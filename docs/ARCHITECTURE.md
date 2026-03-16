@@ -209,6 +209,17 @@ CREATE TABLE notifications (
 );
 ```
 
+### follows
+```sql
+CREATE TABLE follows (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  follower_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  following_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(follower_id, following_id)
+);
+```
+
 ---
 
 ## Row Level Security (RLS) Politikaları
@@ -256,6 +267,21 @@ ALTER TABLE checkin_votes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can vote once per checkin"
   ON checkin_votes FOR INSERT
   WITH CHECK (voter_id = auth.uid());
+
+-- follows
+ALTER TABLE follows ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can follow others"
+  ON follows FOR INSERT
+  WITH CHECK (follower_id = auth.uid());
+
+CREATE POLICY "Users can unfollow"
+  ON follows FOR DELETE
+  USING (follower_id = auth.uid());
+
+CREATE POLICY "Follows visible to all"
+  ON follows FOR SELECT
+  USING (true);
 ```
 
 ---

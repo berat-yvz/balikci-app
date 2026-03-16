@@ -34,6 +34,9 @@ dependencies:
   # Supabase
   supabase_flutter: ^2.8.0
 
+  # Ortam Değişkenleri (.env)
+  flutter_dotenv: ^5.2.1
+
   # Harita
   flutter_map: ^7.0.2
   flutter_map_tile_caching: ^9.1.0
@@ -48,8 +51,8 @@ dependencies:
   go_router: ^14.6.2
 
   # Local Database
-  isar: ^3.1.0+1
-  isar_flutter_libs: ^3.1.0+1
+  isar: ^4.0.0-dev.13
+  isar_flutter_libs: ^4.0.0-dev.13
   path_provider: ^2.1.5
 
   # HTTP
@@ -103,9 +106,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

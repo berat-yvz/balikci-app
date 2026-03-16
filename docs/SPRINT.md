@@ -9,7 +9,7 @@
 
 | Faz | Haftalar | Odak | Durum |
 |-----|---------|------|-------|
-| Faz A | H1–H2 | Kurulum & Auth | ⏳ |
+| Faz A | H1–H2 | Kurulum & Auth | 🔄 |
 | Faz B | H3–H6 | Harita & Check-in Çekirdeği | ⏳ |
 | Faz C | H7–H10 | Günlük, Puan, Hava, Bildirim | ⏳ |
 | Faz D | H11–H13 | Offline & Motivasyon UI | ⏳ |
@@ -23,17 +23,17 @@
 **Hedef:** Çalışan iskelet uygulama, tüm servisler bağlı
 
 #### Görevler
-- [ ] Flutter projesi `flutter create` ile oluşturuldu
-- [ ] `pubspec.yaml` tüm paketler eklendi, `flutter pub get` temiz
-- [ ] Klasör yapısı `ARCHITECTURE.md`'e göre oluşturuldu
+- [x] Flutter projesi `flutter create` ile oluşturuldu
+- [x] `pubspec.yaml` tüm paketler eklendi, `flutter pub get` temiz
+- [x] Klasör yapısı `ARCHITECTURE.md`'e göre oluşturuldu
 - [ ] Supabase projesi oluşturuldu (supabase.com)
 - [ ] Tüm tablolar SQL ile oluşturuldu (`ARCHITECTURE.md` → Veritabanı Şeması)
 - [ ] RLS politikaları eklendi
 - [ ] Firebase projesi oluşturuldu, `google-services.json` eklendi
-- [ ] `.gitignore` güvenlik dosyaları eklendi
-- [ ] `supabase_service.dart` singleton yazıldı
-- [ ] `app/theme.dart` renk ve stil sabitleri eklendi
-- [ ] `app/router.dart` temel route'lar tanımlandı
+- [x] `.gitignore` güvenlik dosyaları eklendi
+- [x] `supabase_service.dart` singleton yazıldı
+- [x] `app/theme.dart` renk ve stil sabitleri eklendi
+- [x] `app/router.dart` temel route'lar tanımlandı
 - [ ] İlk commit ve push yapıldı
 
 **Çıktı:** `flutter run` çalışıyor, Supabase bağlantısı test edildi ✓

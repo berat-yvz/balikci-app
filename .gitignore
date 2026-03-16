@@ -27,3 +27,10 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# ARCHITECTURE.md — Güvenlik: asla commit edilmemeli
+.env
+*.env
+google-services.json
+GoogleService-Info.plist
+supabase/.env
