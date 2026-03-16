@@ -16,11 +16,11 @@ Future<void> main() async {
   //    ARCHITECTURE.md → Güvenlik: API key asla hard-code edilmez.
   await dotenv.load(fileName: '.env');
 
-  // 2. Supabase başlat (.env'den URL + anon key okunur)
-  await SupabaseService.initialize();
-
-  // 3. Firebase (FCM push bildirimleri için)
+  // 2. Firebase (FCM push bildirimleri vb. servisler için)
   await Firebase.initializeApp();
+
+  // 3. Supabase başlat (.env'den URL + anon key okunur)
+  await SupabaseService.initialize();
 
   // 4. Yerel veritabanı — Drift (offline-first)
   final _ = AppDatabase.instance;
