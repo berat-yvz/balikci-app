@@ -31,6 +31,7 @@
 - [ ] RLS politikaları eklendi
 - [ ] Firebase projesi oluşturuldu, `google-services.json` eklendi
 - [x] `.gitignore` güvenlik dosyaları eklendi
+- [x] Android `build.gradle.kts` desugaring (Java 8 API) desteği eklendi
 - [x] `supabase_service.dart` singleton yazıldı
 - [x] `app/theme.dart` renk ve stil sabitleri eklendi
 - [x] `app/router.dart` temel route'lar tanımlandı

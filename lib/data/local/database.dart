@@ -18,9 +18,6 @@ class AppDatabase extends _$AppDatabase {
 
 QueryExecutor _openConnection() {
   return driftDatabase(
-    name: 'balikci_db',
-    native: const DriftNativeOptions(
-      // SQLite ile web desteği vs ayarları burada yapılır
-    ),
+    name: 'balikci_app.db',
   );
 }
