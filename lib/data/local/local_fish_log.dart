@@ -1,23 +1,18 @@
-import 'package:isar/isar.dart';
-import 'package:balikci_app/data/local/local_spot.dart';
+import 'package:drift/drift.dart';
 
-part 'local_fish_log.g.dart';
+/// Offline balık günlüğü tablosu.
+class LocalFishLogs extends Table {
+  TextColumn get id => text()(); // Supabase UUID veya geçici offline ID
+  TextColumn get userId => text()();
+  TextColumn get spotId => text().nullable()();
+  TextColumn get species => text()();
+  RealColumn get weight => real().nullable()();
+  RealColumn get length => real().nullable()();
+  TextColumn get photoUrl => text().nullable()();
+  BoolColumn get isPrivate => boolean()();
+  BoolColumn get isSynced => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get createdAt => dateTime()();
 
-/// Offline balık günlüğü — Isar şeması.
-/// Offline-first: önce buraya yazılır, sync gelince Supabase'e gönderilir.
-@collection
-class LocalFishLog {
-  Id get isarId => fastHash(id);
-
-  late String id; // Geçici UUID (offline) veya Supabase UUID
-  late String userId;
-  String? spotId;
-  late String species;
-  double? weight;
-  double? length;
-  String? photoUrl;
-  late bool isPrivate;
-  late bool released;
-  late DateTime createdAt;
-  late bool synced; // false = sync kuyruğunda
+  @override
+  Set<Column> get primaryKey => {id};
 }

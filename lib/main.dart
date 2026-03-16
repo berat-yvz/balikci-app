@@ -7,7 +7,7 @@ import 'package:balikci_app/app/router.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/services/notification_service.dart';
-import 'package:balikci_app/data/local/isar_service.dart';
+import 'package:balikci_app/data/local/database.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,8 +22,8 @@ Future<void> main() async {
   // 3. Firebase (FCM push bildirimleri için)
   await Firebase.initializeApp();
 
-  // 4. Yerel veritabanı — Isar (offline-first)
-  await IsarService.initialize();
+  // 4. Yerel veritabanı — Drift (offline-first)
+  final _ = AppDatabase.instance;
 
   // 5. Push bildirim servisi (FCM + yerel bildirim kanalı)
   await NotificationService.initialize();

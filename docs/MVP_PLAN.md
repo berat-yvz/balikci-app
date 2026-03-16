@@ -28,7 +28,7 @@
 ### Teknik Uygulama
 - Supabase Auth: e-posta + şifre, Google OAuth
 - go_router ile route guard: giriş yapılmamışsa `/onboarding` yönlendirmesi
-- JWT token Isar'da saklanır, offline oturum açık kalır
+- JWT token Drift'te veya secure storage'da saklanır, offline oturum açık kalır
 
 ### Onboarding Akışı (3 Adım)
 1. Konum izni isteği — "Yakınındaki meraları görmek için"
@@ -69,7 +69,7 @@ splash.dart
 
 ### Performans Kuralları
 - Marker cluster zoom level < 12 için aktif
-- Mera verileri Isar'da cache, arka planda senkronize
+- Mera verileri Drift'te cache, arka planda senkronize
 - Tile cache: flutter_map_tile_caching
 
 ---

@@ -26,7 +26,7 @@
 - [x] Flutter projesi `flutter create` ile oluşturuldu
 - [x] `pubspec.yaml` tüm paketler eklendi, `flutter pub get` temiz
 - [x] Klasör yapısı `ARCHITECTURE.md`'e göre oluşturuldu
-- [ ] Supabase projesi oluşturuldu (supabase.com)
+- [x] Supabase projesi oluşturuldu (supabase.com)
 - [ ] Tüm tablolar SQL ile oluşturuldu (`ARCHITECTURE.md` → Veritabanı Şeması)
 - [ ] RLS politikaları eklendi
 - [ ] Firebase projesi oluşturuldu, `google-services.json` eklendi
@@ -54,7 +54,7 @@
 - [ ] `step_notification.dart` — bildirim izni (FCM)
 - [ ] `step_first_spot.dart` — ilk mera CTA
 - [ ] go_router guard: giriş yapılmamışsa `/login`'e yönlendir
-- [ ] JWT token Isar'da saklanıyor, offline oturum çalışıyor
+- [ ] JWT token Drift'te saklanıyor, offline oturum çalışıyor
 - [ ] Splash ekranı (2 sn, logo)
 
 **Çıktı:** Kullanıcı kayıt, giriş, onboarding akışını tamamlayabiliyor ✓
@@ -75,7 +75,7 @@
 - [ ] `flutter_map_marker_cluster` entegrasyonu
 - [ ] `spot_detail_sheet.dart` — pin'e tıklayınca alt sheet açılıyor
 - [ ] Harita tile cache: `flutter_map_tile_caching` bağlandı
-- [ ] Mera verileri Isar'da cache'leniyor
+- [ ] Mera verileri Drift'te cache'leniyor
 
 **Çıktı:** Harita açılıyor, mera pinleri cluster'lanmış görünüyor ✓
 
@@ -138,14 +138,14 @@
 **Hedef:** Balık kaydı eklenip görüntülenebiliyor
 
 #### Görevler
-- [ ] `fish_log_model.dart` ve Isar şeması oluşturuldu
+- [ ] `local_fish_log.dart` ve Drift şeması oluşturuldu
 - [ ] `fish_log_repository.dart` yazıldı
 - [ ] `add_log_screen.dart` — kayıt formu
 - [ ] Hava snapshot: kayıt anında cache'den hava verisi ekleniyor
 - [ ] Fotoğraf yükleme: image_picker → WebP → Supabase Storage
 - [ ] Gizli kayıt toggle'ı UI'a eklendi
 - [ ] `log_list_screen.dart` — kayıt listesi
-- [ ] Offline-first: Isar'a yaz, internet gelince sync
+- [ ] Offline-first: Drift'e yaz, internet gelince sync
 - [ ] `sync_queue.dart` — offline işlem kuyruğu
 - [ ] `stats_screen.dart` — istatistik ekranı (toplam, tür, mera, grafik)
 
@@ -182,7 +182,7 @@
 - [ ] Balıkçı dili çevirisi: 30 kural tablosu yazıldı
 - [ ] `weather_card_widget.dart` — ana ekranda hava kartı
 - [ ] `weather_screen.dart` — detaylı hava ekranı (7 günlük)
-- [ ] Hava verisi Isar'da cache'leniyor (offline)
+- [ ] Hava verisi Drift'te cache'leniyor (offline)
 
 **Çıktı:** Hava kartı açılıyor, balıkçı dili yorumu gösteriliyor ✓
 

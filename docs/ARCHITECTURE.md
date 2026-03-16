@@ -14,7 +14,7 @@
 | Harita | flutter_map + OpenStreetMap | 7.x |
 | Offline Harita | flutter_map_tile_caching | 9.x |
 | State Management | Riverpod | 2.x |
-| Local DB | Isar | 3.x |
+| Local DB | Drift | 2.x |
 | Navigation | go_router | 14.x |
 | HTTP | Dio | 5.x |
 | Push Bildirim | Firebase Messaging | 15.x |
@@ -38,7 +38,7 @@
 ┌─────────────────────────────────────────┐
 │           Flutter App (Client)          │
 │  ┌─────────┐  ┌─────────┐  ┌─────────┐ │
-│  │Riverpod │  │  Isar   │  │go_router│ │
+│  │Riverpod │  │  Drift  │  │go_router│ │
 │  │ State   │  │Local DB │  │  Nav    │ │
 │  └────┬────┘  └────┬────┘  └─────────┘ │
 └───────┼────────────┼───────────────────┘
@@ -321,9 +321,9 @@ lib/
 │   │   ├── fish_log_repository.dart
 │   │   └── user_repository.dart
 │   └── local/
-│       ├── isar_service.dart       ← Isar init ve yönetim
-│       ├── local_spot.dart         ← Isar şema: mera
-│       ├── local_fish_log.dart     ← Isar şema: günlük
+│       ├── database.dart           ← Drift DB init ve yönetim
+│       ├── local_spot.dart         ← Drift şema: mera
+│       ├── local_fish_log.dart     ← Drift şema: günlük
 │       └── sync_queue.dart         ← offline sync kuyruğu
 ├── features/
 │   ├── auth/

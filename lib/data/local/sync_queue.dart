@@ -1,17 +1,11 @@
-import 'package:isar/isar.dart';
-import 'package:balikci_app/data/local/local_spot.dart';
+import 'package:drift/drift.dart';
 
-part 'sync_queue.g.dart';
-
-/// Offline sync kuyruğu — bağlantı yokken yapılan işlemler.
-/// Bağlantı gelince IsarService + bu kuyruk taranarak Supabase'e gönderilir.
-@collection
-class SyncQueueItem {
-  Id id = Isar.autoIncrement;
-
-  late String action; // 'insert' | 'update' | 'delete'
-  late String table; // 'fish_logs' | 'checkins' | vb.
-  late String payload; // JSON string
-  late DateTime createdAt;
-  late int retryCount;
+/// Offline sync kuyruğu tablosu.
+class SyncQueue extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get tableName => text()(); // örn: 'fish_logs'
+  TextColumn get recordId => text()();
+  TextColumn get operation => text()(); // 'insert', 'update', 'delete'
+  TextColumn get payload => text()(); // JSON data
+  DateTimeColumn get createdAt => dateTime()();
 }
