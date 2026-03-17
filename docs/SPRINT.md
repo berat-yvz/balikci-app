@@ -71,7 +71,7 @@
 - [ ] `map_screen.dart` — FlutterMap widget entegrasyonu
 - [ ] OpenStreetMap tile provider bağlandı
 - [ ] `spot_repository.dart` yazıldı (getSpots, addSpot, updateSpot)
-- [ ] `spot_model.dart` ve Isar şeması oluşturuldu
+- [ ] `spot_model.dart` ve Drift şeması oluşturuldu
 - [ ] Mera pinleri haritada gösteriliyor (privacy_level'a göre renk)
 - [ ] `flutter_map_marker_cluster` entegrasyonu
 - [ ] `spot_detail_sheet.dart` — pin'e tıklayınca alt sheet açılıyor

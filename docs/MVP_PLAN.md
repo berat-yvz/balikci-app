@@ -169,7 +169,7 @@ class FishLog {
 ```
 Kayıt yap
     ↓
-Önce Isar (local) → anında göster
+Önce Drift (local) → anında göster
     ↓
 İnternet varsa → Supabase sync
 İnternet yoksa → kuyruğa ekle → bağlantı gelince sync
@@ -281,7 +281,7 @@ Water Knot, Nail Knot
 ### Teknik Detay
 - `flutter_map_tile_caching` ile tile yönetimi
 - Zoom 10–16 arası tile'lar indirilir
-- Offline iken Isar'daki son mera verileri kullanılır
+- Offline iken Drift'teki son mera verileri kullanılır
 - Check-in offline yazılır, bağlantı gelince sync edilir
 
 ---
