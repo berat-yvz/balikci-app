@@ -27,15 +27,15 @@
 - [x] `pubspec.yaml` tüm paketler eklendi, `flutter pub get` temiz
 - [x] Klasör yapısı `ARCHITECTURE.md`'e göre oluşturuldu
 - [x] Supabase projesi oluşturuldu (supabase.com)
-- [ ] Tüm tablolar SQL ile oluşturuldu (`ARCHITECTURE.md` → Veritabanı Şeması)
-- [ ] RLS politikaları eklendi
-- [ ] Firebase projesi oluşturuldu, `google-services.json` eklendi
+- [x] Tüm tablolar SQL ile oluşturuldu (`ARCHITECTURE.md` → Veritabanı Şeması)
+- [x] RLS politikaları eklendi
+- [x] Firebase projesi oluşturuldu, `google-services.json` eklendi
 - [x] `.gitignore` güvenlik dosyaları eklendi
 - [x] Android `build.gradle.kts` desugaring (Java 8 API) desteği eklendi
 - [x] `supabase_service.dart` singleton yazıldı
 - [x] `app/theme.dart` renk ve stil sabitleri eklendi
 - [x] `app/router.dart` temel route'lar tanımlandı
-- [ ] İlk commit ve push yapıldı
+- [x] İlk commit ve push yapıldı
 
 **Çıktı:** `flutter run` çalışıyor, Supabase bağlantısı test edildi ✓
 
