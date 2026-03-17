@@ -8,6 +8,8 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/services/notification_service.dart';
 import 'package:balikci_app/data/local/database.dart';
+import 'package:balikci_app/shared/providers/preferences_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,10 +30,16 @@ Future<void> main() async {
   // 5. Push bildirim servisi (FCM + yerel bildirim kanalı)
   await NotificationService.initialize();
 
+  // 6. SharedPreferences (Onboarding vs durumlar)
+  final prefs = await SharedPreferences.getInstance();
+
   runApp(
     // Riverpod ProviderScope tüm widget ağacını sarar
-    const ProviderScope(
-      child: BalikciApp(),
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+      child: const BalikciApp(),
     ),
   );
 }

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:balikci_app/app/theme.dart';
 
-class StepFirstSpot extends StatelessWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:balikci_app/shared/providers/preferences_provider.dart';
+
+class StepFirstSpot extends ConsumerWidget {
   const StepFirstSpot({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
@@ -54,8 +57,8 @@ class StepFirstSpot extends StatelessWidget {
           
           ElevatedButton(
             onPressed: () {
-              // Dekoratif buton, asıl tetikleme onboarding_screen.dart 
-              // altındaki 'Başla' butonunda olacaktır.
+              // Onboarding bittiğini kaydet
+              ref.read(onboardingStateProvider.notifier).completeOnboarding();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.secondary,

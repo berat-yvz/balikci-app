@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
+import 'package:balikci_app/shared/providers/preferences_provider.dart';
 
 // Features — Auth
 import 'package:balikci_app/features/auth/splash_screen.dart';
@@ -45,6 +46,7 @@ import 'package:balikci_app/features/profile/settings_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authRepo = ref.watch(authRepositoryProvider);
+  final isOnboardingCompleted = ref.watch(onboardingStateProvider);
 
   return GoRouter(
     initialLocation: '/splash',
@@ -52,18 +54,34 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoggedIn = authRepo.isLoggedIn();
       final path = state.uri.path;
 
-      // Uygulama ilk açıldığında /splash'e gidilir, işlemler SplashScreen'de yapılır
+      // Splash için kontrol yok
       if (path == '/splash') return null;
 
-      final isAuthRoute = path == '/login' || path == '/register' || path == '/onboarding';
+      final isLoginOrRegister = path == '/login' || path == '/register';
 
-      // Giriş yapmamış ama korumalı rotaya (ör. /home) gitmek istiyorsa
-      if (!isLoggedIn && !isAuthRoute) {
-        return '/login';
+      // 1. Durum: Kullanıcı giriş yapmamış
+      if (!isLoggedIn) {
+        if (!isLoginOrRegister) {
+          // Giriş yapmamış kişi korumalı ya da onboarding sayfasına gidemez
+          return '/login';
+        }
+        return null;
       }
 
-      // Giriş yapmış ama auth rotasına gitmek istiyorsa /home sayfasına gönder
-      if (isLoggedIn && isAuthRoute) {
+      // 2. Durum: Kullanıcı giriş YAPMIŞ
+
+      // Eğer yetkilendirme ekranlarına (/login, /register) gitmek isterse:
+      if (isLoginOrRegister) {
+        return isOnboardingCompleted ? '/home' : '/onboarding';
+      }
+
+      // Onboarding tamamlanmamışsa VE başka (korumalı) bir yere gitmeye çalışıyorsa:
+      if (!isOnboardingCompleted && path != '/onboarding') {
+        return '/onboarding';
+      }
+
+      // Onboarding TAMAMLANMIŞSA VE zorla onboarding'e gitmek istiyorsa:
+      if (isOnboardingCompleted && path == '/onboarding') {
         return '/home';
       }
 
