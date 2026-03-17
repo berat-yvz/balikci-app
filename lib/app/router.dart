@@ -1,10 +1,16 @@
-import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:balikci_app/shared/providers/auth_provider.dart';
 
 // Features — Auth
+import 'package:balikci_app/features/auth/splash_screen.dart';
 import 'package:balikci_app/features/auth/login_screen.dart';
 import 'package:balikci_app/features/auth/register_screen.dart';
 import 'package:balikci_app/features/auth/onboarding/onboarding_screen.dart';
+
+// Features — Home Shell
+import 'package:balikci_app/features/main_shell.dart';
 
 // Features — Map
 import 'package:balikci_app/features/map/map_screen.dart';
@@ -37,63 +43,95 @@ import 'package:balikci_app/features/notifications/notification_settings_screen.
 import 'package:balikci_app/features/profile/profile_screen.dart';
 import 'package:balikci_app/features/profile/settings_screen.dart';
 
-final appRouter = GoRouter(
-  initialLocation: '/map',
-  // TODO: H2 - redirect guard eklenecek (auth_provider ile)
-  // redirect: (context, state) { ... },
-  routes: [
-    // Auth
-    GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-    GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
-    GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
+final routerProvider = Provider<GoRouter>((ref) {
+  final authRepo = ref.watch(authRepositoryProvider);
 
-    // Map (ana ekran)
-    GoRoute(path: '/map', builder: (_, __) => const MapScreen()),
-    GoRoute(path: '/map/add-spot', builder: (_, __) => const AddSpotScreen()),
+  return GoRouter(
+    initialLocation: '/splash',
+    redirect: (context, state) {
+      final isLoggedIn = authRepo.isLoggedIn();
+      final path = state.uri.path;
 
-    // Check-in
-    GoRoute(
-      path: '/checkin/:spotId',
-      builder: (_, state) =>
-          CheckinScreen(spotId: state.pathParameters['spotId']!),
+      // Uygulama ilk açıldığında /splash'e gidilir, işlemler SplashScreen'de yapılır
+      if (path == '/splash') return null;
+
+      final isAuthRoute = path == '/login' || path == '/register' || path == '/onboarding';
+
+      // Giriş yapmamış ama korumalı rotaya (ör. /home) gitmek istiyorsa
+      if (!isLoggedIn && !isAuthRoute) {
+        return '/login';
+      }
+
+      // Giriş yapmış ama auth rotasına gitmek istiyorsa /home sayfasına gönder
+      if (isLoggedIn && isAuthRoute) {
+        return '/home';
+      }
+
+      return null;
+    },
+    routes: [
+      // Splash
+      GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
+
+      // Auth
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
+      GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
+
+      // Home (Şimdilik boş Scaffold)
+      GoRoute(
+        path: '/home',
+        builder: (context, state) => const MainShell(),
+      ),
+
+      // Map (ana ekran)
+      GoRoute(path: '/map', builder: (context, state) => const MapScreen()),
+      GoRoute(path: '/map/add-spot', builder: (context, state) => const AddSpotScreen()),
+
+      // Check-in
+      GoRoute(
+        path: '/checkin/:spotId',
+        builder: (_, state) =>
+            CheckinScreen(spotId: state.pathParameters['spotId']!),
+      ),
+
+      // Fish Log
+      GoRoute(path: '/logs', builder: (context, state) => const LogListScreen()),
+      GoRoute(path: '/logs/add', builder: (context, state) => const AddLogScreen()),
+      GoRoute(path: '/logs/stats', builder: (context, state) => const StatsScreen()),
+
+      // Rank
+      GoRoute(path: '/rank', builder: (context, state) => const RankScreen()),
+      GoRoute(
+          path: '/rank/leaderboard',
+          builder: (context, state) => const LeaderboardScreen()),
+
+      // Knots
+      GoRoute(path: '/knots', builder: (context, state) => const KnotsScreen()),
+      GoRoute(
+        path: '/knots/:knotId',
+        builder: (_, state) =>
+            KnotDetailScreen(knotId: state.pathParameters['knotId']!),
+      ),
+
+      // Weather
+      GoRoute(path: '/weather', builder: (context, state) => const WeatherScreen()),
+
+      // Notifications
+      GoRoute(
+          path: '/notifications',
+          builder: (context, state) => const NotificationListScreen()),
+      GoRoute(
+          path: '/notifications/settings',
+          builder: (context, state) => const NotificationSettingsScreen()),
+
+      // Profile
+      GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
+      GoRoute(
+          path: '/profile/settings', builder: (context, state) => const SettingsScreen()),
+    ],
+    errorBuilder: (_, state) => Scaffold(
+      body: Center(child: Text('Sayfa bulunamadı: ${state.uri}')),
     ),
-
-    // Fish Log
-    GoRoute(path: '/logs', builder: (_, __) => const LogListScreen()),
-    GoRoute(path: '/logs/add', builder: (_, __) => const AddLogScreen()),
-    GoRoute(path: '/logs/stats', builder: (_, __) => const StatsScreen()),
-
-    // Rank
-    GoRoute(path: '/rank', builder: (_, __) => const RankScreen()),
-    GoRoute(
-        path: '/rank/leaderboard',
-        builder: (_, __) => const LeaderboardScreen()),
-
-    // Knots
-    GoRoute(path: '/knots', builder: (_, __) => const KnotsScreen()),
-    GoRoute(
-      path: '/knots/:knotId',
-      builder: (_, state) =>
-          KnotDetailScreen(knotId: state.pathParameters['knotId']!),
-    ),
-
-    // Weather
-    GoRoute(path: '/weather', builder: (_, __) => const WeatherScreen()),
-
-    // Notifications
-    GoRoute(
-        path: '/notifications',
-        builder: (_, __) => const NotificationListScreen()),
-    GoRoute(
-        path: '/notifications/settings',
-        builder: (_, __) => const NotificationSettingsScreen()),
-
-    // Profile
-    GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
-    GoRoute(
-        path: '/profile/settings', builder: (_, __) => const SettingsScreen()),
-  ],
-  errorBuilder: (_, state) => Scaffold(
-    body: Center(child: Text('Sayfa bulunamadı: ${state.uri}')),
-  ),
-);
+  );
+});

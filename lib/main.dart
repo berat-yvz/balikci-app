@@ -36,16 +36,18 @@ Future<void> main() async {
   );
 }
 
-class BalikciApp extends StatelessWidget {
+class BalikciApp extends ConsumerWidget {
   const BalikciApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+
     return MaterialApp.router(
       title: 'Balıkçı App',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
-      routerConfig: appRouter,
+      routerConfig: router,
     );
   }
 }
