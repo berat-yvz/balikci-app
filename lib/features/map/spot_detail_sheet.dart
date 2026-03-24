@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 
-/// Mera detay alt sheet (H3 read-only).
+/// Mera detay alt sheet (H3 read-only + H4 sahip düzenleme).
 class SpotDetailSheet extends StatelessWidget {
   final SpotModel spot;
   const SpotDetailSheet({super.key, required this.spot});
@@ -36,8 +38,18 @@ class SpotDetailSheet extends StatelessWidget {
     );
   }
 
+  void _openEdit(BuildContext context) {
+    final router = GoRouter.of(context);
+    final s = spot;
+    Navigator.of(context).pop();
+    Future.microtask(() => router.push('/map/edit-spot', extra: s));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final uid = SupabaseService.auth.currentUser?.id;
+    final isOwner = uid != null && uid == spot.userId;
+
     return SizedBox(
       height: 320,
       child: Padding(
@@ -67,6 +79,11 @@ class SpotDetailSheet extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                if (isOwner)
+                  TextButton(
+                    onPressed: () => _openEdit(context),
+                    child: const Text('Duzenle'),
+                  ),
                 TextButton(
                   onPressed: () => _openDirections(context),
                   child: const Text('Yol tarifi'),

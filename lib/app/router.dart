@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:balikci_app/app/go_router_refresh.dart';
+import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/preferences_provider.dart';
@@ -115,6 +116,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Map (ana ekran)
       GoRoute(path: '/map', builder: (context, state) => const MapScreen()),
       GoRoute(path: '/map/add-spot', builder: (context, state) => const AddSpotScreen()),
+      GoRoute(
+        path: '/map/edit-spot',
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is! SpotModel) {
+            return const Scaffold(
+              body: Center(child: Text('Gecersiz mera')),
+            );
+          }
+          return AddSpotScreen(spotToEdit: extra);
+        },
+      ),
       GoRoute(
         path: '/map/pick-location',
         builder: (context, state) {

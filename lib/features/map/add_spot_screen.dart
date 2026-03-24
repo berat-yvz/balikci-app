@@ -131,21 +131,35 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
     try {
       final user = SupabaseService.auth.currentUser!;
       await AuthRepository().ensureUserProfile(user);
-      await _repo.addSpot({
-        'user_id': uid,
-        'name': _nameCtrl.text.trim(),
-        'lat': _lat,
-        'lng': _lng,
-        'type': _type,
-        'privacy_level': _privacy,
-        'description': _descCtrl.text.trim().isEmpty
-            ? null
-            : _descCtrl.text.trim(),
-      });
+      if (_isEdit) {
+        final id = widget.spotToEdit!.id;
+        await _repo.updateSpot(id, {
+          'name': _nameCtrl.text.trim(),
+          'lat': _lat,
+          'lng': _lng,
+          'type': _type,
+          'privacy_level': _privacy,
+          'description': _descCtrl.text.trim().isEmpty
+              ? null
+              : _descCtrl.text.trim(),
+        });
+      } else {
+        await _repo.addSpot({
+          'user_id': uid,
+          'name': _nameCtrl.text.trim(),
+          'lat': _lat,
+          'lng': _lng,
+          'type': _type,
+          'privacy_level': _privacy,
+          'description': _descCtrl.text.trim().isEmpty
+              ? null
+              : _descCtrl.text.trim(),
+        });
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mera eklendi'),
+        SnackBar(
+          content: Text(_isEdit ? 'Mera guncellendi' : 'Mera eklendi'),
           backgroundColor: AppColors.pinPublic,
         ),
       );
@@ -166,7 +180,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mera ekle')),
+      appBar: AppBar(title: Text(_isEdit ? 'Mera duzenle' : 'Mera ekle')),
       body: Form(
         key: _formKey,
         child: ListView(

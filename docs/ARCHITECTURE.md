@@ -445,7 +445,7 @@ Ayrıntılı akış: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md).
 - **Veri:** `SpotRepository` Supabase `fishing_spots` okur, başarılı yanıtları Drift `local_spots` tablosuna yazar; ağ hatasında `getCachedSpots()` ile offline fallback.
 - **UI:** Pin rengi `privacy_level` (public / friends / private / vip); pin tıklanınca `SpotDetailSheet` (salt okunur).
 - **Giriş noktası:** Onboarding sonrası `/home` → `MainShell` → `MapScreen` (tek ekran shell).
-- **H4 (devam eden):** `add_spot_screen.dart`, `pick_spot_location_screen.dart`; rotalar `go_router`: `/map/add-spot`, `/map/pick-location`; mera ekleme sonrası liste yenileme FAB üzerinden.
+- **H4 (devam eden):** `add_spot_screen.dart` (ekle + düzenleme modu), `pick_spot_location_screen.dart`; rotalar: `/map/add-spot`, `/map/edit-spot`, `/map/pick-location`; `spot_detail_sheet` sahip için **Düzenle**; mera ekleme/güncelleme sonrası liste yenileme FAB üzerinden.
 - **Drift:** `AppDatabase` şema sürümü 2; `local_spots` için migrasyon `database.dart` (`verified`, `muhtarId`, `cachedAt`).
 
 ---

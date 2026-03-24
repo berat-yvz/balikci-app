@@ -105,6 +105,7 @@
 
 #### Görevler
 - [x] `add_spot_screen.dart` — mera ekleme formu (tur, aciklama, Supabase insert)
+- [x] Mera düzenleme: sahip `spot_detail_sheet` → **Düzenle** → `/map/edit-spot` (`updateSpot`)
 - [x] Gizlilik seçimi: public / friends / private / vip UI
 - [x] Konum seçimi: GPS (`LocationService`) veya `pick_spot_location_screen` ile haritada dokunma
 - [ ] Dükkan JSON verisi hazırlandı (10+ dükkan)
