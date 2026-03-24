@@ -1,22 +1,24 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:balikci_app/core/constants/oauth_constants.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 
 /// Auth işlemleri için merkezi repository.
 /// Supabase Auth üzerinden kayıt, giriş, çıkış ve oturum sorgularını yönetir.
 /// Tüm hata mesajları Türkçe olarak fırlatılır.
+///
+/// `public.users` satırı tercihen sunucu tetikleyicisi ile oluşur
+/// ([docs/supabase_auth_users_trigger.sql](docs/supabase_auth_users_trigger.sql)).
+/// İstemcide [ensureUserProfile] yedek olarak kullanılır.
 class AuthRepository {
   final _auth = SupabaseService.client.auth;
   final _db = SupabaseService.client;
 
   // ---------------------------------------------------------------------------
-  // signUp — Kayıt ol & users tablosuna profil ekle
+  // signUp — Kayıt ol (profil: tetikleyici + isteğe bağlı ensureUserProfile)
   // ---------------------------------------------------------------------------
 
-  /// [email] ve [password] ile Supabase Auth'a kayıt olur.
-  /// Başarılıysa `users` tablosuna kullanıcı profilini (id, email, username,
-  /// created_at) ekler.
-  /// Hata durumunda Türkçe mesajla [AuthException] fırlatır.
   Future<AuthResponse> signUp(
     String email,
     String password,
@@ -29,21 +31,14 @@ class AuthRepository {
         data: {'username': username},
       );
 
-      if (response.user != null) {
-        // Kullanıcı profilini users tablosuna ekle
-        await _db.from('users').insert({
-          'id': response.user!.id,
-          'email': email,
-          'username': username,
-          'created_at': DateTime.now().toIso8601String(),
-        });
+      if (response.session != null && response.user != null) {
+        await ensureUserProfile(response.user!);
       }
-
       return response;
     } on AuthException catch (e) {
       throw AuthException(_mapAuthError(e.message));
     } catch (e) {
-      throw AuthException('Bağlantı hatası, lütfen tekrar deneyin');
+      throw AuthException(_mapAuthError(e.toString()));
     }
   }
 
@@ -51,27 +46,89 @@ class AuthRepository {
   // signIn — E-posta + şifre ile giriş yap
   // ---------------------------------------------------------------------------
 
-  /// [email] ve [password] ile Supabase Auth'a giriş yapar.
-  /// Hata durumunda Türkçe mesajla [AuthException] fırlatır.
   Future<AuthResponse> signIn(String email, String password) async {
     try {
       final response = await _auth.signInWithPassword(
         email: email,
         password: password,
       );
+      if (response.user != null) {
+        await ensureUserProfile(response.user!);
+      }
       return response;
     } on AuthException catch (e) {
       throw AuthException(_mapAuthError(e.message));
     } catch (e) {
-      throw AuthException('Bağlantı hatası, lütfen tekrar deneyin');
+      throw AuthException(_mapAuthError(e.toString()));
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // signInWithGoogle — OAuth (PKCE + deep link)
+  // ---------------------------------------------------------------------------
+
+  Future<void> signInWithGoogle() async {
+    try {
+      if (kIsWeb) {
+        await _auth.signInWithOAuth(OAuthProvider.google);
+        return;
+      }
+      await _auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: OauthConstants.redirectUrl,
+        authScreenLaunchMode: LaunchMode.externalApplication,
+      );
+    } on AuthException catch (e) {
+      throw AuthException(_mapAuthError(e.message));
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // ensureUserProfile — public.users yoksa ekle (trigger yedeği)
+  // ---------------------------------------------------------------------------
+
+  Future<void> ensureUserProfile(User user) async {
+    try {
+      final existing =
+          await _db.from('users').select('id').eq('id', user.id).maybeSingle();
+      if (existing != null) return;
+
+      final email = user.email ?? '';
+      final metaUser = user.userMetadata?['username'] as String?;
+      var username = metaUser?.trim();
+      if (username == null || username.isEmpty) {
+        username =
+            email.contains('@') ? email.split('@').first : 'user';
+      }
+      username = _sanitizeUsername(username);
+      if (username.length < 3) username = 'user';
+      final idShort = user.id.replaceAll('-', '');
+      final suffix =
+          idShort.length >= 8 ? idShort.substring(0, 8) : idShort.padRight(8, '0');
+      username = '${username}_$suffix';
+
+      await _db.from('users').insert({
+        'id': user.id,
+        'email':
+            email.isNotEmpty ? email : '$username@oauth.local',
+        'username': username,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+    } catch (_) {
+      // Zaten var, unique veya RLS — yutulur
+    }
+  }
+
+  static String _sanitizeUsername(String raw) {
+    final cleaned = raw.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
+    if (cleaned.isEmpty) return 'user';
+    return cleaned.length > 16 ? cleaned.substring(0, 16) : cleaned;
   }
 
   // ---------------------------------------------------------------------------
   // signOut — Oturumu kapat
   // ---------------------------------------------------------------------------
 
-  /// Mevcut Supabase oturumunu kapatır.
   Future<void> signOut() async {
     try {
       await _auth.signOut();
@@ -82,24 +139,9 @@ class AuthRepository {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // getCurrentUser — Mevcut kullanıcıyı döndür
-  // ---------------------------------------------------------------------------
-
-  /// Supabase oturumundaki mevcut [User] nesnesini döndürür.
-  /// Giriş yapılmamışsa `null` döner.
   User? getCurrentUser() => _auth.currentUser;
 
-  // ---------------------------------------------------------------------------
-  // isLoggedIn — Giriş durumu kontrolü
-  // ---------------------------------------------------------------------------
-
-  /// Kullanıcı oturum açmışsa `true`, açmamışsa `false` döner.
   bool isLoggedIn() => _auth.currentUser != null;
-
-  // ---------------------------------------------------------------------------
-  // _mapAuthError — Supabase hata mesajlarını Türkçeye çevir
-  // ---------------------------------------------------------------------------
 
   String _mapAuthError(String message) {
     final lower = message.toLowerCase();
@@ -114,7 +156,7 @@ class AuthRepository {
         lower.contains('invalid email or password') ||
         lower.contains('wrong password') ||
         lower.contains('email not confirmed')) {
-      return 'Email veya şifre hatalı';
+      return 'Email veya şifre hatalı (veya e-posta henüz onaylanmadı)';
     }
 
     if (lower.contains('password should be at least') ||
@@ -128,6 +170,10 @@ class AuthRepository {
       return 'Geçersiz email adresi';
     }
 
+    if (lower.contains('duplicate key') || lower.contains('unique constraint')) {
+      return 'Bu kullanıcı adı veya e-posta zaten kayıtlı';
+    }
+
     if (lower.contains('network') ||
         lower.contains('connection') ||
         lower.contains('timeout') ||
@@ -135,7 +181,6 @@ class AuthRepository {
       return 'Bağlantı hatası, lütfen tekrar deneyin';
     }
 
-    // Eşleşmeyen hatalar için orijinal mesajı döndür
     return message;
   }
 }

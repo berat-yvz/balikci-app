@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/shared/providers/preferences_provider.dart';
 
 import 'step_location.dart';
 import 'step_notification.dart';
 import 'step_first_spot.dart';
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
@@ -23,6 +25,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
+  Future<void> _finishOnboarding() async {
+    await ref.read(onboardingStateProvider.notifier).completeOnboarding();
+    if (!mounted) return;
+    context.go('/home');
+  }
+
   void _nextPage() {
     if (_currentPage < 2) {
       _pageController.nextPage(
@@ -30,7 +38,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeIn,
       );
     } else {
-      context.go('/home');
+      _finishOnboarding();
     }
   }
 
@@ -43,7 +51,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         elevation: 0,
         actions: [
           TextButton(
-            onPressed: () => context.go('/home'),
+            onPressed: _finishOnboarding,
             child: const Text('Atla', style: TextStyle(color: AppColors.muted)),
           ),
           const SizedBox(width: 8),
@@ -67,7 +75,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   StepNotification(
                     onPermissionGranted: _nextPage,
                   ),
-                  const StepFirstSpot(),
+                  StepFirstSpot(onFinish: _finishOnboarding),
                 ],
               ),
             ),
@@ -75,7 +83,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 children: [
-                  // Dots indicator
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(
@@ -95,7 +102,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  // İleri / Başla Butonu
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(

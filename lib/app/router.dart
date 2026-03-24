@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:balikci_app/app/go_router_refresh.dart';
+import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/preferences_provider.dart';
 
@@ -48,7 +50,13 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authRepo = ref.watch(authRepositoryProvider);
   final isOnboardingCompleted = ref.watch(onboardingStateProvider);
 
+  final refresh = GoRouterRefreshStream(
+    SupabaseService.client.auth.onAuthStateChange,
+  );
+  ref.onDispose(refresh.dispose);
+
   return GoRouter(
+    refreshListenable: refresh,
     initialLocation: '/splash',
     redirect: (context, state) {
       final isLoggedIn = authRepo.isLoggedIn();

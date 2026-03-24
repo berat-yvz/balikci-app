@@ -43,8 +43,11 @@ class CheckinRepository {
         .eq('checkin_id', checkinId);
     int trueCount = 0, falseCount = 0;
     for (final row in response) {
-      if (row['vote'] == true) trueCount++;
-      else falseCount++;
+      if (row['vote'] == true) {
+        trueCount++;
+      } else {
+        falseCount++;
+      }
     }
     return {'true': trueCount, 'false': falseCount};
   }

@@ -49,6 +49,7 @@ dependencies:
 
   # Navigation
   go_router: ^14.6.2
+  app_links: ^6.4.0
 
   # Local Database (Drift)
   drift: ^2.18.0

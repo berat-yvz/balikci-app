@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:balikci_app/app/theme.dart';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:balikci_app/shared/providers/preferences_provider.dart';
-
-class StepFirstSpot extends ConsumerWidget {
-  const StepFirstSpot({super.key});
+class StepFirstSpot extends StatelessWidget {
+  final Future<void> Function()? onFinish;
+  const StepFirstSpot({super.key, this.onFinish});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
@@ -56,9 +54,8 @@ class StepFirstSpot extends ConsumerWidget {
           const SizedBox(height: 32),
           
           ElevatedButton(
-            onPressed: () {
-              // Onboarding bittiğini kaydet
-              ref.read(onboardingStateProvider.notifier).completeOnboarding();
+            onPressed: () async {
+              await onFinish?.call();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.secondary,

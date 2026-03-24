@@ -9,7 +9,7 @@
 
 | Kod | Özellik | Durum |
 |-----|---------|-------|
-| M-01 | Hesap Girişi & Onboarding | ⏳ Bekliyor |
+| M-01 | Hesap Girişi & Onboarding | 🔄 Devam Ediyor |
 | M-02 | Harita & Mera Sistemi | ⏳ Bekliyor |
 | M-03 | Anlık Check-in & Doğrulama | ⏳ Bekliyor |
 | M-04 | Hava Durumu & Cache | ⏳ Bekliyor |
@@ -25,29 +25,31 @@
 
 ## M-01 — Hesap Girişi & Onboarding
 
+> Uygulama ve kurulum detayı: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md)
+
 ### Teknik Uygulama
 - Supabase Auth: e-posta + şifre, Google OAuth
-- go_router ile route guard: giriş yapılmamışsa `/onboarding` yönlendirmesi
-- JWT token Drift'te veya secure storage'da saklanır, offline oturum açık kalır
+- go_router ile route guard: giriş yapılmamışsa önce `/login` (veya `/register`); oturum açıkken onboarding bitmediyse `/onboarding`
+- Oturum: `supabase_flutter` SDK (access/refresh); **Drift şu an oturum token’ı için kullanılmıyor** (ileride `flutter_secure_storage` vb. dokümante edilebilir)
+- `public.users` satırı: tercihen `auth.users` tetikleyicisi ([supabase_auth_users_trigger.sql](supabase_auth_users_trigger.sql)) + RLS ([supabase_rls_users_policies.sql](supabase_rls_users_policies.sql))
 
 ### Onboarding Akışı (3 Adım)
 1. Konum izni isteği — "Yakınındaki meraları görmek için"
 2. Bildirim izni — örnek bildirim gösterilerek
 3. İlk mera önerisi + "İlk avını kaydet" CTA
 
-### Ekran Yapısı
+### Ekran Yapısı (kod ile eşleşen dosyalar)
 ```
-splash.dart
-└── auth_gate.dart
-    ├── onboarding/
-    │   ├── onboarding_step1.dart  (konum izni)
-    │   ├── onboarding_step2.dart  (bildirim izni)
-    │   └── onboarding_step3.dart  (ilk mera)
-    ├── auth/
-    │   ├── login_screen.dart
-    │   └── register_screen.dart
-    └── main_shell.dart
+splash_screen.dart          → /splash
+login_screen.dart           → /login
+register_screen.dart        → /register
+onboarding_screen.dart
+  ├── step_location.dart    (konum izni)
+  ├── step_notification.dart (FCM izni / bildirim)
+  └── step_first_spot.dart  (hoş geldin + onboarding bitişi)
+main_shell.dart             → /home
 ```
+(Router mantığı `lib/app/router.dart` içindedir; ayrı `auth_gate.dart` dosyası yoktur.)
 
 ---
 

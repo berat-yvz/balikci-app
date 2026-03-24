@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'package:balikci_app/shared/providers/auth_provider.dart';
+import 'package:balikci_app/shared/providers/preferences_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -47,6 +50,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             backgroundColor: AppColors.danger,
           ),
         );
+      }
+      if (next is AsyncData<User?>) {
+        final u = next.value;
+        final prevUser = previous is AsyncData<User?> ? previous.value : null;
+        if (u != null && u != prevUser) {
+          final done = ref.read(onboardingStateProvider);
+          context.go(done ? '/home' : '/onboarding');
+        }
       }
     });
 
@@ -144,6 +155,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           )
                         : const Text('Giriş Yap'),
+                  ),
+                  const SizedBox(height: 16),
+
+                  OutlinedButton.icon(
+                    onPressed: authState.isLoading
+                        ? null
+                        : () async {
+                            await ref
+                                .read(authNotifierProvider.notifier)
+                                .signInWithGoogle();
+                            if (!context.mounted) return;
+                            if (ref.read(authNotifierProvider).hasError) {
+                              return;
+                            }
+                            if (ref.read(authRepositoryProvider).isLoggedIn()) {
+                              final done = ref.read(onboardingStateProvider);
+                              context.go(done ? '/home' : '/onboarding');
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Tarayıcıda Google ile girişi tamamlayın; '
+                                    'uygulamaya döndüğünüzde oturum açılır.',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                    icon: const Icon(Icons.login),
+                    label: const Text('Google ile devam et'),
                   ),
                   const SizedBox(height: 16),
 

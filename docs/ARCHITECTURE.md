@@ -408,6 +408,19 @@ lib/
 
 ---
 
+## Kimlik doğrulama ve kullanıcı profili (M-01)
+
+- **İstemci:** `supabase_flutter` — e-posta/şifre ve Google OAuth (`signInWithOAuth`). PKCE önerilir (`FlutterAuthClientOptions`).
+- **Yönlendirme (OAuth):** Mobil için özel şema örn. `balikciapp://login-callback/` — Supabase Dashboard **Redirect URLs** listesinde tanımlı olmalı; Android `AndroidManifest` + iOS `CFBundleURLTypes` ile uygulamaya döner.
+- **Profil tablosu:** `public.users.id` = `auth.users.id`. Yeni kullanıcı için satır oluşturma: tercihen `auth.users` üzerinde `AFTER INSERT` tetikleyici ([supabase_auth_users_trigger.sql](supabase_auth_users_trigger.sql)); istemci yalnızca yedek `ensureUserProfile` ile doldurur.
+- **RLS:** `public.users` için SELECT/INSERT/UPDATE politikaları ([supabase_rls_users_policies.sql](supabase_rls_users_policies.sql)); tetikleyici `SECURITY DEFINER` ile INSERT yapar.
+- **Push:** Oturum varken FCM token `users.fcm_token` alanına yazılır (`notification_service.dart`).
+- **Navigasyon:** `go_router` redirect; oturum değişiminde yeniden yönlendirme için `auth.onAuthStateChange` ile `refreshListenable` kullanılır.
+
+Ayrıntılı akış: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md).
+
+---
+
 ## Güvenlik Kuralları
 
 ### Zorunlu

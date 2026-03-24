@@ -19,10 +19,18 @@ class SupabaseService {
 
     assert(url.isNotEmpty, '.env dosyasında SUPABASE_URL tanımlı değil!');
     assert(anonKey.isNotEmpty, '.env dosyasında SUPABASE_ANON_KEY tanımlı değil!');
+    if (url.isEmpty || anonKey.isEmpty) {
+      throw StateError(
+        'Supabase ayarları eksik. .env içinde SUPABASE_URL ve SUPABASE_ANON_KEY tanımlı olmalı.',
+      );
+    }
 
     await Supabase.initialize(
       url: url,
       anonKey: anonKey,
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+      ),
     );
   }
 

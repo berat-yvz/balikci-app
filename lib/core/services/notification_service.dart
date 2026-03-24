@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
@@ -7,6 +8,7 @@ import 'package:balikci_app/core/services/supabase_service.dart';
 /// Uygulama kapalıyken (terminated) veya arka plandayken (background) çalışır.
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
   debugPrint('FCM Arka plan mesajı alındı: ${message.messageId}');
 }
 
@@ -19,17 +21,13 @@ class NotificationService {
   static final _localNotifications = FlutterLocalNotificationsPlugin();
 
   static Future<void> initialize() async {
-    // 1. İzin İste
-    await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    // Bildirim iznini uygulama açılışında sormuyoruz.
+    // İzin isteği sadece onboarding akışındaki butonla yapılacak.
 
-    // 2. Arka plan dinleyici ayarla
+    // Arka plan dinleyici ayarla
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // 3. Yerel bildirim kanalı (Android)
+    // Yerel bildirim kanalı (Android)
     const androidChannel = AndroidNotificationChannel(
       'balikci_channel',
       'Balıkçı Bildirimleri',
@@ -48,13 +46,19 @@ class NotificationService {
     );
     await _localNotifications.initialize(initSettings);
 
-    // 4. Foreground mesaj dinleme
+    // Foreground mesaj dinleme
     FirebaseMessaging.onMessage.listen(_onForegroundMessage);
 
-    // 5. Token alma ve Supabase'e kaydetme
-    await syncFcmToken();
+    // Token alma ve Supabase'e kaydetme:
+    // - Kullanıcı izin vermediyse token olmayabilir, bu yüzden burada sadece izin durumu authorized/provisional ise senkronlarız.
+    // - İzin onboarding'de verildiğinde StepNotification tarafında tekrar sync tetiklenir.
+    final settings = await _messaging.getNotificationSettings();
+    if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional) {
+      await syncFcmToken();
+    }
 
-    // 6. Token yenilendiğinde tekrar kaydet
+    // Token yenilendiğinde tekrar kaydet
     _messaging.onTokenRefresh.listen((newToken) {
       _saveTokenToSupabase(newToken);
     });

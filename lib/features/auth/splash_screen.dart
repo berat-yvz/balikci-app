@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
+import 'package:balikci_app/shared/providers/preferences_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -26,8 +27,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     if (!mounted) return;
 
     final isLoggedIn = ref.read(isLoggedInProvider);
+    final onboardingDone = ref.read(onboardingStateProvider);
     if (isLoggedIn) {
-      context.go('/home');
+      context.go(onboardingDone ? '/home' : '/onboarding');
     } else {
       context.go('/login');
     }

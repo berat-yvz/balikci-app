@@ -32,6 +32,7 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
 /// Auth state değişimlerinde otomatik olarak yeniden hesaplanmazsa diye,
 /// UI anlık güncellemeleri için `authStateProvider`'ın değeri de izlenebilir.
 final currentUserProvider = Provider<User?>((ref) {
+  ref.watch(authStateProvider);
   final authRepo = ref.watch(authRepositoryProvider);
   return authRepo.getCurrentUser();
 });
@@ -42,6 +43,7 @@ final currentUserProvider = Provider<User?>((ref) {
 
 /// Kullanıcının giriş yapıp yapmadığını belirten boolean provider.
 final isLoggedInProvider = Provider<bool>((ref) {
+  ref.watch(authStateProvider);
   final authRepo = ref.watch(authRepositoryProvider);
   return authRepo.isLoggedIn();
 });
@@ -99,6 +101,20 @@ class AuthNotifier extends AsyncNotifier<User?> {
     try {
       await _authRepository.signOut();
       state = const AsyncData(null); // Çıkış başarılıysa state'i null yap
+    } catch (e, stackTrace) {
+      if (e is AuthException) {
+        state = AsyncError(e.message, stackTrace);
+      } else {
+        state = AsyncError(e.toString(), stackTrace);
+      }
+    }
+  }
+
+  /// Google ile giriş — tarayıcı / sistem UI; oturum deep link ile tamamlanır.
+  Future<void> signInWithGoogle() async {
+    try {
+      await _authRepository.signInWithGoogle();
+      state = AsyncData(_authRepository.getCurrentUser());
     } catch (e, stackTrace) {
       if (e is AuthException) {
         state = AsyncError(e.message, stackTrace);

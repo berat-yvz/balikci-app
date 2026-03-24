@@ -45,18 +45,20 @@
 **Hedef:** Kullanıcı kayıt olup giriş yapabiliyor
 
 #### Görevler
-- [ ] `auth_repository.dart` yazıldı (signUp, signIn, signOut, getUser)
-- [ ] `auth_provider.dart` Riverpod provider yazıldı
-- [ ] `login_screen.dart` — e-posta + şifre formu
-- [ ] `register_screen.dart` — kayıt formu, validasyon
-- [ ] `auth_gate.dart` — oturum kontrolü, yönlendirme
-- [ ] `onboarding_screen.dart` — 3 adımlı akış
-- [ ] `step_location.dart` — konum izni (geolocator)
-- [ ] `step_notification.dart` — bildirim izni (FCM)
-- [ ] `step_first_spot.dart` — ilk mera CTA
-- [ ] go_router guard: giriş yapılmamışsa `/login`'e yönlendir
-- [ ] JWT token Drift'te saklanıyor, offline oturum çalışıyor
-- [ ] Splash ekranı (2 sn, logo)
+- [x] `auth_repository.dart` yazıldı (signUp, signIn, signOut, getUser; OAuth + profil senkronu M-01 ile genişletildi)
+- [x] `auth_provider.dart` Riverpod provider yazıldı
+- [x] `login_screen.dart` — e-posta + şifre formu
+- [x] `register_screen.dart` — kayıt formu, validasyon
+- [x] go_router `redirect` — oturum kontrolü ve yönlendirme (`auth_gate.dart` yerine `router.dart`)
+- [x] `onboarding_screen.dart` — 3 adımlı akış
+- [x] `step_location.dart` — konum izni (geolocator)
+- [x] `step_notification.dart` — bildirim izni (FCM)
+- [x] `step_first_spot.dart` — hoş geldin / onboarding bitiş CTA
+- [x] go_router guard: giriş yapılmamışsa `/login`'e yönlendir
+- [x] Google OAuth (istemci: deep link + Supabase PKCE + login/register UI) — Supabase Dashboard redirect URL ve Google provider’ı doğrulanmalı
+- [ ] `public.users` tetikleyici + RLS production DB’de uygulandı mı ([supabase_auth_users_trigger.sql](supabase_auth_users_trigger.sql), [supabase_rls_users_policies.sql](supabase_rls_users_policies.sql))
+- [ ] E-posta onayı açık projede kayıt sonrası UX doğrulandı mı
+- [ ] (İsteğe bağlı) JWT / token’ı Drift veya secure storage’da tutma — M-01 kapsamı dışı
 
 **Çıktı:** Kullanıcı kayıt, giriş, onboarding akışını tamamlayabiliyor ✓
 

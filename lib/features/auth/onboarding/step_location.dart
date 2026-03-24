@@ -10,47 +10,121 @@ class StepLocation extends StatelessWidget {
     required this.onPermissionGranted,
   });
 
+  void _showMessage(BuildContext context, String message, Color color) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger != null) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: color,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } else {
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Konum'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Tamam'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _openLocationSettings(BuildContext context) async {
+    await Geolocator.openLocationSettings();
+  }
+
+  Future<void> _openAppSettings(BuildContext context) async {
+    await Geolocator.openAppSettings();
+  }
+
   Future<void> _requestLocationPermission(BuildContext context) async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      if (context.mounted) {
-        _showSnackbar(context, 'Konum servisleri kapalı. Lütfen açın.', AppColors.danger);
-      }
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Konum kapalı'),
+          content: const Text(
+            'Cihazda konum (GPS) kapalı. Harita ve yakındaki meralar için konumu açman gerekir.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Vazgeç'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                await _openLocationSettings(context);
+              },
+              child: const Text('Ayarlara git'),
+            ),
+          ],
+        ),
+      );
       return;
     }
 
     LocationPermission permission = await Geolocator.checkPermission();
+
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        if (context.mounted) {
-          _showSnackbar(context, 'Konum izni reddedildi.', AppColors.danger);
-        }
-        return;
-      }
     }
 
-    if (permission == LocationPermission.deniedForever) {
+    if (permission == LocationPermission.denied) {
       if (context.mounted) {
-        _showSnackbar(context, 'Konum izni kalıcı olarak reddedildi. Ayarlardan izin verebilirsiniz.', AppColors.danger);
+        _showMessage(
+          context,
+          'Konum izni reddedildi. İstersen atlayabilir veya ayarlardan izin verebilirsin.',
+          AppColors.danger,
+        );
       }
       return;
     }
 
-    if (context.mounted) {
-      _showSnackbar(context, 'Konum izni başarıyla verildi!', AppColors.pinPublic);
-      onPermissionGranted();
+    if (permission == LocationPermission.deniedForever) {
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Konum izni kapalı'),
+          content: const Text(
+            'Konum izni kalıcı olarak reddedilmiş. Uygulama ayarlarından izin verebilirsin.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Kapat'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                await _openAppSettings(context);
+              },
+              child: const Text('Uygulama ayarları'),
+            ),
+          ],
+        ),
+      );
+      return;
     }
-  }
 
-  void _showSnackbar(BuildContext context, String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-        duration: const Duration(seconds: 2),
-      ),
+    if (!context.mounted) return;
+    _showMessage(
+      context,
+      'Konum izni hazır. Teşekkürler!',
+      AppColors.pinPublic,
     );
+    onPermissionGranted();
   }
 
   @override

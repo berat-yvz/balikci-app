@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/services/notification_service.dart';
 
-class StepNotification extends StatelessWidget {
+class StepNotification extends StatefulWidget {
   final VoidCallback onPermissionGranted;
 
   const StepNotification({
@@ -10,7 +11,27 @@ class StepNotification extends StatelessWidget {
     required this.onPermissionGranted,
   });
 
+  @override
+  State<StepNotification> createState() => _StepNotificationState();
+}
+
+class _StepNotificationState extends State<StepNotification> {
+  bool _asked = false;
+
+  Future<void> _onPressAllowNotifications() async {
+    if (_asked) return;
+    setState(() => _asked = true);
+    try {
+      await _requestNotificationPermission(context);
+    } finally {
+      if (mounted) setState(() => _asked = false);
+    }
+  }
+
   Future<void> _requestNotificationPermission(BuildContext context) async {
+    // Async gap sonrası `context` ile ilgili lint hatası yaşamamak için
+    // snackbar göndericiyi (ScaffoldMessenger) baştan capture ediyoruz.
+    final messenger = ScaffoldMessenger.of(context);
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
     NotificationSettings settings = await messaging.requestPermission(
@@ -23,21 +44,37 @@ class StepNotification extends StatelessWidget {
       sound: true,
     );
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      if (context.mounted) {
-        _showSnackbar(context, 'Bildirim izni başarıyla verildi!', AppColors.pinPublic);
-        onPermissionGranted();
-      }
-    } else {
-      if (context.mounted) {
-        _showSnackbar(context, 'Bildirim izni verilmedi. Sonra ayarlardan açabilirsiniz.', AppColors.muted);
-        onPermissionGranted(); // Reddetse de devam etsin ki onboarding bitirilebilsin
-      }
+    final granted = settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional;
+
+    // İzin verildikten hemen sonra token'ı alıp Supabase'e kaydedelim.
+    if (granted) {
+      await NotificationService.syncFcmToken();
+      if (!mounted) return;
+      _showSnackbar(
+        messenger,
+        'Bildirim izni başarıyla verildi!',
+        AppColors.pinPublic,
+      );
+      widget.onPermissionGranted();
+      return;
     }
+
+    if (!mounted) return;
+    _showSnackbar(
+      messenger,
+      'Bildirim izni verilmedi. Sonra ayarlardan açabilirsiniz.',
+      AppColors.muted,
+    );
+    widget.onPermissionGranted(); // Reddetse de devam etsin ki onboarding bitirilebilsin
   }
 
-  void _showSnackbar(BuildContext context, String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
+  void _showSnackbar(
+    ScaffoldMessengerState messenger,
+    String message,
+    Color color,
+  ) {
+    messenger.showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: color,
@@ -72,7 +109,7 @@ class StepNotification extends StatelessWidget {
           ),
           const SizedBox(height: 48),
           ElevatedButton(
-            onPressed: () => _requestNotificationPermission(context),
+            onPressed: _asked ? null : _onPressAllowNotifications,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.secondary,
             ),

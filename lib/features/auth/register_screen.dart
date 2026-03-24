@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
+import 'package:balikci_app/shared/providers/preferences_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -42,10 +44,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             password,
             username,
           );
-      
-      // Kayıt başarılıysa onboarding ekranına yönlendir
-      if (mounted && !ref.read(authNotifierProvider).hasError) {
+
+      if (!mounted || ref.read(authNotifierProvider).hasError) return;
+
+      final session = SupabaseService.client.auth.currentSession;
+      if (session != null) {
         context.go('/onboarding');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Kayıt alındı. E-postanızdaki onay bağlantısına tıklayın, '
+              'ardından giriş yapın.',
+            ),
+          ),
+        );
+        context.go('/login');
       }
     }
   }
@@ -203,6 +217,36 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ),
                           )
                         : const Text('Kayıt Ol'),
+                  ),
+                  const SizedBox(height: 16),
+
+                  OutlinedButton.icon(
+                    onPressed: authState.isLoading
+                        ? null
+                        : () async {
+                            await ref
+                                .read(authNotifierProvider.notifier)
+                                .signInWithGoogle();
+                            if (!context.mounted) return;
+                            if (ref.read(authNotifierProvider).hasError) {
+                              return;
+                            }
+                            if (ref.read(authRepositoryProvider).isLoggedIn()) {
+                              final done = ref.read(onboardingStateProvider);
+                              context.go(done ? '/home' : '/onboarding');
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Tarayıcıda Google ile girişi tamamlayın; '
+                                    'uygulamaya döndüğünüzde oturum açılır.',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                    icon: const Icon(Icons.login),
+                    label: const Text('Google ile kayıt ol'),
                   ),
                   const SizedBox(height: 16),
 

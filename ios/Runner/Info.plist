@@ -66,5 +66,22 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Yakınındaki meraları göstermek için konumunu kullanıyoruz.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Yakınındaki meraları göstermek için konumunu kullanıyoruz.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.balikciapp.balikci-app.oauth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>balikciapp</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
