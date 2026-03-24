@@ -2,7 +2,7 @@
 
 Bu dosya vekil asistan / geliştirici için **kodla uyumlu anlık özet**tir. Ayrıntılı mimari: [ARCHITECTURE.md](ARCHITECTURE.md). Sprint: [SPRINT.md](SPRINT.md). MVP maddeleri: [MVP_PLAN.md](MVP_PLAN.md).
 
-**Son güncelleme:** M-01 onboarding (manuel **İleri**, izin UX), M-02 **H3 harita temeli** kodda tamam; konum izni başarısında **yeşil SnackBar yok** (geri bildirim buton metni + pasif buton).
+**Son güncelleme:** M-01 onboarding (manuel **İleri**, izin UX), M-02 **H3 harita temeli** kodda tamam; konum/bildirim izni başarısında **yeşil SnackBar yok** (geri bildirim buton metni + pasif buton).
 
 ---
 
@@ -40,7 +40,7 @@ Bu dosya vekil asistan / geliştirici için **kodla uyumlu anlık özet**tir. Ay
   - İzin, yalnızca onboarding’de ilgili butonla istenir.
   - **Sayfa geçişi:** izin verildikten sonra **otomatik ilerleme yok**; kullanıcı alttaki **İleri** ile geçer (izin isteğe bağlı; **Atla** tüm onboarding’i atlar).
 - **Konum adımı** (`step_location.dart`): `AutomaticKeepAliveClientMixin` + `WidgetsBindingObserver`; OS izin durumu (`checkPermission`) ve `resumed` ile senkron; izin verilmişse buton kalıcı kapalı + “Konum izni verildi”. **Başarılı izin sonrası altta yeşil SnackBar gösterilmez** (red / kalıcı red için uyarılar durur).
-- **Bildirim adımı** (`step_notification.dart`): aynı mixin’ler; `getNotificationSettings` ile OS senkronu; izin verilmişse buton kapalı + “Bildirim izni verildi”; reddedilirse **İleri** ile devam, geri dönülürse tekrar denenebilir.
+- **Bildirim adımı** (`step_notification.dart`): aynı mixin’ler; `getNotificationSettings` ile OS senkronu; izin verilmişse buton kapalı + “Bildirim izni verildi”. **Başarılı izin sonrası altta yeşil SnackBar gösterilmez**; reddedilirse **İleri** ile devam, geri dönülürse tekrar denenebilir.
 - **Android manifest:** `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `POST_NOTIFICATIONS` (13+), OAuth `intent-filter` (`balikciapp` / `login-callback`).
 - **iOS:** Konum usage string’leri + `CFBundleURLTypes` OAuth şeması (bkz. `ios/Runner/Info.plist`).
 

@@ -391,8 +391,7 @@ lib/
     │   └── error_widget.dart
     └── providers/
         ├── auth_provider.dart
-        ├── location_provider.dart
-        └── connectivity_provider.dart
+        └── preferences_provider.dart
 ```
 
 ---
@@ -433,7 +432,7 @@ lib/
 - **Profil tablosu:** `public.users.id` = `auth.users.id`. Yeni kullanıcı için satır oluşturma: tercihen `auth.users` üzerinde `AFTER INSERT` tetikleyici ([supabase_fix_mera_insert.sql](supabase_fix_mera_insert.sql)); istemci yalnızca yedek `ensureUserProfile` ile doldurur.
 - **RLS:** `public.users` ve `fishing_spots` yazma politikaları aynı dosyada; ek tablolar için [supabase_rls_app_tables.sql](supabase_rls_app_tables.sql). Tetikleyici `SECURITY DEFINER` ile INSERT yapar.
 - **Push:** Bildirim izni onboarding bildirim adımında kullanıcı aksiyonu ile alındıktan sonra FCM token `users.fcm_token` alanına yazılır (`notification_service.dart`, `step_notification.dart`). Uygulama açılışında `requestPermission` çağrılmaz; izin zaten varsa `initialize` içinde token senkronu yapılabilir.
-- **Onboarding UX:** İzin verildikten sonra sayfa **otomatik ilerlemez**; kullanıcı `onboarding_screen` altındaki **İleri** ile geçer. Konum/bildirim adımlarında `AutomaticKeepAliveClientMixin` ve uygulama `resumed` ile OS izin durumu senkronu; izin verilmiş butonlar pasif kalır. Konum izni başarısında yeşil SnackBar yoktur; bildirim adımında başarı/hata için SnackBar kullanılabilir.
+- **Onboarding UX:** İzin verildikten sonra sayfa **otomatik ilerlemez**; kullanıcı `onboarding_screen` altındaki **İleri** ile geçer. Konum/bildirim adımlarında `AutomaticKeepAliveClientMixin` ve uygulama `resumed` ile OS izin durumu senkronu; izin verilmiş butonlar pasif kalır. Konum ve bildirim izni **başarısında** yeşil SnackBar yoktur; bildirimde token kaydı hatası veya izin reddi için SnackBar kullanılabilir.
 - **Navigasyon:** `go_router` redirect; oturum değişiminde yeniden yönlendirme için `auth.onAuthStateChange` ile `refreshListenable` kullanılır.
 
 Ayrıntılı akış: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md).

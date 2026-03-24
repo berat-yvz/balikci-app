@@ -101,14 +101,6 @@ class _StepNotificationState extends State<StepNotification>
             ),
           );
         }
-        if (!mounted) return;
-        messenger?.showSnackBar(
-          const SnackBar(
-            content: Text('Bildirim izni başarıyla verildi!'),
-            backgroundColor: AppColors.pinPublic,
-            duration: Duration(seconds: 2),
-          ),
-        );
       } else {
         if (!mounted) return;
         messenger?.showSnackBar(

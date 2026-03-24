@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
 import 'package:balikci_app/features/map/spot_detail_sheet.dart';
@@ -29,6 +30,7 @@ class _MapScreenState extends State<MapScreen> {
 
   List<SpotModel> _spots = const [];
   bool _isLoading = true;
+  bool _myLocationBusy = false;
   String? _error;
 
   @override
@@ -83,6 +85,29 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  Future<void> _goToMyLocation() async {
+    if (_myLocationBusy) return;
+    setState(() => _myLocationBusy = true);
+    try {
+      final pos = await LocationService.getCurrentPosition();
+      if (!mounted) return;
+      if (pos == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Konum alinamadi. Izin veya GPS acik mi kontrol edin.',
+            ),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+        return;
+      }
+      _mapController.move(LatLng(pos.latitude, pos.longitude), 15);
+    } finally {
+      if (mounted) setState(() => _myLocationBusy = false);
+    }
+  }
+
   List<Marker> _buildMarkers() {
     return _spots
         .map(
@@ -112,16 +137,40 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isLoading
-            ? null
-            : () async {
-                final added = await context.push<bool>('/map/add-spot');
-                if (!mounted) return;
-                if (added == true) await _loadSpots();
-              },
-        icon: const Icon(Icons.add),
-        label: const Text('Mera ekle'),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'map_my_location',
+            tooltip: 'Konumum',
+            onPressed:
+                (_isLoading || _myLocationBusy) ? null : _goToMyLocation,
+            child: _myLocationBusy
+                ? SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  )
+                : const Icon(Icons.my_location),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'map_add_spot',
+            onPressed: _isLoading
+                ? null
+                : () async {
+                    final added = await context.push<bool>('/map/add-spot');
+                    if (!mounted) return;
+                    if (added == true) await _loadSpots();
+                  },
+            icon: const Icon(Icons.add),
+            label: const Text('Mera ekle'),
+          ),
+        ],
       ),
       body: Stack(
         children: [

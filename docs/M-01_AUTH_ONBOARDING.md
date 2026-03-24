@@ -71,6 +71,7 @@ E-posta onayı açıksa `signUp` sonrası oturum hemen oluşmayabilir. Kullanıc
    - Bildirim izni uygulama açılışında otomatik istenmez.
    - İzin yalnızca kullanıcı **Bildirimlere İzin Ver** butonuna bastığında istenir.
    - İzin verildikten sonra `NotificationService.syncFcmToken()` çağrılır ve `users.fcm_token` güncellenir.
+   - İzin **başarıyla verildiğinde** altta yeşil SnackBar gösterilmez; geri bildirim butonun pasif olması ve **“Bildirim izni verildi”** metniyle verilir.
    - İzin reddedilse bile akış kilitlenmez; sonraki adım yine **İleri** ile alınır (izin isteğe bağlıdır).
 
 **Teknik notlar (izin adımları):**
@@ -94,7 +95,7 @@ E-posta onayı açıksa `signUp` sonrası oturum hemen oluşmayabilir. Kullanıc
 10. Konum/bildirim adımlarında izin sonrası otomatik sayfa geçişi yoktur; **İleri** beklenir.
 11. Onboarding’de sayfa 0→1→0 kaydırınca konum izni verilmişse “Konum İznini Ver” yine kapalıdır.
 12. Bildirim izni verilmişse sayfalar arasında gidip gelince bildirim butonu kapalı kalır; reddedildiyse tekrar açılabilir.
-13. Konum izni başarılı olduğunda ekranın altında yeşil “izin verildi” SnackBar çıkmaz.
+13. Konum ve bildirim izni başarılı olduğunda ekranın altında yeşil “izin verildi” SnackBar çıkmaz.
 
 ## İlgili özet
 

@@ -258,7 +258,7 @@
 - [ ] Depolama uyarısı UI
 - [ ] Offline check-in kuyruğa ekleniyor
 - [ ] Bağlantı gelince otomatik sync tetikleniyor
-- [ ] `connectivity_provider.dart` — ağ durumu izleme
+- [ ] Ağ durumu izleme (ör. `connectivity_plus` + Riverpod provider; şimdilik yok)
 - [ ] Offline modda UI göstergesi (banner)
 
 **Çıktı:** Seçilen bölge offline çalışıyor, check-in sync oluyor ✓
