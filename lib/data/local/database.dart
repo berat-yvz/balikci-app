@@ -13,7 +13,20 @@ class AppDatabase extends _$AppDatabase {
   static final AppDatabase instance = AppDatabase._();
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) async => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            // LocalSpots: fishing_spots cache alanlari ile hizala
+            await m.addColumn(localSpots, localSpots.verified);
+            await m.addColumn(localSpots, localSpots.muhtarId);
+            await m.addColumn(localSpots, localSpots.cachedAt);
+          }
+        },
+      );
 }
 
 QueryExecutor _openConnection() {

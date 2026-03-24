@@ -39,6 +39,7 @@ Bu dosya [MVP_PLAN.md](MVP_PLAN.md) M-01 maddesi ile **gerçek kod akışını**
    - Android: Google Cloud’da OAuth istemcisi, gerekirse **SHA-1** (debug keystore) ekleme.
 4. Uygulama başlangıcında `.env` veya Firebase eksikse [lib/main.dart](../lib/main.dart) içinde hata yakalanıp **Başlatma Hatası** ekranı gösterilir (login gelmez; önce yapılandırmayı tamamlayın).
 5. **Onboarding konum adımı:** Android’de `AndroidManifest.xml` içinde `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` tanımlı olmalı; iOS’ta `Info.plist` içinde `NSLocationWhenInUseUsageDescription` (ve gerekirse `NSLocationAlwaysAndWhenInUseUsageDescription`) olmalı — aksi halde izin diyaloğu çıkmaz.
+6. **Onboarding bildirim adımı (Android 13+):** `POST_NOTIFICATIONS` izninin manifest’te tanımlı olması gerekir; aksi halde `FirebaseMessaging.requestPermission` sistem diyaloğunu göstermeyebilir.
 
 ## `public.users` ve RLS
 
@@ -58,6 +59,27 @@ Bu dosya [MVP_PLAN.md](MVP_PLAN.md) M-01 maddesi ile **gerçek kod akışını**
 
 E-posta onayı açıksa `signUp` sonrası oturum hemen oluşmayabilir. Kullanıcıya “E-postanızdaki bağlantıya tıklayın, ardından giriş yapın” mesajı gösterilir ([register_screen.dart](../lib/features/auth/register_screen.dart)).
 
+## Onboarding izin akışı (konum + bildirim)
+
+1. **Konum adımı (`step_location.dart`):**
+   - Cihazda konum servisi kapalıysa kullanıcıya uyarı dialogu gösterilir ve ayarlara yönlendirme sunulur.
+   - İzin `denied` ise sistem izni yeniden istenir.
+   - İzin `deniedForever` ise uygulama ayarlarına yönlendirme sunulur.
+   - İzin verildiğinde sayfa otomatik değişmez; kullanıcı alttaki **İleri** ile sonraki adıma geçer.
+   - İzin **başarıyla verildiğinde** altta yeşil SnackBar gösterilmez; geri bildirim butonun pasif olması ve **“Konum izni verildi”** metniyle verilir.
+2. **Bildirim adımı (`step_notification.dart`):**
+   - Bildirim izni uygulama açılışında otomatik istenmez.
+   - İzin yalnızca kullanıcı **Bildirimlere İzin Ver** butonuna bastığında istenir.
+   - İzin verildikten sonra `NotificationService.syncFcmToken()` çağrılır ve `users.fcm_token` güncellenir.
+   - İzin reddedilse bile akış kilitlenmez; sonraki adım yine **İleri** ile alınır (izin isteğe bağlıdır).
+
+**Teknik notlar (izin adımları):**
+
+- `NotificationService.initialize()` uygulama açılışında **bildirim izni istemez**; yalnızca izin zaten verilmişse `getNotificationSettings` + `syncFcmToken` çalışır.
+- `step_location` / `step_notification`: `AutomaticKeepAliveClientMixin` (`wantKeepAlive: true`) — PageView’de ileri/geri kaydırınca adım state’i korunur.
+- `WidgetsBindingObserver` + `didChangeAppLifecycleState(resumed)` — kullanıcı ayarlardan döndüğünde OS izin durumu yeniden okunur; izin verildiyse ilgili buton kapalı kalır.
+- `ScaffoldMessenger.maybeOf` — snackbar gösteriminde güvenli erişim.
+
 ## Manuel test listesi (M-01)
 
 1. `.env` + `google-services.json` varken uygulama açılır; splash → login.
@@ -66,3 +88,14 @@ E-posta onayı açıksa `signUp` sonrası oturum hemen oluşmayabilir. Kullanıc
 4. Çıkış (ileride ayarlardan) → login.
 5. Google ile giriş → tarayıcı/hesap seçici → uygulamaya dönüş → profil satırı var.
 6. E-posta onayı açıkken kayıt → bilgilendirme ve login yönlendirmesi.
+7. Onboarding konum adımı: service kapalı/denied/deniedForever senaryolarında doğru dialog ve yönlendirme çalışır.
+8. Bildirim izni yalnızca onboarding bildirim adımında, butona basılınca istenir (app açılışında istenmez).
+9. Bildirim izni verildiğinde `users.fcm_token` yazılır; izin reddinde de **İleri** ile devam edilebilir.
+10. Konum/bildirim adımlarında izin sonrası otomatik sayfa geçişi yoktur; **İleri** beklenir.
+11. Onboarding’de sayfa 0→1→0 kaydırınca konum izni verilmişse “Konum İznini Ver” yine kapalıdır.
+12. Bildirim izni verilmişse sayfalar arasında gidip gelince bildirim butonu kapalı kalır; reddedildiyse tekrar açılabilir.
+13. Konum izni başarılı olduğunda ekranın altında yeşil “izin verildi” SnackBar çıkmaz.
+
+## İlgili özet
+
+Tüm modül özeti: [PROJECT_STATUS.md](PROJECT_STATUS.md).

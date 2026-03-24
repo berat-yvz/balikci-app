@@ -26,6 +26,34 @@ class SpotModel {
     required this.createdAt,
   });
 
+  SpotModel copyWith({
+    String? id,
+    String? userId,
+    String? name,
+    double? lat,
+    double? lng,
+    String? type,
+    String? privacyLevel,
+    String? description,
+    bool? verified,
+    String? muhtarId,
+    DateTime? createdAt,
+  }) {
+    return SpotModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      lat: lat ?? this.lat,
+      lng: lng ?? this.lng,
+      type: type ?? this.type,
+      privacyLevel: privacyLevel ?? this.privacyLevel,
+      description: description ?? this.description,
+      verified: verified ?? this.verified,
+      muhtarId: muhtarId ?? this.muhtarId,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
   factory SpotModel.fromJson(Map<String, dynamic> json) => SpotModel(
         id: json['id'] as String,
         userId: json['user_id'] as String,

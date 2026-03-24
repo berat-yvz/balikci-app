@@ -3,14 +3,16 @@
 > Bu doküman MVP fazındaki tüm özelliklerin teknik detaylarını içerir.
 > Her özellik geliştirilirken bu dosya referans alınmalıdır.
 
+> **Güncel kod özeti ve sıradaki adımlar:** [PROJECT_STATUS.md](PROJECT_STATUS.md)
+
 ---
 
 ## Özellik Listesi
 
 | Kod | Özellik | Durum |
 |-----|---------|-------|
-| M-01 | Hesap Girişi & Onboarding | 🔄 Devam Ediyor |
-| M-02 | Harita & Mera Sistemi | ⏳ Bekliyor |
+| M-01 | Hesap Girişi & Onboarding | 🟡 Uygulama tarafı tamam (prod doğrulama bekliyor) |
+| M-02 | Harita & Mera Sistemi | 🔄 Devam Ediyor (H3 temel tamam) |
 | M-03 | Anlık Check-in & Doğrulama | ⏳ Bekliyor |
 | M-04 | Hava Durumu & Cache | ⏳ Bekliyor |
 | M-05 | Balık Günlüğü | ⏳ Bekliyor |
@@ -35,8 +37,10 @@
 
 ### Onboarding Akışı (3 Adım)
 1. Konum izni isteği — "Yakınındaki meraları görmek için"
-2. Bildirim izni — örnek bildirim gösterilerek
+2. Bildirim izni — onboarding adımındaki butonla kullanıcı aksiyonu sonrası istenir (app açılışında otomatik istenmez)
 3. İlk mera önerisi + "İlk avını kaydet" CTA
+
+İzin adımlarında sayfa **otomatik ilerlemez**; kullanıcı alttaki **İleri** ile sonraki adıma geçer (izin isteğe bağlı, **Atla** ile tüm onboarding atlanabilir).
 
 ### Ekran Yapısı (kod ile eşleşen dosyalar)
 ```
@@ -47,13 +51,18 @@ onboarding_screen.dart
   ├── step_location.dart    (konum izni)
   ├── step_notification.dart (FCM izni / bildirim)
   └── step_first_spot.dart  (hoş geldin + onboarding bitişi)
-main_shell.dart             → /home
+main_shell.dart             → /home (şu an içinde MapScreen)
 ```
-(Router mantığı `lib/app/router.dart` içindedir; ayrı `auth_gate.dart` dosyası yoktur.)
+(Router mantığı `lib/app/router.dart` içindedir; ayrı `auth_gate.dart` dosyası yoktur. Güncel özet: [PROJECT_STATUS.md](PROJECT_STATUS.md).)
 
 ---
 
 ## M-02 — Harita & Mera Sistemi
+
+### Kodda güncel durum (repo ile senkron)
+
+- **H3 (harita temeli):** Uygulandı — `MapScreen` (FlutterMap + OSM), marker cluster, `flutter_map_tile_caching`, `SpotRepository` + Drift `local_spots` (şema sürümü 2), `SpotDetailSheet` salt okunur, `privacy_level` pin renkleri. `/home` → `MainShell` → `MapScreen`; `/map` rotası ayrıca mevcut.
+- **H4–H6:** Planlandı; henüz tamamlanmadı (mera CRUD UI, check-in, Realtime, EXIF/oy — bkz. [SPRINT.md](SPRINT.md) Faz B).
 
 ### Teknik Uygulama
 - **Harita SDK:** FlutterMap + OpenStreetMap (ücretsiz, API key yok)

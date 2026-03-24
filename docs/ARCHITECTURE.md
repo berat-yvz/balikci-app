@@ -3,6 +3,8 @@
 > Tüm mimari kararlar bu dosyada tanımlanmıştır.
 > Yeni bir özellik eklerken bu dosyayı referans al.
 
+> **Anlık uygulama özeti (onboarding, izinler, harita H3):** [PROJECT_STATUS.md](PROJECT_STATUS.md)
+
 ---
 
 ## Teknoloji Stack
@@ -414,10 +416,21 @@ lib/
 - **Yönlendirme (OAuth):** Mobil için özel şema örn. `balikciapp://login-callback/` — Supabase Dashboard **Redirect URLs** listesinde tanımlı olmalı; Android `AndroidManifest` + iOS `CFBundleURLTypes` ile uygulamaya döner.
 - **Profil tablosu:** `public.users.id` = `auth.users.id`. Yeni kullanıcı için satır oluşturma: tercihen `auth.users` üzerinde `AFTER INSERT` tetikleyici ([supabase_auth_users_trigger.sql](supabase_auth_users_trigger.sql)); istemci yalnızca yedek `ensureUserProfile` ile doldurur.
 - **RLS:** `public.users` için SELECT/INSERT/UPDATE politikaları ([supabase_rls_users_policies.sql](supabase_rls_users_policies.sql)); tetikleyici `SECURITY DEFINER` ile INSERT yapar.
-- **Push:** Oturum varken FCM token `users.fcm_token` alanına yazılır (`notification_service.dart`).
+- **Push:** Bildirim izni onboarding bildirim adımında kullanıcı aksiyonu ile alındıktan sonra FCM token `users.fcm_token` alanına yazılır (`notification_service.dart`, `step_notification.dart`). Uygulama açılışında `requestPermission` çağrılmaz; izin zaten varsa `initialize` içinde token senkronu yapılabilir.
+- **Onboarding UX:** İzin verildikten sonra sayfa **otomatik ilerlemez**; kullanıcı `onboarding_screen` altındaki **İleri** ile geçer. Konum/bildirim adımlarında `AutomaticKeepAliveClientMixin` ve uygulama `resumed` ile OS izin durumu senkronu; izin verilmiş butonlar pasif kalır. Konum izni başarısında yeşil SnackBar yoktur; bildirim adımında başarı/hata için SnackBar kullanılabilir.
 - **Navigasyon:** `go_router` redirect; oturum değişiminde yeniden yönlendirme için `auth.onAuthStateChange` ile `refreshListenable` kullanılır.
 
 Ayrıntılı akış: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md).
+
+---
+
+## Harita ve mera (M-02 H3)
+
+- **Ekran:** `features/map/map_screen.dart` — FlutterMap + OSM tile; `flutter_map_marker_cluster` ile yoğun pin desteği; `flutter_map_tile_caching` ile tile önbelleği.
+- **Veri:** `SpotRepository` Supabase `fishing_spots` okur, başarılı yanıtları Drift `local_spots` tablosuna yazar; ağ hatasında `getCachedSpots()` ile offline fallback.
+- **UI:** Pin rengi `privacy_level` (public / friends / private / vip); pin tıklanınca `SpotDetailSheet` (salt okunur).
+- **Giriş noktası:** Onboarding sonrası `/home` → `MainShell` → `MapScreen` (tek ekran shell).
+- **Drift:** `AppDatabase` şema sürümü 2; `local_spots` için migrasyon `database.dart` (`verified`, `muhtarId`, `cachedAt`).
 
 ---
 

@@ -1,5 +1,7 @@
 # Balıkçı Super App — 16 Haftalık Sprint Planı
 
+> Kodla uyumlu kısa özet: [PROJECT_STATUS.md](PROJECT_STATUS.md)
+
 > Her sprint başında bu dosyayı güncelle.
 > Tamamlanan görevleri ✅, devam edenleri 🔄, bekleyenleri ⏳ ile işaretle.
 
@@ -9,8 +11,8 @@
 
 | Faz | Haftalar | Odak | Durum |
 |-----|---------|------|-------|
-| Faz A | H1–H2 | Kurulum & Auth | 🔄 |
-| Faz B | H3–H6 | Harita & Check-in Çekirdeği | ⏳ |
+| Faz A | H1–H2 | Kurulum & Auth | 🟡 |
+| Faz B | H3–H6 | Harita & Check-in Çekirdeği | 🔄 |
 | Faz C | H7–H10 | Günlük, Puan, Hava, Bildirim | ⏳ |
 | Faz D | H11–H13 | Offline & Motivasyon UI | ⏳ |
 | Faz E | H14–H16 | Test, Polish & Launch | ⏳ |
@@ -54,6 +56,7 @@
 - [x] `step_location.dart` — konum izni (geolocator)
 - [x] `step_notification.dart` — bildirim izni (FCM)
 - [x] `step_first_spot.dart` — hoş geldin / onboarding bitiş CTA
+- [x] Onboarding: izin sonrası otomatik sayfa geçişi yok; **İleri** ile ilerleme; izin isteğe bağlı; konum/bildirim adımlarında KeepAlive + OS/`resumed` senkronu; Android `POST_NOTIFICATIONS`
 - [x] go_router guard: giriş yapılmamışsa `/login`'e yönlendir
 - [x] Google OAuth (istemci: deep link + Supabase PKCE + login/register UI) — Supabase Dashboard redirect URL ve Google provider’ı doğrulanmalı
 - [ ] `public.users` tetikleyici + RLS production DB’de uygulandı mı ([supabase_auth_users_trigger.sql](supabase_auth_users_trigger.sql), [supabase_rls_users_policies.sql](supabase_rls_users_policies.sql))
@@ -66,19 +69,32 @@
 
 ## FAZ B — Harita & Check-in Çekirdeği (H3–H6)
 
+**Durum:** H3 tamamlandı. **Sıradaki odak:** H4 (Mera Yönetimi) → H5 (Check-in) → H6 (EXIF & oylama).
+
 ### H3 — Harita Temeli
 **Hedef:** Harita açılıyor, meralar görünüyor
 
+**Kapsam sınırı (H3):**
+- Sadece read odaklı temel harita: listeleme, pin gösterimi, pin detayı (read-only).
+- Spot ekleme/düzenleme akışı H4 kapsamındadır.
+- RLS görünürlük kuralları backend kaynaklı kabul edilir; istemci `privacy_level` değerine göre pin rengi uygular.
+
+**Kabul kriteri (H3):**
+- Harita ekranı açılır ve OSM tile yüklenir.
+- Spot verisi repository üzerinden çekilir; local cache yazımı yapılır.
+- Pinler `privacy_level` bazlı renklendirilir, cluster aktif çalışır.
+- Pin tıklanınca `spot_detail_sheet` açılır.
+
 #### Görevler
-- [ ] `map_screen.dart` — FlutterMap widget entegrasyonu
-- [ ] OpenStreetMap tile provider bağlandı
-- [ ] `spot_repository.dart` yazıldı (getSpots, addSpot, updateSpot)
-- [ ] `spot_model.dart` ve Drift şeması oluşturuldu
-- [ ] Mera pinleri haritada gösteriliyor (privacy_level'a göre renk)
-- [ ] `flutter_map_marker_cluster` entegrasyonu
-- [ ] `spot_detail_sheet.dart` — pin'e tıklayınca alt sheet açılıyor
-- [ ] Harita tile cache: `flutter_map_tile_caching` bağlandı
-- [ ] Mera verileri Drift'te cache'leniyor
+- [x] `map_screen.dart` — FlutterMap widget entegrasyonu
+- [x] OpenStreetMap tile provider bağlandı
+- [x] `spot_repository.dart` yazıldı (getSpots, getSpotsInBounds, addSpot, updateSpot, Drift cache)
+- [x] `spot_model.dart` ve Drift şeması oluşturuldu / genişletildi (`verified`, `muhtarId`, `cachedAt`)
+- [x] Mera pinleri haritada gösteriliyor (privacy_level'a göre renk)
+- [x] `flutter_map_marker_cluster` entegrasyonu
+- [x] `spot_detail_sheet.dart` — pin'e tıklayınca alt sheet açılıyor
+- [x] Harita tile cache: `flutter_map_tile_caching` bağlandı
+- [x] Mera verileri Drift'te cache'leniyor
 
 **Çıktı:** Harita açılıyor, mera pinleri cluster'lanmış görünüyor ✓
 
@@ -196,7 +212,7 @@
 
 #### Görevler
 - [ ] Edge Function: `notification-sender` yazıldı ve deploy edildi
-- [ ] FCM token kullanıcı kaydında alınıp Supabase'e yazılıyor
+- [x] FCM token izin verildiğinde alınıp Supabase `users.fcm_token` alanına yazılıyor (izin onboarding bildirim adımındaki butonla istenir)
 - [ ] Konum tabanlı bildirim: 2km'de check-in → yakın kullanıcılara gönder
 - [ ] Favori mera bildirimi: favorilenen meraya check-in → bildirim
 - [ ] Gölge puan bildirimi: shadow-point-calculator'dan tetikleniyor

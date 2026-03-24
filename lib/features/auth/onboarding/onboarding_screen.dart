@@ -69,12 +69,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   });
                 },
                 children: [
-                  StepLocation(
-                    onPermissionGranted: _nextPage,
-                  ),
-                  StepNotification(
-                    onPermissionGranted: _nextPage,
-                  ),
+                  const StepLocation(),
+                  const StepNotification(),
                   StepFirstSpot(onFinish: _finishOnboarding),
                 ],
               ),
@@ -101,7 +97,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 12),
+                  if (_currentPage < 2)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        'İzin vermek isteğe bağlıdır. Sonraki adıma geçmek için İleri\'ye basın.',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(

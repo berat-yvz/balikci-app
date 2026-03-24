@@ -85,6 +85,32 @@ class $LocalSpotsTable extends LocalSpots
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _verifiedMeta = const VerificationMeta(
+    'verified',
+  );
+  @override
+  late final GeneratedColumn<bool> verified = GeneratedColumn<bool>(
+    'verified',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("verified" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _muhtarIdMeta = const VerificationMeta(
+    'muhtarId',
+  );
+  @override
+  late final GeneratedColumn<String> muhtarId = GeneratedColumn<String>(
+    'muhtar_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _isSyncedMeta = const VerificationMeta(
     'isSynced',
   );
@@ -111,6 +137,18 @@ class $LocalSpotsTable extends LocalSpots
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _cachedAtMeta = const VerificationMeta(
+    'cachedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> cachedAt = GeneratedColumn<DateTime>(
+    'cached_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -121,8 +159,11 @@ class $LocalSpotsTable extends LocalSpots
     type,
     privacyLevel,
     description,
+    verified,
+    muhtarId,
     isSynced,
     createdAt,
+    cachedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -199,6 +240,18 @@ class $LocalSpotsTable extends LocalSpots
         ),
       );
     }
+    if (data.containsKey('verified')) {
+      context.handle(
+        _verifiedMeta,
+        verified.isAcceptableOrUnknown(data['verified']!, _verifiedMeta),
+      );
+    }
+    if (data.containsKey('muhtar_id')) {
+      context.handle(
+        _muhtarIdMeta,
+        muhtarId.isAcceptableOrUnknown(data['muhtar_id']!, _muhtarIdMeta),
+      );
+    }
     if (data.containsKey('is_synced')) {
       context.handle(
         _isSyncedMeta,
@@ -212,6 +265,12 @@ class $LocalSpotsTable extends LocalSpots
       );
     } else if (isInserting) {
       context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('cached_at')) {
+      context.handle(
+        _cachedAtMeta,
+        cachedAt.isAcceptableOrUnknown(data['cached_at']!, _cachedAtMeta),
+      );
     }
     return context;
   }
@@ -254,6 +313,14 @@ class $LocalSpotsTable extends LocalSpots
         DriftSqlType.string,
         data['${effectivePrefix}description'],
       ),
+      verified: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}verified'],
+      )!,
+      muhtarId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}muhtar_id'],
+      ),
       isSynced: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_synced'],
@@ -261,6 +328,10 @@ class $LocalSpotsTable extends LocalSpots
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
+      )!,
+      cachedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}cached_at'],
       )!,
     );
   }
@@ -280,8 +351,11 @@ class LocalSpot extends DataClass implements Insertable<LocalSpot> {
   final String? type;
   final String privacyLevel;
   final String? description;
+  final bool verified;
+  final String? muhtarId;
   final bool isSynced;
   final DateTime createdAt;
+  final DateTime cachedAt;
   const LocalSpot({
     required this.id,
     required this.userId,
@@ -291,8 +365,11 @@ class LocalSpot extends DataClass implements Insertable<LocalSpot> {
     this.type,
     required this.privacyLevel,
     this.description,
+    required this.verified,
+    this.muhtarId,
     required this.isSynced,
     required this.createdAt,
+    required this.cachedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -309,8 +386,13 @@ class LocalSpot extends DataClass implements Insertable<LocalSpot> {
     if (!nullToAbsent || description != null) {
       map['description'] = Variable<String>(description);
     }
+    map['verified'] = Variable<bool>(verified);
+    if (!nullToAbsent || muhtarId != null) {
+      map['muhtar_id'] = Variable<String>(muhtarId);
+    }
     map['is_synced'] = Variable<bool>(isSynced);
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['cached_at'] = Variable<DateTime>(cachedAt);
     return map;
   }
 
@@ -326,8 +408,13 @@ class LocalSpot extends DataClass implements Insertable<LocalSpot> {
       description: description == null && nullToAbsent
           ? const Value.absent()
           : Value(description),
+      verified: Value(verified),
+      muhtarId: muhtarId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(muhtarId),
       isSynced: Value(isSynced),
       createdAt: Value(createdAt),
+      cachedAt: Value(cachedAt),
     );
   }
 
@@ -345,8 +432,11 @@ class LocalSpot extends DataClass implements Insertable<LocalSpot> {
       type: serializer.fromJson<String?>(json['type']),
       privacyLevel: serializer.fromJson<String>(json['privacyLevel']),
       description: serializer.fromJson<String?>(json['description']),
+      verified: serializer.fromJson<bool>(json['verified']),
+      muhtarId: serializer.fromJson<String?>(json['muhtarId']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      cachedAt: serializer.fromJson<DateTime>(json['cachedAt']),
     );
   }
   @override
@@ -361,8 +451,11 @@ class LocalSpot extends DataClass implements Insertable<LocalSpot> {
       'type': serializer.toJson<String?>(type),
       'privacyLevel': serializer.toJson<String>(privacyLevel),
       'description': serializer.toJson<String?>(description),
+      'verified': serializer.toJson<bool>(verified),
+      'muhtarId': serializer.toJson<String?>(muhtarId),
       'isSynced': serializer.toJson<bool>(isSynced),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'cachedAt': serializer.toJson<DateTime>(cachedAt),
     };
   }
 
@@ -375,8 +468,11 @@ class LocalSpot extends DataClass implements Insertable<LocalSpot> {
     Value<String?> type = const Value.absent(),
     String? privacyLevel,
     Value<String?> description = const Value.absent(),
+    bool? verified,
+    Value<String?> muhtarId = const Value.absent(),
     bool? isSynced,
     DateTime? createdAt,
+    DateTime? cachedAt,
   }) => LocalSpot(
     id: id ?? this.id,
     userId: userId ?? this.userId,
@@ -386,8 +482,11 @@ class LocalSpot extends DataClass implements Insertable<LocalSpot> {
     type: type.present ? type.value : this.type,
     privacyLevel: privacyLevel ?? this.privacyLevel,
     description: description.present ? description.value : this.description,
+    verified: verified ?? this.verified,
+    muhtarId: muhtarId.present ? muhtarId.value : this.muhtarId,
     isSynced: isSynced ?? this.isSynced,
     createdAt: createdAt ?? this.createdAt,
+    cachedAt: cachedAt ?? this.cachedAt,
   );
   LocalSpot copyWithCompanion(LocalSpotsCompanion data) {
     return LocalSpot(
@@ -403,8 +502,11 @@ class LocalSpot extends DataClass implements Insertable<LocalSpot> {
       description: data.description.present
           ? data.description.value
           : this.description,
+      verified: data.verified.present ? data.verified.value : this.verified,
+      muhtarId: data.muhtarId.present ? data.muhtarId.value : this.muhtarId,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      cachedAt: data.cachedAt.present ? data.cachedAt.value : this.cachedAt,
     );
   }
 
@@ -419,8 +521,11 @@ class LocalSpot extends DataClass implements Insertable<LocalSpot> {
           ..write('type: $type, ')
           ..write('privacyLevel: $privacyLevel, ')
           ..write('description: $description, ')
+          ..write('verified: $verified, ')
+          ..write('muhtarId: $muhtarId, ')
           ..write('isSynced: $isSynced, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('cachedAt: $cachedAt')
           ..write(')'))
         .toString();
   }
@@ -435,8 +540,11 @@ class LocalSpot extends DataClass implements Insertable<LocalSpot> {
     type,
     privacyLevel,
     description,
+    verified,
+    muhtarId,
     isSynced,
     createdAt,
+    cachedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -450,8 +558,11 @@ class LocalSpot extends DataClass implements Insertable<LocalSpot> {
           other.type == this.type &&
           other.privacyLevel == this.privacyLevel &&
           other.description == this.description &&
+          other.verified == this.verified &&
+          other.muhtarId == this.muhtarId &&
           other.isSynced == this.isSynced &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.cachedAt == this.cachedAt);
 }
 
 class LocalSpotsCompanion extends UpdateCompanion<LocalSpot> {
@@ -463,8 +574,11 @@ class LocalSpotsCompanion extends UpdateCompanion<LocalSpot> {
   final Value<String?> type;
   final Value<String> privacyLevel;
   final Value<String?> description;
+  final Value<bool> verified;
+  final Value<String?> muhtarId;
   final Value<bool> isSynced;
   final Value<DateTime> createdAt;
+  final Value<DateTime> cachedAt;
   final Value<int> rowid;
   const LocalSpotsCompanion({
     this.id = const Value.absent(),
@@ -475,8 +589,11 @@ class LocalSpotsCompanion extends UpdateCompanion<LocalSpot> {
     this.type = const Value.absent(),
     this.privacyLevel = const Value.absent(),
     this.description = const Value.absent(),
+    this.verified = const Value.absent(),
+    this.muhtarId = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.cachedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LocalSpotsCompanion.insert({
@@ -488,8 +605,11 @@ class LocalSpotsCompanion extends UpdateCompanion<LocalSpot> {
     this.type = const Value.absent(),
     required String privacyLevel,
     this.description = const Value.absent(),
+    this.verified = const Value.absent(),
+    this.muhtarId = const Value.absent(),
     this.isSynced = const Value.absent(),
     required DateTime createdAt,
+    this.cachedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        userId = Value(userId),
@@ -507,8 +627,11 @@ class LocalSpotsCompanion extends UpdateCompanion<LocalSpot> {
     Expression<String>? type,
     Expression<String>? privacyLevel,
     Expression<String>? description,
+    Expression<bool>? verified,
+    Expression<String>? muhtarId,
     Expression<bool>? isSynced,
     Expression<DateTime>? createdAt,
+    Expression<DateTime>? cachedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -520,8 +643,11 @@ class LocalSpotsCompanion extends UpdateCompanion<LocalSpot> {
       if (type != null) 'type': type,
       if (privacyLevel != null) 'privacy_level': privacyLevel,
       if (description != null) 'description': description,
+      if (verified != null) 'verified': verified,
+      if (muhtarId != null) 'muhtar_id': muhtarId,
       if (isSynced != null) 'is_synced': isSynced,
       if (createdAt != null) 'created_at': createdAt,
+      if (cachedAt != null) 'cached_at': cachedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -535,8 +661,11 @@ class LocalSpotsCompanion extends UpdateCompanion<LocalSpot> {
     Value<String?>? type,
     Value<String>? privacyLevel,
     Value<String?>? description,
+    Value<bool>? verified,
+    Value<String?>? muhtarId,
     Value<bool>? isSynced,
     Value<DateTime>? createdAt,
+    Value<DateTime>? cachedAt,
     Value<int>? rowid,
   }) {
     return LocalSpotsCompanion(
@@ -548,8 +677,11 @@ class LocalSpotsCompanion extends UpdateCompanion<LocalSpot> {
       type: type ?? this.type,
       privacyLevel: privacyLevel ?? this.privacyLevel,
       description: description ?? this.description,
+      verified: verified ?? this.verified,
+      muhtarId: muhtarId ?? this.muhtarId,
       isSynced: isSynced ?? this.isSynced,
       createdAt: createdAt ?? this.createdAt,
+      cachedAt: cachedAt ?? this.cachedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -581,11 +713,20 @@ class LocalSpotsCompanion extends UpdateCompanion<LocalSpot> {
     if (description.present) {
       map['description'] = Variable<String>(description.value);
     }
+    if (verified.present) {
+      map['verified'] = Variable<bool>(verified.value);
+    }
+    if (muhtarId.present) {
+      map['muhtar_id'] = Variable<String>(muhtarId.value);
+    }
     if (isSynced.present) {
       map['is_synced'] = Variable<bool>(isSynced.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (cachedAt.present) {
+      map['cached_at'] = Variable<DateTime>(cachedAt.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -604,8 +745,11 @@ class LocalSpotsCompanion extends UpdateCompanion<LocalSpot> {
           ..write('type: $type, ')
           ..write('privacyLevel: $privacyLevel, ')
           ..write('description: $description, ')
+          ..write('verified: $verified, ')
+          ..write('muhtarId: $muhtarId, ')
           ..write('isSynced: $isSynced, ')
           ..write('createdAt: $createdAt, ')
+          ..write('cachedAt: $cachedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1652,8 +1796,11 @@ typedef $$LocalSpotsTableCreateCompanionBuilder =
       Value<String?> type,
       required String privacyLevel,
       Value<String?> description,
+      Value<bool> verified,
+      Value<String?> muhtarId,
       Value<bool> isSynced,
       required DateTime createdAt,
+      Value<DateTime> cachedAt,
       Value<int> rowid,
     });
 typedef $$LocalSpotsTableUpdateCompanionBuilder =
@@ -1666,8 +1813,11 @@ typedef $$LocalSpotsTableUpdateCompanionBuilder =
       Value<String?> type,
       Value<String> privacyLevel,
       Value<String?> description,
+      Value<bool> verified,
+      Value<String?> muhtarId,
       Value<bool> isSynced,
       Value<DateTime> createdAt,
+      Value<DateTime> cachedAt,
       Value<int> rowid,
     });
 
@@ -1720,6 +1870,16 @@ class $$LocalSpotsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<bool> get verified => $composableBuilder(
+    column: $table.verified,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get muhtarId => $composableBuilder(
+    column: $table.muhtarId,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<bool> get isSynced => $composableBuilder(
     column: $table.isSynced,
     builder: (column) => ColumnFilters(column),
@@ -1727,6 +1887,11 @@ class $$LocalSpotsTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get cachedAt => $composableBuilder(
+    column: $table.cachedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1780,6 +1945,16 @@ class $$LocalSpotsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get verified => $composableBuilder(
+    column: $table.verified,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get muhtarId => $composableBuilder(
+    column: $table.muhtarId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isSynced => $composableBuilder(
     column: $table.isSynced,
     builder: (column) => ColumnOrderings(column),
@@ -1787,6 +1962,11 @@ class $$LocalSpotsTableOrderingComposer
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get cachedAt => $composableBuilder(
+    column: $table.cachedAt,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -1828,11 +2008,20 @@ class $$LocalSpotsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get verified =>
+      $composableBuilder(column: $table.verified, builder: (column) => column);
+
+  GeneratedColumn<String> get muhtarId =>
+      $composableBuilder(column: $table.muhtarId, builder: (column) => column);
+
   GeneratedColumn<bool> get isSynced =>
       $composableBuilder(column: $table.isSynced, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get cachedAt =>
+      $composableBuilder(column: $table.cachedAt, builder: (column) => column);
 }
 
 class $$LocalSpotsTableTableManager
@@ -1874,8 +2063,11 @@ class $$LocalSpotsTableTableManager
                 Value<String?> type = const Value.absent(),
                 Value<String> privacyLevel = const Value.absent(),
                 Value<String?> description = const Value.absent(),
+                Value<bool> verified = const Value.absent(),
+                Value<String?> muhtarId = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> cachedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalSpotsCompanion(
                 id: id,
@@ -1886,8 +2078,11 @@ class $$LocalSpotsTableTableManager
                 type: type,
                 privacyLevel: privacyLevel,
                 description: description,
+                verified: verified,
+                muhtarId: muhtarId,
                 isSynced: isSynced,
                 createdAt: createdAt,
+                cachedAt: cachedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1900,8 +2095,11 @@ class $$LocalSpotsTableTableManager
                 Value<String?> type = const Value.absent(),
                 required String privacyLevel,
                 Value<String?> description = const Value.absent(),
+                Value<bool> verified = const Value.absent(),
+                Value<String?> muhtarId = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 required DateTime createdAt,
+                Value<DateTime> cachedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalSpotsCompanion.insert(
                 id: id,
@@ -1912,8 +2110,11 @@ class $$LocalSpotsTableTableManager
                 type: type,
                 privacyLevel: privacyLevel,
                 description: description,
+                verified: verified,
+                muhtarId: muhtarId,
                 isSynced: isSynced,
                 createdAt: createdAt,
+                cachedAt: cachedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

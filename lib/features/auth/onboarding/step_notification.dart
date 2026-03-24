@@ -1,90 +1,148 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/notification_service.dart';
 
 class StepNotification extends StatefulWidget {
-  final VoidCallback onPermissionGranted;
-
-  const StepNotification({
-    super.key,
-    required this.onPermissionGranted,
-  });
+  const StepNotification({super.key});
 
   @override
   State<StepNotification> createState() => _StepNotificationState();
 }
 
-class _StepNotificationState extends State<StepNotification> {
-  bool _asked = false;
+class _StepNotificationState extends State<StepNotification>
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
+  @override
+  bool get wantKeepAlive => true;
+
+  bool _busy = false;
+  AuthorizationStatus? _authorizationStatus;
+
+  bool get _notificationAllowed {
+    final s = _authorizationStatus;
+    return s == AuthorizationStatus.authorized ||
+        s == AuthorizationStatus.provisional;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_refreshFromOs());
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_refreshFromOs());
+    }
+  }
+
+  Future<void> _refreshFromOs() async {
+    try {
+      final settings = await FirebaseMessaging.instance.getNotificationSettings();
+      if (!mounted) return;
+      setState(() => _authorizationStatus = settings.authorizationStatus);
+    } catch (_) {
+      // Sessiz
+    }
+  }
 
   Future<void> _onPressAllowNotifications() async {
-    if (_asked) return;
-    setState(() => _asked = true);
+    if (_busy || _notificationAllowed) return;
+
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    setState(() => _busy = true);
+
     try {
-      await _requestNotificationPermission(context);
-    } finally {
-      if (mounted) setState(() => _asked = false);
-    }
-  }
-
-  Future<void> _requestNotificationPermission(BuildContext context) async {
-    // Async gap sonrası `context` ile ilgili lint hatası yaşamamak için
-    // snackbar göndericiyi (ScaffoldMessenger) baştan capture ediyoruz.
-    final messenger = ScaffoldMessenger.of(context);
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
-
-    NotificationSettings settings = await messaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
-
-    final granted = settings.authorizationStatus == AuthorizationStatus.authorized ||
-        settings.authorizationStatus == AuthorizationStatus.provisional;
-
-    // İzin verildikten hemen sonra token'ı alıp Supabase'e kaydedelim.
-    if (granted) {
-      await NotificationService.syncFcmToken();
+      await _refreshFromOs();
       if (!mounted) return;
-      _showSnackbar(
-        messenger,
-        'Bildirim izni başarıyla verildi!',
-        AppColors.pinPublic,
+      if (_notificationAllowed) {
+        setState(() => _busy = false);
+        return;
+      }
+
+      final settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
       );
-      widget.onPermissionGranted();
-      return;
+
+      if (!mounted) return;
+      setState(() => _authorizationStatus = settings.authorizationStatus);
+
+      final granted = settings.authorizationStatus ==
+              AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional;
+
+      if (granted) {
+        try {
+          await NotificationService.syncFcmToken();
+        } catch (e) {
+          messenger?.showSnackBar(
+            SnackBar(
+              content: Text('Bildirim izni tamam, ancak token kaydedilemedi: $e'),
+              backgroundColor: AppColors.danger,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+        if (!mounted) return;
+        messenger?.showSnackBar(
+          const SnackBar(
+            content: Text('Bildirim izni başarıyla verildi!'),
+            backgroundColor: AppColors.pinPublic,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        if (!mounted) return;
+        messenger?.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Bildirim izni verilmedi. Sonra ayarlardan açabilirsiniz.',
+            ),
+            backgroundColor: AppColors.muted,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text('Bildirim izni istenirken hata: $e'),
+          backgroundColor: AppColors.danger,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+        unawaited(_refreshFromOs());
+      }
     }
-
-    if (!mounted) return;
-    _showSnackbar(
-      messenger,
-      'Bildirim izni verilmedi. Sonra ayarlardan açabilirsiniz.',
-      AppColors.muted,
-    );
-    widget.onPermissionGranted(); // Reddetse de devam etsin ki onboarding bitirilebilsin
-  }
-
-  void _showSnackbar(
-    ScaffoldMessengerState messenger,
-    String message,
-    Color color,
-  ) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+    final allowed = _notificationAllowed;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
@@ -109,11 +167,13 @@ class _StepNotificationState extends State<StepNotification> {
           ),
           const SizedBox(height: 48),
           ElevatedButton(
-            onPressed: _asked ? null : _onPressAllowNotifications,
+            onPressed: (allowed || _busy) ? null : _onPressAllowNotifications,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.secondary,
             ),
-            child: const Text('Bildirimlere İzin Ver'),
+            child: Text(
+              allowed ? 'Bildirim izni verildi' : 'Bildirimlere İzin Ver',
+            ),
           ),
         ],
       ),
