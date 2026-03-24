@@ -5,12 +5,16 @@ import 'package:latlong2/latlong.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/repositories/auth_repository.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
 
-/// Mera ekleme formu — H4.
+/// Mera ekleme / düzenleme formu — H4.
 class AddSpotScreen extends StatefulWidget {
-  const AddSpotScreen({super.key});
+  /// Doluysa mevcut mera güncellenir (`updateSpot`).
+  final SpotModel? spotToEdit;
+
+  const AddSpotScreen({super.key, this.spotToEdit});
 
   @override
   State<AddSpotScreen> createState() => _AddSpotScreenState();
@@ -46,11 +50,27 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    final e = widget.spotToEdit;
+    if (e != null) {
+      _nameCtrl.text = e.name;
+      _descCtrl.text = e.description ?? '';
+      _type = e.type ?? 'kıyı';
+      _privacy = e.privacyLevel;
+      _lat = e.lat;
+      _lng = e.lng;
+    }
+  }
+
+  @override
   void dispose() {
     _nameCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
   }
+
+  bool get _isEdit => widget.spotToEdit != null;
 
   Future<void> _useGps() async {
     final pos = await LocationService.getCurrentPosition();
