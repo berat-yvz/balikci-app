@@ -69,7 +69,7 @@
 
 ## FAZ B — Harita & Check-in Çekirdeği (H3–H6)
 
-**Durum:** H3 tamamlandı. **Sıradaki odak:** H4 (Mera Yönetimi) → H5 (Check-in) → H6 (EXIF & oylama).
+**Durum:** H3 tamamlandı; H4 mera ekleme/düzenleme tamam. **Sıradaki odak:** H5 (Check-in) → H6 (EXIF & oylama). **Haritada dükkan (`shops`) pinleri** planın sonuna alındı (bkz. H15).
 
 ### H3 — Harita Temeli
 **Hedef:** Harita açılıyor, meralar görünüyor
@@ -108,13 +108,10 @@
 - [x] Mera düzenleme: sahip `spot_detail_sheet` → **Düzenle** → `/map/edit-spot` (`updateSpot`)
 - [x] Gizlilik seçimi: public / friends / private / vip UI
 - [x] Konum seçimi: GPS (`LocationService`) veya `pick_spot_location_screen` ile haritada dokunma
-- [ ] Dükkan JSON verisi hazırlandı (10+ dükkan)
-- [ ] Dükkan verileri Supabase'e import edildi
-- [ ] Dükkan pinleri haritada farklı ikonla gösteriliyor
 - [x] Yol tarifi: `geo:` + Google Maps yedek (`url_launcher`)
 - [x] `spot_detail_sheet.dart` — "Yol tarifi" butonu; `map_screen` FAB — "Mera ekle" (`/map/add-spot`)
 
-**Çıktı:** Mera eklenip haritada görünüyor, yol tarifi çalışıyor ✓
+**Çıktı:** Mera eklenip/düzenlenip haritada görünüyor, yol tarifi çalışıyor ✓ (Dükkan katmanı → H15.)
 
 ---
 
@@ -313,6 +310,7 @@
 - [ ] Türkçe karakter sorunu kontrolü (font)
 - [ ] İnternet yok banner'ı
 - [ ] Pull-to-refresh tüm liste ekranlarında
+- [ ] **Harita — dükkan katmanı (ertelenen):** `shops` için JSON (10+ kayıt), Supabase import, istemci `ShopRepository` veya mevcut repo genişletmesi, `MapScreen`’de meralardan farklı ikonla pinler
 
 ---
 

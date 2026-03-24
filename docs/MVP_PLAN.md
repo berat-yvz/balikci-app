@@ -62,14 +62,14 @@ main_shell.dart             → /home (şu an içinde MapScreen)
 ### Kodda güncel durum (repo ile senkron)
 
 - **H3 (harita temeli):** Uygulandı — `MapScreen` (FlutterMap + OSM), marker cluster, `flutter_map_tile_caching`, `SpotRepository` + Drift `local_spots` (şema sürümü 2), `SpotDetailSheet` salt okunur, `privacy_level` pin renkleri. `/home` → `MainShell` → `MapScreen`; `/map` rotası ayrıca mevcut.
-- **H4 (mera yönetimi — kısmi):** `add_spot_screen` (ekle + `spotToEdit` ile güncelle), `pick_spot_location_screen`, `/map/edit-spot`; `spot_detail_sheet` yol tarifi + sahip **Düzenle**; haritada **Mera ekle** FAB. Eksik: dükkan verisi/pinleri ([SPRINT.md](SPRINT.md) H4).
+- **H4 (mera yönetimi):** `add_spot_screen` (ekle + `spotToEdit` ile güncelle), `pick_spot_location_screen`, `/map/edit-spot`; `spot_detail_sheet` yol tarifi + sahip **Düzenle**; haritada **Mera ekle** FAB. **Dükkan verisi ve haritada `shops` pinleri** planın sonuna alındı — FAZ E **H15** ([SPRINT.md](SPRINT.md)).
 - **H5–H6:** Planlandı (check-in, Realtime, EXIF/oy).
 
 ### Teknik Uygulama
 - **Harita SDK:** FlutterMap + OpenStreetMap (ücretsiz, API key yok)
 - **Cluster:** flutter_map_marker_cluster (1000+ mera için zorunlu)
 - **Yol tarifi:** `geo:lat,lng?q=label` URL şeması — API ücreti sıfır
-- **Dükkan verileri:** Manuel JSON → Supabase import
+- **Dükkan verileri (`shops`):** Manuel JSON → Supabase import — uygulama zamanlaması **H15** (FAZ E); şema `ARCHITECTURE.md` içinde.
 
 ### Gizlilik Katmanları
 | privacy_level | Görünürlük | Pin Rengi |

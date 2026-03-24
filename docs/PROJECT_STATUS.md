@@ -11,8 +11,8 @@ Bu dosya vekil asistan / geliştirici için **kodla uyumlu anlık özet**tir. Ay
 | Öncelik | Modül | Durum | Not |
 |--------|--------|--------|-----|
 | 1 | M-01 prod | 🟡 | `public.users` tetikleyici + RLS production’da doğrulanacak; **mera kaydı:** Supabase’te `docs/supabase_fix_mera_insert.sql` (users + `fishing_spots` yazma RLS); e-posta onayı UX |
-| 2 | M-02 **H4** | 🔄 | Mera **ekleme / duzenleme** (sahip) + yol tarifi + konum secici; **dukkan pinleri** acik |
-| 3 | M-02 **H5–H6** | ⏳ | Check-in, Realtime, EXIF, oylama |
+| 2 | M-02 **H4** | ✓ | Mera **ekleme / düzenleme** (sahip) + yol tarifi + konum seçici; **dükkan pinleri** plan sonu ([SPRINT.md](SPRINT.md) H15) |
+| 3 | M-02 **H5–H6** | 🔄 | Sıradaki odak: check-in, Realtime, EXIF, oylama |
 | 4 | M-03+ | ⏳ | MVP_PLAN sırası |
 
 ---
@@ -54,7 +54,7 @@ Detay: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md).
 - `SpotRepository`: Supabase `fishing_spots` listeleme/sayfalama, bbox sorgusu, CRUD + Drift `local_spots` upsert; `getCachedSpots()` offline fallback.
 - Drift: `AppDatabase` **schemaVersion 2** — `local_spots` alanları (`verified`, `muhtarId`, `cachedAt`); migrasyon `database.dart` içinde.
 - Harita: cluster, FMTC tile store, `SpotDetailSheet` salt okunur + **Yol tarifi** (`geo` / Google Maps).
-- **H4 (kismi):** `add_spot_screen` (ekle + sahip icin guncelle), `pick_spot_location_screen`, `/map/add-spot`, `/map/edit-spot`, `/map/pick-location`; detay sheet **Duzenle**; haritada FAB **Mera ekle**.
+- **H4 (mera):** `add_spot_screen` (ekle + sahip için güncelle), `pick_spot_location_screen`, `/map/add-spot`, `/map/edit-spot`, `/map/pick-location`; detay sheet **Düzenle**; haritada FAB **Mera ekle**. **Dükkan (`shops`) pinleri** FAZ E H15’e ertelendi.
 - `/map` rotası hâlâ tanımlı; ana giriş yolu `/home` → `MainShell` → `MapScreen`.
 
 ---
