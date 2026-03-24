@@ -59,7 +59,7 @@
 - [x] Onboarding: izin sonrası otomatik sayfa geçişi yok; **İleri** ile ilerleme; izin isteğe bağlı; konum/bildirim adımlarında KeepAlive + OS/`resumed` senkronu; Android `POST_NOTIFICATIONS`
 - [x] go_router guard: giriş yapılmamışsa `/login`'e yönlendir
 - [x] Google OAuth (istemci: deep link + Supabase PKCE + login/register UI) — Supabase Dashboard redirect URL ve Google provider’ı doğrulanmalı
-- [ ] `public.users` tetikleyici + RLS production DB’de uygulandı mı ([supabase_auth_users_trigger.sql](supabase_auth_users_trigger.sql), [supabase_rls_users_policies.sql](supabase_rls_users_policies.sql))
+- [ ] `public.users` tetikleyici + RLS production DB’de uygulandı mı ([supabase_fix_mera_insert.sql](supabase_fix_mera_insert.sql))
 - [ ] E-posta onayı açık projede kayıt sonrası UX doğrulandı mı
 - [ ] (İsteğe bağlı) JWT / token’ı Drift veya secure storage’da tutma — M-01 kapsamı dışı
 
@@ -104,14 +104,14 @@
 **Hedef:** Kullanıcı mera ekleyip düzenleyebiliyor
 
 #### Görevler
-- [ ] `add_spot_screen.dart` — mera ekleme formu
-- [ ] Gizlilik seçimi: public / friends / private / vip UI
-- [ ] Konum seçimi: haritadan pin bırakma veya GPS
+- [x] `add_spot_screen.dart` — mera ekleme formu (tur, aciklama, Supabase insert)
+- [x] Gizlilik seçimi: public / friends / private / vip UI
+- [x] Konum seçimi: GPS (`LocationService`) veya `pick_spot_location_screen` ile haritada dokunma
 - [ ] Dükkan JSON verisi hazırlandı (10+ dükkan)
 - [ ] Dükkan verileri Supabase'e import edildi
 - [ ] Dükkan pinleri haritada farklı ikonla gösteriliyor
-- [ ] Yol tarifi: `geo:lat,lng?q=label` URL launcher entegrasyonu
-- [ ] `spot_detail_sheet.dart`'a "Yol Tarifi Al" butonu eklendi
+- [x] Yol tarifi: `geo:` + Google Maps yedek (`url_launcher`)
+- [x] `spot_detail_sheet.dart` — "Yol tarifi" butonu; `map_screen` FAB — "Mera ekle" (`/map/add-spot`)
 
 **Çıktı:** Mera eklenip haritada görünüyor, yol tarifi çalışıyor ✓
 

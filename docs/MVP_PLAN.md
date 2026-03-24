@@ -33,7 +33,7 @@
 - Supabase Auth: e-posta + şifre, Google OAuth
 - go_router ile route guard: giriş yapılmamışsa önce `/login` (veya `/register`); oturum açıkken onboarding bitmediyse `/onboarding`
 - Oturum: `supabase_flutter` SDK (access/refresh); **Drift şu an oturum token’ı için kullanılmıyor** (ileride `flutter_secure_storage` vb. dokümante edilebilir)
-- `public.users` satırı: tercihen `auth.users` tetikleyicisi ([supabase_auth_users_trigger.sql](supabase_auth_users_trigger.sql)) + RLS ([supabase_rls_users_policies.sql](supabase_rls_users_policies.sql))
+- `public.users` satırı: tercihen `auth.users` tetikleyicisi + RLS ([supabase_fix_mera_insert.sql](supabase_fix_mera_insert.sql))
 
 ### Onboarding Akışı (3 Adım)
 1. Konum izni isteği — "Yakınındaki meraları görmek için"
@@ -62,7 +62,8 @@ main_shell.dart             → /home (şu an içinde MapScreen)
 ### Kodda güncel durum (repo ile senkron)
 
 - **H3 (harita temeli):** Uygulandı — `MapScreen` (FlutterMap + OSM), marker cluster, `flutter_map_tile_caching`, `SpotRepository` + Drift `local_spots` (şema sürümü 2), `SpotDetailSheet` salt okunur, `privacy_level` pin renkleri. `/home` → `MainShell` → `MapScreen`; `/map` rotası ayrıca mevcut.
-- **H4–H6:** Planlandı; henüz tamamlanmadı (mera CRUD UI, check-in, Realtime, EXIF/oy — bkz. [SPRINT.md](SPRINT.md) Faz B).
+- **H4 (mera yönetimi — kısmi):** `add_spot_screen` (form + Supabase insert), `pick_spot_location_screen` (haritada nokta seçme), GPS ile konum; `spot_detail_sheet` yol tarifi; haritada **Mera ekle** FAB. Eksik: mera **düzenleme** UI, dükkan verisi/pinleri ([SPRINT.md](SPRINT.md) H4).
+- **H5–H6:** Planlandı (check-in, Realtime, EXIF/oy).
 
 ### Teknik Uygulama
 - **Harita SDK:** FlutterMap + OpenStreetMap (ücretsiz, API key yok)

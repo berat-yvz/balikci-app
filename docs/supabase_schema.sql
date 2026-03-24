@@ -158,6 +158,22 @@ CREATE POLICY "VIP spots for usta and above"
     AND (SELECT rank FROM users WHERE id = auth.uid()) IN ('usta', 'deniz_reisi')
   );
 
+CREATE POLICY "Authenticated insert own fishing_spots"
+  ON fishing_spots FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Authenticated update own fishing_spots"
+  ON fishing_spots FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Authenticated delete own fishing_spots"
+  ON fishing_spots FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
 -- fish_logs
 ALTER TABLE fish_logs ENABLE ROW LEVEL SECURITY;
 

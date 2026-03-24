@@ -9,7 +9,7 @@ import 'package:balikci_app/core/services/supabase_service.dart';
 /// Tüm hata mesajları Türkçe olarak fırlatılır.
 ///
 /// `public.users` satırı tercihen sunucu tetikleyicisi ile oluşur
-/// ([docs/supabase_auth_users_trigger.sql](docs/supabase_auth_users_trigger.sql)).
+/// ([docs/supabase_fix_mera_insert.sql](docs/supabase_fix_mera_insert.sql) bölüm 1).
 /// İstemcide [ensureUserProfile] yedek olarak kullanılır.
 class AuthRepository {
   final _auth = SupabaseService.client.auth;

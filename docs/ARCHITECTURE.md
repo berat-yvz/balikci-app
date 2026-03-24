@@ -252,6 +252,22 @@ CREATE POLICY "VIP spots for usta and above"
     AND (SELECT rank FROM users WHERE id = auth.uid()) IN ('usta', 'deniz_reisi')
   );
 
+CREATE POLICY "Authenticated insert own fishing_spots"
+  ON fishing_spots FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Authenticated update own fishing_spots"
+  ON fishing_spots FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Authenticated delete own fishing_spots"
+  ON fishing_spots FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
 -- fish_logs: gizli kayıtlar sadece sahibine
 ALTER TABLE fish_logs ENABLE ROW LEVEL SECURITY;
 
@@ -414,8 +430,8 @@ lib/
 
 - **İstemci:** `supabase_flutter` — e-posta/şifre ve Google OAuth (`signInWithOAuth`). PKCE önerilir (`FlutterAuthClientOptions`).
 - **Yönlendirme (OAuth):** Mobil için özel şema örn. `balikciapp://login-callback/` — Supabase Dashboard **Redirect URLs** listesinde tanımlı olmalı; Android `AndroidManifest` + iOS `CFBundleURLTypes` ile uygulamaya döner.
-- **Profil tablosu:** `public.users.id` = `auth.users.id`. Yeni kullanıcı için satır oluşturma: tercihen `auth.users` üzerinde `AFTER INSERT` tetikleyici ([supabase_auth_users_trigger.sql](supabase_auth_users_trigger.sql)); istemci yalnızca yedek `ensureUserProfile` ile doldurur.
-- **RLS:** `public.users` için SELECT/INSERT/UPDATE politikaları ([supabase_rls_users_policies.sql](supabase_rls_users_policies.sql)); tetikleyici `SECURITY DEFINER` ile INSERT yapar.
+- **Profil tablosu:** `public.users.id` = `auth.users.id`. Yeni kullanıcı için satır oluşturma: tercihen `auth.users` üzerinde `AFTER INSERT` tetikleyici ([supabase_fix_mera_insert.sql](supabase_fix_mera_insert.sql)); istemci yalnızca yedek `ensureUserProfile` ile doldurur.
+- **RLS:** `public.users` ve `fishing_spots` yazma politikaları aynı dosyada; ek tablolar için [supabase_rls_app_tables.sql](supabase_rls_app_tables.sql). Tetikleyici `SECURITY DEFINER` ile INSERT yapar.
 - **Push:** Bildirim izni onboarding bildirim adımında kullanıcı aksiyonu ile alındıktan sonra FCM token `users.fcm_token` alanına yazılır (`notification_service.dart`, `step_notification.dart`). Uygulama açılışında `requestPermission` çağrılmaz; izin zaten varsa `initialize` içinde token senkronu yapılabilir.
 - **Onboarding UX:** İzin verildikten sonra sayfa **otomatik ilerlemez**; kullanıcı `onboarding_screen` altındaki **İleri** ile geçer. Konum/bildirim adımlarında `AutomaticKeepAliveClientMixin` ve uygulama `resumed` ile OS izin durumu senkronu; izin verilmiş butonlar pasif kalır. Konum izni başarısında yeşil SnackBar yoktur; bildirim adımında başarı/hata için SnackBar kullanılabilir.
 - **Navigasyon:** `go_router` redirect; oturum değişiminde yeniden yönlendirme için `auth.onAuthStateChange` ile `refreshListenable` kullanılır.
@@ -430,6 +446,7 @@ Ayrıntılı akış: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md).
 - **Veri:** `SpotRepository` Supabase `fishing_spots` okur, başarılı yanıtları Drift `local_spots` tablosuna yazar; ağ hatasında `getCachedSpots()` ile offline fallback.
 - **UI:** Pin rengi `privacy_level` (public / friends / private / vip); pin tıklanınca `SpotDetailSheet` (salt okunur).
 - **Giriş noktası:** Onboarding sonrası `/home` → `MainShell` → `MapScreen` (tek ekran shell).
+- **H4 (devam eden):** `add_spot_screen.dart`, `pick_spot_location_screen.dart`; rotalar `go_router`: `/map/add-spot`, `/map/pick-location`; mera ekleme sonrası liste yenileme FAB üzerinden.
 - **Drift:** `AppDatabase` şema sürümü 2; `local_spots` için migrasyon `database.dart` (`verified`, `muhtarId`, `cachedAt`).
 
 ---

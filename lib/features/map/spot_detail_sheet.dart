@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 
@@ -6,6 +8,33 @@ import 'package:balikci_app/data/models/spot_model.dart';
 class SpotDetailSheet extends StatelessWidget {
   final SpotModel spot;
   const SpotDetailSheet({super.key, required this.spot});
+
+  Future<void> _openDirections(BuildContext context) async {
+    final label = Uri.encodeComponent(spot.name);
+    final geo = Uri.parse(
+      'geo:${spot.lat},${spot.lng}?q=${spot.lat},${spot.lng}($label)',
+    );
+    final maps = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=${spot.lat},${spot.lng}',
+    );
+    try {
+      if (await launchUrl(geo, mode: LaunchMode.externalApplication)) {
+        return;
+      }
+    } catch (_) {}
+    try {
+      if (await launchUrl(maps, mode: LaunchMode.externalApplication)) {
+        return;
+      }
+    } catch (_) {}
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Harita acilamadi'),
+        backgroundColor: AppColors.danger,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,12 +64,18 @@ class SpotDetailSheet extends StatelessWidget {
               style: AppTextStyles.body,
             ),
             const Spacer(),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Kapat'),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => _openDirections(context),
+                  child: const Text('Yol tarifi'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Kapat'),
+                ),
+              ],
             ),
           ],
         ),

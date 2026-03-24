@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:balikci_app/app/go_router_refresh.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
@@ -18,6 +19,7 @@ import 'package:balikci_app/features/main_shell.dart';
 // Features — Map
 import 'package:balikci_app/features/map/map_screen.dart';
 import 'package:balikci_app/features/map/add_spot_screen.dart';
+import 'package:balikci_app/features/map/pick_spot_location_screen.dart';
 
 // Features — Check-in
 import 'package:balikci_app/features/checkin/checkin_screen.dart';
@@ -113,6 +115,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Map (ana ekran)
       GoRoute(path: '/map', builder: (context, state) => const MapScreen()),
       GoRoute(path: '/map/add-spot', builder: (context, state) => const AddSpotScreen()),
+      GoRoute(
+        path: '/map/pick-location',
+        builder: (context, state) {
+          final extra = state.extra;
+          return PickSpotLocationScreen(
+            initial: extra is LatLng ? extra : null,
+          );
+        },
+      ),
 
       // Check-in
       GoRoute(

@@ -44,9 +44,9 @@ Bu dosya [MVP_PLAN.md](MVP_PLAN.md) M-01 maddesi ile **gerçek kod akışını**
 ## `public.users` ve RLS
 
 - Uygulama profil satırını `auth.users.id` ile `public.users.id` üzerinde hizalar.
-- **Önerilen sunucu tarafı:** `auth.users` üzerine `AFTER INSERT` tetikleyici — yeni kullanıcı için `public.users` satırı oluşturur (e-posta onayı sonrası oturum gecikse bile tutarlılık). Bkz. [supabase_auth_users_trigger.sql](supabase_auth_users_trigger.sql).
+- **Önerilen sunucu tarafı:** `auth.users` üzerine `AFTER INSERT` tetikleyici — yeni kullanıcı için `public.users` satırı oluşturur (e-posta onayı sonrası oturum gecikse bile tutarlılık). Bkz. [supabase_fix_mera_insert.sql](supabase_fix_mera_insert.sql) (bölüm 1–2: tetikleyici + `users` RLS).
 - İstemci tarafında `ensureUserProfile` eski/kısmi hesaplar için **yedek** upsert benzeri davranış sağlar.
-- **RLS:** [supabase_rls_users_policies.sql](supabase_rls_users_policies.sql) — kendi satırını güncelleme; herkese açık profil okuma (liderlik için). Tetikleyici `SECURITY DEFINER` ile insert yapar.
+- **Ek tablo RLS** (checkins, shops, …): [supabase_rls_app_tables.sql](supabase_rls_app_tables.sql). Profil okuma/güncelleme ile çakışmıyorsa aynı projede birlikte kullanılır.
 
 ## Google OAuth (Flutter)
 

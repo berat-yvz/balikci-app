@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
@@ -23,6 +24,9 @@ class _MapScreenState extends State<MapScreen> {
   final SpotRepository _repository = SpotRepository();
   final MapController _mapController = MapController();
 
+  /// FMTC basarisiz olursa ag uzerinden [NetworkTileProvider] (karo gorunur kalir).
+  TileProvider _tileProvider = NetworkTileProvider();
+
   List<SpotModel> _spots = const [];
   bool _isLoading = true;
   String? _error;
@@ -36,8 +40,13 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _initializeCacheAndLoad() async {
     try {
       await FMTCObjectBoxBackend().initialise();
+      if (mounted) {
+        setState(
+          () => _tileProvider = FMTCStore('balikci_map_h3').getTileProvider(),
+        );
+      }
     } catch (_) {
-      // Cache backend daha once baslatildiysa veya platformda kisit varsa sessiz devam.
+      // Cache yoksa _tileProvider NetworkTileProvider olarak kalir.
     }
     await _loadSpots();
   }
@@ -92,8 +101,6 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tileProvider = FMTCStore('balikci_map_h3').getTileProvider();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Harita'),
@@ -105,19 +112,31 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _isLoading
+            ? null
+            : () async {
+                final added = await context.push<bool>('/map/add-spot');
+                if (!mounted) return;
+                if (added == true) await _loadSpots();
+              },
+        icon: const Icon(Icons.add),
+        label: const Text('Mera ekle'),
+      ),
       body: Stack(
         children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _initialCenter,
-              initialZoom: 10,
-            ),
-            children: [
+          Positioned.fill(
+            child: FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _initialCenter,
+                initialZoom: 10,
+              ),
+              children: [
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.balikciapp.mobile',
-                tileProvider: tileProvider,
+                userAgentPackageName: 'com.balikciapp.balikci_app',
+                tileProvider: _tileProvider,
               ),
               MarkerClusterLayerWidget(
                 options: MarkerClusterLayerOptions(
@@ -145,6 +164,7 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),
             ],
+            ),
           ),
           if (_isLoading)
             const Center(child: CircularProgressIndicator()),
