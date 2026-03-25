@@ -114,7 +114,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Konum mera'dan fazla uzak (yaklasik ${distMeters.toStringAsFixed(0)}m).',
+              "Konum mera'dan fazla uzak (yaklasik ${distMeters.toStringAsFixed(0)}m).",
             ),
             backgroundColor: AppColors.danger,
           ),

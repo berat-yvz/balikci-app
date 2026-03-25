@@ -138,7 +138,7 @@
 
 #### Görevler
 - [x] `exif_helper.dart` yazıldı (native_exif ile GPS + timestamp oku)
-- [ ] Supabase Edge Function: `exif-verify` yazıldı ve deploy edildi
+- [x] Supabase Edge Function: `exif-verify` yazıldı (deploy + storage trigger kurulumunu ayrıca yap)
 - [ ] Storage trigger: fotoğraf yüklenince Edge Function tetikleniyor
 - [x] `vote_widget.dart` — Doğru/Yanlış oy butonu
 - [x] `checkin_repository.dart`'a vote fonksiyonu eklendi
