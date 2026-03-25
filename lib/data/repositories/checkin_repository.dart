@@ -1,4 +1,5 @@
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/core/constants/app_constants.dart';
 import 'package:balikci_app/data/models/checkin_model.dart';
 
 /// Check-in repository — checkins + checkin_votes CRUD.
@@ -29,10 +30,44 @@ class CheckinRepository {
     return response.map<CheckinModel>(CheckinModel.fromJson).toList();
   }
 
+  /// H5 (Map UI) için: Son N saat içindeki check-in'leri çek.
+  ///
+  /// - 2 saatten eski olanlar UI'da "soluk"
+  /// - 6 saatten eski olanlar UI'dan kalkar
+  Future<List<CheckinModel>> getRecentCheckinsAll({
+    int limit = 2000,
+    int hours = AppConstants.checkinRemoveHours,
+  }) async {
+    final threshold = DateTime.now().subtract(Duration(hours: hours));
+
+    final response = await _db
+        .from('checkins')
+        .select()
+        .gte('created_at', threshold.toIso8601String())
+        .order('created_at', ascending: false)
+        .range(0, limit - 1);
+
+    return response.map<CheckinModel>(CheckinModel.fromJson).toList();
+  }
+
   Future<CheckinModel?> addCheckin(Map<String, dynamic> data) async {
     final response =
         await _db.from('checkins').insert(data).select().single();
     return CheckinModel.fromJson(response);
+  }
+
+  /// checkins.photo_url güncellemesi.
+  ///
+  /// EXIF doğrulama Edge Function'ı bu photo_url / dosya yolu üzerinden
+  /// checkin'i eşleyebilir (MVP akışı için photo path yeterli).
+  Future<void> updateCheckinPhotoUrl({
+    required String checkinId,
+    required String photoUrl,
+  }) async {
+    await _db
+        .from('checkins')
+        .update({'photo_url': photoUrl})
+        .eq('id', checkinId);
   }
 
   /// Oylama: vote = true → doğru, false → yanlış
@@ -41,11 +76,17 @@ class CheckinRepository {
     required String voterId,
     required bool vote,
   }) async {
-    await _db.from('checkin_votes').upsert({
-      'checkin_id': checkinId,
-      'voter_id': voterId,
-      'vote': vote,
-    });
+    // RLS tarafında sadece INSERT izni var (update/upsert için policy yok).
+    // UNIQUE(checkin_id, voter_id) nedeniyle aynı kullanıcı tekrar oy vermek isterse insert başarısız olur.
+    try {
+      await _db.from('checkin_votes').insert({
+        'checkin_id': checkinId,
+        'voter_id': voterId,
+        'vote': vote,
+      });
+    } catch (_) {
+      // İkinci oy denemesi / duplicate durumlarını UI seviyesinde sessiz geçiyoruz.
+    }
   }
 
   /// Oylama istatistiği — score-calculator Edge Function'ı da bunu kullanır

@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -7,9 +8,12 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/app_constants.dart';
 import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
+import 'package:balikci_app/features/checkin/vote_widget.dart';
+import 'package:image_picker/image_picker.dart';
 
 /// Check-in ekranı — H5 sprint'i.
 class CheckinScreen extends StatefulWidget {
@@ -25,8 +29,11 @@ class _CheckinScreenState extends State<CheckinScreen> {
   final _checkinRepo = CheckinRepository();
 
   SpotModel? _spot;
+  CheckinModel? _createdCheckin;
   bool _loadingSpot = true;
   bool _submitting = false;
+
+  XFile? _pickedPhoto;
 
   // DB kısıtları: crowd_level IN ('yoğun','normal','az','boş')
   String _crowdLevel = 'normal';
@@ -68,9 +75,12 @@ class _CheckinScreenState extends State<CheckinScreen> {
     return r * c;
   }
 
-  void _closeAndNavigateToSpotDetail() {
-    // Check-in route'u üstüne push edildiği için geri dönmek yeterli.
-    if (mounted) Navigator.of(context).pop(true);
+  Future<void> _pickPhoto() async {
+    final picker = ImagePicker();
+    final photo = await picker.pickImage(source: ImageSource.gallery);
+    if (!mounted) return;
+    if (photo == null) return;
+    setState(() => _pickedPhoto = photo);
   }
 
   Future<void> _submitCheckin() async {
@@ -112,7 +122,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
         return;
       }
 
-      await _checkinRepo.addCheckin({
+      final created = await _checkinRepo.addCheckin({
         'user_id': uid,
         'spot_id': widget.spotId,
         'crowd_level': _crowdLevel,
@@ -122,6 +132,32 @@ class _CheckinScreenState extends State<CheckinScreen> {
         'is_active': true,
       });
 
+      if (created == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Check-in olusturulamadi'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+        return;
+      }
+
+      if (_pickedPhoto != null) {
+        final parts = _pickedPhoto!.path.split('.');
+        final ext = parts.length > 1 ? parts.last.toLowerCase() : 'jpg';
+        final photoPath = 'checkins/${created.id}/photo.$ext';
+
+        await SupabaseService.storage
+            .from(AppConstants.photoBucket)
+            .upload(photoPath, File(_pickedPhoto!.path));
+
+        await _checkinRepo.updateCheckinPhotoUrl(
+          checkinId: created.id,
+          photoUrl: photoPath,
+        );
+      }
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -130,7 +166,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
         ),
       );
 
-      _closeAndNavigateToSpotDetail();
+      setState(() => _createdCheckin = created);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -209,6 +245,23 @@ class _CheckinScreenState extends State<CheckinScreen> {
                         ),
 
                         const SizedBox(height: 16),
+                        OutlinedButton.icon(
+                          onPressed: _submitting ? null : _pickPhoto,
+                          icon: const Icon(Icons.photo_camera_outlined),
+                          label: const Text('Fotoğraf seç'),
+                        ),
+                        const SizedBox(height: 12),
+                        if (_pickedPhoto != null)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              File(_pickedPhoto!.path),
+                              height: 160,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        if (_pickedPhoto != null) const SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: canSubmit ? _submitCheckin : null,
                           child: _submitting
@@ -224,6 +277,20 @@ class _CheckinScreenState extends State<CheckinScreen> {
                         ),
 
                         const SizedBox(height: 12),
+                        if (_createdCheckin != null) ...[
+                          Text(
+                            'Oylama',
+                            style: AppTextStyles.h3,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Bu check-in için Dogru/Yanlis oyu verin.',
+                            style: AppTextStyles.body,
+                          ),
+                          const SizedBox(height: 12),
+                          VoteWidget(checkinId: _createdCheckin!.id),
+                          const SizedBox(height: 20),
+                        ],
                         TextButton(
                           onPressed: () {
                             // Geri: route stack'inden çık.

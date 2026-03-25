@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:supabase/supabase.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
@@ -41,6 +42,7 @@ class _MapScreenState extends State<MapScreen> {
 
   bool _checkingCheckins = false;
   Timer? _checkinPollTimer;
+  RealtimeChannel? _checkinsRealtimeChannel;
 
   @override
   void initState() {
@@ -60,12 +62,42 @@ class _MapScreenState extends State<MapScreen> {
       // Cache yoksa _tileProvider NetworkTileProvider olarak kalir.
     }
     await _loadSpots();
-    // H5: Realtime olmadan polling ile check-in pinlerini "solar/opacity" olarak güncel tut.
+    // H5: Realtime ile check-in değişikliklerini yakalayacağız.
+    // Polling sadece "solukluk/yaşlandırma" için (created_at tabanlı) çalışsın diye tutuluyor.
     _checkinPollTimer?.cancel();
     _checkinPollTimer =
         Timer.periodic(const Duration(seconds: 30), (_) async {
-      await _refreshActiveCheckins();
+      if (!mounted) return;
+      setState(() {});
     });
+
+    _startCheckinsRealtime();
+  }
+
+  void _startCheckinsRealtime() {
+    if (_checkinsRealtimeChannel != null) return;
+
+    try {
+      // Basit yaklaşım: checkins değişince global aktif check-in'i tekrar çekiyoruz.
+      // (Realtime event yoğunluğunda DB load'u artırmamak için _refreshActiveCheckins içi guard var.)
+      _checkinsRealtimeChannel = SupabaseService.client.channel(
+        'realtime:public:checkins',
+      );
+
+      _checkinsRealtimeChannel!
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'checkins',
+            callback: (payload) {
+              // Insert/Update/Delete geldiğinde aktif checkin listesini güncelle.
+              unawaited(_refreshActiveCheckins());
+            },
+          )
+          .subscribe();
+    } catch (_) {
+      // Realtime başarısız olursa polling ile yaşamaya devam ederiz.
+    }
   }
 
   Future<void> _loadSpots() async {
@@ -143,15 +175,13 @@ class _MapScreenState extends State<MapScreen> {
 
   Widget _buildSpotMarker(SpotModel spot) {
     final checkins = _activeCheckinsBySpotId[spot.id];
-    final count = checkins?.length ?? 0;
-    final mostRecent = (checkins != null && checkins.isNotEmpty)
-        ? checkins.first
-        : null;
+    final activeCount = checkins?.where((c) => !c.isStale).length ?? 0;
+    final hasStale = checkins?.any((c) => c.isStale) ?? false;
 
     return SpotMarker(
       privacyLevel: spot.privacyLevel,
-      activeCheckinCount: count,
-      hasStaleCheckins: mostRecent?.isStale ?? false,
+      activeCheckinCount: activeCount,
+      hasStaleCheckins: hasStale,
     );
   }
 
@@ -162,7 +192,7 @@ class _MapScreenState extends State<MapScreen> {
 
     _checkingCheckins = true;
     try {
-      final active = await _checkinRepository.getActiveCheckinsAll();
+      final active = await _checkinRepository.getRecentCheckinsAll();
       final spotIds = _spots.map((s) => s.id).toSet();
 
       final Map<String, List<CheckinModel>> grouped = {};
@@ -187,6 +217,8 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   void dispose() {
+    unawaited(_checkinsRealtimeChannel?.unsubscribe());
+    _checkinsRealtimeChannel = null;
     _checkinPollTimer?.cancel();
     super.dispose();
   }

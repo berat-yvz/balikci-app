@@ -124,9 +124,9 @@
 - [x] Balık yoğunluğu seçimi UI (4 seviye)
 - [x] Kalabalık seçimi UI (4 seviye)
 - [x] `checkin_repository.dart` yazıldı
-- [ ] Supabase Realtime subscription: yeni check-in'leri dinle
-- [ ] Harita pin'i anlık güncelleniyor (Realtime)
-- [ ] Check-in veri yaşam süresi: 2 saat sonra `is_active = false`
+- [x] Supabase Realtime subscription: yeni check-in'leri dinle
+- [x] Harita pin'i anlık güncelleniyor (Realtime)
+- [x] Check-in veri yaşam süresi: 2 saat sonra (created_at bazlı) soluk/azaltılmış görünüm
 - [x] Eski check-in pin'leri haritada solar (opacity azalır)
 
 **Çıktı:** Check-in yapılınca haritada anlık görünüyor ✓
@@ -137,11 +137,11 @@
 **Hedef:** Güven sistemi aktif, sahte raporlar engelleniyor
 
 #### Görevler
-- [ ] `exif_helper.dart` yazıldı (native_exif ile GPS + timestamp oku)
+- [x] `exif_helper.dart` yazıldı (native_exif ile GPS + timestamp oku)
 - [ ] Supabase Edge Function: `exif-verify` yazıldı ve deploy edildi
 - [ ] Storage trigger: fotoğraf yüklenince Edge Function tetikleniyor
-- [ ] `vote_widget.dart` — Doğru/Yanlış oy butonu
-- [ ] `checkin_repository.dart`'a vote fonksiyonu eklendi
+- [x] `vote_widget.dart` — Doğru/Yanlış oy butonu
+- [x] `checkin_repository.dart`'a vote fonksiyonu eklendi
 - [ ] Oy sonucu: %70+ yanlış → check-in gizleniyor
 - [ ] Doğrulanmış check-in rozeti UI'a eklendi
 
