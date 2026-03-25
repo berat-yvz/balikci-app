@@ -45,6 +45,13 @@ class SpotDetailSheet extends StatelessWidget {
     Future.microtask(() => router.push('/map/edit-spot', extra: s));
   }
 
+  void _openCheckin(BuildContext context) {
+    final router = GoRouter.of(context);
+    final s = spot;
+    Navigator.of(context).pop();
+    Future.microtask(() => router.push('/checkin/${s.id}'));
+  }
+
   @override
   Widget build(BuildContext context) {
     final uid = SupabaseService.auth.currentUser?.id;
@@ -84,6 +91,10 @@ class SpotDetailSheet extends StatelessWidget {
                     onPressed: () => _openEdit(context),
                     child: const Text('Duzenle'),
                   ),
+                TextButton(
+                  onPressed: () => _openCheckin(context),
+                  child: const Text('Check-in'),
+                ),
                 TextButton(
                   onPressed: () => _openDirections(context),
                   child: const Text('Yol tarifi'),

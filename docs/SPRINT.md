@@ -119,11 +119,11 @@
 **Hedef:** Anlık check-in çalışıyor, harita gerçek zamanlı güncelleniyor
 
 #### Görevler
-- [ ] `checkin_screen.dart` — check-in akış ekranı
-- [ ] Konum doğrulama: kullanıcı mera ± 500m'de mi?
-- [ ] Balık yoğunluğu seçimi UI (4 seviye)
-- [ ] Kalabalık seçimi UI (4 seviye)
-- [ ] `checkin_repository.dart` yazıldı
+- [x] `checkin_screen.dart` — check-in akış ekranı
+- [x] Konum doğrulama: kullanıcı mera ± 500m'de mi?
+- [x] Balık yoğunluğu seçimi UI (4 seviye)
+- [x] Kalabalık seçimi UI (4 seviye)
+- [x] `checkin_repository.dart` yazıldı
 - [ ] Supabase Realtime subscription: yeni check-in'leri dinle
 - [ ] Harita pin'i anlık güncelleniyor (Realtime)
 - [ ] Check-in veri yaşam süresi: 2 saat sonra `is_active = false`
