@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
@@ -8,6 +10,8 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
+import 'package:balikci_app/data/models/checkin_model.dart';
+import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/features/map/spot_detail_sheet.dart';
 import 'package:balikci_app/features/map/widgets/spot_marker.dart';
 
@@ -23,15 +27,20 @@ class _MapScreenState extends State<MapScreen> {
   static final LatLng _initialCenter = LatLng(41.015, 28.979); // Istanbul
 
   final SpotRepository _repository = SpotRepository();
+  final CheckinRepository _checkinRepository = CheckinRepository();
   final MapController _mapController = MapController();
 
   /// FMTC basarisiz olursa ag uzerinden [NetworkTileProvider] (karo gorunur kalir).
   TileProvider _tileProvider = NetworkTileProvider();
 
   List<SpotModel> _spots = const [];
+  Map<String, List<CheckinModel>> _activeCheckinsBySpotId = const {};
   bool _isLoading = true;
   bool _myLocationBusy = false;
   String? _error;
+
+  bool _checkingCheckins = false;
+  Timer? _checkinPollTimer;
 
   @override
   void initState() {
@@ -51,6 +60,12 @@ class _MapScreenState extends State<MapScreen> {
       // Cache yoksa _tileProvider NetworkTileProvider olarak kalir.
     }
     await _loadSpots();
+    // H5: Realtime olmadan polling ile check-in pinlerini "solar/opacity" olarak güncel tut.
+    _checkinPollTimer?.cancel();
+    _checkinPollTimer =
+        Timer.periodic(const Duration(seconds: 30), (_) async {
+      await _refreshActiveCheckins();
+    });
   }
 
   Future<void> _loadSpots() async {
@@ -63,6 +78,7 @@ class _MapScreenState extends State<MapScreen> {
       setState(() {
         _spots = spots;
       });
+      await _refreshActiveCheckins();
     } catch (e) {
       // Remote hata verirse local cache ile fallback.
       final cached = await _repository.getCachedSpots();
@@ -70,6 +86,7 @@ class _MapScreenState extends State<MapScreen> {
         _spots = cached;
         _error = cached.isEmpty ? 'Meralar yuklenemedi.' : null;
       });
+      await _refreshActiveCheckins();
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -117,11 +134,61 @@ class _MapScreenState extends State<MapScreen> {
             height: 44,
             child: GestureDetector(
               onTap: () => _openSpotDetail(spot),
-              child: SpotMarker(privacyLevel: spot.privacyLevel),
+              child: _buildSpotMarker(spot),
             ),
           ),
         )
         .toList();
+  }
+
+  Widget _buildSpotMarker(SpotModel spot) {
+    final checkins = _activeCheckinsBySpotId[spot.id];
+    final count = checkins?.length ?? 0;
+    final mostRecent = (checkins != null && checkins.isNotEmpty)
+        ? checkins.first
+        : null;
+
+    return SpotMarker(
+      privacyLevel: spot.privacyLevel,
+      activeCheckinCount: count,
+      hasStaleCheckins: mostRecent?.isStale ?? false,
+    );
+  }
+
+  Future<void> _refreshActiveCheckins() async {
+    if (_checkingCheckins) return;
+    if (!mounted) return;
+    if (_spots.isEmpty) return;
+
+    _checkingCheckins = true;
+    try {
+      final active = await _checkinRepository.getActiveCheckinsAll();
+      final spotIds = _spots.map((s) => s.id).toSet();
+
+      final Map<String, List<CheckinModel>> grouped = {};
+      for (final c in active) {
+        if (!spotIds.contains(c.spotId)) continue;
+        grouped.putIfAbsent(c.spotId, () => []).add(c);
+      }
+
+      // Created_at desc olduğu için çoğu zaman zaten doğru sıralı; yine de güvenli olsun.
+      for (final entry in grouped.entries) {
+        entry.value.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      }
+
+      if (!mounted) return;
+      setState(() => _activeCheckinsBySpotId = grouped);
+    } catch (_) {
+      // UI bozulmasın: kontrol başarısız olursa marker rozetleri değişmez.
+    } finally {
+      _checkingCheckins = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _checkinPollTimer?.cancel();
+    super.dispose();
   }
 
   @override

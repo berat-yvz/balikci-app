@@ -16,6 +16,19 @@ class CheckinRepository {
     return response.map<CheckinModel>(CheckinModel.fromJson).toList();
   }
 
+  /// H5 (Map UI) için: Realtime olmadan global aktif check-in'leri tek çağrıyla çek.
+  /// Sonra Map içindeki visible meralarla eşleştirilir.
+  Future<List<CheckinModel>> getActiveCheckinsAll({int limit = 2000}) async {
+    final response = await _db
+        .from('checkins')
+        .select()
+        .eq('is_active', true)
+        .order('created_at', ascending: false)
+        .range(0, limit - 1);
+
+    return response.map<CheckinModel>(CheckinModel.fromJson).toList();
+  }
+
   Future<CheckinModel?> addCheckin(Map<String, dynamic> data) async {
     final response =
         await _db.from('checkins').insert(data).select().single();

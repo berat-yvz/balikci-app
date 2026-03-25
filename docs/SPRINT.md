@@ -127,7 +127,7 @@
 - [ ] Supabase Realtime subscription: yeni check-in'leri dinle
 - [ ] Harita pin'i anlık güncelleniyor (Realtime)
 - [ ] Check-in veri yaşam süresi: 2 saat sonra `is_active = false`
-- [ ] Eski check-in pin'leri haritada solar (opacity azalır)
+- [x] Eski check-in pin'leri haritada solar (opacity azalır)
 
 **Çıktı:** Check-in yapılınca haritada anlık görünüyor ✓
 
