@@ -94,6 +94,7 @@ ThemeData buildAppTheme() {
     useMaterial3: true,
     colorScheme: colorScheme,
     scaffoldBackgroundColor: AppColors.background,
+    cardColor: const Color(0xFF132236),
     splashFactory: InkSparkle.splashFactory,
   );
 
@@ -111,7 +112,7 @@ ThemeData buildAppTheme() {
       ),
     ),
     cardTheme: CardThemeData(
-      color: const Color(0xFF0B1C33),
+      color: const Color(0xFF132236),
       elevation: 2.5,
       shadowColor: Colors.black,
       margin: EdgeInsets.zero,

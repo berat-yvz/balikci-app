@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:balikci_app/app/theme.dart';
@@ -269,8 +270,12 @@ class _ProfileContent extends ConsumerWidget {
           if (isSelf) ...[
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).pushNamed('/logs'),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => context.go('/fish-log'),
                 icon: const Icon(Icons.list_alt_outlined),
                 label: const Text('Günlüğüm'),
               ),
@@ -278,9 +283,12 @@ class _ProfileContent extends ConsumerWidget {
             const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/profile/settings'),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => context.push('/profile/settings'),
                 icon: const Icon(Icons.settings_outlined),
                 label: const Text('Ayarlar'),
               ),
@@ -371,7 +379,11 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: AppTextStyles.h3,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 }
@@ -397,28 +409,34 @@ class _ScoreRow extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: onTapTotal,
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Toplam Puan', style: AppTextStyles.caption),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Text('🎣', style: TextStyle(fontSize: 18)),
-                      const SizedBox(width: 8),
-                      Text(
-                        totalScore.toString(),
-                        style: AppTextStyles.h3,
-                      ),
-                    ],
-                  ),
-                ],
+            child: Card(
+              color: Theme.of(context).cardColor,
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Toplam Puan',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text('🎣', style: TextStyle(fontSize: 18)),
+                        const SizedBox(width: 8),
+                        Text(
+                          totalScore.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -428,31 +446,34 @@ class _ScoreRow extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: onTapSustainability,
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Sürdürülebilirlik',
-                    style: AppTextStyles.caption,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Text('♻️', style: TextStyle(fontSize: 18)),
-                      const SizedBox(width: 8),
-                      Text(
-                        sustainabilityScore.toString(),
-                        style: AppTextStyles.h3,
-                      ),
-                    ],
-                  ),
-                ],
+            child: Card(
+              color: Theme.of(context).cardColor,
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Sürdürülebilirlik',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Text('♻️', style: TextStyle(fontSize: 18)),
+                        const SizedBox(width: 8),
+                        Text(
+                          sustainabilityScore.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -490,27 +511,28 @@ class _RankProgress extends StatelessWidget {
 
     final next = thresholds[currentRank];
     if (currentRank == 'deniz_reisi' || next == null) {
-      return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Deniz Reisi rütbesindesin.',
-              style: AppTextStyles.body.copyWith(
-                fontWeight: FontWeight.w800,
+      return Card(
+        color: const Color(0xFF132236),
+        child: const Padding(
+          padding: EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Deniz Reisi rütbesindesin.',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            const LinearProgressIndicator(
-              value: 1,
-              color: AppColors.primary,
-            ),
-          ],
+              SizedBox(height: 10),
+              LinearProgressIndicator(
+                value: 1,
+                backgroundColor: Colors.white24,
+                valueColor: AlwaysStoppedAnimation(AppColors.primary),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -528,32 +550,33 @@ class _RankProgress extends StatelessWidget {
       _ => 'Olta Kurdu',
     };
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Şu an: ${_rankLabel(currentRank)}',
-            style: AppTextStyles.body.copyWith(
-              fontWeight: FontWeight.w800,
+    return Card(
+      color: const Color(0xFF132236),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Şu an: ${_rankLabel(currentRank)}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          LinearProgressIndicator(
-            value: progressValue,
-            color: AppColors.primary,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Sonraki: $nextRank. $xpToNext puan kaldı.',
-            style: AppTextStyles.caption.copyWith(color: AppColors.muted),
-          ),
-        ],
+            const SizedBox(height: 10),
+            LinearProgressIndicator(
+              value: progressValue,
+              backgroundColor: Colors.white24,
+              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Sonraki: $nextRank. $xpToNext puan kaldı.',
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -654,27 +677,30 @@ class _StatBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: AppColors.primary),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: AppTextStyles.h3,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: AppTextStyles.caption.copyWith(color: AppColors.muted),
-          ),
-        ],
+    return Card(
+      color: const Color(0xFF132236),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: AppColors.primary),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+          ],
+        ),
       ),
     );
   }

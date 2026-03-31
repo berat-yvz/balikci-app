@@ -3,6 +3,7 @@ class CheckinModel {
   final String id;
   final String userId;
   final String spotId;
+  final String? username;
   final String? crowdLevel; // yoğun | normal | az | boş
   final String? fishDensity; // yoğun | normal | az | yok
   final String? photoUrl;
@@ -14,6 +15,7 @@ class CheckinModel {
     required this.id,
     required this.userId,
     required this.spotId,
+    this.username,
     this.crowdLevel,
     this.fishDensity,
     this.photoUrl,
@@ -34,6 +36,7 @@ class CheckinModel {
         id: json['id'] as String,
         userId: json['user_id'] as String,
         spotId: json['spot_id'] as String,
+        username: _parseUsername(json['users']),
         crowdLevel: json['crowd_level'] as String?,
         fishDensity: json['fish_density'] as String?,
         photoUrl: json['photo_url'] as String?,
@@ -46,6 +49,7 @@ class CheckinModel {
         'id': id,
         'user_id': userId,
         'spot_id': spotId,
+        'username': username,
         'crowd_level': crowdLevel,
         'fish_density': fishDensity,
         'photo_url': photoUrl,
@@ -53,4 +57,17 @@ class CheckinModel {
         'is_active': isActive,
         'created_at': createdAt.toIso8601String(),
       };
+
+  static String? _parseUsername(dynamic usersField) {
+    if (usersField is Map<String, dynamic>) {
+      return usersField['username'] as String?;
+    }
+    if (usersField is List && usersField.isNotEmpty) {
+      final first = usersField.first;
+      if (first is Map<String, dynamic>) {
+        return first['username'] as String?;
+      }
+    }
+    return null;
+  }
 }

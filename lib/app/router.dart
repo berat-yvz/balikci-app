@@ -107,10 +107,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
       GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
 
-      // Home (Şimdilik boş Scaffold)
-      GoRoute(
-        path: '/home',
-        builder: (context, state) => const MainShell(),
+      ShellRoute(
+        builder: (context, state, child) => MainShell(child: child),
+        routes: [
+          GoRoute(path: '/home', builder: (context, state) => const MapScreen()),
+          GoRoute(
+            path: '/fish-log',
+            builder: (context, state) => const LogListScreen(),
+          ),
+          GoRoute(path: '/rank', builder: (context, state) => const RankScreen()),
+          GoRoute(
+            path: '/weather',
+            builder: (context, state) => const WeatherScreen(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (context, state) => const ProfileScreen(),
+          ),
+        ],
       ),
 
       // Map (ana ekran)
@@ -151,7 +165,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/logs/stats', builder: (context, state) => const StatsScreen()),
 
       // Fish Log (yeni path'ler)
-      GoRoute(path: '/fish-log', builder: (context, state) => const LogListScreen()),
       GoRoute(
         path: '/fish-log/add',
         builder: (context, state) {
@@ -162,7 +175,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/fish-log/stats', builder: (context, state) => const StatsScreen()),
 
       // Rank
-      GoRoute(path: '/rank', builder: (context, state) => const RankScreen()),
       GoRoute(
           path: '/rank/leaderboard',
           builder: (context, state) => const LeaderboardScreen()),
@@ -181,9 +193,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             KnotDetailScreen(knotId: state.pathParameters['id']!),
       ),
 
-      // Weather
-      GoRoute(path: '/weather', builder: (context, state) => const WeatherScreen()),
-
       // Notifications
       GoRoute(
           path: '/notifications',
@@ -193,7 +202,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           builder: (context, state) => const NotificationSettingsScreen()),
 
       // Profile
-      GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
       GoRoute(
         path: '/profile/:userId',
         builder: (context, state) =>

@@ -63,8 +63,6 @@ class _MapScreenState extends State<MapScreen> {
   final DraggableScrollableController _sheetController =
       DraggableScrollableController();
 
-  int _navIndex = 0;
-
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   List<SpotModel> _searchResults = const [];
@@ -276,8 +274,16 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  void _openCheckinForSpot(SpotModel spot) {
-    context.push('/checkin/${spot.id}');
+  Future<void> _openCheckinForSpot(SpotModel spot) async {
+    final result = await context.push<bool>('/checkin/${spot.id}');
+    if (!mounted) return;
+    if (result == true) {
+      await _refreshActiveCheckins();
+      if (_sheetSpot?.id == spot.id) {
+        await _loadWeatherForSpot(spot);
+      }
+      setState(() {});
+    }
   }
 
   void _openEditForSpot(SpotModel spot) {
@@ -448,6 +454,15 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const sheetInitialSize = 0.18;
+    const sheetMinSize = 0.14;
+    const sheetMaxSize = 0.85;
+
+    final screenHeight = MediaQuery.of(context).size.height;
+    final navBottom = MediaQuery.of(context).padding.bottom;
+    final mapFabBottom = (sheetMinSize * screenHeight) + 72;
+    final checkinFabBottom = (sheetMinSize * screenHeight) + navBottom + 16;
+
     final sheetSpot = _sheetSpot;
     final sheetCheckins = sheetSpot == null
         ? const <CheckinModel>[]
@@ -471,15 +486,13 @@ class _MapScreenState extends State<MapScreen> {
     final windKmh = weather != null ? weather.windKmh.round().toString() : '—';
     final tempC = weather != null ? weather.tempCelsius.round().toString() : '—';
 
-    final navBottom = MediaQuery.of(context).padding.bottom;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _nearbySpotForFab == null
           ? null
           : Padding(
-              padding: EdgeInsets.only(bottom: navBottom + 10),
+              padding: EdgeInsets.only(bottom: checkinFabBottom),
               child: SizedBox(
                 height: 52,
                 child: FloatingActionButton.extended(
@@ -781,7 +794,7 @@ class _MapScreenState extends State<MapScreen> {
           // Sağ alt: harita aksiyonları
           Positioned(
             right: 16,
-            bottom: 16 + kBottomNavigationBarHeight,
+            bottom: mapFabBottom,
             child: Column(
               children: [
                 _MapActionButton(
@@ -826,22 +839,28 @@ class _MapScreenState extends State<MapScreen> {
             alignment: Alignment.bottomCenter,
             child: DraggableScrollableSheet(
               controller: _sheetController,
-              initialChildSize: 0.16,
-              minChildSize: 0.12,
-              // Üstteki arama/hava kartıyla çakışmayı azaltmak için max'i düşürdük.
-              maxChildSize: 0.45,
+              initialChildSize: sheetInitialSize,
+              minChildSize: sheetMinSize,
+              maxChildSize: sheetMaxSize,
               snap: true,
-              snapSizes: const [0.16, 0.32, 0.45],
+              snapSizes: const [sheetInitialSize, 0.32, sheetMaxSize],
               builder: (context, scrollController) {
                 final bottomPad = MediaQuery.of(context).padding.bottom;
                 return Padding(
-                  padding:
-                      EdgeInsets.only(bottom: bottomPad + kBottomNavigationBarHeight),
-                  child: Material(
-                    color: AppColors.navy.withValues(alpha: 0.86),
-                    elevation: 10,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(22),
+                  padding: EdgeInsets.only(bottom: bottomPad),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(20),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: ListView(
@@ -850,15 +869,15 @@ class _MapScreenState extends State<MapScreen> {
                       children: [
                         Center(
                           child: Container(
-                            height: 5,
-                            width: 54,
+                            margin: const EdgeInsets.only(top: 8, bottom: 12),
+                            width: 40,
+                            height: 4,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.35),
-                              borderRadius: BorderRadius.circular(10),
+                              color: Colors.grey.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(2),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
                         if (sheetSpot == null)
                           Text(
                             'Mera seç',
@@ -957,55 +976,6 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),
             ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: AppColors.navy,
-        selectedItemColor: AppColors.teal,
-        unselectedItemColor: const Color(0xFF9FB2C9),
-        currentIndex: _navIndex,
-        onTap: (i) {
-          setState(() => _navIndex = i);
-          switch (i) {
-            case 0:
-              context.go('/home');
-              break;
-            case 1:
-              context.go('/fish-log');
-              break;
-            case 2:
-              context.go('/rank');
-              break;
-            case 3:
-              context.go('/weather');
-              break;
-            case 4:
-              context.go('/profile');
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map_outlined),
-            label: 'Harita',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_outlined),
-            label: 'G\u00fcnl\u00fck',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.emoji_events_outlined),
-            label: 'S\u0131ralama',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.water_outlined),
-            label: 'Hava',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Profil',
-          ),
         ],
       ),
     );

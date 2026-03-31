@@ -167,8 +167,8 @@ class _CheckinScreenState extends State<CheckinScreen> {
       }
 
       final voteCounts = await _checkinRepo.getVoteCounts(created.id);
-      final trueCount = voteCounts['true'] ?? 0;
-      final falseCount = voteCounts['false'] ?? 0;
+      final trueCount = voteCounts[true] ?? 0;
+      final falseCount = voteCounts[false] ?? 0;
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -182,6 +182,9 @@ class _CheckinScreenState extends State<CheckinScreen> {
         _createdCheckin = created;
         _voteCounts = {true: trueCount, false: falseCount};
       });
+      if (!mounted) return;
+      context.pop(true);
+      return;
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -341,6 +344,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
                           const SizedBox(height: 12),
                           VoteWidget(
                             checkinId: _createdCheckin!.id,
+                            checkinOwnerId: _createdCheckin!.userId,
                             initialVoteCounts: _voteCounts,
                             currentUserId:
                                 SupabaseService.auth.currentUser!.id,
@@ -350,7 +354,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
                         TextButton(
                           onPressed: () {
                             // Geri: route stack'inden çık.
-                            context.pop();
+                            context.pop(false);
                           },
                           child: const Text('Iptal'),
                         ),

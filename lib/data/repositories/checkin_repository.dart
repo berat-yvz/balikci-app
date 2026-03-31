@@ -71,20 +71,58 @@ class CheckinRepository {
         .eq('id', checkinId);
   }
 
-  /// Oylama: vote = true → doğru, false → yanlış
-  Future<void> vote({
+  Future<List<CheckinModel>> getCheckinsForSpot(String spotId) async {
+    final threshold = DateTime.now().subtract(
+      const Duration(hours: AppConstants.checkinRemoveHours),
+    );
+    final response = await _db
+        .from('checkins')
+        .select('*, users:user_id(username)')
+        .eq('spot_id', spotId)
+        .gte('created_at', threshold.toIso8601String())
+        .order('created_at', ascending: false);
+    return response.map<CheckinModel>(CheckinModel.fromJson).toList();
+  }
+
+  Future<bool?> getUserVote(String checkinId, String userId) async {
+    try {
+      final response = await _db
+          .from('checkin_votes')
+          .select('vote')
+          .eq('checkin_id', checkinId)
+          .eq('voter_id', userId)
+          .maybeSingle();
+      return response?['vote'] as bool?;
+    } on PostgrestException catch (e) {
+      throw Exception('Kullanıcı oyu okunamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Kullanıcı oyu okunamadı: $e');
+    }
+  }
+
+  /// Oylama: voteValue = true → doğru, false → yanlış
+  /// Toggle davranışı:
+  /// - Aynı oy: kaldır
+  /// - Farklı oy: eskiyi kaldır, yeniyi ekle
+  /// - Oy yoksa: yeni oy ekle
+  Future<void> castVote({
     required String checkinId,
     required String voterId,
-    required bool vote,
+    required bool voteValue,
   }) async {
-    // RLS tarafında sadece INSERT izni var (update/upsert için policy yok).
-    // UNIQUE(checkin_id, voter_id) nedeniyle aynı kullanıcı tekrar oy vermek isterse insert başarısız olur.
     try {
+      final existing = await getUserVote(checkinId, voterId);
+      if (existing == voteValue) {
+        await unvote(checkinId: checkinId, voterId: voterId);
+        return;
+      }
+
+      await unvote(checkinId: checkinId, voterId: voterId);
       await _db.from('checkin_votes').insert({
-        'checkin_id': checkinId,
-        'voter_id': voterId,
-        'vote': vote,
-      });
+            'checkin_id': checkinId,
+            'voter_id': voterId,
+            'vote': voteValue,
+          });
     } on PostgrestException catch (e) {
       throw Exception('Oylama gönderilemedi: ${e.message}');
     } catch (e) {
@@ -111,7 +149,7 @@ class CheckinRepository {
   }
 
   /// Oylama istatistiği — score-calculator Edge Function'ı da bunu kullanır
-  Future<Map<String, int>> getVoteCounts(String checkinId) async {
+  Future<Map<bool, int>> getVoteCounts(String checkinId) async {
     final response = await _db
         .from('checkin_votes')
         .select('vote')
@@ -124,6 +162,6 @@ class CheckinRepository {
         falseCount++;
       }
     }
-    return {'true': trueCount, 'false': falseCount};
+    return {true: trueCount, false: falseCount};
   }
 }
