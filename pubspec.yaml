@@ -30,75 +30,33 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  # Supabase
-  supabase_flutter: ^2.8.0
-
-  # Ortam Değişkenleri (.env)
-  flutter_dotenv: ^5.2.1
-
-  # Harita
-  flutter_map: ^7.0.2
-  flutter_map_tile_caching: ^9.1.0
-  flutter_map_marker_cluster: ^1.4.0
-  latlong2: ^0.9.1
-
-  # State Management
-  flutter_riverpod: ^2.6.1
-  riverpod_annotation: ^2.6.1
-
-  # Navigation
-  go_router: ^14.6.2
   app_links: ^6.4.0
-
-  # Local Database (Drift)
   drift: ^2.18.0
   drift_flutter: ^0.1.0
-  sqlite3_flutter_libs: ^0.5.24
-  path_provider: ^2.1.5
-
-  # HTTP
-  dio: ^5.7.0
-
-  # Firebase & Bildirim
   firebase_core: ^3.8.0
   firebase_messaging: ^15.1.4
+  flutter_dotenv: ^5.2.1
   flutter_local_notifications: ^18.0.1
-
-  # Konum
+  flutter_map: ^7.0.2
+  flutter_map_marker_cluster: ^1.4.0
+  flutter_map_tile_caching: ^9.1.0
+  flutter_riverpod: ^2.6.1
   geolocator: ^13.0.2
-  permission_handler: ^11.3.1
-
-  # Fotoğraf & EXIF
+  go_router: ^14.6.2
   image_picker: ^1.1.2
+  latlong2: ^0.9.1
   native_exif: ^0.7.0
-
-  # Animasyon
-  lottie: ^3.2.0
-
-  # Yardımcı
-  intl: ^0.19.0
-  cached_network_image: ^3.4.1
+  shared_preferences: ^2.5.4
+  sqlite3_flutter_libs: ^0.5.24
+  supabase_flutter: ^2.8.0
   url_launcher: ^6.3.1
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
-  shared_preferences: ^2.5.4
-
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
-
   build_runner: ^2.4.9
   drift_dev: ^2.18.0
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

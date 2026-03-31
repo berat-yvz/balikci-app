@@ -31,9 +31,7 @@ class _KnotsScreenState extends ConsumerState<KnotsScreen> {
     final repo = KnotRepository();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Düğüm Rehberi'),
-      ),
+      appBar: AppBar(title: const Text('Düğüm Rehberi')),
       body: FutureBuilder<List<KnotModel>>(
         future: repo.getKnots(typeFilter: _typeFilter),
         builder: (context, snapshot) {
@@ -60,7 +58,7 @@ class _KnotsScreenState extends ConsumerState<KnotsScreen> {
                     final type = c['type'];
                     final selected =
                         (type == null && _typeFilter == null) ||
-                            (type != null && _typeFilter == type);
+                        (type != null && _typeFilter == type);
                     return FilterChip(
                       label: Text(c['label']!),
                       selected: selected,
@@ -103,10 +101,7 @@ class _KnotCard extends StatelessWidget {
   final KnotModel knot;
   final VoidCallback onTap;
 
-  const _KnotCard({
-    required this.knot,
-    required this.onTap,
-  });
+  const _KnotCard({required this.knot, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -132,16 +127,13 @@ class _KnotCard extends StatelessWidget {
               color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 4),
-            )
+            ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              knot.name,
-              style: AppTextStyles.h3,
-            ),
+            Text(knot.name, style: AppTextStyles.h3),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -151,12 +143,7 @@ class _KnotCard extends StatelessWidget {
                   label: Text(knot.type),
                   backgroundColor: AppColors.primaryLight,
                 ),
-                Row(
-                  children: [
-                    ...stars,
-                    ...emptyStars,
-                  ],
-                ),
+                Row(children: [...stars, ...emptyStars]),
               ],
             ),
             const SizedBox(height: 10),
@@ -172,4 +159,3 @@ class _KnotCard extends StatelessWidget {
     );
   }
 }
-

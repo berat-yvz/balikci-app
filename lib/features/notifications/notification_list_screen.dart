@@ -53,8 +53,7 @@ class NotificationListScreen extends ConsumerWidget {
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: notifications.length,
-              separatorBuilder: (context, index) =>
-                  const SizedBox(height: 10),
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final n = notifications[index];
                 return _NotificationTile(
@@ -76,8 +75,7 @@ class NotificationListScreen extends ConsumerWidget {
                     } catch (e) {
                       messenger.showSnackBar(
                         SnackBar(
-                          content:
-                              Text('Bildirim açılırken hata oluştu: $e'),
+                          content: Text('Bildirim açılırken hata oluştu: $e'),
                           backgroundColor: AppColors.danger,
                         ),
                       );
@@ -88,9 +86,7 @@ class NotificationListScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Text(
             'Bildirimler alınamadı: $e',
@@ -114,10 +110,7 @@ class _NotificationTile extends StatelessWidget {
   final NotificationModel notification;
   final VoidCallback onTap;
 
-  const _NotificationTile({
-    required this.notification,
-    required this.onTap,
-  });
+  const _NotificationTile({required this.notification, required this.onTap});
 
   String _iconForType(String type) {
     final t = type.toLowerCase();
@@ -154,10 +147,7 @@ class _NotificationTile extends StatelessWidget {
                 backgroundColor: unread
                     ? AppColors.accent.withValues(alpha: 0.22)
                     : AppColors.primaryLight,
-                child: Text(
-                  icon,
-                  style: const TextStyle(fontSize: 18),
-                ),
+                child: Text(icon, style: const TextStyle(fontSize: 18)),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -169,8 +159,7 @@ class _NotificationTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.body.copyWith(
-                        fontWeight:
-                            unread ? FontWeight.w800 : FontWeight.w600,
+                        fontWeight: unread ? FontWeight.w800 : FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -232,15 +221,10 @@ class _NotificationEmptyState extends StatelessWidget {
             SizedBox(
               width: 120,
               height: 120,
-              child: CustomPaint(
-                painter: _BellPainter(),
-              ),
+              child: CustomPaint(painter: _BellPainter()),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Henüz bildirim yok',
-              style: AppTextStyles.h2,
-            ),
+            Text('Henüz bildirim yok', style: AppTextStyles.h2),
             const SizedBox(height: 8),
             Text(
               'Yeni gelişmeleri kaçırmamak için takip etmeye devam et.',
@@ -297,4 +281,3 @@ class _BellPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-

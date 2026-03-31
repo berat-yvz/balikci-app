@@ -42,9 +42,9 @@ class _PickSpotLocationScreenState extends State<PickSpotLocationScreen> {
   void _confirm() {
     final p = _picked;
     if (p == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Haritada bir nokta secin')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Haritada bir nokta secin')));
       return;
     }
     context.pop(p);

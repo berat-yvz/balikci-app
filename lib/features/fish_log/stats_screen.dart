@@ -14,9 +14,7 @@ class StatsScreen extends ConsumerWidget {
     final asyncStats = ref.watch(fishLogStatsProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Av İstatistikleri'),
-      ),
+      appBar: AppBar(title: const Text('Av İstatistikleri')),
       body: asyncStats.when(
         data: (stats) {
           final total = stats['totalLogs'] as int? ?? 0;
@@ -35,10 +33,7 @@ class StatsScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             child: ListView(
               children: [
-                Text(
-                  'Genel Bakış',
-                  style: AppTextStyles.h2,
-                ),
+                Text('Genel Bakış', style: AppTextStyles.h2),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -56,10 +51,7 @@ class StatsScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                Text(
-                  'En Çok Tutulan Türler',
-                  style: AppTextStyles.h3,
-                ),
+                Text('En Çok Tutulan Türler', style: AppTextStyles.h3),
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 180,
@@ -112,16 +104,11 @@ class _StatTile extends StatelessWidget {
           children: [
             Icon(icon, color: AppColors.primary),
             const SizedBox(height: 8),
-            Text(
-              value,
-              style: AppTextStyles.h3,
-            ),
+            Text(value, style: AppTextStyles.h3),
             const SizedBox(height: 4),
             Text(
               label,
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.muted,
-              ),
+              style: AppTextStyles.caption.copyWith(color: AppColors.muted),
             ),
           ],
         ),
@@ -188,10 +175,7 @@ class _SpeciesBarChartPainter extends CustomPainter {
         style: AppTextStyles.caption.copyWith(color: AppColors.dark),
       );
       textPainter.layout(maxWidth: size.width - barWidth - 8);
-      textPainter.paint(
-        canvas,
-        Offset(barWidth + 8, top),
-      );
+      textPainter.paint(canvas, Offset(barWidth + 8, top));
 
       // Adet
       textPainter.text = TextSpan(
@@ -199,10 +183,7 @@ class _SpeciesBarChartPainter extends CustomPainter {
         style: AppTextStyles.caption.copyWith(color: AppColors.muted),
       );
       textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(barWidth + 8, top + barHeight / 2),
-      );
+      textPainter.paint(canvas, Offset(barWidth + 8, top + barHeight / 2));
     }
   }
 
@@ -211,4 +192,3 @@ class _SpeciesBarChartPainter extends CustomPainter {
     return oldDelegate.data != data;
   }
 }
-

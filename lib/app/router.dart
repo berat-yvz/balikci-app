@@ -69,7 +69,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Splash için kontrol yok
       if (path == '/splash') return null;
 
-      final isAuthFlow = path == '/login' ||
+      final isAuthFlow =
+          path == '/login' ||
           path == '/register' ||
           path == '/reset-callback' ||
           path == '/reset-password';
@@ -104,11 +105,17 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       // Splash
-      GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
 
       // Auth
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
+      ),
       GoRoute(
         path: '/reset-callback',
         builder: (context, state) => const ResetPasswordScreen(),
@@ -117,17 +124,26 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/reset-password',
         builder: (context, state) => const ResetPasswordScreen(),
       ),
-      GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
 
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
-          GoRoute(path: '/home', builder: (context, state) => const MapScreen()),
+          GoRoute(
+            path: '/home',
+            builder: (context, state) => const MapScreen(),
+          ),
           GoRoute(
             path: '/fish-log',
             builder: (context, state) => const LogListScreen(),
           ),
-          GoRoute(path: '/rank', builder: (context, state) => const RankScreen()),
+          GoRoute(
+            path: '/rank',
+            builder: (context, state) => const RankScreen(),
+          ),
           GoRoute(
             path: '/weather',
             builder: (context, state) => const WeatherScreen(),
@@ -141,15 +157,16 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Map (ana ekran)
       GoRoute(path: '/map', builder: (context, state) => const MapScreen()),
-      GoRoute(path: '/map/add-spot', builder: (context, state) => const AddSpotScreen()),
+      GoRoute(
+        path: '/map/add-spot',
+        builder: (context, state) => const AddSpotScreen(),
+      ),
       GoRoute(
         path: '/map/edit-spot',
         builder: (context, state) {
           final extra = state.extra;
           if (extra is! SpotModel) {
-            return const Scaffold(
-              body: Center(child: Text('Gecersiz mera')),
-            );
+            return const Scaffold(body: Center(child: Text('Gecersiz mera')));
           }
           return AddSpotScreen(spotToEdit: extra);
         },
@@ -172,9 +189,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // Fish Log
-      GoRoute(path: '/logs', builder: (context, state) => const LogListScreen()),
-      GoRoute(path: '/logs/add', builder: (context, state) => const AddLogScreen()),
-      GoRoute(path: '/logs/stats', builder: (context, state) => const StatsScreen()),
+      GoRoute(
+        path: '/logs',
+        builder: (context, state) => const LogListScreen(),
+      ),
+      GoRoute(
+        path: '/logs/add',
+        builder: (context, state) => const AddLogScreen(),
+      ),
+      GoRoute(
+        path: '/logs/stats',
+        builder: (context, state) => const StatsScreen(),
+      ),
 
       // Fish Log (yeni path'ler)
       GoRoute(
@@ -184,13 +210,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           return AddLogScreen(spotId: spotId);
         },
       ),
-      GoRoute(path: '/fish-log/stats', builder: (context, state) => const StatsScreen()),
+      GoRoute(
+        path: '/fish-log/stats',
+        builder: (context, state) => const StatsScreen(),
+      ),
 
       // Rank
       GoRoute(
-          path: '/rank/leaderboard',
-          builder: (context, state) => const LeaderboardScreen()),
-      GoRoute(path: '/leaderboard', builder: (context, state) => const LeaderboardScreen()),
+        path: '/rank/leaderboard',
+        builder: (context, state) => const LeaderboardScreen(),
+      ),
+      GoRoute(
+        path: '/leaderboard',
+        builder: (context, state) => const LeaderboardScreen(),
+      ),
 
       // Knots
       GoRoute(path: '/knots', builder: (context, state) => const KnotsScreen()),
@@ -207,11 +240,13 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Notifications
       GoRoute(
-          path: '/notifications',
-          builder: (context, state) => const NotificationListScreen()),
+        path: '/notifications',
+        builder: (context, state) => const NotificationListScreen(),
+      ),
       GoRoute(
-          path: '/notifications/settings',
-          builder: (context, state) => const NotificationSettingsScreen()),
+        path: '/notifications/settings',
+        builder: (context, state) => const NotificationSettingsScreen(),
+      ),
 
       // Profile
       GoRoute(
@@ -220,11 +255,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             ProfileScreen(userId: state.pathParameters['userId']),
       ),
       GoRoute(
-          path: '/profile/settings', builder: (context, state) => const SettingsScreen()),
-      GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
+        path: '/profile/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
     ],
-    errorBuilder: (_, state) => Scaffold(
-      body: Center(child: Text('Sayfa bulunamadı: ${state.uri}')),
-    ),
+    errorBuilder: (_, state) =>
+        Scaffold(body: Center(child: Text('Sayfa bulunamadı: ${state.uri}'))),
   );
 });

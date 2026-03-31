@@ -18,7 +18,10 @@ class SupabaseService {
     final anonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
     assert(url.isNotEmpty, '.env dosyasında SUPABASE_URL tanımlı değil!');
-    assert(anonKey.isNotEmpty, '.env dosyasında SUPABASE_ANON_KEY tanımlı değil!');
+    assert(
+      anonKey.isNotEmpty,
+      '.env dosyasında SUPABASE_ANON_KEY tanımlı değil!',
+    );
     if (url.isEmpty || anonKey.isEmpty) {
       throw StateError(
         'Supabase ayarları eksik. .env içinde SUPABASE_URL ve SUPABASE_ANON_KEY tanımlı olmalı.',

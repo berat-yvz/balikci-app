@@ -2,6 +2,9 @@ import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/local/database.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:drift/drift.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+// cleaned: hata yönetimi, method dokümantasyonu ve public API açıklamaları iyileştirildi
 
 /// Mera repository — fishing_spots CRUD.
 /// H3 ve H4 sprint görevleri.
@@ -9,19 +12,24 @@ class SpotRepository {
   final _db = SupabaseService.client;
   final _localDb = AppDatabase.instance;
 
-  Future<List<SpotModel>> getSpots({
-    int limit = 500,
-    int offset = 0,
-  }) async {
-    final response = await _db
-        .from('fishing_spots')
-        .select()
-        .range(offset, offset + limit - 1);
-    final remote = response.map<SpotModel>(SpotModel.fromJson).toList();
-    await _cacheSpots(remote);
-    return remote;
+  /// Tüm meraları uzak kaynaktan çeker ve local cache'e yazar.
+  Future<List<SpotModel>> getSpots({int limit = 500, int offset = 0}) async {
+    try {
+      final response = await _db
+          .from('fishing_spots')
+          .select()
+          .range(offset, offset + limit - 1);
+      final remote = response.map<SpotModel>(SpotModel.fromJson).toList();
+      await _cacheSpots(remote);
+      return remote;
+    } on PostgrestException catch (e) {
+      throw Exception('Meralar alınamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Meralar alınamadı: $e');
+    }
   }
 
+  /// Verilen koordinat sınırları içindeki meraları döner.
   Future<List<SpotModel>> getSpotsInBounds({
     required double minLat,
     required double maxLat,
@@ -30,55 +38,87 @@ class SpotRepository {
     int limit = 500,
     int offset = 0,
   }) async {
-    final response = await _db
-        .from('fishing_spots')
-        .select()
-        .gte('lat', minLat)
-        .lte('lat', maxLat)
-        .gte('lng', minLng)
-        .lte('lng', maxLng)
-        .range(offset, offset + limit - 1);
-    final remote = response.map<SpotModel>(SpotModel.fromJson).toList();
-    await _cacheSpots(remote);
-    return remote;
+    try {
+      final response = await _db
+          .from('fishing_spots')
+          .select()
+          .gte('lat', minLat)
+          .lte('lat', maxLat)
+          .gte('lng', minLng)
+          .lte('lng', maxLng)
+          .range(offset, offset + limit - 1);
+      final remote = response.map<SpotModel>(SpotModel.fromJson).toList();
+      await _cacheSpots(remote);
+      return remote;
+    } on PostgrestException catch (e) {
+      throw Exception('Sınır içi meralar alınamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Sınır içi meralar alınamadı: $e');
+    }
   }
 
+  /// ID ile tek bir mera kaydı döner, bulunamazsa `null` verir.
   Future<SpotModel?> getSpotById(String id) async {
     try {
-      final data =
-          await _db.from('fishing_spots').select().eq('id', id).single();
+      final data = await _db
+          .from('fishing_spots')
+          .select()
+          .eq('id', id)
+          .single();
       return SpotModel.fromJson(data);
     } catch (_) {
       return null;
     }
   }
 
+  /// Yeni mera kaydı oluşturur ve cache'i günceller.
   Future<SpotModel?> addSpot(Map<String, dynamic> spotData) async {
-    final response = await _db
-        .from('fishing_spots')
-        .insert(spotData)
-        .select()
-        .single();
-    final created = SpotModel.fromJson(response);
-    await _cacheSpots([created]);
-    return created;
-  }
-
-  Future<void> updateSpot(String id, Map<String, dynamic> updates) async {
-    await _db.from('fishing_spots').update(updates).eq('id', id);
-    final fresh = await getSpotById(id);
-    if (fresh != null) {
-      await _cacheSpots([fresh]);
+    try {
+      final response = await _db
+          .from('fishing_spots')
+          .insert(spotData)
+          .select()
+          .single();
+      final created = SpotModel.fromJson(response);
+      await _cacheSpots([created]);
+      return created;
+    } on PostgrestException catch (e) {
+      throw Exception('Mera eklenemedi: ${e.message}');
+    } catch (e) {
+      throw Exception('Mera eklenemedi: $e');
     }
   }
 
-  Future<void> deleteSpot(String id) async {
-    await _db.from('fishing_spots').delete().eq('id', id);
-    await (_localDb.delete(_localDb.localSpots)
-          ..where((tbl) => tbl.id.equals(id)))
-        .go();
+  /// Mevcut mera kaydını günceller ve cache'i tazeler.
+  Future<void> updateSpot(String id, Map<String, dynamic> updates) async {
+    try {
+      await _db.from('fishing_spots').update(updates).eq('id', id);
+      final fresh = await getSpotById(id);
+      if (fresh != null) {
+        await _cacheSpots([fresh]);
+      }
+    } on PostgrestException catch (e) {
+      throw Exception('Mera güncellenemedi: ${e.message}');
+    } catch (e) {
+      throw Exception('Mera güncellenemedi: $e');
+    }
   }
 
+  /// Mera kaydını uzak ve yerel depodan siler.
+  Future<void> deleteSpot(String id) async {
+    try {
+      await _db.from('fishing_spots').delete().eq('id', id);
+      await (_localDb.delete(
+        _localDb.localSpots,
+      )..where((tbl) => tbl.id.equals(id))).go();
+    } on PostgrestException catch (e) {
+      throw Exception('Mera silinemedi: ${e.message}');
+    } catch (e) {
+      throw Exception('Mera silinemedi: $e');
+    }
+  }
+
+  /// Yerel cache'deki mera kayıtlarını döner.
   Future<List<SpotModel>> getCachedSpots() async {
     final rows = await _localDb.select(_localDb.localSpots).get();
     return rows
@@ -100,6 +140,7 @@ class SpotRepository {
         .toList();
   }
 
+  /// Uzak kaynaktan gelen mera listesini local cache'e yazar.
   Future<void> _cacheSpots(List<SpotModel> spots) async {
     if (spots.isEmpty) return;
     await _localDb.batch((batch) {

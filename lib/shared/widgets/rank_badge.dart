@@ -44,10 +44,7 @@ class _RankBadgeState extends State<RankBadge>
     final cfg = _badgeConfig(widget.rank, widget.size);
 
     final child = _isDenizReisi
-        ? _DenizReisiShimmerBadge(
-            controller: _controller,
-            child: cfg.child,
-          )
+        ? _DenizReisiShimmerBadge(controller: _controller, child: cfg.child)
         : cfg.child;
 
     return child;
@@ -156,10 +153,7 @@ class _RankBadgeState extends State<RankBadge>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            emoji,
-            style: TextStyle(fontSize: iconSize),
-          ),
+          Text(emoji, style: TextStyle(fontSize: iconSize)),
           const SizedBox(width: 8),
           Text(
             text,
@@ -236,4 +230,3 @@ class _BadgeConfig {
     required this.child,
   });
 }
-

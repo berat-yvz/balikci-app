@@ -42,9 +42,7 @@ class UserRepository {
     try {
       await _db.from('users').update(updates).eq('id', userId);
     } on PostgrestException catch (e) {
-      throw Exception(
-        'Profil güncellenirken bir hata oluştu: ${e.message}',
-      );
+      throw Exception('Profil güncellenirken bir hata oluştu: ${e.message}');
     } catch (e) {
       throw Exception('Profil güncellenemedi: $e');
     }
@@ -64,8 +62,7 @@ class UserRepository {
           .select()
           .order('total_score', ascending: false)
           .limit(limit);
-      final users =
-          response.map<UserModel>(UserModel.fromJson).toList();
+      final users = response.map<UserModel>(UserModel.fromJson).toList();
 
       // Şimdilik bölge filtresi olmadığı için backend tarafında filtre yok.
       // Gelecekte kullanıcıya ait bölge bilgisi eklendiğinde burada
@@ -89,9 +86,7 @@ class UserRepository {
           .eq('following_id', userId);
       return (response as List).length;
     } on PostgrestException catch (e) {
-      throw Exception(
-        'Takipçi sayısı alınırken bir hata oluştu: ${e.message}',
-      );
+      throw Exception('Takipçi sayısı alınırken bir hata oluştu: ${e.message}');
     } catch (e) {
       throw Exception('Takipçi sayısı alınamadı: $e');
     }
@@ -117,9 +112,7 @@ class UserRepository {
   /// Mevcut kullanımları korumak için FCM token güncelleme yardımcı metodu.
   Future<void> updateFcmToken(String userId, String token) async {
     try {
-      await _db
-          .from('users')
-          .update({'fcm_token': token}).eq('id', userId);
+      await _db.from('users').update({'fcm_token': token}).eq('id', userId);
     } on PostgrestException catch (e) {
       throw Exception(
         'Bildirim anahtarı güncellenirken bir hata oluştu: ${e.message}',
@@ -129,4 +122,3 @@ class UserRepository {
     }
   }
 }
-

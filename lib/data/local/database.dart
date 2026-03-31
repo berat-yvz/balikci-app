@@ -17,20 +17,18 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async => m.createAll(),
-        onUpgrade: (m, from, to) async {
-          if (from < 2) {
-            // LocalSpots: fishing_spots cache alanlari ile hizala
-            await m.addColumn(localSpots, localSpots.verified);
-            await m.addColumn(localSpots, localSpots.muhtarId);
-            await m.addColumn(localSpots, localSpots.cachedAt);
-          }
-        },
-      );
+    onCreate: (m) async => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        // LocalSpots: fishing_spots cache alanlari ile hizala
+        await m.addColumn(localSpots, localSpots.verified);
+        await m.addColumn(localSpots, localSpots.muhtarId);
+        await m.addColumn(localSpots, localSpots.cachedAt);
+      }
+    },
+  );
 }
 
 QueryExecutor _openConnection() {
-  return driftDatabase(
-    name: 'balikci_app.db',
-  );
+  return driftDatabase(name: 'balikci_app.db');
 }

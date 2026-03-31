@@ -12,11 +12,7 @@ class StepFirstSpot extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.anchor,
-            size: 80,
-            color: AppColors.primary,
-          ),
+          const Icon(Icons.anchor, size: 80, color: AppColors.primary),
           const SizedBox(height: 32),
           const Text(
             'Balıkçı Topluluğuna Hoş Geldin!',
@@ -30,14 +26,16 @@ class StepFirstSpot extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 48),
-          
+
           // Rütbe Bilgileri Panosu
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.primaryLight.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.2),
+              ),
             ),
             child: const Column(
               children: [
@@ -52,7 +50,7 @@ class StepFirstSpot extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-          
+
           ElevatedButton(
             onPressed: () async {
               await onFinish?.call();

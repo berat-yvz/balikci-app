@@ -39,9 +39,7 @@ class FollowRepository {
           .eq('follower_id', currentUserId)
           .eq('following_id', targetUserId);
     } on PostgrestException catch (e) {
-      throw Exception(
-        'Takipten çıkılırken bir hata oluştu: ${e.message}',
-      );
+      throw Exception('Takipten çıkılırken bir hata oluştu: ${e.message}');
     } catch (e) {
       throw Exception('Takipten çıkılamadı: $e');
     }
@@ -60,9 +58,7 @@ class FollowRepository {
           .limit(1);
       return (response as List).isNotEmpty;
     } on PostgrestException catch (e) {
-      throw Exception(
-        'Takip durumu alınırken bir hata oluştu: ${e.message}',
-      );
+      throw Exception('Takip durumu alınırken bir hata oluştu: ${e.message}');
     } catch (e) {
       throw Exception('Takip durumu alınamadı: $e');
     }
@@ -104,4 +100,3 @@ class FollowRepository {
     }
   }
 }
-

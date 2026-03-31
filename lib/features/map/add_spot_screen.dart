@@ -218,10 +218,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
                   isExpanded: true,
                   items: _types
                       .map(
-                        (e) => DropdownMenuItem(
-                          value: e.$1,
-                          child: Text(e.$2),
-                        ),
+                        (e) => DropdownMenuItem(value: e.$1, child: Text(e.$2)),
                       )
                       .toList(),
                   onChanged: (v) {

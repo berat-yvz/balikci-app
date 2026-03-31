@@ -3,29 +3,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/models/fish_log_model.dart';
 
+// cleaned: duplicate sorgu azaltıldı ve public API belgeleri netleştirildi
+
 /// Balık günlüğü repository — Supabase `fish_logs` tablosu.
 class FishLogRepository {
   final SupabaseClient _db = SupabaseService.client;
 
+  /// Kullanıcının günlük kayıtlarını varsayılan limit ile döner.
   Future<List<FishLogModel>> getMyLogs(String userId) async {
-    try {
-      final response = await _db
-          .from('fish_logs')
-          .select()
-          .eq('user_id', userId)
-          .order('created_at', ascending: false);
-      return response
-          .map<FishLogModel>(FishLogModel.fromJson)
-          .toList();
-    } on PostgrestException catch (e) {
-      throw Exception(
-        'Günlük kayıtları alınırken bir hata oluştu: ${e.message}',
-      );
-    } catch (e) {
-      throw Exception('Günlük kayıtları alınamadı: $e');
-    }
+    return getLogs(userId, limit: 10000);
   }
 
+  /// Yeni bir balık günlüğü kaydı oluşturur.
   Future<FishLogModel> createLog({
     required String userId,
     String? spotId,
@@ -54,8 +43,11 @@ class FishLogRepository {
     }
 
     try {
-      final response =
-          await _db.from('fish_logs').insert(data).select().single();
+      final response = await _db
+          .from('fish_logs')
+          .insert(data)
+          .select()
+          .single();
       return FishLogModel.fromJson(response);
     } on PostgrestException catch (e) {
       throw Exception(
@@ -66,10 +58,8 @@ class FishLogRepository {
     }
   }
 
-  Future<List<FishLogModel>> getLogs(
-    String userId, {
-    int limit = 50,
-  }) async {
+  /// Kullanıcının günlük kayıtlarını tarih sırasına göre döner.
+  Future<List<FishLogModel>> getLogs(String userId, {int limit = 50}) async {
     try {
       final response = await _db
           .from('fish_logs')
@@ -77,18 +67,15 @@ class FishLogRepository {
           .eq('user_id', userId)
           .order('created_at', ascending: false)
           .limit(limit);
-      return response
-          .map<FishLogModel>(FishLogModel.fromJson)
-          .toList();
+      return response.map<FishLogModel>(FishLogModel.fromJson).toList();
     } on PostgrestException catch (e) {
-      throw Exception(
-        'Günlük listesi alınırken bir hata oluştu: ${e.message}',
-      );
+      throw Exception('Günlük listesi alınırken bir hata oluştu: ${e.message}');
     } catch (e) {
       throw Exception('Günlük listesi alınamadı: $e');
     }
   }
 
+  /// Mevcut günlük kaydını günceller.
   Future<void> updateLog(String id, Map<String, dynamic> updates) async {
     try {
       await _db.from('fish_logs').update(updates).eq('id', id);
@@ -101,13 +88,12 @@ class FishLogRepository {
     }
   }
 
+  /// Günlük kaydını siler.
   Future<void> deleteLog(String id) async {
     try {
       await _db.from('fish_logs').delete().eq('id', id);
     } on PostgrestException catch (e) {
-      throw Exception(
-        'Günlük kaydı silinirken bir hata oluştu: ${e.message}',
-      );
+      throw Exception('Günlük kaydı silinirken bir hata oluştu: ${e.message}');
     } catch (e) {
       throw Exception('Günlük kaydı silinemedi: $e');
     }
@@ -175,4 +161,3 @@ class FishLogRepository {
     }
   }
 }
-

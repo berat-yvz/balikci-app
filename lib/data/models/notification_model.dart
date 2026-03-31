@@ -32,4 +32,3 @@ class NotificationModel {
         createdAt: DateTime.parse(json['created_at'] as String),
       );
 }
-

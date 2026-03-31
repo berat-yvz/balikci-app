@@ -20,9 +20,7 @@ class LocationService {
     if (permission == LocationPermission.deniedForever) return null;
 
     return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-      ),
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
   }
 

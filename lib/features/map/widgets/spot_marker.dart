@@ -110,10 +110,7 @@ class _SpotMarkerState extends State<SpotMarker>
                       ),
                       if (isVip) ...[
                         const SizedBox(width: 2),
-                        const Text(
-                          '⭐',
-                          style: TextStyle(fontSize: 12),
-                        ),
+                        const Text('⭐', style: TextStyle(fontSize: 12)),
                       ],
                     ],
                   ),
@@ -129,10 +126,26 @@ class _SpotMarkerState extends State<SpotMarker>
     if (stale) {
       marker = ColorFiltered(
         colorFilter: const ColorFilter.matrix(<double>[
-          0.2126, 0.7152, 0.0722, 0, 0,
-          0.2126, 0.7152, 0.0722, 0, 0,
-          0.2126, 0.7152, 0.0722, 0, 0,
-          0, 0, 0, 1, 0,
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0.2126,
+          0.7152,
+          0.0722,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
         ]),
         child: marker,
       );
@@ -161,7 +174,7 @@ class _SpotMarkerState extends State<SpotMarker>
                     color: Colors.black.withValues(alpha: 0.25),
                     blurRadius: 10,
                     offset: const Offset(0, 6),
-                  )
+                  ),
                 ],
               ),
               child: Text(
@@ -224,22 +237,8 @@ class _TeardropMarkerPainter extends CustomPainter {
     final bottom = Offset(w / 2, h * 0.92);
 
     body.moveTo(top.dx, top.dy);
-    body.cubicTo(
-      w * 0.92,
-      h * 0.18,
-      w * 0.96,
-      h * 0.62,
-      bottom.dx,
-      bottom.dy,
-    );
-    body.cubicTo(
-      w * 0.04,
-      h * 0.62,
-      w * 0.08,
-      h * 0.18,
-      top.dx,
-      top.dy,
-    );
+    body.cubicTo(w * 0.92, h * 0.18, w * 0.96, h * 0.62, bottom.dx, bottom.dy);
+    body.cubicTo(w * 0.04, h * 0.62, w * 0.08, h * 0.18, top.dx, top.dy);
     body.close();
 
     final shadow = Paint()

@@ -392,10 +392,13 @@ class _OnboardingPage extends StatelessWidget {
                                   onPressed: onSecondary,
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(
-                                      color: Colors.white.withValues(alpha: 0.18),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.18,
+                                      ),
                                     ),
-                                    foregroundColor:
-                                        AppColors.foam.withValues(alpha: 0.90),
+                                    foregroundColor: AppColors.foam.withValues(
+                                      alpha: 0.90,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -563,8 +566,11 @@ class _BellRipplePainter extends CustomPainter {
       height: h * 0.28,
     );
     canvas.drawArc(rect, math.pi, math.pi, false, bellPaint);
-    canvas.drawLine(Offset(rect.left, rect.bottom),
-        Offset(rect.right, rect.bottom), bellPaint);
+    canvas.drawLine(
+      Offset(rect.left, rect.bottom),
+      Offset(rect.right, rect.bottom),
+      bellPaint,
+    );
     canvas.drawCircle(
       c.translate(0, 28),
       6,
@@ -591,9 +597,7 @@ class _FishingHeroIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _FishingHeroPainter(),
-    );
+    return CustomPaint(painter: _FishingHeroPainter());
   }
 }
 
@@ -605,15 +609,18 @@ class _FishingHeroPainter extends CustomPainter {
 
     // Horizon glow
     final glow = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          AppColors.sand.withValues(alpha: 0.12),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromCircle(
-        center: Offset(w * 0.55, h * 0.35),
-        radius: h * 0.7,
-      ));
+      ..shader =
+          RadialGradient(
+            colors: [
+              AppColors.sand.withValues(alpha: 0.12),
+              Colors.transparent,
+            ],
+          ).createShader(
+            Rect.fromCircle(
+              center: Offset(w * 0.55, h * 0.35),
+              radius: h * 0.7,
+            ),
+          );
     canvas.drawRect(Offset.zero & size, glow);
 
     // Sea line

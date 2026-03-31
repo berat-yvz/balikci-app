@@ -40,19 +40,19 @@ class WeatherModel {
   double get windKmh => (windspeed ?? 0).toDouble();
 
   factory WeatherModel.fromJson(Map<String, dynamic> json) => WeatherModel(
-        id: json['id'] as String,
-        lat: (json['lat'] as num).toDouble(),
-        lng: (json['lng'] as num).toDouble(),
-        temperature: (json['temperature'] as num?)?.toDouble(),
-        windspeed: (json['windspeed'] as num?)?.toDouble(),
-        windDirection: json['wind_direction'] as int?,
-        waveHeight: (json['wave_height'] as num?)?.toDouble(),
-        seaSurfaceTemperature:
-            (json['sea_surface_temperature'] as num?)?.toDouble(),
-        precipitation: (json['precipitation'] as num?)?.toDouble(),
-        weatherCode: json['weather_code'] as int?,
-        fishingSummary: json['fishing_summary'] as String?,
-        fetchedAt: DateTime.parse(json['fetched_at'] as String),
-        regionKey: json['region_key'] as String?,
-      );
+    id: json['id'] as String,
+    lat: (json['lat'] as num).toDouble(),
+    lng: (json['lng'] as num).toDouble(),
+    temperature: (json['temperature'] as num?)?.toDouble(),
+    windspeed: (json['windspeed'] as num?)?.toDouble(),
+    windDirection: json['wind_direction'] as int?,
+    waveHeight: (json['wave_height'] as num?)?.toDouble(),
+    seaSurfaceTemperature: (json['sea_surface_temperature'] as num?)
+        ?.toDouble(),
+    precipitation: (json['precipitation'] as num?)?.toDouble(),
+    weatherCode: json['weather_code'] as int?,
+    fishingSummary: json['fishing_summary'] as String?,
+    fetchedAt: DateTime.parse(json['fetched_at'] as String),
+    regionKey: json['region_key'] as String?,
+  );
 }

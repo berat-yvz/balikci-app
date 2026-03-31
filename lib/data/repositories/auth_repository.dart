@@ -89,28 +89,30 @@ class AuthRepository {
 
   Future<void> ensureUserProfile(User user) async {
     try {
-      final existing =
-          await _db.from('users').select('id').eq('id', user.id).maybeSingle();
+      final existing = await _db
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
       if (existing != null) return;
 
       final email = user.email ?? '';
       final metaUser = user.userMetadata?['username'] as String?;
       var username = metaUser?.trim();
       if (username == null || username.isEmpty) {
-        username =
-            email.contains('@') ? email.split('@').first : 'user';
+        username = email.contains('@') ? email.split('@').first : 'user';
       }
       username = _sanitizeUsername(username);
       if (username.length < 3) username = 'user';
       final idShort = user.id.replaceAll('-', '');
-      final suffix =
-          idShort.length >= 8 ? idShort.substring(0, 8) : idShort.padRight(8, '0');
+      final suffix = idShort.length >= 8
+          ? idShort.substring(0, 8)
+          : idShort.padRight(8, '0');
       username = '${username}_$suffix';
 
       await _db.from('users').insert({
         'id': user.id,
-        'email':
-            email.isNotEmpty ? email : '$username@oauth.local',
+        'email': email.isNotEmpty ? email : '$username@oauth.local',
         'username': username,
         'created_at': DateTime.now().toIso8601String(),
       });
@@ -198,7 +200,8 @@ class AuthRepository {
       return 'Geçersiz email adresi';
     }
 
-    if (lower.contains('duplicate key') || lower.contains('unique constraint')) {
+    if (lower.contains('duplicate key') ||
+        lower.contains('unique constraint')) {
       return 'Bu kullanıcı adı veya e-posta zaten kayıtlı';
     }
 

@@ -39,11 +39,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       final email = _emailController.text.trim();
       final password = _passwordController.text;
 
-      await ref.read(authNotifierProvider.notifier).signUp(
-            email,
-            password,
-            username,
-          );
+      await ref
+          .read(authNotifierProvider.notifier)
+          .signUp(email, password, username);
 
       if (!mounted || ref.read(authNotifierProvider).hasError) return;
 
@@ -131,8 +129,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       if (value == null || value.trim().isEmpty) {
                         return 'E-posta boş olamaz';
                       }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                          .hasMatch(value)) {
+                      if (!RegExp(
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                      ).hasMatch(value)) {
                         return 'Geçerli bir e-posta girin';
                       }
                       return null;

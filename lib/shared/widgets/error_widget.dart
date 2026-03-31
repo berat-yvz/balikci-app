@@ -22,8 +22,11 @@ class AppErrorWidget extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, size: 56, color: AppColors.danger),
             const SizedBox(height: 16),
-            Text(message,
-                style: AppTextStyles.body, textAlign: TextAlign.center),
+            Text(
+              message,
+              style: AppTextStyles.body,
+              textAlign: TextAlign.center,
+            ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
               ElevatedButton.icon(

@@ -9,23 +9,27 @@ import 'package:balikci_app/data/models/fish_log_model.dart';
 import 'package:balikci_app/data/repositories/fish_log_repository.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 
+// cleaned: liste/istatistik provider'larına autoDispose eklendi, read/watch sadeleştirildi
+
 /// FishLogRepository provider.
 final fishLogRepositoryProvider = Provider<FishLogRepository>((ref) {
   return FishLogRepository();
 });
 
 /// Giriş yapmış kullanıcının günlük kayıtları.
-final myFishLogsProvider =
-    FutureProvider<List<FishLogModel>>((ref) async {
+final myFishLogsProvider = FutureProvider.autoDispose<List<FishLogModel>>((
+  ref,
+) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return const [];
-  final repo = ref.watch(fishLogRepositoryProvider);
+  final repo = ref.read(fishLogRepositoryProvider);
   return repo.getLogs(user.id, limit: AppConstants.pageSize * 3);
 });
 
 /// Giriş yapmış kullanıcının günlük istatistikleri.
-final fishLogStatsProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {
+final fishLogStatsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
+  ref,
+) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) {
     return {
@@ -35,7 +39,7 @@ final fishLogStatsProvider =
       'totalWeightKg': 0.0,
     };
   }
-  final repo = ref.watch(fishLogRepositoryProvider);
+  final repo = ref.read(fishLogRepositoryProvider);
   return repo.getStats(user.id);
 });
 
@@ -68,8 +72,7 @@ class FishLogNotifier extends AsyncNotifier<void> {
       // Opsiyonel fotoğraf seçimi
       String? photoPathInBucket;
 
-      final pickedFile =
-          await _picker.pickImage(source: ImageSource.gallery);
+      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
         final file = File(pickedFile.path);
         final fileSize = await file.length();
@@ -80,10 +83,8 @@ class FishLogNotifier extends AsyncNotifier<void> {
         }
 
         final ext = pickedFile.path.split('.').last.toLowerCase();
-        final fileName =
-            '${DateTime.now().millisecondsSinceEpoch}.$ext';
-        final storagePath =
-            'fish_logs/${user.id}/$fileName';
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}.$ext';
+        final storagePath = 'fish_logs/${user.id}/$fileName';
 
         await SupabaseService.storage
             .from(AppConstants.photoBucket)
@@ -123,6 +124,6 @@ class FishLogNotifier extends AsyncNotifier<void> {
   }
 }
 
-final fishLogNotifierProvider =
-    AsyncNotifierProvider<FishLogNotifier, void>(FishLogNotifier.new);
-
+final fishLogNotifierProvider = AsyncNotifierProvider<FishLogNotifier, void>(
+  FishLogNotifier.new,
+);

@@ -18,13 +18,30 @@ class ExifBadge extends StatelessWidget {
     final fail = exifVerified == false;
 
     final (bg, fg, icon, text) = switch (true) {
-      _ when pending =>
-        (AppColors.primaryLight, AppColors.primary, '⏳', 'EXIF doğrulanıyor...'),
-      _ when ok =>
-        (Colors.green.withValues(alpha: 0.16), Colors.green.shade800, '✅', 'EXIF doğrulandı (+bonus puan)'),
-      _ when fail =>
-        (AppColors.danger.withValues(alpha: 0.14), AppColors.danger, '❌', 'EXIF eşleşmedi'),
-      _ => (AppColors.primaryLight, AppColors.primary, '⏳', 'EXIF doğrulanıyor...'),
+      _ when pending => (
+        AppColors.primaryLight,
+        AppColors.primary,
+        '⏳',
+        'EXIF doğrulanıyor...',
+      ),
+      _ when ok => (
+        Colors.green.withValues(alpha: 0.16),
+        Colors.green.shade800,
+        '✅',
+        'EXIF doğrulandı (+bonus puan)',
+      ),
+      _ when fail => (
+        AppColors.danger.withValues(alpha: 0.14),
+        AppColors.danger,
+        '❌',
+        'EXIF eşleşmedi',
+      ),
+      _ => (
+        AppColors.primaryLight,
+        AppColors.primary,
+        '⏳',
+        'EXIF doğrulanıyor...',
+      ),
     };
 
     return Container(
@@ -37,10 +54,7 @@ class ExifBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            icon,
-            style: const TextStyle(fontSize: 16),
-          ),
+          Text(icon, style: const TextStyle(fontSize: 16)),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
@@ -57,4 +71,3 @@ class ExifBadge extends StatelessWidget {
     );
   }
 }
-

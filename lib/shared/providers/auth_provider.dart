@@ -72,7 +72,10 @@ class AuthNotifier extends AsyncNotifier<User?> {
       state = AsyncData(user); // Başarılıysa kullanıcıyı state'e yaz
     } catch (e, stackTrace) {
       if (e is AuthException) {
-        state = AsyncError(e.message, stackTrace); // AuthException ise mesajı doğrudan al
+        state = AsyncError(
+          e.message,
+          stackTrace,
+        ); // AuthException ise mesajı doğrudan al
       } else {
         state = AsyncError(e.toString(), stackTrace); // Diğer hatalar
       }
@@ -126,5 +129,6 @@ class AuthNotifier extends AsyncNotifier<User?> {
 }
 
 /// [AuthNotifier] state'ini ve metodlarını UI'a bağlamak için kullanılan provider.
-final authNotifierProvider =
-    AsyncNotifierProvider<AuthNotifier, User?>(AuthNotifier.new);
+final authNotifierProvider = AsyncNotifierProvider<AuthNotifier, User?>(
+  AuthNotifier.new,
+);

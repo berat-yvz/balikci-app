@@ -7,9 +7,7 @@ import 'package:balikci_app/data/models/notification_model.dart';
 class NotificationRepository {
   final SupabaseClient _db = SupabaseService.client;
 
-  Future<List<NotificationModel>> getMyNotifications({
-    int limit = 50,
-  }) async {
+  Future<List<NotificationModel>> getMyNotifications({int limit = 50}) async {
     final currentUserId = SupabaseService.auth.currentUser?.id;
     if (currentUserId == null) {
       throw Exception('Bildirimler için önce giriş yapmalısın.');
@@ -91,4 +89,3 @@ class NotificationRepository {
     }
   }
 }
-

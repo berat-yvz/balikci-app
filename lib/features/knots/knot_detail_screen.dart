@@ -16,9 +16,7 @@ class KnotDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Düğüm Detayı'),
-      ),
+      appBar: AppBar(title: const Text('Düğüm Detayı')),
       body: FutureBuilder<KnotModel?>(
         future: _fetchKnot(),
         builder: (context, snapshot) {
@@ -42,10 +40,7 @@ class KnotDetailScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  knot.name,
-                  style: AppTextStyles.h2,
-                ),
+                Text(knot.name, style: AppTextStyles.h2),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
@@ -58,7 +53,7 @@ class KnotDetailScreen extends ConsumerWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: _difficultyStars(knot.difficulty),
-                    )
+                    ),
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -81,10 +76,7 @@ class KnotDetailScreen extends ConsumerWidget {
                   ),
                 ],
                 const SizedBox(height: 16),
-                Text(
-                  'Adımlar',
-                  style: AppTextStyles.h3,
-                ),
+                Text('Adımlar', style: AppTextStyles.h3),
                 const SizedBox(height: 10),
                 ListView.separated(
                   physics: const NeverScrollableScrollPhysics(),
@@ -128,10 +120,7 @@ class KnotDetailScreen extends ConsumerWidget {
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Text(
-                              step,
-                              style: AppTextStyles.body,
-                            ),
+                            child: Text(step, style: AppTextStyles.body),
                           ),
                         ],
                       ),
@@ -175,4 +164,3 @@ class KnotDetailScreen extends ConsumerWidget {
     return [...filled, ...empty];
   }
 }
-

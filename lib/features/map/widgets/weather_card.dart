@@ -13,11 +13,7 @@ class WeatherCard extends StatelessWidget {
   final double lat;
   final double lng;
 
-  const WeatherCard({
-    super.key,
-    required this.lat,
-    required this.lng,
-  });
+  const WeatherCard({super.key, required this.lat, required this.lng});
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +50,7 @@ class WeatherCard extends StatelessWidget {
                 color: Colors.black.withValues(alpha: 0.06),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
-              )
+              ),
             ],
           ),
           child: Row(
@@ -107,8 +103,11 @@ class WeatherCard extends StatelessWidget {
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          const Icon(Icons.thermostat_outlined,
-                              size: 16, color: AppColors.secondary),
+                          const Icon(
+                            Icons.thermostat_outlined,
+                            size: 16,
+                            color: AppColors.secondary,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             '${w.tempCelsius.round()}°C',
@@ -118,8 +117,11 @@ class WeatherCard extends StatelessWidget {
                             ),
                           ),
                           const Spacer(),
-                          const Icon(Icons.air_outlined,
-                              size: 16, color: AppColors.secondary),
+                          const Icon(
+                            Icons.air_outlined,
+                            size: 16,
+                            color: AppColors.secondary,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             '${w.windKmh.round()} km/h',
@@ -163,9 +165,7 @@ class WeatherCard extends StatelessWidget {
       child: const Row(
         children: [
           SizedBox(width: 8),
-          Expanded(
-            child: LinearProgressIndicator(),
-          ),
+          Expanded(child: LinearProgressIndicator()),
         ],
       ),
     );
@@ -207,4 +207,3 @@ class WeatherCard extends StatelessWidget {
     );
   }
 }
-

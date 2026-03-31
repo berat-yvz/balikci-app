@@ -13,8 +13,7 @@ class LeaderboardScreen extends ConsumerStatefulWidget {
   const LeaderboardScreen({super.key});
 
   @override
-  ConsumerState<LeaderboardScreen> createState() =>
-      _LeaderboardScreenState();
+  ConsumerState<LeaderboardScreen> createState() => _LeaderboardScreenState();
 }
 
 class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
@@ -42,9 +41,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
     final asyncUsers = ref.watch(leaderboardProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Liderlik'),
-      ),
+      appBar: AppBar(title: const Text('Liderlik')),
       body: asyncUsers.when(
         data: (users) {
           if (!_controller.isAnimating) {
@@ -74,8 +71,8 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
                   itemBuilder: (context, idx) {
                     final user = rest[idx];
                     final rank = idx + 4;
-                    final highlight = currentUserId != null &&
-                        currentUserId == user.id;
+                    final highlight =
+                        currentUserId != null && currentUserId == user.id;
                     return _LeaderboardRow(
                       user: user,
                       rank: rank,
@@ -87,8 +84,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
             ],
           );
         },
-        loading: () =>
-            const LoadingWidget(message: 'Liderlik hesaplanıyor...'),
+        loading: () => const LoadingWidget(message: 'Liderlik hesaplanıyor...'),
         error: (e, _) => AppErrorWidget(
           message: e.toString(),
           onRetry: () => ref.invalidate(leaderboardProvider),
@@ -118,11 +114,7 @@ class _PodiumSection extends StatelessWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
-        Positioned.fill(
-          child: CustomPaint(
-            painter: _PodiumPainter(),
-          ),
-        ),
+        Positioned.fill(child: CustomPaint(painter: _PodiumPainter())),
         if (rank2 != null)
           _PodiumPerson(
             user: rank2,
@@ -221,14 +213,11 @@ class _PodiumPerson extends StatelessWidget {
                           color: Colors.black.withValues(alpha: 0.06),
                           blurRadius: 10,
                           offset: const Offset(0, 6),
-                        )
+                        ),
                       ],
                     ),
                     alignment: Alignment.center,
-                    child: RankBadge(
-                      rank: user.rank,
-                      size: badgeSize,
-                    ),
+                    child: RankBadge(rank: user.rank, size: badgeSize),
                   ),
                   // Kullanıcı foto/avatar yoksa bırakılır; sadece rozet.
                   SizedBox(
@@ -246,14 +235,12 @@ class _PodiumPerson extends StatelessWidget {
                 user.username,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.body.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w800),
               ),
             ),
             const SizedBox(height: 4),
             Text(
-            '${user.totalScore} puan',
+              '${user.totalScore} puan',
               style: AppTextStyles.caption.copyWith(
                 color: AppColors.muted,
                 fontWeight: FontWeight.w600,
@@ -282,7 +269,9 @@ class _LeaderboardRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: highlight ? AppColors.primary.withValues(alpha: 0.10) : Colors.white,
+        color: highlight
+            ? AppColors.primary.withValues(alpha: 0.10)
+            : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: highlight
             ? Border.all(color: AppColors.primary.withValues(alpha: 0.35))
@@ -310,10 +299,7 @@ class _LeaderboardRow extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            '${user.totalScore}',
-            style: AppTextStyles.h3,
-          ),
+          Text('${user.totalScore}', style: AppTextStyles.h3),
         ],
       ),
     );
@@ -346,7 +332,11 @@ class _PodiumPainter extends CustomPainter {
       ..color = Colors.black.withValues(alpha: 0.06)
       ..style = PaintingStyle.fill;
     canvas.drawOval(
-      Rect.fromCenter(center: center + const Offset(0, 8), width: 200, height: 44),
+      Rect.fromCenter(
+        center: center + const Offset(0, 8),
+        width: 200,
+        height: 44,
+      ),
       shadow,
     );
   }
@@ -354,4 +344,3 @@ class _PodiumPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-

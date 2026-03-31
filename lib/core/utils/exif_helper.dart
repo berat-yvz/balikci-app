@@ -97,7 +97,11 @@ class ExifHelper {
 
   /// Basit Öklid yaklaşımı (kısa mesafeler için yeterli).
   static double _approxDistanceKm(
-      double lat1, double lng1, double lat2, double lng2) {
+    double lat1,
+    double lng1,
+    double lat2,
+    double lng2,
+  ) {
     const degToKm = 111.0;
     final dLat = (lat1 - lat2) * degToKm;
     final dLng = (lng1 - lng2) * degToKm;

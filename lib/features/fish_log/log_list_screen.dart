@@ -111,11 +111,11 @@ class _LogListScreenState extends ConsumerState<LogListScreen> {
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: logs.length,
-              separatorBuilder: (context, index) =>
-                  const SizedBox(height: 12),
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final log = logs[index];
-                final exifStatus = _exifStatusByLogId[log.id] ?? log.exifVerified;
+                final exifStatus =
+                    _exifStatusByLogId[log.id] ?? log.exifVerified;
                 return _FishLogCard(
                   log: log,
                   exifStatus: log.photoUrl == null ? null : exifStatus,
@@ -145,10 +145,7 @@ class _FishLogCard extends StatelessWidget {
   final FishLogModel log;
   final bool? exifStatus;
 
-  const _FishLogCard({
-    required this.log,
-    required this.exifStatus,
-  });
+  const _FishLogCard({required this.log, required this.exifStatus});
 
   @override
   Widget build(BuildContext context) {
@@ -177,10 +174,7 @@ class _FishLogCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        log.species,
-                        style: AppTextStyles.h3,
-                      ),
+                      Text(log.species, style: AppTextStyles.h3),
                       const SizedBox(width: 8),
                       if (log.weight != null)
                         Text(
@@ -194,14 +188,13 @@ class _FishLogCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     dateStr,
-                    style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.muted,
+                    ),
                   ),
                   if (log.spotId != null) ...[
                     const SizedBox(height: 4),
-                    Text(
-                      'Mera: ${log.spotId}',
-                      style: AppTextStyles.caption,
-                    ),
+                    Text('Mera: ${log.spotId}', style: AppTextStyles.caption),
                   ],
                   if (exifStatus != null) ...[
                     const SizedBox(height: 10),
@@ -251,4 +244,3 @@ class _FishLogCard extends StatelessWidget {
     );
   }
 }
-

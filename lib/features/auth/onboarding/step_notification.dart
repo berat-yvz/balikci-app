@@ -50,7 +50,8 @@ class _StepNotificationState extends State<StepNotification>
 
   Future<void> _refreshFromOs() async {
     try {
-      final settings = await FirebaseMessaging.instance.getNotificationSettings();
+      final settings = await FirebaseMessaging.instance
+          .getNotificationSettings();
       if (!mounted) return;
       setState(() => _authorizationStatus = settings.authorizationStatus);
     } catch (_) {
@@ -85,8 +86,8 @@ class _StepNotificationState extends State<StepNotification>
       if (!mounted) return;
       setState(() => _authorizationStatus = settings.authorizationStatus);
 
-      final granted = settings.authorizationStatus ==
-              AuthorizationStatus.authorized ||
+      final granted =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional;
 
       if (granted) {
@@ -95,7 +96,9 @@ class _StepNotificationState extends State<StepNotification>
         } catch (e) {
           messenger?.showSnackBar(
             SnackBar(
-              content: Text('Bildirim izni tamam, ancak token kaydedilemedi: $e'),
+              content: Text(
+                'Bildirim izni tamam, ancak token kaydedilemedi: $e',
+              ),
               backgroundColor: AppColors.danger,
               duration: const Duration(seconds: 4),
             ),
@@ -140,11 +143,7 @@ class _StepNotificationState extends State<StepNotification>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.notifications,
-            size: 80,
-            color: AppColors.primary,
-          ),
+          const Icon(Icons.notifications, size: 80, color: AppColors.primary),
           const SizedBox(height: 32),
           const Text(
             'Balık Haberlerini Kaçırma',

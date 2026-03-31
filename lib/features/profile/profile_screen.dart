@@ -39,9 +39,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final isViewingOther = widget.userId != null && viewedUserId != null;
 
     if (viewedUserId == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final profileAsync = isSelf
@@ -53,15 +51,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         : null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil'),
-      ),
+      appBar: AppBar(title: const Text('Profil')),
       body: profileAsync.when(
         data: (user) {
           if (user == null) {
-            return const Center(
-              child: Text('Kullanıcı bulunamadı.'),
-            );
+            return const Center(child: Text('Kullanıcı bulunamadı.'));
           }
 
           return _ProfileContent(
@@ -75,9 +69,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 : null,
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Text(
             'Profil yüklenemedi: $e',
@@ -100,8 +92,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> _pickAndUploadAvatar(UserModel user) async {
     setState(() => _uploadingAvatar = true);
     try {
-      final picked =
-          await _imagePicker.pickImage(source: ImageSource.gallery);
+      final picked = await _imagePicker.pickImage(source: ImageSource.gallery);
       if (picked == null) return;
 
       final file = File(picked.path);
@@ -121,10 +112,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           .upload(storagePath, file);
 
       final repo = ref.read(userRepositoryProvider);
-      await repo.updateProfile(
-        userId: user.id,
-        avatarUrl: storagePath,
-      );
+      await repo.updateProfile(userId: user.id, avatarUrl: storagePath);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -223,15 +211,9 @@ class _ProfileContent extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  user.username,
-                  style: AppTextStyles.h2,
-                ),
+                Text(user.username, style: AppTextStyles.h2),
                 const SizedBox(height: 8),
-                RankBadge(
-                  rank: user.rank,
-                  size: RankBadgeSize.large,
-                ),
+                RankBadge(rank: user.rank, size: RankBadgeSize.large),
               ],
             ),
           ),
@@ -307,9 +289,7 @@ class _ProfileContent extends ConsumerWidget {
                       icon: Icon(
                         following ? Icons.person_remove : Icons.person_add,
                       ),
-                      label: Text(
-                        following ? 'Takipten çık' : 'Takip et',
-                      ),
+                      label: Text(following ? 'Takipten çık' : 'Takip et'),
                     ),
                   );
                 },
@@ -350,11 +330,7 @@ class _ProfileContent extends ConsumerWidget {
     return '$base/storage/v1/object/public/$_avatarBucket/$avatarUrlOrPath';
   }
 
-  void _showExplanation(
-    BuildContext context,
-    String title,
-    String body,
-  ) {
+  void _showExplanation(BuildContext context, String title, String body) {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -487,10 +463,7 @@ class _RankProgress extends StatelessWidget {
   final String currentRank;
   final int totalScore;
 
-  const _RankProgress({
-    required this.currentRank,
-    required this.totalScore,
-  });
+  const _RankProgress({required this.currentRank, required this.totalScore});
 
   @override
   Widget build(BuildContext context) {
@@ -601,10 +574,7 @@ class _StatsRow extends ConsumerWidget {
   final String userId;
   final bool isSelf;
 
-  const _StatsRow({
-    required this.userId,
-    required this.isSelf,
-  });
+  const _StatsRow({required this.userId, required this.isSelf});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -705,4 +675,3 @@ class _StatBox extends StatelessWidget {
     );
   }
 }
-

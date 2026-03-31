@@ -57,14 +57,8 @@ class AppTextStyles {
     fontWeight: FontWeight.w700,
     fontFamily: _displayFamily,
   );
-  static const body = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w500,
-  );
-  static const caption = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w500,
-  );
+  static const body = TextStyle(fontSize: 15, fontWeight: FontWeight.w500);
+  static const caption = TextStyle(fontSize: 13, fontWeight: FontWeight.w500);
 }
 
 ThemeData buildAppTheme() {
@@ -160,10 +154,7 @@ ThemeData buildAppTheme() {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: AppColors.teal,
-          width: 2,
-        ),
+        borderSide: const BorderSide(color: AppColors.teal, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

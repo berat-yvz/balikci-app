@@ -31,8 +31,7 @@ class _StepLocationState extends State<StepLocation>
 
   static bool _permissionIsGranted(LocationPermission? p) {
     if (p == null) return false;
-    return p == LocationPermission.whileInUse ||
-        p == LocationPermission.always;
+    return p == LocationPermission.whileInUse || p == LocationPermission.always;
   }
 
   @override
@@ -217,11 +216,7 @@ class _StepLocationState extends State<StepLocation>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.location_on,
-            size: 80,
-            color: AppColors.primary,
-          ),
+          const Icon(Icons.location_on, size: 80, color: AppColors.primary),
           const SizedBox(height: 32),
           const Text(
             'Yakınındaki Meraları Gör',
@@ -236,7 +231,9 @@ class _StepLocationState extends State<StepLocation>
           ),
           const SizedBox(height: 48),
           ElevatedButton(
-            onPressed: (allowed || _busy) ? null : () => _requestLocationPermission(),
+            onPressed: (allowed || _busy)
+                ? null
+                : () => _requestLocationPermission(),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.secondary,
             ),

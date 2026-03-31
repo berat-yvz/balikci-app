@@ -41,7 +41,10 @@ class _VoteWidgetState extends State<VoteWidget> {
 
   Future<void> _loadMyExistingVote() async {
     try {
-      final vote = await _repo.getUserVote(widget.checkinId, widget.currentUserId);
+      final vote = await _repo.getUserVote(
+        widget.checkinId,
+        widget.currentUserId,
+      );
       if (!mounted) return;
       setState(() {
         _myVote = vote;

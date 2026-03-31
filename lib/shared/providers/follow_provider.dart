@@ -2,15 +2,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/data/repositories/follow_repository.dart';
 
+// cleaned: provider belgeleri iyileştirildi ve uygun yerde autoDispose eklendi
+
 /// FollowRepository singleton provider.
 final followRepositoryProvider = Provider<FollowRepository>((ref) {
   return FollowRepository();
 });
 
 /// Belirli bir kullanıcıyı şu anki kullanıcının takip edip etmediğini döner.
-final isFollowingProvider =
-    FutureProvider.family<bool, String>((ref, userId) async {
-  final repo = ref.watch(followRepositoryProvider);
+final isFollowingProvider = FutureProvider.autoDispose.family<bool, String>((
+  ref,
+  userId,
+) async {
+  final repo = ref.read(followRepositoryProvider);
   return repo.isFollowing(userId);
 });
 
@@ -47,6 +51,6 @@ class FollowNotifier extends AsyncNotifier<void> {
   }
 }
 
-final followNotifierProvider =
-    AsyncNotifierProvider<FollowNotifier, void>(FollowNotifier.new);
-
+final followNotifierProvider = AsyncNotifierProvider<FollowNotifier, void>(
+  FollowNotifier.new,
+);

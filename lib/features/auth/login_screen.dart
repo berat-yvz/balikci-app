@@ -11,6 +11,7 @@ import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/preferences_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
+  // cleaned: dialog doğrulaması ve async context kullanımı lint uyumlu hale getirildi
   const LoginScreen({super.key});
 
   @override
@@ -36,14 +37,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       vsync: this,
       duration: const Duration(milliseconds: 420),
     );
-    _shake = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0, end: -10), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: -10, end: 8), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 8, end: -6), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: -6, end: 4), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 4, end: -2), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: -2, end: 0), weight: 1),
-    ]).animate(CurvedAnimation(parent: _shakeController, curve: Curves.easeOut));
+    _shake = TweenSequence<double>(
+      [
+        TweenSequenceItem(tween: Tween(begin: 0, end: -10), weight: 1),
+        TweenSequenceItem(tween: Tween(begin: -10, end: 8), weight: 1),
+        TweenSequenceItem(tween: Tween(begin: 8, end: -6), weight: 1),
+        TweenSequenceItem(tween: Tween(begin: -6, end: 4), weight: 1),
+        TweenSequenceItem(tween: Tween(begin: 4, end: -2), weight: 1),
+        TweenSequenceItem(tween: Tween(begin: -2, end: 0), weight: 1),
+      ],
+    ).animate(CurvedAnimation(parent: _shakeController, curve: Curves.easeOut));
 
     _headerAnimController = AnimationController(
       vsync: this,
@@ -116,8 +119,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       ),
                       validator: (value) {
                         final text = value?.trim() ?? '';
-                        if (text.isEmpty) return 'E-posta boş bırakılamaz';
-                        if (!text.contains('@')) return 'Geçerli bir e-posta girin';
+                        if (text.isEmpty) {
+                          return 'E-posta boş bırakılamaz';
+                        }
+                        if (!text.contains('@')) {
+                          return 'Geçerli bir e-posta girin';
+                        }
                         return null;
                       },
                     ),
@@ -137,14 +144,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               ),
               actions: [
                 OutlinedButton(
-                  onPressed: sending ? null : () => Navigator.of(dialogContext).pop(),
+                  onPressed: sending
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
                   child: const Text('İptal'),
                 ),
                 ElevatedButton(
                   onPressed: sending
                       ? null
                       : () async {
-                          if (!(dialogFormKey.currentState?.validate() ?? false)) {
+                          if (!(dialogFormKey.currentState?.validate() ??
+                              false)) {
                             return;
                           }
                           setDialogState(() {
@@ -152,13 +162,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             dialogError = null;
                           });
                           try {
-                            await ref.read(authRepositoryProvider).resetPassword(
+                            await ref
+                                .read(authRepositoryProvider)
+                                .resetPassword(
                                   forgotEmailController.text.trim(),
                                 );
                             if (!mounted) return;
                             if (dialogContext.mounted) {
                               Navigator.of(dialogContext).pop();
                             }
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
@@ -169,7 +182,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             );
                           } catch (e) {
                             setDialogState(() {
-                              dialogError = e.toString().replaceFirst('Exception: ', '');
+                              dialogError = e.toString().replaceFirst(
+                                'Exception: ',
+                                '',
+                              );
                               sending = false;
                             });
                           }
@@ -377,9 +393,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                   ? null
                                   : () async {
                                       await ref
-                                          .read(
-                                            authNotifierProvider.notifier,
-                                          )
+                                          .read(authNotifierProvider.notifier)
                                           .signInWithGoogle();
                                       if (!context.mounted) return;
                                       if (ref
@@ -390,12 +404,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                       if (ref
                                           .read(authRepositoryProvider)
                                           .isLoggedIn()) {
-                                        final done =
-                                            ref.read(onboardingStateProvider);
-                                        context.go(done ? '/home' : '/onboarding');
+                                        final done = ref.read(
+                                          onboardingStateProvider,
+                                        );
+                                        context.go(
+                                          done ? '/home' : '/onboarding',
+                                        );
                                       } else {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           const SnackBar(
                                             content: Text(
                                               'Tarayıcıda Google ile girişi tamamlayın; '
@@ -414,8 +432,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
                   const SizedBox(height: 14),
                   TextButton(
-                    onPressed:
-                        authState.isLoading ? null : () => context.go('/register'),
+                    onPressed: authState.isLoading
+                        ? null
+                        : () => context.go('/register'),
                     style: TextButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
                       foregroundColor: AppColors.foam.withValues(alpha: 0.92),
@@ -446,9 +465,7 @@ class _LogoLockup extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.surface.withValues(alpha: 0.65),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.teal.withValues(alpha: 0.35),
-            ),
+            border: Border.all(color: AppColors.teal.withValues(alpha: 0.35)),
           ),
           child: const Icon(
             Icons.anchor_rounded,
@@ -494,9 +511,7 @@ class _FrostedCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.12),
-          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.30),
@@ -577,7 +592,9 @@ class _GoogleOutlineButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: Colors.white.withValues(alpha: 0.30)),
           foregroundColor: AppColors.foam,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -618,13 +635,16 @@ class _HeaderSeaPainter extends CustomPainter {
 
     // Soft glow
     final glowPaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          AppColors.teal.withValues(alpha: 0.18),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 1.0],
-      ).createShader(Rect.fromCircle(center: Offset(w * 0.7, h * 0.2), radius: h));
+      ..shader =
+          RadialGradient(
+            colors: [
+              AppColors.teal.withValues(alpha: 0.18),
+              Colors.transparent,
+            ],
+            stops: const [0.0, 1.0],
+          ).createShader(
+            Rect.fromCircle(center: Offset(w * 0.7, h * 0.2), radius: h),
+          );
     canvas.drawRect(Offset.zero & size, glowPaint);
 
     // Waves
@@ -664,5 +684,6 @@ class _HeaderSeaPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _HeaderSeaPainter oldDelegate) => oldDelegate.t != t;
+  bool shouldRepaint(covariant _HeaderSeaPainter oldDelegate) =>
+      oldDelegate.t != t;
 }

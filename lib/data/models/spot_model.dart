@@ -55,30 +55,30 @@ class SpotModel {
   }
 
   factory SpotModel.fromJson(Map<String, dynamic> json) => SpotModel(
-        id: json['id'] as String,
-        userId: json['user_id'] as String,
-        name: json['name'] as String,
-        lat: (json['lat'] as num).toDouble(),
-        lng: (json['lng'] as num).toDouble(),
-        type: json['type'] as String?,
-        privacyLevel: json['privacy_level'] as String? ?? 'public',
-        description: json['description'] as String?,
-        verified: json['verified'] as bool? ?? false,
-        muhtarId: json['muhtar_id'] as String?,
-        createdAt: DateTime.parse(json['created_at'] as String),
-      );
+    id: json['id'] as String,
+    userId: json['user_id'] as String,
+    name: json['name'] as String,
+    lat: (json['lat'] as num).toDouble(),
+    lng: (json['lng'] as num).toDouble(),
+    type: json['type'] as String?,
+    privacyLevel: json['privacy_level'] as String? ?? 'public',
+    description: json['description'] as String?,
+    verified: json['verified'] as bool? ?? false,
+    muhtarId: json['muhtar_id'] as String?,
+    createdAt: DateTime.parse(json['created_at'] as String),
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'user_id': userId,
-        'name': name,
-        'lat': lat,
-        'lng': lng,
-        'type': type,
-        'privacy_level': privacyLevel,
-        'description': description,
-        'verified': verified,
-        'muhtar_id': muhtarId,
-        'created_at': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'user_id': userId,
+    'name': name,
+    'lat': lat,
+    'lng': lng,
+    'type': type,
+    'privacy_level': privacyLevel,
+    'description': description,
+    'verified': verified,
+    'muhtar_id': muhtarId,
+    'created_at': createdAt.toIso8601String(),
+  };
 }

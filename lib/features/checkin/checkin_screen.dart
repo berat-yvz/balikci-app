@@ -70,7 +70,8 @@ class _CheckinScreenState extends State<CheckinScreen> {
     const r = 6371000.0; // meters
     final dLat = (lat2 - lat1) * (math.pi / 180.0);
     final dLng = (lng2 - lng1) * (math.pi / 180.0);
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(lat1 * (math.pi / 180.0)) *
             math.cos(lat2 * (math.pi / 180.0)) *
             math.sin(dLng / 2) *
@@ -235,133 +236,130 @@ class _CheckinScreenState extends State<CheckinScreen> {
     final canSubmit = !_loadingSpot && spot != null && !_submitting;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Check-in'),
-      ),
+      appBar: AppBar(title: const Text('Check-in')),
       body: _loadingSpot
           ? const Center(child: CircularProgressIndicator())
           : spot == null
-              ? const Center(child: Text('Mera bulunamadi.'))
-              : SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: ListView(
-                      children: [
-                        Text(
-                          spot.name,
-                          style: AppTextStyles.h2,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Konum dogrulama: GPS ±${AppConstants.checkinRadiusMeters}m',
-                          style: AppTextStyles.body,
-                        ),
-                        const SizedBox(height: 16),
-
-                        DropdownButtonFormField<String>(
-                          initialValue: _crowdLevel,
-                          decoration: const InputDecoration(
-                            labelText: 'Kalabalik (4 seviye)',
-                          ),
-                          items: const [
-                            DropdownMenuItem(value: 'yoğun', child: Text('Yogun')),
-                            DropdownMenuItem(value: 'normal', child: Text('Normal')),
-                            DropdownMenuItem(value: 'az', child: Text('Az')),
-                            DropdownMenuItem(value: 'boş', child: Text('Bos')),
-                          ],
-                          onChanged: (v) {
-                            if (v == null) return;
-                            setState(() => _crowdLevel = v);
-                          },
-                        ),
-                        const SizedBox(height: 12),
-
-                        DropdownButtonFormField<String>(
-                          initialValue: _fishDensity,
-                          decoration: const InputDecoration(
-                            labelText: 'Balik yogunlugu (4 seviye)',
-                          ),
-                          items: const [
-                            DropdownMenuItem(value: 'yoğun', child: Text('Yogun')),
-                            DropdownMenuItem(value: 'normal', child: Text('Normal')),
-                            DropdownMenuItem(value: 'az', child: Text('Az')),
-                            DropdownMenuItem(value: 'yok', child: Text('Yok')),
-                          ],
-                          onChanged: (v) {
-                            if (v == null) return;
-                            setState(() => _fishDensity = v);
-                          },
-                        ),
-
-                        const SizedBox(height: 16),
-                        OutlinedButton.icon(
-                          onPressed: _submitting ? null : _pickPhoto,
-                          icon: const Icon(Icons.photo_camera_outlined),
-                          label: const Text('Fotoğraf seç'),
-                        ),
-                        const SizedBox(height: 12),
-                        if (_pickedPhoto != null)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.file(
-                              File(_pickedPhoto!.path),
-                              height: 160,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        if (_pickedPhoto != null) const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: canSubmit ? _submitCheckin : null,
-                          child: _submitting
-                              ? const SizedBox(
-                                  height: 18,
-                                  width: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text('Konum dogrula ve check-in yap'),
-                        ),
-
-                        const SizedBox(height: 12),
-                        if (_createdCheckin != null) ...[
-                          Text(
-                            'Oylama',
-                            style: AppTextStyles.h3,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Bu check-in için Dogru/Yanlis oyu verin.',
-                            style: AppTextStyles.body,
-                          ),
-                          if (_pickedPhoto != null) ...[
-                            const SizedBox(height: 12),
-                            ExifBadge(exifVerified: _exifVerifiedStatus),
-                            const SizedBox(height: 12),
-                          ],
-                          const SizedBox(height: 12),
-                          VoteWidget(
-                            checkinId: _createdCheckin!.id,
-                            checkinOwnerId: _createdCheckin!.userId,
-                            initialVoteCounts: _voteCounts,
-                            currentUserId:
-                                SupabaseService.auth.currentUser!.id,
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-                        TextButton(
-                          onPressed: () {
-                            // Geri: route stack'inden çık.
-                            context.pop(false);
-                          },
-                          child: const Text('Iptal'),
-                        ),
-                      ],
+          ? const Center(child: Text('Mera bulunamadi.'))
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: ListView(
+                  children: [
+                    Text(spot.name, style: AppTextStyles.h2),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Konum dogrulama: GPS ±${AppConstants.checkinRadiusMeters}m',
+                      style: AppTextStyles.body,
                     ),
-                  ),
+                    const SizedBox(height: 16),
+
+                    DropdownButtonFormField<String>(
+                      initialValue: _crowdLevel,
+                      decoration: const InputDecoration(
+                        labelText: 'Kalabalik (4 seviye)',
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'yoğun', child: Text('Yogun')),
+                        DropdownMenuItem(
+                          value: 'normal',
+                          child: Text('Normal'),
+                        ),
+                        DropdownMenuItem(value: 'az', child: Text('Az')),
+                        DropdownMenuItem(value: 'boş', child: Text('Bos')),
+                      ],
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() => _crowdLevel = v);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    DropdownButtonFormField<String>(
+                      initialValue: _fishDensity,
+                      decoration: const InputDecoration(
+                        labelText: 'Balik yogunlugu (4 seviye)',
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'yoğun', child: Text('Yogun')),
+                        DropdownMenuItem(
+                          value: 'normal',
+                          child: Text('Normal'),
+                        ),
+                        DropdownMenuItem(value: 'az', child: Text('Az')),
+                        DropdownMenuItem(value: 'yok', child: Text('Yok')),
+                      ],
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() => _fishDensity = v);
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: _submitting ? null : _pickPhoto,
+                      icon: const Icon(Icons.photo_camera_outlined),
+                      label: const Text('Fotoğraf seç'),
+                    ),
+                    const SizedBox(height: 12),
+                    if (_pickedPhoto != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          File(_pickedPhoto!.path),
+                          height: 160,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    if (_pickedPhoto != null) const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: canSubmit ? _submitCheckin : null,
+                      child: _submitting
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Konum dogrula ve check-in yap'),
+                    ),
+
+                    const SizedBox(height: 12),
+                    if (_createdCheckin != null) ...[
+                      Text('Oylama', style: AppTextStyles.h3),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Bu check-in için Dogru/Yanlis oyu verin.',
+                        style: AppTextStyles.body,
+                      ),
+                      if (_pickedPhoto != null) ...[
+                        const SizedBox(height: 12),
+                        ExifBadge(exifVerified: _exifVerifiedStatus),
+                        const SizedBox(height: 12),
+                      ],
+                      const SizedBox(height: 12),
+                      VoteWidget(
+                        checkinId: _createdCheckin!.id,
+                        checkinOwnerId: _createdCheckin!.userId,
+                        initialVoteCounts: _voteCounts,
+                        currentUserId: SupabaseService.auth.currentUser!.id,
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                    TextButton(
+                      onPressed: () {
+                        // Geri: route stack'inden çık.
+                        context.pop(false);
+                      },
+                      child: const Text('Iptal'),
+                    ),
+                  ],
                 ),
+              ),
+            ),
     );
   }
 }

@@ -52,10 +52,12 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
     final notifier = ref.read(fishLogNotifierProvider.notifier);
 
     final species = _speciesController.text.trim();
-    final weight =
-        _weightController.text.trim().isEmpty ? null : double.tryParse(_weightController.text.trim());
-    final length =
-        _lengthController.text.trim().isEmpty ? null : double.tryParse(_lengthController.text.trim());
+    final weight = _weightController.text.trim().isEmpty
+        ? null
+        : double.tryParse(_weightController.text.trim());
+    final length = _lengthController.text.trim().isEmpty
+        ? null
+        : double.tryParse(_lengthController.text.trim());
     final notes = _notesController.text.trim().isEmpty
         ? null
         : _notesController.text.trim();
@@ -95,9 +97,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
     final isLoading = asyncState.isLoading;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Yeni Av Kaydı'),
-      ),
+      appBar: AppBar(title: const Text('Yeni Av Kaydı')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -107,9 +107,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
               children: [
                 Text(
                   '📸 Fotoğrafınız EXIF ile doğrulanacak. Konum ve tarih bilgisi puan hesabını etkiler.',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.muted,
-                  ),
+                  style: AppTextStyles.caption.copyWith(color: AppColors.muted),
                 ),
                 const SizedBox(height: 16),
                 Autocomplete<String>(
@@ -125,38 +123,36 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                   onSelected: (value) {
                     _speciesController.text = value;
                   },
-                  fieldViewBuilder: (
-                    context,
-                    controller,
-                    focusNode,
-                    onFieldSubmitted,
-                  ) {
-                    controller.text = _speciesController.text;
-                    controller.selection = TextSelection.fromPosition(
-                      TextPosition(offset: controller.text.length),
-                    );
-                    _speciesController
-                        .addListener(() => controller.text = _speciesController.text);
-                    return TextFormField(
-                      controller: _speciesController,
-                      focusNode: focusNode,
-                      decoration: const InputDecoration(
-                        labelText: 'Tür (Levrek, Çipura, Hamsi...)',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Lütfen balık türünü yaz.';
-                        }
-                        return null;
+                  fieldViewBuilder:
+                      (context, controller, focusNode, onFieldSubmitted) {
+                        controller.text = _speciesController.text;
+                        controller.selection = TextSelection.fromPosition(
+                          TextPosition(offset: controller.text.length),
+                        );
+                        _speciesController.addListener(
+                          () => controller.text = _speciesController.text,
+                        );
+                        return TextFormField(
+                          controller: _speciesController,
+                          focusNode: focusNode,
+                          decoration: const InputDecoration(
+                            labelText: 'Tür (Levrek, Çipura, Hamsi...)',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Lütfen balık türünü yaz.';
+                            }
+                            return null;
+                          },
+                        );
                       },
-                    );
-                  },
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _weightController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: const InputDecoration(
                     labelText: 'Ağırlık (kg)',
                     hintText: 'Örn: 1.2',
@@ -165,8 +161,9 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _lengthController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: const InputDecoration(
                     labelText: 'Boy (cm)',
                     hintText: 'Örn: 35',
@@ -198,9 +195,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                     setState(() => _released = v);
                   },
                   title: const Text('Balığı geri saldım'),
-                  subtitle: const Text(
-                    'Sürdürülebilirlik puanını arttırır.',
-                  ),
+                  subtitle: const Text('Sürdürülebilirlik puanını arttırır.'),
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -227,4 +222,3 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
     );
   }
 }
-

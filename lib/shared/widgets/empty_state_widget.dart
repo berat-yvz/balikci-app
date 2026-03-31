@@ -3,12 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:balikci_app/app/theme.dart';
 
-enum EmptyStateContext {
-  mapNoSpots,
-  noFishLogs,
-  noNotifications,
-  generic,
-}
+enum EmptyStateContext { mapNoSpots, noFishLogs, noNotifications, generic }
 
 /// Boş içerik durumu — offline-first, kompakt ve CTA'lı.
 ///
@@ -36,28 +31,28 @@ class EmptyStateWidget extends StatefulWidget {
     super.key,
     this.buttonLabel,
     this.onButtonPressed,
-  })  : contextType = EmptyStateContext.mapNoSpots,
-        title = 'Henüz mera yok',
-        subtitle = 'Henüz mera yok, ilk sen ekle!',
-        icon = Icons.place_outlined;
+  }) : contextType = EmptyStateContext.mapNoSpots,
+       title = 'Henüz mera yok',
+       subtitle = 'Henüz mera yok, ilk sen ekle!',
+       icon = Icons.place_outlined;
 
   const EmptyStateWidget.noFishLogs({
     super.key,
     this.buttonLabel,
     this.onButtonPressed,
-  })  : contextType = EmptyStateContext.noFishLogs,
-        title = 'İlk avını kaydet',
-        subtitle = 'İlk avını kaydet! Sonra istatistiklerini burada görürsün.',
-        icon = Icons.menu_book_outlined;
+  }) : contextType = EmptyStateContext.noFishLogs,
+       title = 'İlk avını kaydet',
+       subtitle = 'İlk avını kaydet! Sonra istatistiklerini burada görürsün.',
+       icon = Icons.menu_book_outlined;
 
   const EmptyStateWidget.noNotifications({
     super.key,
     this.buttonLabel,
     this.onButtonPressed,
-  })  : contextType = EmptyStateContext.noNotifications,
-        title = 'Henüz bildirim yok',
-        subtitle = 'Henüz bildirim yok. Yeni gelişmeler burada görünecek.',
-        icon = Icons.notifications_none;
+  }) : contextType = EmptyStateContext.noNotifications,
+       title = 'Henüz bildirim yok',
+       subtitle = 'Henüz bildirim yok. Yeni gelişmeler burada görünecek.',
+       icon = Icons.notifications_none;
 
   @override
   State<EmptyStateWidget> createState() => _EmptyStateWidgetState();
@@ -104,7 +99,7 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
                   color: Colors.black.withValues(alpha: 0.25),
                   blurRadius: 14,
                   offset: const Offset(0, 10),
-                )
+                ),
               ],
             ),
             child: Column(
@@ -157,8 +152,11 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(widget.icon,
-                          size: 18, color: AppColors.muted.withValues(alpha: 0.9)),
+                      Icon(
+                        widget.icon,
+                        size: 18,
+                        color: AppColors.muted.withValues(alpha: 0.9),
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'İpucu: yukarıdan yenile',
@@ -182,10 +180,7 @@ class _EmptyStatePainter extends CustomPainter {
   final double t; // 0..1
   final EmptyStateContext kind;
 
-  _EmptyStatePainter({
-    required this.t,
-    required this.kind,
-  });
+  _EmptyStatePainter({required this.t, required this.kind});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -319,7 +314,11 @@ class _EmptyStatePainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
     final r = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(w * 0.50, h * 0.44), width: 64, height: 44),
+      Rect.fromCenter(
+        center: Offset(w * 0.50, h * 0.44),
+        width: 64,
+        height: 44,
+      ),
       const Radius.circular(12),
     );
     final paint = Paint()
@@ -333,12 +332,20 @@ class _EmptyStatePainter extends CustomPainter {
     canvas.drawRRect(r, stroke);
   }
 
-  void _drawTextGlyph(Canvas canvas, Size size, String glyph,
-      {required double x, required double y}) {
+  void _drawTextGlyph(
+    Canvas canvas,
+    Size size,
+    String glyph, {
+    required double x,
+    required double y,
+  }) {
     final tp = TextPainter(
       text: TextSpan(
         text: glyph,
-        style: TextStyle(fontSize: 20, color: Colors.white.withValues(alpha: 0.65)),
+        style: TextStyle(
+          fontSize: 20,
+          color: Colors.white.withValues(alpha: 0.65),
+        ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();

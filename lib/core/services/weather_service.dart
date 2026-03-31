@@ -82,8 +82,10 @@ class WeatherService {
 
   /// Tüm cache kayıtlarını döner.
   static Future<List<WeatherModel>> getAllCaches() async {
-    final response =
-        await _db.from('weather_cache').select().order('fetched_at');
+    final response = await _db
+        .from('weather_cache')
+        .select()
+        .order('fetched_at');
     return response.map<WeatherModel>(WeatherModel.fromJson).toList();
   }
 
@@ -96,11 +98,13 @@ class WeatherService {
     const r = 6371.0;
     final dLat = _degToRad(lat2 - lat1);
     final dLng = _degToRad(lng2 - lng1);
-    final a = (MathHelpers.sin(dLat / 2) * MathHelpers.sin(dLat / 2)) +
+    final a =
+        (MathHelpers.sin(dLat / 2) * MathHelpers.sin(dLat / 2)) +
         MathHelpers.cos(_degToRad(lat1)) *
             MathHelpers.cos(_degToRad(lat2)) *
             (MathHelpers.sin(dLng / 2) * MathHelpers.sin(dLng / 2));
-    final c = 2 * MathHelpers.atan2(MathHelpers.sqrt(a), MathHelpers.sqrt(1 - a));
+    final c =
+        2 * MathHelpers.atan2(MathHelpers.sqrt(a), MathHelpers.sqrt(1 - a));
     return r * c;
   }
 

@@ -111,8 +111,7 @@ class _MapScreenState extends State<MapScreen> {
     // H5: Realtime ile check-in değişikliklerini yakalayacağız.
     // Polling sadece "solukluk/yaşlandırma" için (created_at tabanlı) çalışsın diye tutuluyor.
     _checkinPollTimer?.cancel();
-    _checkinPollTimer =
-        Timer.periodic(const Duration(seconds: 30), (_) async {
+    _checkinPollTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
       if (!mounted) return;
       setState(() {});
     });
@@ -325,7 +324,8 @@ class _MapScreenState extends State<MapScreen> {
     const r = 6371000.0; // meters
     final dLat = (lat2 - lat1) * (math.pi / 180.0);
     final dLng = (lng2 - lng1) * (math.pi / 180.0);
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(lat1 * (math.pi / 180.0)) *
             math.cos(lat2 * (math.pi / 180.0)) *
             math.sin(dLng / 2) *
@@ -400,11 +400,7 @@ class _MapScreenState extends State<MapScreen> {
             point: LatLng(shop.lat, shop.lng),
             width: 44,
             height: 44,
-            child: Icon(
-              Icons.storefront,
-              color: Colors.orange,
-              size: 32,
-            ),
+            child: Icon(Icons.storefront, color: Colors.orange, size: 32),
           ),
         )
         .toList();
@@ -485,7 +481,9 @@ class _MapScreenState extends State<MapScreen> {
 
     final weather = _spotWeather;
     final windKmh = weather != null ? weather.windKmh.round().toString() : '—';
-    final tempC = weather != null ? weather.tempCelsius.round().toString() : '—';
+    final tempC = weather != null
+        ? weather.tempCelsius.round().toString()
+        : '—';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -522,19 +520,12 @@ class _MapScreenState extends State<MapScreen> {
               ),
               children: [
                 TileLayer(
-                  urlTemplate:
-                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.balikciapp.balikci_app',
                   tileProvider: _tileProvider,
                 ),
-                if (_showWeatherOverlay)
-                  ColoredBox(
-                    color: Colors.transparent,
-                  ),
-                if (_showShops)
-                  MarkerLayer(
-                    markers: _buildShopMarkers(),
-                  ),
+                if (_showWeatherOverlay) ColoredBox(color: Colors.transparent),
+                if (_showShops) MarkerLayer(markers: _buildShopMarkers()),
                 if (_showSpots)
                   MarkerClusterLayerWidget(
                     options: MarkerClusterLayerOptions(
@@ -555,7 +546,7 @@ class _MapScreenState extends State<MapScreen> {
                                 color: Colors.black.withValues(alpha: 0.25),
                                 blurRadius: 10,
                                 offset: const Offset(0, 6),
-                              )
+                              ),
                             ],
                           ),
                           child: Center(
@@ -623,9 +614,7 @@ class _MapScreenState extends State<MapScreen> {
                                   child: TextField(
                                     controller: _searchController,
                                     focusNode: _searchFocusNode,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                    ),
+                                    style: const TextStyle(color: Colors.white),
                                     decoration: InputDecoration(
                                       hintText: _searchController.text.isEmpty
                                           ? 'Mera ara...'
@@ -675,13 +664,18 @@ class _MapScreenState extends State<MapScreen> {
                         child: _searchResults.isEmpty
                             ? const SizedBox.shrink()
                             : Container(
-                                margin: const EdgeInsets.only(top: 4, right: 64),
+                                margin: const EdgeInsets.only(
+                                  top: 4,
+                                  right: 64,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.black.withValues(alpha: 0.9),
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.4),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.4,
+                                      ),
                                       blurRadius: 20,
                                       offset: const Offset(0, 10),
                                     ),
@@ -691,7 +685,9 @@ class _MapScreenState extends State<MapScreen> {
                                     ? const Center(
                                         child: Text(
                                           'Sonuç bulunamadı',
-                                          style: TextStyle(color: Colors.white54),
+                                          style: TextStyle(
+                                            color: Colors.white54,
+                                          ),
                                         ),
                                       )
                                     : ListView.separated(
@@ -699,17 +695,21 @@ class _MapScreenState extends State<MapScreen> {
                                           vertical: 8,
                                           horizontal: 8,
                                         ),
-                                        itemCount:
-                                            _searchResults.length.clamp(0, 6),
-                                        separatorBuilder: (_, __) =>
+                                        itemCount: _searchResults.length.clamp(
+                                          0,
+                                          6,
+                                        ),
+                                        separatorBuilder: (_, _) =>
                                             const SizedBox(height: 4),
                                         itemBuilder: (context, idx) {
                                           final spot = _searchResults[idx];
                                           return InkWell(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                             onTap: () {
-                                              _searchController.text = spot.name;
+                                              _searchController.text =
+                                                  spot.name;
                                               _searchFocusNode.unfocus();
                                               _selectSpot(spot);
                                               setState(() {
@@ -719,9 +719,9 @@ class _MapScreenState extends State<MapScreen> {
                                             child: Padding(
                                               padding:
                                                   const EdgeInsets.symmetric(
-                                                vertical: 8,
-                                                horizontal: 10,
-                                              ),
+                                                    vertical: 8,
+                                                    horizontal: 10,
+                                                  ),
                                               child: Row(
                                                 children: [
                                                   const Icon(
@@ -738,43 +738,47 @@ class _MapScreenState extends State<MapScreen> {
                                                       children: [
                                                         Text(
                                                           spot.name,
-                                                          style: const TextStyle(
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                          ),
+                                                          style:
+                                                              const TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
                                                           maxLines: 1,
                                                           overflow: TextOverflow
                                                               .ellipsis,
                                                         ),
                                                         if (spot.type != null)
                                                           const SizedBox(
-                                                              height: 2),
+                                                            height: 2,
+                                                          ),
                                                         if (spot.type != null)
                                                           Container(
                                                             padding:
-                                                                const EdgeInsets
-                                                                    .symmetric(
-                                                              horizontal: 8,
-                                                              vertical: 3,
-                                                            ),
+                                                                const EdgeInsets.symmetric(
+                                                                  horizontal: 8,
+                                                                  vertical: 3,
+                                                                ),
                                                             decoration:
                                                                 BoxDecoration(
-                                                              color:
-                                                                  Colors.white12,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          999),
-                                                            ),
+                                                                  color: Colors
+                                                                      .white12,
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(
+                                                                        999,
+                                                                      ),
+                                                                ),
                                                             child: Text(
                                                               spot.type!,
                                                               style:
                                                                   const TextStyle(
-                                                                color: Colors
-                                                                    .white70,
-                                                                fontSize: 11,
-                                                              ),
+                                                                    color: Colors
+                                                                        .white70,
+                                                                    fontSize:
+                                                                        11,
+                                                                  ),
                                                             ),
                                                           ),
                                                       ],
@@ -782,8 +786,8 @@ class _MapScreenState extends State<MapScreen> {
                                                   ),
                                                   const SizedBox(width: 8),
                                                   _PrivacyChip(
-                                                      level:
-                                                          spot.privacyLevel),
+                                                    level: spot.privacyLevel,
+                                                  ),
                                                 ],
                                               ),
                                             ),
@@ -872,7 +876,7 @@ class _MapScreenState extends State<MapScreen> {
                           onPressed: () => context.push('/notifications'),
                           icon: badgeFor(0),
                         ),
-                        error: (_, __) => IconButton(
+                        error: (_, _) => IconButton(
                           tooltip: 'Bildirimler',
                           onPressed: () => context.push('/notifications'),
                           icon: badgeFor(0),
@@ -925,8 +929,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          if (_isLoading)
-            const Center(child: CircularProgressIndicator()),
+          if (_isLoading) const Center(child: CircularProgressIndicator()),
 
           // Alt: Draggable sheet
           Align(
@@ -998,7 +1001,8 @@ class _MapScreenState extends State<MapScreen> {
                             children: [
                               Expanded(
                                 child: _SheetPrimaryButton(
-                                  onPressed: () => _openCheckinForSpot(sheetSpot),
+                                  onPressed: () =>
+                                      _openCheckinForSpot(sheetSpot),
                                   icon: Icons.check_circle_outline,
                                   label: 'Check-in Yap',
                                 ),
@@ -1006,7 +1010,8 @@ class _MapScreenState extends State<MapScreen> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: _SheetSecondaryButton(
-                                  onPressed: () => _openDirectionsForSpot(sheetSpot),
+                                  onPressed: () =>
+                                      _openDirectionsForSpot(sheetSpot),
                                   icon: Icons.directions,
                                   label: 'Yol Tarifi',
                                 ),
@@ -1040,9 +1045,7 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          _EmptySheetHints(
-                            fishDensityTitle: fishDensityTitle,
-                          ),
+                          _EmptySheetHints(fishDensityTitle: fishDensityTitle),
                         ],
                       ],
                     ),
@@ -1227,7 +1230,7 @@ class _LayerToggleButton extends StatelessWidget {
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -1357,7 +1360,7 @@ class _ActivePulseCountState extends State<_ActivePulseCount>
                       color: AppColors.success.withValues(alpha: 0.45),
                       blurRadius: 10 * (0.4 + t),
                       spreadRadius: 1.0 + 2.0 * t,
-                    )
+                    ),
                   ],
                 ),
               )
@@ -1518,7 +1521,9 @@ class _SheetSecondaryButton extends StatelessWidget {
         ),
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );
@@ -1545,10 +1550,7 @@ class _RecentCheckinsRow extends StatelessWidget {
       children: [
         Text(
           'Son Check-in\'ler',
-          style: AppTextStyles.h3.copyWith(
-            color: AppColors.foam,
-            fontSize: 14,
-          ),
+          style: AppTextStyles.h3.copyWith(color: AppColors.foam, fontSize: 14),
         ),
         const SizedBox(height: 10),
         SizedBox(
@@ -1579,8 +1581,9 @@ class _RecentCheckinsRow extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 12,
-                      backgroundColor:
-                          AppColors.foam.withValues(alpha: active ? 0.18 : 0.10),
+                      backgroundColor: AppColors.foam.withValues(
+                        alpha: active ? 0.18 : 0.10,
+                      ),
                       child: Text(
                         '🎣',
                         style: TextStyle(

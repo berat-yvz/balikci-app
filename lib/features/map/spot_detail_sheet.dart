@@ -164,9 +164,21 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
 
   Widget _exifBadge(bool? exif) {
     final (label, bgColor, borderColor) = switch (exif) {
-      true => ('✓ doğrulandı', AppColors.success.withValues(alpha: 0.15), AppColors.success),
-      false => ('✗ eşleşmedi', AppColors.danger.withValues(alpha: 0.15), AppColors.danger),
-      _ => ('⏳ bekliyor', AppColors.warning.withValues(alpha: 0.15), AppColors.warning),
+      true => (
+        '✓ doğrulandı',
+        AppColors.success.withValues(alpha: 0.15),
+        AppColors.success,
+      ),
+      false => (
+        '✗ eşleşmedi',
+        AppColors.danger.withValues(alpha: 0.15),
+        AppColors.danger,
+      ),
+      _ => (
+        '⏳ bekliyor',
+        AppColors.warning.withValues(alpha: 0.15),
+        AppColors.warning,
+      ),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -232,7 +244,10 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
             ),
             Text(widget.spot.name, style: AppTextStyles.h2),
             const SizedBox(height: 8),
-            Text('Gizlilik: ${widget.spot.privacyLevel}', style: AppTextStyles.body),
+            Text(
+              'Gizlilik: ${widget.spot.privacyLevel}',
+              style: AppTextStyles.body,
+            ),
             const SizedBox(height: 4),
             if (widget.spot.type != null)
               Text('Tur: ${widget.spot.type}', style: AppTextStyles.body),
@@ -298,88 +313,84 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
                 style: TextStyle(color: Colors.white70),
               )
             else
-              ..._checkins.map(
-                (checkin) {
-                  final userLabel = checkin.username ?? 'Kullanıcı';
-                  final crowd = _crowdMeta(checkin.crowdLevel);
-                  final fish = _fishMeta(checkin.fishDensity);
-                  final voteCounts =
-                      _voteCountsByCheckinId[checkin.id] ?? const {true: 0, false: 0};
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    color: const Color(0xFF132236),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 16,
-                                backgroundColor: AppColors.primary.withValues(alpha: 0.25),
-                                child: Text(
-                                  _initials(userLabel),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 11,
+              ..._checkins.map((checkin) {
+                final userLabel = checkin.username ?? 'Kullanıcı';
+                final crowd = _crowdMeta(checkin.crowdLevel);
+                final fish = _fishMeta(checkin.fishDensity);
+                final voteCounts =
+                    _voteCountsByCheckinId[checkin.id] ??
+                    const {true: 0, false: 0};
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  color: const Color(0xFF132236),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 16,
+                              backgroundColor: AppColors.primary.withValues(
+                                alpha: 0.25,
+                              ),
+                              child: Text(
+                                _initials(userLabel),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    userLabel,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      userLabel,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                  Text(
+                                    _formatAgo(checkin.createdAt),
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
                                     ),
-                                    Text(
-                                      _formatAgo(checkin.createdAt),
-                                      style: const TextStyle(color: Colors.white70, fontSize: 12),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              _chip(
-                                crowd.$1,
-                                crowd.$2,
-                              ),
-                              _chip(
-                                fish.$1,
-                                fish.$2,
-                              ),
-                              if (checkin.photoUrl != null)
-                                _exifBadge(
-                                  _exifStatusForList(checkin),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          VoteWidget(
-                            checkinId: checkin.id,
-                            checkinOwnerId: checkin.userId,
-                            initialVoteCounts: voteCounts,
-                            currentUserId: uid ?? '',
-                          ),
-                        ],
-                      ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _chip(crowd.$1, crowd.$2),
+                            _chip(fish.$1, fish.$2),
+                            if (checkin.photoUrl != null)
+                              _exifBadge(_exifStatusForList(checkin)),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        VoteWidget(
+                          checkinId: checkin.id,
+                          checkinOwnerId: checkin.userId,
+                          initialVoteCounts: voteCounts,
+                          currentUserId: uid ?? '',
+                        ),
+                      ],
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              }),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,

@@ -3,32 +3,47 @@ import 'package:balikci_app/core/constants/app_constants.dart';
 import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// cleaned: public method dokümantasyonu ve eksik hata yönetimi standardize edildi
+
 /// Check-in repository — checkins + checkin_votes CRUD.
 /// H5 ve H6 sprint görevleri.
 class CheckinRepository {
   final _db = SupabaseService.client;
 
+  /// Belirli meradaki aktif check-in kayıtlarını döner.
   Future<List<CheckinModel>> getActiveCheckins(String spotId) async {
-    final response = await _db
-        .from('checkins')
-        .select()
-        .eq('spot_id', spotId)
-        .eq('is_active', true)
-        .order('created_at', ascending: false);
-    return response.map<CheckinModel>(CheckinModel.fromJson).toList();
+    try {
+      final response = await _db
+          .from('checkins')
+          .select()
+          .eq('spot_id', spotId)
+          .eq('is_active', true)
+          .order('created_at', ascending: false);
+      return response.map<CheckinModel>(CheckinModel.fromJson).toList();
+    } on PostgrestException catch (e) {
+      throw Exception('Aktif check-in kayıtları alınamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Aktif check-in kayıtları alınamadı: $e');
+    }
   }
 
   /// H5 (Map UI) için: Realtime olmadan global aktif check-in'leri tek çağrıyla çek.
   /// Sonra Map içindeki visible meralarla eşleştirilir.
   Future<List<CheckinModel>> getActiveCheckinsAll({int limit = 2000}) async {
-    final response = await _db
-        .from('checkins')
-        .select()
-        .eq('is_active', true)
-        .order('created_at', ascending: false)
-        .range(0, limit - 1);
+    try {
+      final response = await _db
+          .from('checkins')
+          .select()
+          .eq('is_active', true)
+          .order('created_at', ascending: false)
+          .range(0, limit - 1);
 
-    return response.map<CheckinModel>(CheckinModel.fromJson).toList();
+      return response.map<CheckinModel>(CheckinModel.fromJson).toList();
+    } on PostgrestException catch (e) {
+      throw Exception('Aktif check-in listesi alınamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Aktif check-in listesi alınamadı: $e');
+    }
   }
 
   /// H5 (Map UI) için: Son N saat içindeki check-in'leri çek.
@@ -39,22 +54,38 @@ class CheckinRepository {
     int limit = 2000,
     int hours = AppConstants.checkinRemoveHours,
   }) async {
-    final threshold = DateTime.now().subtract(Duration(hours: hours));
+    try {
+      final threshold = DateTime.now().subtract(Duration(hours: hours));
 
-    final response = await _db
-        .from('checkins')
-        .select()
-        .gte('created_at', threshold.toIso8601String())
-        .order('created_at', ascending: false)
-        .range(0, limit - 1);
+      final response = await _db
+          .from('checkins')
+          .select()
+          .gte('created_at', threshold.toIso8601String())
+          .order('created_at', ascending: false)
+          .range(0, limit - 1);
 
-    return response.map<CheckinModel>(CheckinModel.fromJson).toList();
+      return response.map<CheckinModel>(CheckinModel.fromJson).toList();
+    } on PostgrestException catch (e) {
+      throw Exception('Son check-in kayıtları alınamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Son check-in kayıtları alınamadı: $e');
+    }
   }
 
+  /// Yeni bir check-in kaydı oluşturur.
   Future<CheckinModel?> addCheckin(Map<String, dynamic> data) async {
-    final response =
-        await _db.from('checkins').insert(data).select().single();
-    return CheckinModel.fromJson(response);
+    try {
+      final response = await _db
+          .from('checkins')
+          .insert(data)
+          .select()
+          .single();
+      return CheckinModel.fromJson(response);
+    } on PostgrestException catch (e) {
+      throw Exception('Check-in oluşturulamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Check-in oluşturulamadı: $e');
+    }
   }
 
   /// checkins.photo_url güncellemesi.
@@ -65,25 +96,39 @@ class CheckinRepository {
     required String checkinId,
     required String photoUrl,
   }) async {
-    await _db
-        .from('checkins')
-        .update({'photo_url': photoUrl})
-        .eq('id', checkinId);
+    try {
+      await _db
+          .from('checkins')
+          .update({'photo_url': photoUrl})
+          .eq('id', checkinId);
+    } on PostgrestException catch (e) {
+      throw Exception('Check-in fotoğrafı güncellenemedi: ${e.message}');
+    } catch (e) {
+      throw Exception('Check-in fotoğrafı güncellenemedi: $e');
+    }
   }
 
+  /// Belirli mera için son 6 saatlik check-in kayıtlarını kullanıcı adıyla döner.
   Future<List<CheckinModel>> getCheckinsForSpot(String spotId) async {
-    final threshold = DateTime.now().subtract(
-      const Duration(hours: AppConstants.checkinRemoveHours),
-    );
-    final response = await _db
-        .from('checkins')
-        .select('*, users:user_id(username)')
-        .eq('spot_id', spotId)
-        .gte('created_at', threshold.toIso8601String())
-        .order('created_at', ascending: false);
-    return response.map<CheckinModel>(CheckinModel.fromJson).toList();
+    try {
+      final threshold = DateTime.now().subtract(
+        const Duration(hours: AppConstants.checkinRemoveHours),
+      );
+      final response = await _db
+          .from('checkins')
+          .select('*, users:user_id(username)')
+          .eq('spot_id', spotId)
+          .gte('created_at', threshold.toIso8601String())
+          .order('created_at', ascending: false);
+      return response.map<CheckinModel>(CheckinModel.fromJson).toList();
+    } on PostgrestException catch (e) {
+      throw Exception('Mera check-in kayıtları alınamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Mera check-in kayıtları alınamadı: $e');
+    }
   }
 
+  /// Kullanıcının ilgili check-in için verdiği oyu döner (`null` ise oy yok).
   Future<bool?> getUserVote(String checkinId, String userId) async {
     try {
       final response = await _db
@@ -105,6 +150,7 @@ class CheckinRepository {
   /// - Aynı oy: kaldır
   /// - Farklı oy: eskiyi kaldır, yeniyi ekle
   /// - Oy yoksa: yeni oy ekle
+  /// Kullanıcının oyunu toggle davranışıyla günceller.
   Future<void> castVote({
     required String checkinId,
     required String voterId,
@@ -119,10 +165,10 @@ class CheckinRepository {
 
       await unvote(checkinId: checkinId, voterId: voterId);
       await _db.from('checkin_votes').insert({
-            'checkin_id': checkinId,
-            'voter_id': voterId,
-            'vote': voteValue,
-          });
+        'checkin_id': checkinId,
+        'voter_id': voterId,
+        'vote': voteValue,
+      });
     } on PostgrestException catch (e) {
       throw Exception('Oylama gönderilemedi: ${e.message}');
     } catch (e) {
@@ -150,18 +196,24 @@ class CheckinRepository {
 
   /// Oylama istatistiği — score-calculator Edge Function'ı da bunu kullanır
   Future<Map<bool, int>> getVoteCounts(String checkinId) async {
-    final response = await _db
-        .from('checkin_votes')
-        .select('vote')
-        .eq('checkin_id', checkinId);
-    int trueCount = 0, falseCount = 0;
-    for (final row in response) {
-      if (row['vote'] == true) {
-        trueCount++;
-      } else {
-        falseCount++;
+    try {
+      final response = await _db
+          .from('checkin_votes')
+          .select('vote')
+          .eq('checkin_id', checkinId);
+      int trueCount = 0, falseCount = 0;
+      for (final row in response) {
+        if (row['vote'] == true) {
+          trueCount++;
+        } else {
+          falseCount++;
+        }
       }
+      return {true: trueCount, false: falseCount};
+    } on PostgrestException catch (e) {
+      throw Exception('Oy sayıları alınamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Oy sayıları alınamadı: $e');
     }
-    return {true: trueCount, false: falseCount};
   }
 }

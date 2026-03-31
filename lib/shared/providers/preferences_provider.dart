@@ -5,7 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// main() metodunda await SharedPreferences.getInstance() ile başlatılıp
 /// overrideWithValue ile Riverpod scope içine enjekte edilmelidir.
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
-  throw UnimplementedError('sharedPreferencesProvider main.dart içinde override edilmedi.');
+  throw UnimplementedError(
+    'sharedPreferencesProvider main.dart içinde override edilmedi.',
+  );
 });
 
 /// Kullanıcının onboarding'i (3 adımı) tamamlayıp tamamlamadığını tutan state.

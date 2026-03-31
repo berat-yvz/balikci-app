@@ -23,9 +23,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Çıkış Yap'),
-          content: const Text(
-            'Hesabından çıkış yapmak istediğine emin misin?',
-          ),
+          content: const Text('Hesabından çıkış yapmak istediğine emin misin?'),
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -69,9 +67,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ayarlar'),
-      ),
+      appBar: AppBar(title: const Text('Ayarlar')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -106,10 +102,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
             child: ListTile(
-              leading: Icon(
-                Icons.logout,
-                color: AppColors.danger,
-              ),
+              leading: Icon(Icons.logout, color: AppColors.danger),
               title: Text(
                 'Çıkış Yap',
                 style: AppTextStyles.body.copyWith(
@@ -126,10 +119,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         color: AppColors.danger,
                       ),
                     )
-                  : const Icon(
-                      Icons.chevron_right,
-                      color: Colors.white38,
-                    ),
+                  : const Icon(Icons.chevron_right, color: Colors.white38),
               onTap: _signingOut ? null : _confirmAndSignOut,
             ),
           ),

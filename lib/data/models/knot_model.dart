@@ -19,16 +19,13 @@ class KnotModel {
   });
 
   factory KnotModel.fromJson(Map<String, dynamic> json) => KnotModel(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        type: json['type'] as String,
-        description: json['description'] as String? ?? '',
-        steps: (json['steps'] as List?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            const [],
-        difficulty: (json['difficulty'] as num?)?.toInt() ?? 1,
-        imageUrl: json['image_url'] as String? ?? json['imageUrl'] as String?,
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    type: json['type'] as String,
+    description: json['description'] as String? ?? '',
+    steps:
+        (json['steps'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+    difficulty: (json['difficulty'] as num?)?.toInt() ?? 1,
+    imageUrl: json['image_url'] as String? ?? json['imageUrl'] as String?,
+  );
 }
-

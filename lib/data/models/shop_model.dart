@@ -23,15 +23,14 @@ class ShopModel {
   });
 
   factory ShopModel.fromJson(Map<String, dynamic> json) => ShopModel(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        lat: (json['lat'] as num).toDouble(),
-        lng: (json['lng'] as num).toDouble(),
-        type: json['type'] as String,
-        phone: json['phone'] as String?,
-        hours: json['hours'] as String?,
-        addedBy: json['added_by'] as String?,
-        verified: json['verified'] as bool? ?? false,
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    lat: (json['lat'] as num).toDouble(),
+    lng: (json['lng'] as num).toDouble(),
+    type: json['type'] as String,
+    phone: json['phone'] as String?,
+    hours: json['hours'] as String?,
+    addedBy: json['added_by'] as String?,
+    verified: json['verified'] as bool? ?? false,
+  );
 }
-

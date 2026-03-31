@@ -34,22 +34,14 @@ class RankScreen extends ConsumerWidget {
           data: (users) {
             return TabBarView(
               children: [
-                _LeaderboardTab(
-                  users: users,
-                  currentUserId: currentUserId,
-                ),
-                _LeaderboardTab(
-                  users: users,
-                  currentUserId: currentUserId,
-                ),
-                _LeaderboardTab(
-                  users: users,
-                  currentUserId: currentUserId,
-                ),
+                _LeaderboardTab(users: users, currentUserId: currentUserId),
+                _LeaderboardTab(users: users, currentUserId: currentUserId),
+                _LeaderboardTab(users: users, currentUserId: currentUserId),
               ],
             );
           },
-          loading: () => const LoadingWidget(message: 'Sıralamalar yükleniyor...'),
+          loading: () =>
+              const LoadingWidget(message: 'Sıralamalar yükleniyor...'),
           error: (e, _) => AppErrorWidget(
             message: e.toString(),
             onRetry: () => ref.invalidate(leaderboardProvider),
@@ -64,10 +56,7 @@ class _LeaderboardTab extends ConsumerWidget {
   final List<UserModel> users;
   final String? currentUserId;
 
-  const _LeaderboardTab({
-    required this.users,
-    required this.currentUserId,
-  });
+  const _LeaderboardTab({required this.users, required this.currentUserId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -78,17 +67,12 @@ class _LeaderboardTab extends ConsumerWidget {
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: users.length,
-        separatorBuilder: (context, index) =>
-            const SizedBox(height: 10),
+        separatorBuilder: (context, index) => const SizedBox(height: 10),
         itemBuilder: (context, idx) {
           final u = users[idx];
           final rank = idx + 1;
           final isCurrent = currentUserId != null && currentUserId == u.id;
-          return _LeaderboardRow(
-            user: u,
-            rank: rank,
-            highlight: isCurrent,
-          );
+          return _LeaderboardRow(user: u, rank: rank, highlight: isCurrent);
         },
       ),
     );
@@ -111,7 +95,9 @@ class _LeaderboardRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: highlight ? AppColors.primary.withValues(alpha: 0.10) : Colors.white,
+        color: highlight
+            ? AppColors.primary.withValues(alpha: 0.10)
+            : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: highlight
             ? Border.all(color: AppColors.primary.withValues(alpha: 0.35))
@@ -134,20 +120,14 @@ class _LeaderboardRow extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   'Toplam puan: ${user.totalScore}',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.muted,
-                  ),
+                  style: AppTextStyles.caption.copyWith(color: AppColors.muted),
                 ),
               ],
             ),
           ),
-          Text(
-            '${user.totalScore}',
-            style: AppTextStyles.h3,
-          ),
+          Text('${user.totalScore}', style: AppTextStyles.h3),
         ],
       ),
     );
   }
 }
-
