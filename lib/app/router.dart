@@ -12,6 +12,7 @@ import 'package:balikci_app/shared/providers/preferences_provider.dart';
 import 'package:balikci_app/features/auth/splash_screen.dart';
 import 'package:balikci_app/features/auth/login_screen.dart';
 import 'package:balikci_app/features/auth/register_screen.dart';
+import 'package:balikci_app/features/auth/reset_password_screen.dart';
 import 'package:balikci_app/features/auth/onboarding/onboarding_screen.dart';
 
 // Features — Home Shell
@@ -68,11 +69,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Splash için kontrol yok
       if (path == '/splash') return null;
 
-      final isLoginOrRegister = path == '/login' || path == '/register';
+      final isAuthFlow = path == '/login' ||
+          path == '/register' ||
+          path == '/reset-callback' ||
+          path == '/reset-password';
 
       // 1. Durum: Kullanıcı giriş yapmamış
       if (!isLoggedIn) {
-        if (!isLoginOrRegister) {
+        if (!isAuthFlow) {
           // Giriş yapmamış kişi korumalı ya da onboarding sayfasına gidemez
           return '/login';
         }
@@ -82,7 +86,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // 2. Durum: Kullanıcı giriş YAPMIŞ
 
       // Eğer yetkilendirme ekranlarına (/login, /register) gitmek isterse:
-      if (isLoginOrRegister) {
+      if (isAuthFlow) {
         return isOnboardingCompleted ? '/home' : '/onboarding';
       }
 
@@ -105,6 +109,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Auth
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
+      GoRoute(
+        path: '/reset-callback',
+        builder: (context, state) => const ResetPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) => const ResetPasswordScreen(),
+      ),
       GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
 
       ShellRoute(

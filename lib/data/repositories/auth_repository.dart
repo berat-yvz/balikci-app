@@ -143,6 +143,34 @@ class AuthRepository {
 
   bool isLoggedIn() => _auth.currentUser != null;
 
+  Future<void> resetPassword(String email) async {
+    try {
+      await _auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'balikciapp://reset-callback/',
+      );
+    } on AuthException catch (e) {
+      final lower = e.message.toLowerCase();
+      if (lower.contains('invalid email') ||
+          lower.contains('email address is invalid') ||
+          lower.contains('unable to validate email')) {
+        throw Exception('Geçerli bir e-posta adresi girin.');
+      }
+      if (lower.contains('user not found') ||
+          lower.contains('email not found') ||
+          lower.contains('no user')) {
+        throw Exception('Bu e-posta ile kayıtlı hesap bulunamadı.');
+      }
+      throw Exception(
+        'Şifre sıfırlama e-postası gönderilemedi. Tekrar deneyin.',
+      );
+    } catch (_) {
+      throw Exception(
+        'Şifre sıfırlama e-postası gönderilemedi. Tekrar deneyin.',
+      );
+    }
+  }
+
   String _mapAuthError(String message) {
     final lower = message.toLowerCase();
 

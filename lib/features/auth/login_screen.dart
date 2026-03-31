@@ -71,6 +71,130 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     }
   }
 
+  Future<void> _showForgotPasswordDialog() async {
+    final dialogFormKey = GlobalKey<FormState>();
+    final forgotEmailController = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+    String? dialogError;
+    bool sending = false;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  const Icon(Icons.lock_reset, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Şifremi Unuttum',
+                    style: AppTextStyles.h3.copyWith(color: Colors.white),
+                  ),
+                ],
+              ),
+              content: Form(
+                key: dialogFormKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'E-posta adresini gir, şifre sıfırlama bağlantısı gönderelim.',
+                      style: AppTextStyles.body.copyWith(color: Colors.white70),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: forgotEmailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'E-posta',
+                        prefixIcon: Icon(Icons.email_outlined),
+                      ),
+                      validator: (value) {
+                        final text = value?.trim() ?? '';
+                        if (text.isEmpty) return 'E-posta boş bırakılamaz';
+                        if (!text.contains('@')) return 'Geçerli bir e-posta girin';
+                        return null;
+                      },
+                    ),
+                    if (dialogError != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        dialogError!,
+                        style: const TextStyle(
+                          color: AppColors.danger,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                OutlinedButton(
+                  onPressed: sending ? null : () => Navigator.of(dialogContext).pop(),
+                  child: const Text('İptal'),
+                ),
+                ElevatedButton(
+                  onPressed: sending
+                      ? null
+                      : () async {
+                          if (!(dialogFormKey.currentState?.validate() ?? false)) {
+                            return;
+                          }
+                          setDialogState(() {
+                            sending = true;
+                            dialogError = null;
+                          });
+                          try {
+                            await ref.read(authRepositoryProvider).resetPassword(
+                                  forgotEmailController.text.trim(),
+                                );
+                            if (!mounted) return;
+                            if (dialogContext.mounted) {
+                              Navigator.of(dialogContext).pop();
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Şifre sıfırlama bağlantısı e-postana gönderildi. Spam klasörünü de kontrol et.',
+                                ),
+                                backgroundColor: AppColors.success,
+                              ),
+                            );
+                          } catch (e) {
+                            setDialogState(() {
+                              dialogError = e.toString().replaceFirst('Exception: ', '');
+                              sending = false;
+                            });
+                          }
+                        },
+                  child: sending
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Gönder'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    forgotEmailController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Auth state'ini dinle, hata varsa ScaffoldMessenger ile göster
@@ -225,6 +349,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 }
                                 return null;
                               },
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: authState.isLoading
+                                    ? null
+                                    : _showForgotPasswordDialog,
+                                child: Text(
+                                  'Şifremi Unuttum',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: AppColors.primary,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 14),
                             _TealGradientButton(
