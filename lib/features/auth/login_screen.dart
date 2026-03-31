@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,16 +17,46 @@ class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
+  late final AnimationController _shakeController;
+  late final Animation<double> _shake;
+
+  late final AnimationController _headerAnimController;
+
+  @override
+  void initState() {
+    super.initState();
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    _shake = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0, end: -10), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -10, end: 8), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 8, end: -6), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -6, end: 4), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 4, end: -2), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -2, end: 0), weight: 1),
+    ]).animate(CurvedAnimation(parent: _shakeController, curve: Curves.easeOut));
+
+    _headerAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat();
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _shakeController.dispose();
+    _headerAnimController.dispose();
     super.dispose();
   }
 
@@ -44,6 +76,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Auth state'ini dinle, hata varsa ScaffoldMessenger ile göster
     ref.listen(authNotifierProvider, (previous, next) {
       if (next is AsyncError) {
+        _shakeController.forward(from: 0);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.error.toString()),
@@ -63,144 +96,434 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     final authState = ref.watch(authNotifierProvider);
 
+    final media = MediaQuery.of(context);
+    final topPad = media.padding.top;
+    final bottomPad = media.padding.bottom;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
+      body: Stack(
+        children: [
+          // Background gradient
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.navy,
+                    const Color(0xFF07182D),
+                    AppColors.background,
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Subtle wave/fish header paint
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            height: 220 + topPad,
+            child: SafeArea(
+              bottom: false,
+              child: AnimatedBuilder(
+                animation: _headerAnimController,
+                builder: (context, _) {
+                  return CustomPaint(
+                    painter: _HeaderSeaPainter(t: _headerAnimController.value),
+                  );
+                },
+              ),
+            ),
+          ),
+
+          // Content
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(18, 14, 18, 16 + bottomPad),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo / Başlık
-                  const Icon(
-                    Icons.sailing,
-                    size: 80,
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Balıkçı',
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.h1,
-                  ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 10),
+                  _LogoLockup(),
+                  const SizedBox(height: 18),
 
-                  // Email
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'E-posta',
-                      prefixIcon: Icon(Icons.email_outlined),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'E-posta boş olamaz';
-                      }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                          .hasMatch(value)) {
-                        return 'Geçerli bir e-posta girin';
-                      }
-                      return null;
+                  AnimatedBuilder(
+                    animation: _shakeController,
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(_shake.value, 0),
+                        child: child,
+                      );
                     },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Şifre
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      labelText: 'Şifre',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
+                    child: _FrostedCard(
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'Giriş Yap',
+                              style: AppTextStyles.h2.copyWith(
+                                color: Colors.white,
+                                fontSize: 20,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              decoration: const InputDecoration(
+                                labelText: 'E-posta',
+                                prefixIcon: Icon(Icons.email_outlined),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'E-posta boş olamaz';
+                                }
+                                if (!RegExp(
+                                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                ).hasMatch(value)) {
+                                  return 'Geçerli bir e-posta girin';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _passwordController,
+                              obscureText: _obscurePassword,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) {
+                                if (!authState.isLoading) _submit();
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'Şifre',
+                                prefixIcon: const Icon(Icons.lock_outline),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Şifre boş olamaz';
+                                }
+                                if (value.length < 6) {
+                                  return 'Şifre en az 6 karakter olmalı';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 14),
+                            _TealGradientButton(
+                              onPressed: authState.isLoading ? null : _submit,
+                              loading: authState.isLoading,
+                              label: 'Giriş Yap',
+                            ),
+                            const SizedBox(height: 10),
+                            _GoogleOutlineButton(
+                              onPressed: authState.isLoading
+                                  ? null
+                                  : () async {
+                                      await ref
+                                          .read(
+                                            authNotifierProvider.notifier,
+                                          )
+                                          .signInWithGoogle();
+                                      if (!context.mounted) return;
+                                      if (ref
+                                          .read(authNotifierProvider)
+                                          .hasError) {
+                                        return;
+                                      }
+                                      if (ref
+                                          .read(authRepositoryProvider)
+                                          .isLoggedIn()) {
+                                        final done =
+                                            ref.read(onboardingStateProvider);
+                                        context.go(done ? '/home' : '/onboarding');
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Tarayıcıda Google ile girişi tamamlayın; '
+                                              'uygulamaya döndüğünüzde oturum açılır.',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                            ),
+                          ],
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Şifre boş olamaz';
-                      }
-                      if (value.length < 6) {
-                        return 'Şifre en az 6 karakter olmalı';
-                      }
-                      return null;
-                    },
                   ),
-                  const SizedBox(height: 24),
 
-                  // Giriş Yap Butonu
-                  ElevatedButton(
-                    onPressed: authState.isLoading ? null : _submit,
-                    child: authState.isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('Giriş Yap'),
-                  ),
-                  const SizedBox(height: 16),
-
-                  OutlinedButton.icon(
-                    onPressed: authState.isLoading
-                        ? null
-                        : () async {
-                            await ref
-                                .read(authNotifierProvider.notifier)
-                                .signInWithGoogle();
-                            if (!context.mounted) return;
-                            if (ref.read(authNotifierProvider).hasError) {
-                              return;
-                            }
-                            if (ref.read(authRepositoryProvider).isLoggedIn()) {
-                              final done = ref.read(onboardingStateProvider);
-                              context.go(done ? '/home' : '/onboarding');
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Tarayıcıda Google ile girişi tamamlayın; '
-                                    'uygulamaya döndüğünüzde oturum açılır.',
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                    icon: const Icon(Icons.login),
-                    label: const Text('Google ile devam et'),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Kayıt Ol Butonu
+                  const SizedBox(height: 14),
                   TextButton(
-                    onPressed: authState.isLoading
-                        ? null
-                        : () => context.go('/register'),
-                    child: const Text('Hesabın yok mu? Kayıt ol'),
+                    onPressed:
+                        authState.isLoading ? null : () => context.go('/register'),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      foregroundColor: AppColors.foam.withValues(alpha: 0.92),
+                    ),
+                    child: const Text('Hesap yok mu? Kayıt ol'),
                   ),
                 ],
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LogoLockup extends StatelessWidget {
+  const _LogoLockup();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: AppColors.surface.withValues(alpha: 0.65),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.teal.withValues(alpha: 0.35),
+            ),
+          ),
+          child: const Icon(
+            Icons.anchor_rounded,
+            color: AppColors.foam,
+            size: 30,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Balıkçı',
+              style: AppTextStyles.h1.copyWith(
+                color: AppColors.foam,
+                height: 1.0,
+              ),
+            ),
+            Text(
+              'Super App',
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.muted,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _FrostedCard extends StatelessWidget {
+  final Widget child;
+  const _FrostedCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.12),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.30),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _TealGradientButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final bool loading;
+  final String label;
+
+  const _TealGradientButton({
+    required this.onPressed,
+    required this.loading,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.teal,
+              AppColors.teal.withValues(alpha: 0.78),
+              const Color(0xFF2E6FB9).withValues(alpha: 0.85),
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: loading
+              ? const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(label),
         ),
       ),
     );
   }
+}
+
+class _GoogleOutlineButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  const _GoogleOutlineButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.30)),
+          foregroundColor: AppColors.foam,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              alignment: Alignment.center,
+              child: const Text(
+                'G',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text('Google ile Giriş'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderSeaPainter extends CustomPainter {
+  final double t; // 0..1
+  _HeaderSeaPainter({required this.t});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    // Soft glow
+    final glowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          AppColors.teal.withValues(alpha: 0.18),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 1.0],
+      ).createShader(Rect.fromCircle(center: Offset(w * 0.7, h * 0.2), radius: h));
+    canvas.drawRect(Offset.zero & size, glowPaint);
+
+    // Waves
+    final wavePaint = Paint()
+      ..color = AppColors.teal.withValues(alpha: 0.18)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    for (int i = 0; i < 3; i++) {
+      final yBase = h * (0.55 + i * 0.12);
+      final phase = (t * 2 * 3.14159) + i * 0.8;
+      final path = Path()..moveTo(0, yBase);
+      for (double x = 0; x <= w; x += 12) {
+        final amp = 6.0 + i * 3.0;
+        final y = yBase + amp * math.sin((x / w) * (math.pi * 2) + phase);
+        path.lineTo(x, y);
+      }
+      canvas.drawPath(path, wavePaint);
+    }
+
+    // Small fish silhouette
+    final fishX = w * (0.18 + 0.64 * t);
+    final fishY = h * 0.36 + 10 * math.sin(t * math.pi * 2);
+    final fishPaint = Paint()
+      ..color = AppColors.foam.withValues(alpha: 0.14)
+      ..style = PaintingStyle.fill;
+    final fish = Path()
+      ..moveTo(fishX, fishY)
+      ..quadraticBezierTo(fishX + 16, fishY - 8, fishX + 28, fishY)
+      ..quadraticBezierTo(fishX + 16, fishY + 8, fishX, fishY)
+      ..close()
+      ..moveTo(fishX + 28, fishY)
+      ..lineTo(fishX + 38, fishY - 6)
+      ..lineTo(fishX + 38, fishY + 6)
+      ..close();
+    canvas.drawPath(fish, fishPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _HeaderSeaPainter oldDelegate) => oldDelegate.t != t;
 }

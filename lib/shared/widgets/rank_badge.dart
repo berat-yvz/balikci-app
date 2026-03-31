@@ -65,9 +65,9 @@ class _RankBadgeState extends State<RankBadge>
     switch (rank) {
       case 'acemi':
         return _BadgeConfig(
-          background: AppColors.muted.withValues(alpha: 0.15),
+          background: AppColors.rankAcemi.withValues(alpha: 0.15),
           border: Colors.transparent,
-          color: AppColors.muted,
+          color: AppColors.rankAcemi,
           child: _chip(
             emoji: '🪝',
             text: 'Acemi',
@@ -76,15 +76,15 @@ class _RankBadgeState extends State<RankBadge>
             fontSize: fontSize,
             iconSize: iconSize,
             borderColor: Colors.transparent,
-            backgroundColor: AppColors.muted.withValues(alpha: 0.15),
-            textColor: AppColors.muted,
+            backgroundColor: AppColors.rankAcemi.withValues(alpha: 0.15),
+            textColor: AppColors.rankAcemi,
           ),
         );
       case 'olta_kurdu':
         return _BadgeConfig(
-          background: AppColors.secondary.withValues(alpha: 0.15),
+          background: AppColors.rankOltaKurdu.withValues(alpha: 0.15),
           border: Colors.transparent,
-          color: AppColors.secondary,
+          color: AppColors.rankOltaKurdu,
           child: _chip(
             emoji: '🎣',
             text: 'Olta Kurdu',
@@ -93,15 +93,15 @@ class _RankBadgeState extends State<RankBadge>
             fontSize: fontSize,
             iconSize: iconSize,
             borderColor: Colors.transparent,
-            backgroundColor: AppColors.secondary.withValues(alpha: 0.15),
-            textColor: AppColors.secondary,
+            backgroundColor: AppColors.rankOltaKurdu.withValues(alpha: 0.15),
+            textColor: AppColors.rankOltaKurdu,
           ),
         );
       case 'usta':
         return _BadgeConfig(
-          background: AppColors.primary.withValues(alpha: 0.10),
-          border: AppColors.primary,
-          color: AppColors.primary,
+          background: AppColors.rankUsta.withValues(alpha: 0.10),
+          border: AppColors.rankUsta,
+          color: AppColors.rankUsta,
           child: _chip(
             emoji: '⚓',
             text: 'Usta',
@@ -109,17 +109,17 @@ class _RankBadgeState extends State<RankBadge>
             padH: padH,
             fontSize: fontSize,
             iconSize: iconSize,
-            borderColor: AppColors.primary,
-            backgroundColor: AppColors.primary.withValues(alpha: 0.10),
-            textColor: AppColors.primary,
+            borderColor: AppColors.rankUsta,
+            backgroundColor: AppColors.rankUsta.withValues(alpha: 0.10),
+            textColor: AppColors.rankUsta,
           ),
         );
       case 'deniz_reisi':
       default:
         return _BadgeConfig(
-          background: Colors.amber.withValues(alpha: 0.18),
-          border: Colors.amber.shade700,
-          color: Colors.amber.shade700,
+          background: AppColors.rankDenizReisi.withValues(alpha: 0.18),
+          border: AppColors.rankDenizReisi,
+          color: AppColors.rankDenizReisi,
           child: _chip(
             emoji: '👑',
             text: 'Deniz Reisi',
@@ -127,9 +127,9 @@ class _RankBadgeState extends State<RankBadge>
             padH: padH,
             fontSize: fontSize,
             iconSize: iconSize,
-            borderColor: Colors.amber.shade700,
-            backgroundColor: Colors.amber.withValues(alpha: 0.18),
-            textColor: Colors.amber.shade800,
+            borderColor: AppColors.rankDenizReisi,
+            backgroundColor: AppColors.rankDenizReisi.withValues(alpha: 0.18),
+            textColor: AppColors.rankDenizReisi,
           ),
         );
     }
