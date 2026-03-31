@@ -120,7 +120,41 @@ class CheckinRepository {
           .eq('spot_id', spotId)
           .gte('created_at', threshold.toIso8601String())
           .order('created_at', ascending: false);
-      return response.map<CheckinModel>(CheckinModel.fromJson).toList();
+      final baseItems = response
+          .map<CheckinModel>(CheckinModel.fromJson)
+          .toList();
+      final voteCountsList = await Future.wait(
+        baseItems.map((c) => getVoteCounts(c.id)),
+      );
+
+      final withVotes = <CheckinModel>[];
+      for (var i = 0; i < baseItems.length; i++) {
+        final base = baseItems[i];
+        final counts = voteCountsList[i];
+        final trueVotes = counts[true] ?? 0;
+        final falseVotes = counts[false] ?? 0;
+        final model = CheckinModel(
+          id: base.id,
+          userId: base.userId,
+          spotId: base.spotId,
+          username: base.username,
+          crowdLevel: base.crowdLevel,
+          fishDensity: base.fishDensity,
+          photoUrl: base.photoUrl,
+          exifVerified: base.exifVerified,
+          isActive: base.isActive,
+          trueVotes: trueVotes,
+          falseVotes: falseVotes,
+          createdAt: base.createdAt,
+        );
+        final total = trueVotes + falseVotes;
+        final falseRatio = total == 0 ? 0.0 : (falseVotes / total);
+        final shouldHide = total >= 3 && falseRatio > 0.70;
+        if (!shouldHide) {
+          withVotes.add(model);
+        }
+      }
+      return withVotes;
     } on PostgrestException catch (e) {
       throw Exception('Mera check-in kayıtları alınamadı: ${e.message}');
     } catch (e) {

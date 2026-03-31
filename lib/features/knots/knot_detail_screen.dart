@@ -1,166 +1,156 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:balikci_app/app/theme.dart';
-import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/models/knot_model.dart';
-import 'package:balikci_app/shared/widgets/loading_widget.dart';
-import 'package:balikci_app/shared/widgets/error_widget.dart';
 
-class KnotDetailScreen extends ConsumerWidget {
-  final String knotId;
-
-  const KnotDetailScreen({super.key, required this.knotId});
+class KnotDetailScreen extends StatefulWidget {
+  // cleaned: extra ile KnotModel alan, öğrenildi toggle'ı olan detay ekranı yazıldı
+  final KnotModel knot;
+  const KnotDetailScreen({super.key, required this.knot});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  State<KnotDetailScreen> createState() => _KnotDetailScreenState();
+}
+
+class _KnotDetailScreenState extends State<KnotDetailScreen> {
+  bool _learned = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLearned();
+  }
+
+  Future<void> _loadLearned() async {
+    final prefs = await SharedPreferences.getInstance();
+    final learned = prefs.getStringList('learned_knots') ?? <String>[];
+    if (!mounted) return;
+    setState(() => _learned = learned.contains(widget.knot.id));
+  }
+
+  Future<void> _toggleLearned() async {
+    final prefs = await SharedPreferences.getInstance();
+    final learned = (prefs.getStringList('learned_knots') ?? <String>[])
+        .toSet();
+    if (_learned) {
+      learned.remove(widget.knot.id);
+    } else {
+      learned.add(widget.knot.id);
+    }
+    await prefs.setStringList('learned_knots', learned.toList());
+    if (!mounted) return;
+    setState(() => _learned = !_learned);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final knot = widget.knot;
+    final diff = knot.difficulty.clamp(1, 5);
     return Scaffold(
-      appBar: AppBar(title: const Text('Düğüm Detayı')),
-      body: FutureBuilder<KnotModel?>(
-        future: _fetchKnot(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingWidget(message: 'Düğüm yükleniyor...');
-          }
-          if (snapshot.hasError) {
-            return AppErrorWidget(
-              message: snapshot.error.toString(),
-              onRetry: () {},
-            );
-          }
-
-          final knot = snapshot.data;
-          if (knot == null) {
-            return const Center(child: Text('Düğüm bulunamadı.'));
-          }
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(knot.name, style: AppTextStyles.h2),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    Chip(
-                      label: Text(knot.type),
-                      backgroundColor: AppColors.primaryLight,
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: _difficultyStars(knot.difficulty),
-                    ),
-                  ],
+      appBar: AppBar(title: Text(knot.title)),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  knot.description,
-                  style: AppTextStyles.body.copyWith(color: AppColors.muted),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(999),
                 ),
-                if (knot.imageUrl != null && knot.imageUrl!.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.network(
-                      knot.imageUrl!,
-                      height: 220,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const SizedBox.shrink(),
-                    ),
+                child: Text(knot.category),
+              ),
+              const SizedBox(width: 12),
+              Row(
+                children: List.generate(5, (i) {
+                  return Icon(
+                    i < diff ? Icons.star : Icons.star_border,
+                    color: AppColors.primary,
+                    size: 18,
+                  );
+                }),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: knot.useCases
+                .map(
+                  (use) => Chip(
+                    label: Text(use),
+                    backgroundColor: AppColors.surface,
                   ),
-                ],
-                const SizedBox(height: 16),
-                Text('Adımlar', style: AppTextStyles.h3),
-                const SizedBox(height: 10),
-                ListView.separated(
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  itemCount: knot.steps.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 10),
-                  itemBuilder: (context, idx) {
-                    final step = knot.steps[idx];
-                    return Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 28,
-                            height: 28,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.12),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              '${idx + 1}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(step, style: AppTextStyles.body),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ],
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Adımlar',
+            style: AppTextStyles.h3.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             ),
-          );
-        },
+          ),
+          const SizedBox(height: 10),
+          ...List.generate(knot.steps.length, (idx) {
+            final step = knot.steps[idx];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 30,
+                        height: 30,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '${idx + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          step,
+                          style: AppTextStyles.body.copyWith(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: _toggleLearned,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _learned ? AppColors.success : AppColors.primary,
+            ),
+            child: Text(_learned ? 'Öğrendim ✓' : 'Öğrendim ✓'),
+          ),
+        ],
       ),
     );
-  }
-
-  Future<KnotModel?> _fetchKnot() async {
-    try {
-      final response = await SupabaseService.client
-          .from('knots')
-          .select()
-          .eq('id', knotId)
-          .maybeSingle();
-      if (response == null) return null;
-      return KnotModel.fromJson(response);
-    } on PostgrestException catch (e) {
-      throw Exception('Düğüm alınamadı: ${e.message}');
-    } catch (e) {
-      throw Exception('Düğüm alınamadı: $e');
-    }
-  }
-
-  List<Widget> _difficultyStars(int difficulty) {
-    final d = difficulty.clamp(1, 5);
-    final filled = List<Widget>.generate(
-      d,
-      (_) => const Icon(Icons.star, size: 18, color: Colors.amber),
-    );
-    final empty = List<Widget>.generate(
-      5 - d,
-      (_) => const Icon(Icons.star_border, size: 18, color: Colors.amber),
-    );
-    return [...filled, ...empty];
   }
 }

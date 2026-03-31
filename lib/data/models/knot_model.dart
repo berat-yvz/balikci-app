@@ -1,31 +1,36 @@
-/// Düğüm modeli — Supabase `knots` tablosu.
+/// Düğüm rehberi modeli.
 class KnotModel {
+  // cleaned: model yapısı H11 JSON formatına göre yenilendi
   final String id;
-  final String name;
-  final String type;
-  final String description;
+  final String title;
+  final String category;
   final List<String> steps;
-  final int difficulty; // 1-5
-  final String? imageUrl;
+  final int difficulty;
+  final List<String> useCases;
 
   const KnotModel({
     required this.id,
-    required this.name,
-    required this.type,
-    required this.description,
-    required this.steps,
+    required this.title,
+    required this.category,
     required this.difficulty,
-    this.imageUrl,
+    required this.useCases,
+    required this.steps,
   });
 
   factory KnotModel.fromJson(Map<String, dynamic> json) => KnotModel(
-    id: json['id'] as String,
-    name: json['name'] as String,
-    type: json['type'] as String,
-    description: json['description'] as String? ?? '',
-    steps:
-        (json['steps'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+    id: json['id'] as String? ?? '',
+    title: json['title'] as String? ?? '',
+    category: json['category'] as String? ?? '',
     difficulty: (json['difficulty'] as num?)?.toInt() ?? 1,
-    imageUrl: json['image_url'] as String? ?? json['imageUrl'] as String?,
+    useCases:
+        (json['use_cases'] as List?)
+            ?.map((e) => e.toString())
+            .toList(growable: false) ??
+        const [],
+    steps:
+        (json['steps'] as List?)
+            ?.map((e) => e.toString())
+            .toList(growable: false) ??
+        const [],
   );
 }

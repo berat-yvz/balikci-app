@@ -1,6 +1,7 @@
 /// Hava durumu modeli — ARCHITECTURE.md `weather_cache` tablosu referans.
 /// MVP_PLAN.md M-04 balıkçı dili çevirisi bu model üzerinden çalışır.
 class WeatherModel {
+  // cleaned: ekran detayları için ek alanlar eklendi
   final String id;
   final double lat;
   final double lng;
@@ -12,6 +13,9 @@ class WeatherModel {
   final double? waveHeight; // metre
   final double? seaSurfaceTemperature; // °C
   final double? precipitation; // mm
+  final double? humidity; // %
+  final double? visibilityKm; // km
+  final double? cloudCover; // %
   final int? weatherCode;
 
   final String? fishingSummary; // Balıkçı dili özeti (Edge Function üretir)
@@ -30,6 +34,9 @@ class WeatherModel {
     required this.waveHeight,
     required this.seaSurfaceTemperature,
     required this.precipitation,
+    required this.humidity,
+    required this.visibilityKm,
+    required this.cloudCover,
     required this.weatherCode,
     required this.fishingSummary,
     required this.fetchedAt,
@@ -50,6 +57,15 @@ class WeatherModel {
     seaSurfaceTemperature: (json['sea_surface_temperature'] as num?)
         ?.toDouble(),
     precipitation: (json['precipitation'] as num?)?.toDouble(),
+    humidity: (json['humidity'] as num?)?.toDouble(),
+    visibilityKm:
+        (json['visibility_km'] as num?)?.toDouble() ??
+        ((json['visibility'] as num?)?.toDouble() != null
+            ? (json['visibility'] as num).toDouble() / 1000
+            : null),
+    cloudCover:
+        (json['cloud_cover'] as num?)?.toDouble() ??
+        (json['cloudiness'] as num?)?.toDouble(),
     weatherCode: json['weather_code'] as int?,
     fishingSummary: json['fishing_summary'] as String?,
     fetchedAt: DateTime.parse(json['fetched_at'] as String),

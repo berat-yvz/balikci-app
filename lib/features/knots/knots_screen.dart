@@ -1,98 +1,124 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/data/models/knot_model.dart';
-import 'package:balikci_app/data/repositories/knot_repository.dart';
-import 'package:balikci_app/shared/widgets/loading_widget.dart';
-import 'package:balikci_app/shared/widgets/error_widget.dart';
 
-class KnotsScreen extends ConsumerStatefulWidget {
+class KnotsScreen extends StatefulWidget {
+  // cleaned: Supabase yerine local JSON tabanlı tam rehber ekranı eklendi
   const KnotsScreen({super.key});
 
   @override
-  ConsumerState<KnotsScreen> createState() => _KnotsScreenState();
+  State<KnotsScreen> createState() => _KnotsScreenState();
 }
 
-class _KnotsScreenState extends ConsumerState<KnotsScreen> {
-  String? _typeFilter;
+class _KnotsScreenState extends State<KnotsScreen> {
+  String _category = 'tumu';
+  List<KnotModel> _allKnots = const [];
+  bool _loading = true;
+  String? _error;
 
-  static const _chips = <Map<String, String?>>[
-    {'label': 'Tümü', 'type': null},
-    {'label': 'Olta', 'type': 'olta'},
-    {'label': 'Ağ', 'type': 'ag'},
-    {'label': 'Tekne', 'type': 'tekne'},
-    {'label': 'Temel', 'type': 'temel'},
+  static const _chips = <(String label, String value)>[
+    ('Tümü', 'tumu'),
+    ('Kanca', 'kanca'),
+    ('Birleştirme', 'birlestirme'),
+    ('Lider', 'lider'),
   ];
 
   @override
-  Widget build(BuildContext context) {
-    final repo = KnotRepository();
+  void initState() {
+    super.initState();
+    _loadKnots();
+  }
 
+  Future<void> _loadKnots() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final raw = await rootBundle.loadString('assets/knots/knots_data.json');
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      final knots = decoded
+          .whereType<Map<String, dynamic>>()
+          .map(KnotModel.fromJson)
+          .toList(growable: false);
+      if (!mounted) return;
+      setState(() => _allKnots = knots);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  List<KnotModel> get _filtered {
+    if (_category == 'tumu') return _allKnots;
+    return _allKnots.where((k) => k.category == _category).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Düğüm Rehberi')),
-      body: FutureBuilder<List<KnotModel>>(
-        future: repo.getKnots(typeFilter: _typeFilter),
-        builder: (context, snapshot) {
-          final knots = snapshot.data ?? const <KnotModel>[];
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingWidget(message: 'Düğümler yükleniyor...');
-          }
-          if (snapshot.hasError) {
-            return AppErrorWidget(
-              message: snapshot.error.toString(),
-              onRetry: () => setState(() {}),
-            );
-          }
-
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _chips.map((c) {
-                    final type = c['type'];
-                    final selected =
-                        (type == null && _typeFilter == null) ||
-                        (type != null && _typeFilter == type);
-                    return FilterChip(
-                      label: Text(c['label']!),
-                      selected: selected,
-                      onSelected: (_) {
-                        setState(() => _typeFilter = type);
-                      },
-                    );
-                  }).toList(),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? Center(
+              child: Text(
+                'Düğümler yüklenemedi: $_error',
+                style: AppTextStyles.body.copyWith(color: Colors.white70),
+              ),
+            )
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _chips.map((chip) {
+                      final selected = _category == chip.$2;
+                      return FilterChip(
+                        label: Text(chip.$1),
+                        selected: selected,
+                        onSelected: (_) => setState(() => _category = chip.$2),
+                      );
+                    }).toList(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: knots.isEmpty
-                    ? const Center(child: Text('Bu filtreye uygun düğüm yok.'))
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: knots.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          final knot = knots[index];
-                          return _KnotCard(
-                            knot: knot,
-                            onTap: () {
-                              context.push('/knots/${knot.id}');
-                            },
-                          );
-                        },
-                      ),
-              ),
-            ],
-          );
-        },
-      ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: _filtered.isEmpty
+                      ? const Center(
+                          child: Text('Bu filtrede düğüm bulunamadı.'),
+                        )
+                      : GridView.builder(
+                          padding: const EdgeInsets.all(16),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 1.2,
+                                crossAxisSpacing: 10,
+                                mainAxisSpacing: 10,
+                              ),
+                          itemCount: _filtered.length,
+                          itemBuilder: (context, index) {
+                            final knot = _filtered[index];
+                            return _KnotCard(
+                              knot: knot,
+                              onTap: () =>
+                                  context.push('/knots/detail', extra: knot),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
     );
   }
 }
@@ -105,14 +131,7 @@ class _KnotCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stars = List<Widget>.generate(
-      knot.difficulty.clamp(1, 5),
-      (_) => const Icon(Icons.star, size: 16, color: Colors.amber),
-    );
-    final emptyStars = List<Widget>.generate(
-      5 - knot.difficulty.clamp(1, 5),
-      (_) => const Icon(Icons.star_border, size: 16, color: Colors.amber),
-    );
+    final difficulty = knot.difficulty.clamp(1, 5);
 
     return InkWell(
       onTap: onTap,
@@ -120,7 +139,7 @@ class _KnotCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -133,25 +152,40 @@ class _KnotCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(knot.name, style: AppTextStyles.h3),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                Chip(
-                  label: Text(knot.type),
-                  backgroundColor: AppColors.primaryLight,
-                ),
-                Row(children: [...stars, ...emptyStars]),
-              ],
-            ),
-            const SizedBox(height: 10),
             Text(
-              knot.description,
+              knot.title,
+              style: AppTextStyles.body.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                knot.category,
+                style: AppTextStyles.caption.copyWith(
+                  color: Colors.white70,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: List.generate(5, (i) {
+                return Icon(
+                  i < difficulty ? Icons.star : Icons.star_border,
+                  size: 16,
+                  color: AppColors.primary,
+                );
+              }),
             ),
           ],
         ),

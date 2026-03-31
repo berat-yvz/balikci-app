@@ -38,6 +38,7 @@ import 'package:balikci_app/features/rank/leaderboard_screen.dart';
 // Features — Knots
 import 'package:balikci_app/features/knots/knots_screen.dart';
 import 'package:balikci_app/features/knots/knot_detail_screen.dart';
+import 'package:balikci_app/data/models/knot_model.dart';
 
 // Features — Weather
 import 'package:balikci_app/features/weather/weather_screen.dart';
@@ -228,14 +229,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Knots
       GoRoute(path: '/knots', builder: (context, state) => const KnotsScreen()),
       GoRoute(
-        path: '/knots/:knotId',
-        builder: (_, state) =>
-            KnotDetailScreen(knotId: state.pathParameters['knotId']!),
-      ),
-      GoRoute(
-        path: '/knots/:id',
-        builder: (_, state) =>
-            KnotDetailScreen(knotId: state.pathParameters['id']!),
+        path: '/knots/detail',
+        builder: (_, state) {
+          final extra = state.extra;
+          if (extra is! KnotModel) {
+            return const Scaffold(
+              body: Center(child: Text('Geçersiz düğüm detayı')),
+            );
+          }
+          return KnotDetailScreen(knot: extra);
+        },
       ),
 
       // Notifications

@@ -1,19 +1,20 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
-import 'package:balikci_app/data/local/local_spot.dart';
 import 'package:balikci_app/data/local/local_fish_log.dart';
+import 'package:balikci_app/data/local/local_spot.dart';
+import 'package:balikci_app/data/local/local_weather.dart';
 import 'package:balikci_app/data/local/sync_queue.dart';
 
 part 'database.g.dart';
 
-@DriftDatabase(tables: [LocalSpots, LocalFishLogs, SyncQueue])
+@DriftDatabase(tables: [LocalSpots, LocalFishLogs, SyncQueue, LocalWeather])
 class AppDatabase extends _$AppDatabase {
   AppDatabase._() : super(_openConnection());
 
   static final AppDatabase instance = AppDatabase._();
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -24,6 +25,13 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(localSpots, localSpots.verified);
         await m.addColumn(localSpots, localSpots.muhtarId);
         await m.addColumn(localSpots, localSpots.cachedAt);
+      }
+      if (from < 3) {
+        await m.createTable(localWeather);
+      }
+      if (from < 4) {
+        await m.addColumn(syncQueue, syncQueue.tableNameValue);
+        await m.addColumn(syncQueue, syncQueue.retryCount);
       }
     },
   );

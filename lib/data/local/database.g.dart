@@ -1383,34 +1383,23 @@ class $SyncQueueTable extends SyncQueue
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
-  static const VerificationMeta _sourceTableMeta = const VerificationMeta(
-    'sourceTable',
-  );
-  @override
-  late final GeneratedColumn<String> sourceTable = GeneratedColumn<String>(
-    'source_table',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _recordIdMeta = const VerificationMeta(
-    'recordId',
-  );
-  @override
-  late final GeneratedColumn<String> recordId = GeneratedColumn<String>(
-    'record_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
   static const VerificationMeta _operationMeta = const VerificationMeta(
     'operation',
   );
   @override
   late final GeneratedColumn<String> operation = GeneratedColumn<String>(
     'operation',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tableNameValueMeta = const VerificationMeta(
+    'tableNameValue',
+  );
+  @override
+  late final GeneratedColumn<String> tableNameValue = GeneratedColumn<String>(
+    'table_name',
     aliasedName,
     false,
     type: DriftSqlType.string,
@@ -1427,6 +1416,18 @@ class $SyncQueueTable extends SyncQueue
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _retryCountMeta = const VerificationMeta(
+    'retryCount',
+  );
+  @override
+  late final GeneratedColumn<int> retryCount = GeneratedColumn<int>(
+    'retry_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1436,15 +1437,16 @@ class $SyncQueueTable extends SyncQueue
     aliasedName,
     false,
     type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
   );
   @override
   List<GeneratedColumn> get $columns => [
     id,
-    sourceTable,
-    recordId,
     operation,
+    tableNameValue,
     payload,
+    retryCount,
     createdAt,
   ];
   @override
@@ -1462,25 +1464,6 @@ class $SyncQueueTable extends SyncQueue
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
-    if (data.containsKey('source_table')) {
-      context.handle(
-        _sourceTableMeta,
-        sourceTable.isAcceptableOrUnknown(
-          data['source_table']!,
-          _sourceTableMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_sourceTableMeta);
-    }
-    if (data.containsKey('record_id')) {
-      context.handle(
-        _recordIdMeta,
-        recordId.isAcceptableOrUnknown(data['record_id']!, _recordIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_recordIdMeta);
-    }
     if (data.containsKey('operation')) {
       context.handle(
         _operationMeta,
@@ -1488,6 +1471,17 @@ class $SyncQueueTable extends SyncQueue
       );
     } else if (isInserting) {
       context.missing(_operationMeta);
+    }
+    if (data.containsKey('table_name')) {
+      context.handle(
+        _tableNameValueMeta,
+        tableNameValue.isAcceptableOrUnknown(
+          data['table_name']!,
+          _tableNameValueMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_tableNameValueMeta);
     }
     if (data.containsKey('payload')) {
       context.handle(
@@ -1497,13 +1491,17 @@ class $SyncQueueTable extends SyncQueue
     } else if (isInserting) {
       context.missing(_payloadMeta);
     }
+    if (data.containsKey('retry_count')) {
+      context.handle(
+        _retryCountMeta,
+        retryCount.isAcceptableOrUnknown(data['retry_count']!, _retryCountMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
     }
     return context;
   }
@@ -1518,21 +1516,21 @@ class $SyncQueueTable extends SyncQueue
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
-      sourceTable: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}source_table'],
-      )!,
-      recordId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}record_id'],
-      )!,
       operation: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}operation'],
       )!,
+      tableNameValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}table_name'],
+      )!,
       payload: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}payload'],
+      )!,
+      retryCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}retry_count'],
       )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -1549,27 +1547,27 @@ class $SyncQueueTable extends SyncQueue
 
 class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
   final int id;
-  final String sourceTable;
-  final String recordId;
   final String operation;
+  final String tableNameValue;
   final String payload;
+  final int retryCount;
   final DateTime createdAt;
   const SyncQueueData({
     required this.id,
-    required this.sourceTable,
-    required this.recordId,
     required this.operation,
+    required this.tableNameValue,
     required this.payload,
+    required this.retryCount,
     required this.createdAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['source_table'] = Variable<String>(sourceTable);
-    map['record_id'] = Variable<String>(recordId);
     map['operation'] = Variable<String>(operation);
+    map['table_name'] = Variable<String>(tableNameValue);
     map['payload'] = Variable<String>(payload);
+    map['retry_count'] = Variable<int>(retryCount);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -1577,10 +1575,10 @@ class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
   SyncQueueCompanion toCompanion(bool nullToAbsent) {
     return SyncQueueCompanion(
       id: Value(id),
-      sourceTable: Value(sourceTable),
-      recordId: Value(recordId),
       operation: Value(operation),
+      tableNameValue: Value(tableNameValue),
       payload: Value(payload),
+      retryCount: Value(retryCount),
       createdAt: Value(createdAt),
     );
   }
@@ -1592,10 +1590,10 @@ class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return SyncQueueData(
       id: serializer.fromJson<int>(json['id']),
-      sourceTable: serializer.fromJson<String>(json['sourceTable']),
-      recordId: serializer.fromJson<String>(json['recordId']),
       operation: serializer.fromJson<String>(json['operation']),
+      tableNameValue: serializer.fromJson<String>(json['tableNameValue']),
       payload: serializer.fromJson<String>(json['payload']),
+      retryCount: serializer.fromJson<int>(json['retryCount']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -1604,38 +1602,40 @@ class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'sourceTable': serializer.toJson<String>(sourceTable),
-      'recordId': serializer.toJson<String>(recordId),
       'operation': serializer.toJson<String>(operation),
+      'tableNameValue': serializer.toJson<String>(tableNameValue),
       'payload': serializer.toJson<String>(payload),
+      'retryCount': serializer.toJson<int>(retryCount),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
 
   SyncQueueData copyWith({
     int? id,
-    String? sourceTable,
-    String? recordId,
     String? operation,
+    String? tableNameValue,
     String? payload,
+    int? retryCount,
     DateTime? createdAt,
   }) => SyncQueueData(
     id: id ?? this.id,
-    sourceTable: sourceTable ?? this.sourceTable,
-    recordId: recordId ?? this.recordId,
     operation: operation ?? this.operation,
+    tableNameValue: tableNameValue ?? this.tableNameValue,
     payload: payload ?? this.payload,
+    retryCount: retryCount ?? this.retryCount,
     createdAt: createdAt ?? this.createdAt,
   );
   SyncQueueData copyWithCompanion(SyncQueueCompanion data) {
     return SyncQueueData(
       id: data.id.present ? data.id.value : this.id,
-      sourceTable: data.sourceTable.present
-          ? data.sourceTable.value
-          : this.sourceTable,
-      recordId: data.recordId.present ? data.recordId.value : this.recordId,
       operation: data.operation.present ? data.operation.value : this.operation,
+      tableNameValue: data.tableNameValue.present
+          ? data.tableNameValue.value
+          : this.tableNameValue,
       payload: data.payload.present ? data.payload.value : this.payload,
+      retryCount: data.retryCount.present
+          ? data.retryCount.value
+          : this.retryCount,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -1644,89 +1644,93 @@ class SyncQueueData extends DataClass implements Insertable<SyncQueueData> {
   String toString() {
     return (StringBuffer('SyncQueueData(')
           ..write('id: $id, ')
-          ..write('sourceTable: $sourceTable, ')
-          ..write('recordId: $recordId, ')
           ..write('operation: $operation, ')
+          ..write('tableNameValue: $tableNameValue, ')
           ..write('payload: $payload, ')
+          ..write('retryCount: $retryCount, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, sourceTable, recordId, operation, payload, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    operation,
+    tableNameValue,
+    payload,
+    retryCount,
+    createdAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is SyncQueueData &&
           other.id == this.id &&
-          other.sourceTable == this.sourceTable &&
-          other.recordId == this.recordId &&
           other.operation == this.operation &&
+          other.tableNameValue == this.tableNameValue &&
           other.payload == this.payload &&
+          other.retryCount == this.retryCount &&
           other.createdAt == this.createdAt);
 }
 
 class SyncQueueCompanion extends UpdateCompanion<SyncQueueData> {
   final Value<int> id;
-  final Value<String> sourceTable;
-  final Value<String> recordId;
   final Value<String> operation;
+  final Value<String> tableNameValue;
   final Value<String> payload;
+  final Value<int> retryCount;
   final Value<DateTime> createdAt;
   const SyncQueueCompanion({
     this.id = const Value.absent(),
-    this.sourceTable = const Value.absent(),
-    this.recordId = const Value.absent(),
     this.operation = const Value.absent(),
+    this.tableNameValue = const Value.absent(),
     this.payload = const Value.absent(),
+    this.retryCount = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   SyncQueueCompanion.insert({
     this.id = const Value.absent(),
-    required String sourceTable,
-    required String recordId,
     required String operation,
+    required String tableNameValue,
     required String payload,
-    required DateTime createdAt,
-  }) : sourceTable = Value(sourceTable),
-       recordId = Value(recordId),
-       operation = Value(operation),
-       payload = Value(payload),
-       createdAt = Value(createdAt);
+    this.retryCount = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : operation = Value(operation),
+       tableNameValue = Value(tableNameValue),
+       payload = Value(payload);
   static Insertable<SyncQueueData> custom({
     Expression<int>? id,
-    Expression<String>? sourceTable,
-    Expression<String>? recordId,
     Expression<String>? operation,
+    Expression<String>? tableNameValue,
     Expression<String>? payload,
+    Expression<int>? retryCount,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (sourceTable != null) 'source_table': sourceTable,
-      if (recordId != null) 'record_id': recordId,
       if (operation != null) 'operation': operation,
+      if (tableNameValue != null) 'table_name': tableNameValue,
       if (payload != null) 'payload': payload,
+      if (retryCount != null) 'retry_count': retryCount,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
 
   SyncQueueCompanion copyWith({
     Value<int>? id,
-    Value<String>? sourceTable,
-    Value<String>? recordId,
     Value<String>? operation,
+    Value<String>? tableNameValue,
     Value<String>? payload,
+    Value<int>? retryCount,
     Value<DateTime>? createdAt,
   }) {
     return SyncQueueCompanion(
       id: id ?? this.id,
-      sourceTable: sourceTable ?? this.sourceTable,
-      recordId: recordId ?? this.recordId,
       operation: operation ?? this.operation,
+      tableNameValue: tableNameValue ?? this.tableNameValue,
       payload: payload ?? this.payload,
+      retryCount: retryCount ?? this.retryCount,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -1737,17 +1741,17 @@ class SyncQueueCompanion extends UpdateCompanion<SyncQueueData> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
-    if (sourceTable.present) {
-      map['source_table'] = Variable<String>(sourceTable.value);
-    }
-    if (recordId.present) {
-      map['record_id'] = Variable<String>(recordId.value);
-    }
     if (operation.present) {
       map['operation'] = Variable<String>(operation.value);
     }
+    if (tableNameValue.present) {
+      map['table_name'] = Variable<String>(tableNameValue.value);
+    }
     if (payload.present) {
       map['payload'] = Variable<String>(payload.value);
+    }
+    if (retryCount.present) {
+      map['retry_count'] = Variable<int>(retryCount.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -1759,11 +1763,445 @@ class SyncQueueCompanion extends UpdateCompanion<SyncQueueData> {
   String toString() {
     return (StringBuffer('SyncQueueCompanion(')
           ..write('id: $id, ')
-          ..write('sourceTable: $sourceTable, ')
-          ..write('recordId: $recordId, ')
           ..write('operation: $operation, ')
+          ..write('tableNameValue: $tableNameValue, ')
           ..write('payload: $payload, ')
+          ..write('retryCount: $retryCount, ')
           ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LocalWeatherTable extends LocalWeather
+    with TableInfo<$LocalWeatherTable, LocalWeatherData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalWeatherTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _regionKeyMeta = const VerificationMeta(
+    'regionKey',
+  );
+  @override
+  late final GeneratedColumn<String> regionKey = GeneratedColumn<String>(
+    'region_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tempCMeta = const VerificationMeta('tempC');
+  @override
+  late final GeneratedColumn<double> tempC = GeneratedColumn<double>(
+    'temp_c',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _windSpeedKmhMeta = const VerificationMeta(
+    'windSpeedKmh',
+  );
+  @override
+  late final GeneratedColumn<double> windSpeedKmh = GeneratedColumn<double>(
+    'wind_speed_kmh',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _waveHeightMMeta = const VerificationMeta(
+    'waveHeightM',
+  );
+  @override
+  late final GeneratedColumn<double> waveHeightM = GeneratedColumn<double>(
+    'wave_height_m',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _humidityMeta = const VerificationMeta(
+    'humidity',
+  );
+  @override
+  late final GeneratedColumn<double> humidity = GeneratedColumn<double>(
+    'humidity',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cachedAtMeta = const VerificationMeta(
+    'cachedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> cachedAt = GeneratedColumn<DateTime>(
+    'cached_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    regionKey,
+    tempC,
+    windSpeedKmh,
+    waveHeightM,
+    humidity,
+    cachedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_weather';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LocalWeatherData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('region_key')) {
+      context.handle(
+        _regionKeyMeta,
+        regionKey.isAcceptableOrUnknown(data['region_key']!, _regionKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_regionKeyMeta);
+    }
+    if (data.containsKey('temp_c')) {
+      context.handle(
+        _tempCMeta,
+        tempC.isAcceptableOrUnknown(data['temp_c']!, _tempCMeta),
+      );
+    }
+    if (data.containsKey('wind_speed_kmh')) {
+      context.handle(
+        _windSpeedKmhMeta,
+        windSpeedKmh.isAcceptableOrUnknown(
+          data['wind_speed_kmh']!,
+          _windSpeedKmhMeta,
+        ),
+      );
+    }
+    if (data.containsKey('wave_height_m')) {
+      context.handle(
+        _waveHeightMMeta,
+        waveHeightM.isAcceptableOrUnknown(
+          data['wave_height_m']!,
+          _waveHeightMMeta,
+        ),
+      );
+    }
+    if (data.containsKey('humidity')) {
+      context.handle(
+        _humidityMeta,
+        humidity.isAcceptableOrUnknown(data['humidity']!, _humidityMeta),
+      );
+    }
+    if (data.containsKey('cached_at')) {
+      context.handle(
+        _cachedAtMeta,
+        cachedAt.isAcceptableOrUnknown(data['cached_at']!, _cachedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cachedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {regionKey};
+  @override
+  LocalWeatherData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalWeatherData(
+      regionKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}region_key'],
+      )!,
+      tempC: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}temp_c'],
+      ),
+      windSpeedKmh: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}wind_speed_kmh'],
+      ),
+      waveHeightM: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}wave_height_m'],
+      ),
+      humidity: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}humidity'],
+      ),
+      cachedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}cached_at'],
+      )!,
+    );
+  }
+
+  @override
+  $LocalWeatherTable createAlias(String alias) {
+    return $LocalWeatherTable(attachedDatabase, alias);
+  }
+}
+
+class LocalWeatherData extends DataClass
+    implements Insertable<LocalWeatherData> {
+  final String regionKey;
+  final double? tempC;
+  final double? windSpeedKmh;
+  final double? waveHeightM;
+  final double? humidity;
+  final DateTime cachedAt;
+  const LocalWeatherData({
+    required this.regionKey,
+    this.tempC,
+    this.windSpeedKmh,
+    this.waveHeightM,
+    this.humidity,
+    required this.cachedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['region_key'] = Variable<String>(regionKey);
+    if (!nullToAbsent || tempC != null) {
+      map['temp_c'] = Variable<double>(tempC);
+    }
+    if (!nullToAbsent || windSpeedKmh != null) {
+      map['wind_speed_kmh'] = Variable<double>(windSpeedKmh);
+    }
+    if (!nullToAbsent || waveHeightM != null) {
+      map['wave_height_m'] = Variable<double>(waveHeightM);
+    }
+    if (!nullToAbsent || humidity != null) {
+      map['humidity'] = Variable<double>(humidity);
+    }
+    map['cached_at'] = Variable<DateTime>(cachedAt);
+    return map;
+  }
+
+  LocalWeatherCompanion toCompanion(bool nullToAbsent) {
+    return LocalWeatherCompanion(
+      regionKey: Value(regionKey),
+      tempC: tempC == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tempC),
+      windSpeedKmh: windSpeedKmh == null && nullToAbsent
+          ? const Value.absent()
+          : Value(windSpeedKmh),
+      waveHeightM: waveHeightM == null && nullToAbsent
+          ? const Value.absent()
+          : Value(waveHeightM),
+      humidity: humidity == null && nullToAbsent
+          ? const Value.absent()
+          : Value(humidity),
+      cachedAt: Value(cachedAt),
+    );
+  }
+
+  factory LocalWeatherData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalWeatherData(
+      regionKey: serializer.fromJson<String>(json['regionKey']),
+      tempC: serializer.fromJson<double?>(json['tempC']),
+      windSpeedKmh: serializer.fromJson<double?>(json['windSpeedKmh']),
+      waveHeightM: serializer.fromJson<double?>(json['waveHeightM']),
+      humidity: serializer.fromJson<double?>(json['humidity']),
+      cachedAt: serializer.fromJson<DateTime>(json['cachedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'regionKey': serializer.toJson<String>(regionKey),
+      'tempC': serializer.toJson<double?>(tempC),
+      'windSpeedKmh': serializer.toJson<double?>(windSpeedKmh),
+      'waveHeightM': serializer.toJson<double?>(waveHeightM),
+      'humidity': serializer.toJson<double?>(humidity),
+      'cachedAt': serializer.toJson<DateTime>(cachedAt),
+    };
+  }
+
+  LocalWeatherData copyWith({
+    String? regionKey,
+    Value<double?> tempC = const Value.absent(),
+    Value<double?> windSpeedKmh = const Value.absent(),
+    Value<double?> waveHeightM = const Value.absent(),
+    Value<double?> humidity = const Value.absent(),
+    DateTime? cachedAt,
+  }) => LocalWeatherData(
+    regionKey: regionKey ?? this.regionKey,
+    tempC: tempC.present ? tempC.value : this.tempC,
+    windSpeedKmh: windSpeedKmh.present ? windSpeedKmh.value : this.windSpeedKmh,
+    waveHeightM: waveHeightM.present ? waveHeightM.value : this.waveHeightM,
+    humidity: humidity.present ? humidity.value : this.humidity,
+    cachedAt: cachedAt ?? this.cachedAt,
+  );
+  LocalWeatherData copyWithCompanion(LocalWeatherCompanion data) {
+    return LocalWeatherData(
+      regionKey: data.regionKey.present ? data.regionKey.value : this.regionKey,
+      tempC: data.tempC.present ? data.tempC.value : this.tempC,
+      windSpeedKmh: data.windSpeedKmh.present
+          ? data.windSpeedKmh.value
+          : this.windSpeedKmh,
+      waveHeightM: data.waveHeightM.present
+          ? data.waveHeightM.value
+          : this.waveHeightM,
+      humidity: data.humidity.present ? data.humidity.value : this.humidity,
+      cachedAt: data.cachedAt.present ? data.cachedAt.value : this.cachedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalWeatherData(')
+          ..write('regionKey: $regionKey, ')
+          ..write('tempC: $tempC, ')
+          ..write('windSpeedKmh: $windSpeedKmh, ')
+          ..write('waveHeightM: $waveHeightM, ')
+          ..write('humidity: $humidity, ')
+          ..write('cachedAt: $cachedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    regionKey,
+    tempC,
+    windSpeedKmh,
+    waveHeightM,
+    humidity,
+    cachedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalWeatherData &&
+          other.regionKey == this.regionKey &&
+          other.tempC == this.tempC &&
+          other.windSpeedKmh == this.windSpeedKmh &&
+          other.waveHeightM == this.waveHeightM &&
+          other.humidity == this.humidity &&
+          other.cachedAt == this.cachedAt);
+}
+
+class LocalWeatherCompanion extends UpdateCompanion<LocalWeatherData> {
+  final Value<String> regionKey;
+  final Value<double?> tempC;
+  final Value<double?> windSpeedKmh;
+  final Value<double?> waveHeightM;
+  final Value<double?> humidity;
+  final Value<DateTime> cachedAt;
+  final Value<int> rowid;
+  const LocalWeatherCompanion({
+    this.regionKey = const Value.absent(),
+    this.tempC = const Value.absent(),
+    this.windSpeedKmh = const Value.absent(),
+    this.waveHeightM = const Value.absent(),
+    this.humidity = const Value.absent(),
+    this.cachedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalWeatherCompanion.insert({
+    required String regionKey,
+    this.tempC = const Value.absent(),
+    this.windSpeedKmh = const Value.absent(),
+    this.waveHeightM = const Value.absent(),
+    this.humidity = const Value.absent(),
+    required DateTime cachedAt,
+    this.rowid = const Value.absent(),
+  }) : regionKey = Value(regionKey),
+       cachedAt = Value(cachedAt);
+  static Insertable<LocalWeatherData> custom({
+    Expression<String>? regionKey,
+    Expression<double>? tempC,
+    Expression<double>? windSpeedKmh,
+    Expression<double>? waveHeightM,
+    Expression<double>? humidity,
+    Expression<DateTime>? cachedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (regionKey != null) 'region_key': regionKey,
+      if (tempC != null) 'temp_c': tempC,
+      if (windSpeedKmh != null) 'wind_speed_kmh': windSpeedKmh,
+      if (waveHeightM != null) 'wave_height_m': waveHeightM,
+      if (humidity != null) 'humidity': humidity,
+      if (cachedAt != null) 'cached_at': cachedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalWeatherCompanion copyWith({
+    Value<String>? regionKey,
+    Value<double?>? tempC,
+    Value<double?>? windSpeedKmh,
+    Value<double?>? waveHeightM,
+    Value<double?>? humidity,
+    Value<DateTime>? cachedAt,
+    Value<int>? rowid,
+  }) {
+    return LocalWeatherCompanion(
+      regionKey: regionKey ?? this.regionKey,
+      tempC: tempC ?? this.tempC,
+      windSpeedKmh: windSpeedKmh ?? this.windSpeedKmh,
+      waveHeightM: waveHeightM ?? this.waveHeightM,
+      humidity: humidity ?? this.humidity,
+      cachedAt: cachedAt ?? this.cachedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (regionKey.present) {
+      map['region_key'] = Variable<String>(regionKey.value);
+    }
+    if (tempC.present) {
+      map['temp_c'] = Variable<double>(tempC.value);
+    }
+    if (windSpeedKmh.present) {
+      map['wind_speed_kmh'] = Variable<double>(windSpeedKmh.value);
+    }
+    if (waveHeightM.present) {
+      map['wave_height_m'] = Variable<double>(waveHeightM.value);
+    }
+    if (humidity.present) {
+      map['humidity'] = Variable<double>(humidity.value);
+    }
+    if (cachedAt.present) {
+      map['cached_at'] = Variable<DateTime>(cachedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalWeatherCompanion(')
+          ..write('regionKey: $regionKey, ')
+          ..write('tempC: $tempC, ')
+          ..write('windSpeedKmh: $windSpeedKmh, ')
+          ..write('waveHeightM: $waveHeightM, ')
+          ..write('humidity: $humidity, ')
+          ..write('cachedAt: $cachedAt, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -1775,6 +2213,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LocalSpotsTable localSpots = $LocalSpotsTable(this);
   late final $LocalFishLogsTable localFishLogs = $LocalFishLogsTable(this);
   late final $SyncQueueTable syncQueue = $SyncQueueTable(this);
+  late final $LocalWeatherTable localWeather = $LocalWeatherTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1783,6 +2222,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     localSpots,
     localFishLogs,
     syncQueue,
+    localWeather,
   ];
 }
 
@@ -2437,19 +2877,19 @@ typedef $$LocalFishLogsTableProcessedTableManager =
 typedef $$SyncQueueTableCreateCompanionBuilder =
     SyncQueueCompanion Function({
       Value<int> id,
-      required String sourceTable,
-      required String recordId,
       required String operation,
+      required String tableNameValue,
       required String payload,
-      required DateTime createdAt,
+      Value<int> retryCount,
+      Value<DateTime> createdAt,
     });
 typedef $$SyncQueueTableUpdateCompanionBuilder =
     SyncQueueCompanion Function({
       Value<int> id,
-      Value<String> sourceTable,
-      Value<String> recordId,
       Value<String> operation,
+      Value<String> tableNameValue,
       Value<String> payload,
+      Value<int> retryCount,
       Value<DateTime> createdAt,
     });
 
@@ -2467,23 +2907,23 @@ class $$SyncQueueTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get sourceTable => $composableBuilder(
-    column: $table.sourceTable,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get recordId => $composableBuilder(
-    column: $table.recordId,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<String> get operation => $composableBuilder(
     column: $table.operation,
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get tableNameValue => $composableBuilder(
+    column: $table.tableNameValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get payload => $composableBuilder(
     column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get retryCount => $composableBuilder(
+    column: $table.retryCount,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2507,23 +2947,23 @@ class $$SyncQueueTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get sourceTable => $composableBuilder(
-    column: $table.sourceTable,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get recordId => $composableBuilder(
-    column: $table.recordId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get operation => $composableBuilder(
     column: $table.operation,
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get tableNameValue => $composableBuilder(
+    column: $table.tableNameValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get payload => $composableBuilder(
     column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get retryCount => $composableBuilder(
+    column: $table.retryCount,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -2545,19 +2985,21 @@ class $$SyncQueueTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get sourceTable => $composableBuilder(
-    column: $table.sourceTable,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get recordId =>
-      $composableBuilder(column: $table.recordId, builder: (column) => column);
-
   GeneratedColumn<String> get operation =>
       $composableBuilder(column: $table.operation, builder: (column) => column);
 
+  GeneratedColumn<String> get tableNameValue => $composableBuilder(
+    column: $table.tableNameValue,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get payload =>
       $composableBuilder(column: $table.payload, builder: (column) => column);
+
+  GeneratedColumn<int> get retryCount => $composableBuilder(
+    column: $table.retryCount,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -2595,33 +3037,33 @@ class $$SyncQueueTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                Value<String> sourceTable = const Value.absent(),
-                Value<String> recordId = const Value.absent(),
                 Value<String> operation = const Value.absent(),
+                Value<String> tableNameValue = const Value.absent(),
                 Value<String> payload = const Value.absent(),
+                Value<int> retryCount = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => SyncQueueCompanion(
                 id: id,
-                sourceTable: sourceTable,
-                recordId: recordId,
                 operation: operation,
+                tableNameValue: tableNameValue,
                 payload: payload,
+                retryCount: retryCount,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                required String sourceTable,
-                required String recordId,
                 required String operation,
+                required String tableNameValue,
                 required String payload,
-                required DateTime createdAt,
+                Value<int> retryCount = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
               }) => SyncQueueCompanion.insert(
                 id: id,
-                sourceTable: sourceTable,
-                recordId: recordId,
                 operation: operation,
+                tableNameValue: tableNameValue,
                 payload: payload,
+                retryCount: retryCount,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
@@ -2649,6 +3091,229 @@ typedef $$SyncQueueTableProcessedTableManager =
       SyncQueueData,
       PrefetchHooks Function()
     >;
+typedef $$LocalWeatherTableCreateCompanionBuilder =
+    LocalWeatherCompanion Function({
+      required String regionKey,
+      Value<double?> tempC,
+      Value<double?> windSpeedKmh,
+      Value<double?> waveHeightM,
+      Value<double?> humidity,
+      required DateTime cachedAt,
+      Value<int> rowid,
+    });
+typedef $$LocalWeatherTableUpdateCompanionBuilder =
+    LocalWeatherCompanion Function({
+      Value<String> regionKey,
+      Value<double?> tempC,
+      Value<double?> windSpeedKmh,
+      Value<double?> waveHeightM,
+      Value<double?> humidity,
+      Value<DateTime> cachedAt,
+      Value<int> rowid,
+    });
+
+class $$LocalWeatherTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalWeatherTable> {
+  $$LocalWeatherTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get regionKey => $composableBuilder(
+    column: $table.regionKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get tempC => $composableBuilder(
+    column: $table.tempC,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get windSpeedKmh => $composableBuilder(
+    column: $table.windSpeedKmh,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get waveHeightM => $composableBuilder(
+    column: $table.waveHeightM,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get humidity => $composableBuilder(
+    column: $table.humidity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get cachedAt => $composableBuilder(
+    column: $table.cachedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocalWeatherTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalWeatherTable> {
+  $$LocalWeatherTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get regionKey => $composableBuilder(
+    column: $table.regionKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get tempC => $composableBuilder(
+    column: $table.tempC,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get windSpeedKmh => $composableBuilder(
+    column: $table.windSpeedKmh,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get waveHeightM => $composableBuilder(
+    column: $table.waveHeightM,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get humidity => $composableBuilder(
+    column: $table.humidity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get cachedAt => $composableBuilder(
+    column: $table.cachedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocalWeatherTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalWeatherTable> {
+  $$LocalWeatherTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get regionKey =>
+      $composableBuilder(column: $table.regionKey, builder: (column) => column);
+
+  GeneratedColumn<double> get tempC =>
+      $composableBuilder(column: $table.tempC, builder: (column) => column);
+
+  GeneratedColumn<double> get windSpeedKmh => $composableBuilder(
+    column: $table.windSpeedKmh,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get waveHeightM => $composableBuilder(
+    column: $table.waveHeightM,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get humidity =>
+      $composableBuilder(column: $table.humidity, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get cachedAt =>
+      $composableBuilder(column: $table.cachedAt, builder: (column) => column);
+}
+
+class $$LocalWeatherTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocalWeatherTable,
+          LocalWeatherData,
+          $$LocalWeatherTableFilterComposer,
+          $$LocalWeatherTableOrderingComposer,
+          $$LocalWeatherTableAnnotationComposer,
+          $$LocalWeatherTableCreateCompanionBuilder,
+          $$LocalWeatherTableUpdateCompanionBuilder,
+          (
+            LocalWeatherData,
+            BaseReferences<_$AppDatabase, $LocalWeatherTable, LocalWeatherData>,
+          ),
+          LocalWeatherData,
+          PrefetchHooks Function()
+        > {
+  $$LocalWeatherTableTableManager(_$AppDatabase db, $LocalWeatherTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalWeatherTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocalWeatherTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LocalWeatherTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> regionKey = const Value.absent(),
+                Value<double?> tempC = const Value.absent(),
+                Value<double?> windSpeedKmh = const Value.absent(),
+                Value<double?> waveHeightM = const Value.absent(),
+                Value<double?> humidity = const Value.absent(),
+                Value<DateTime> cachedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocalWeatherCompanion(
+                regionKey: regionKey,
+                tempC: tempC,
+                windSpeedKmh: windSpeedKmh,
+                waveHeightM: waveHeightM,
+                humidity: humidity,
+                cachedAt: cachedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String regionKey,
+                Value<double?> tempC = const Value.absent(),
+                Value<double?> windSpeedKmh = const Value.absent(),
+                Value<double?> waveHeightM = const Value.absent(),
+                Value<double?> humidity = const Value.absent(),
+                required DateTime cachedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => LocalWeatherCompanion.insert(
+                regionKey: regionKey,
+                tempC: tempC,
+                windSpeedKmh: windSpeedKmh,
+                waveHeightM: waveHeightM,
+                humidity: humidity,
+                cachedAt: cachedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocalWeatherTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocalWeatherTable,
+      LocalWeatherData,
+      $$LocalWeatherTableFilterComposer,
+      $$LocalWeatherTableOrderingComposer,
+      $$LocalWeatherTableAnnotationComposer,
+      $$LocalWeatherTableCreateCompanionBuilder,
+      $$LocalWeatherTableUpdateCompanionBuilder,
+      (
+        LocalWeatherData,
+        BaseReferences<_$AppDatabase, $LocalWeatherTable, LocalWeatherData>,
+      ),
+      LocalWeatherData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2659,4 +3324,6 @@ class $AppDatabaseManager {
       $$LocalFishLogsTableTableManager(_db, _db.localFishLogs);
   $$SyncQueueTableTableManager get syncQueue =>
       $$SyncQueueTableTableManager(_db, _db.syncQueue);
+  $$LocalWeatherTableTableManager get localWeather =>
+      $$LocalWeatherTableTableManager(_db, _db.localWeather);
 }

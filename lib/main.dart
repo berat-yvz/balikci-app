@@ -9,6 +9,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:balikci_app/app/router.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/notification_service.dart';
+import 'package:balikci_app/core/services/sync_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/local/database.dart';
 import 'package:balikci_app/data/repositories/auth_repository.dart';
@@ -51,6 +52,7 @@ Future<void> main() async {
   if (startupErrors.isEmpty) {
     try {
       final _ = AppDatabase.instance;
+      SyncService(AppDatabase.instance).startListening();
     } catch (e) {
       startupErrors.add("Yerel veritabanı başlatılamadı.\n$e");
     }

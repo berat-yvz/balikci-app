@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:balikci_app/core/services/supabase_service.dart';
@@ -7,6 +9,22 @@ import 'package:balikci_app/data/models/fish_log_model.dart';
 
 /// Balık günlüğü repository — Supabase `fish_logs` tablosu.
 class FishLogRepository {
+  /// Fotoğrafı Supabase Storage'a yükler.
+  Future<void> uploadPhoto({
+    required File file,
+    required String storagePath,
+  }) async {
+    try {
+      await SupabaseService.storage
+          .from('fish-photos')
+          .upload(storagePath, file);
+    } on StorageException catch (e) {
+      throw Exception('Fotoğraf yüklenemedi: ${e.message}');
+    } catch (e) {
+      throw Exception('Fotoğraf yüklenemedi: $e');
+    }
+  }
+
   final SupabaseClient _db = SupabaseService.client;
 
   /// Kullanıcının günlük kayıtlarını varsayılan limit ile döner.

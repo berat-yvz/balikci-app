@@ -1,19 +1,23 @@
 import 'dart:math' as math;
 
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/data/local/database.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
+import 'package:drift/drift.dart' as drift;
 
 /// Hava durumu servisi — Supabase weather_cache tablosundan okur.
 /// M-04 Hava Durumu & Cache — MVP_PLAN.md referans.
 ///
 /// Mimari: Open-Meteo → Edge Function / spot-create hook → weather_cache → bu servis
 class WeatherService {
+  // cleaned: Drift cache + Supabase fallback akışı 30dk tazelikle güncellendi
   WeatherService._();
 
   static final _db = SupabaseService.client;
+  static final _localDb = AppDatabase.instance;
 
   static const double _cacheRadiusKm = 25;
-  static const Duration _freshness = Duration(hours: 1);
+  static const Duration _freshness = Duration(minutes: 30);
 
   /// Kullanıcı konumuna en yakın (25km içinde) taze cache verisini döner.
   /// Bulunamazsa 25km içindeki en yakın (eski olabilir) cache döner.
@@ -21,6 +25,32 @@ class WeatherService {
     required double lat,
     required double lng,
   }) async {
+    final regionKey = _regionKeyForLatLng(lat, lng);
+    final local = await (_localDb.select(
+      _localDb.localWeather,
+    )..where((t) => t.regionKey.equals(regionKey))).getSingleOrNull();
+    if (local != null &&
+        DateTime.now().difference(local.cachedAt) <= _freshness) {
+      return WeatherModel(
+        id: 'local-$regionKey',
+        lat: lat,
+        lng: lng,
+        temperature: local.tempC,
+        windspeed: local.windSpeedKmh,
+        windDirection: null,
+        waveHeight: local.waveHeightM,
+        seaSurfaceTemperature: null,
+        precipitation: null,
+        humidity: local.humidity,
+        visibilityKm: null,
+        cloudCover: null,
+        weatherCode: null,
+        fishingSummary: null,
+        fetchedAt: local.cachedAt,
+        regionKey: local.regionKey,
+      );
+    }
+
     final now = DateTime.now().toUtc();
     final freshAfter = now.subtract(_freshness);
 
@@ -60,7 +90,31 @@ class WeatherService {
         }
       }
 
-      return bestFresh ?? bestAny;
+      final selected = bestFresh ?? bestAny;
+      if (selected != null) {
+        final key = selected.regionKey ?? regionKey;
+        await _localDb
+            .into(_localDb.localWeather)
+            .insertOnConflictUpdate(
+              LocalWeatherCompanion.insert(
+                regionKey: key,
+                tempC: selected.temperature == null
+                    ? const drift.Value.absent()
+                    : drift.Value(selected.temperature!),
+                windSpeedKmh: selected.windspeed == null
+                    ? const drift.Value.absent()
+                    : drift.Value(selected.windspeed!),
+                waveHeightM: selected.waveHeight == null
+                    ? const drift.Value.absent()
+                    : drift.Value(selected.waveHeight!),
+                humidity: selected.humidity == null
+                    ? const drift.Value.absent()
+                    : drift.Value(selected.humidity!),
+                cachedAt: DateTime.now(),
+              ),
+            );
+      }
+      return selected;
     } catch (_) {
       return null;
     }
@@ -109,6 +163,12 @@ class WeatherService {
   }
 
   static double _degToRad(double deg) => deg * 3.141592653589793 / 180.0;
+
+  static String _regionKeyForLatLng(double lat, double lng) {
+    final latBucket = (lat * 4).round() / 4;
+    final lngBucket = (lng * 4).round() / 4;
+    return '${latBucket.toStringAsFixed(2)}_${lngBucket.toStringAsFixed(2)}';
+  }
 
   static _BBox _bboxForRadiusKm({
     required double lat,
