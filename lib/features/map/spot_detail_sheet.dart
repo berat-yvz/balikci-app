@@ -199,6 +199,8 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
     final uid = SupabaseService.auth.currentUser?.id;
     final isOwner = uid != null && uid == widget.spot.userId;
     final latest = _checkins.isNotEmpty ? _checkins.first : null;
+    final latestCrowd = latest == null ? null : _crowdMeta(latest.crowdLevel);
+    final latestFish = latest == null ? null : _fishMeta(latest.fishDensity);
 
     return Container(
       height: 560,
@@ -216,7 +218,6 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
               child: Container(
@@ -265,14 +266,12 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
                 style: TextStyle(color: Colors.grey),
               )
             else ...[
-              final crowd = _crowdMeta(latest.crowdLevel);
-              final fish = _fishMeta(latest.fishDensity);
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _chip(crowd.$1, crowd.$2),
-                  _chip(fish.$1, fish.$2),
+                  _chip(latestCrowd!.$1, latestCrowd.$2),
+                  _chip(latestFish!.$1, latestFish.$2),
                 ],
               ),
               const SizedBox(height: 8),
