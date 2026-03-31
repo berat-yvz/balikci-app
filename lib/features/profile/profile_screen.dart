@@ -288,7 +288,7 @@ class _ProfileContent extends ConsumerWidget {
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                 ),
-                onPressed: () => context.push('/profile/settings'),
+                onPressed: () => context.push('/settings'),
                 icon: const Icon(Icons.settings_outlined),
                 label: const Text('Ayarlar'),
               ),

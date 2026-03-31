@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -574,220 +575,313 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          // Üst: Arama (pill) + sync + bildirimler
+          // Üst: Arama (floating) + sync + bildirimler
           Positioned(
-            left: 0,
-            right: 0,
-            top: 0,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
+            left: 16,
+            right: 16,
+            top: MediaQuery.of(context).padding.top + 8,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
                             height: 48,
                             decoration: BoxDecoration(
-                              color: AppColors.navy.withValues(alpha: 0.70),
-                              borderRadius: BorderRadius.circular(999),
+                              color: Colors.black.withValues(alpha: 0.75),
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.35),
+                                  blurRadius: 18,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
                               border: Border.all(
                                 color: _searchFocusNode.hasFocus
-                                    ? AppColors.teal.withValues(alpha: 0.55)
-                                    : Colors.white.withValues(alpha: 0.08),
+                                    ? AppColors.primary
+                                    : Colors.transparent,
                               ),
                             ),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: Row(
                               children: [
-                                const SizedBox(width: 12),
-                                const Icon(Icons.search,
-                                    color: Color(0xFFB8C7DA), size: 20),
+                                const Icon(
+                                  Icons.search,
+                                  color: Colors.white60,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: TextField(
                                     controller: _searchController,
                                     focusNode: _searchFocusNode,
-                                    style: const TextStyle(color: Colors.white),
-                                    decoration: const InputDecoration(
-                                      hintText: 'Mera ara',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: _searchController.text.isEmpty
+                                          ? 'Mera ara...'
+                                          : null,
+                                      hintStyle: const TextStyle(
+                                        color: Colors.white38,
+                                        fontStyle: FontStyle.italic,
+                                      ),
                                       border: InputBorder.none,
                                       isDense: true,
                                       contentPadding: EdgeInsets.zero,
                                     ),
-                                    onChanged: _onSearchChanged,
+                                    onChanged: (value) {
+                                      _onSearchChanged(value);
+                                      setState(() {});
+                                    },
                                     onTap: () => setState(() {}),
                                   ),
                                 ),
                                 if (_searchController.text.isNotEmpty)
                                   IconButton(
                                     tooltip: 'Temizle',
+                                    icon: const Icon(
+                                      Icons.close,
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
                                     onPressed: () {
                                       _searchController.clear();
                                       _onSearchChanged('');
+                                      _searchFocusNode.unfocus();
                                       setState(() {});
                                     },
-                                    icon: const Icon(Icons.close,
-                                        color: Color(0xFFB8C7DA)),
                                   ),
                               ],
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Consumer(
-                          builder: (context, ref, _) {
-                            final unreadAsync = ref.watch(unreadCountProvider);
-                            final onlineAsync = ref.watch(connectivityProvider);
-                            final online = onlineAsync.asData?.value ?? true;
-
-                            Widget badgeFor(int count) {
-                              final showBadge = count > 0;
-                              return Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  Icon(
-                                    online
-                                        ? Icons.cloud_done_outlined
-                                        : Icons.cloud_off_outlined,
-                                    color: online
-                                        ? AppColors.foam.withValues(alpha: 0.75)
-                                        : AppColors.warning.withValues(
-                                            alpha: 0.85,
-                                          ),
-                                  ),
-                                  Positioned(
-                                    right: -6,
-                                    top: -6,
-                                    child: Container(
-                                      width: 10,
-                                      height: 10,
-                                      decoration: BoxDecoration(
-                                        color: online
-                                            ? AppColors.success
-                                            : AppColors.warning,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: AppColors.navy,
-                                          width: 2,
-                                        ),
-                                      ),
+                      ),
+                      const SizedBox(height: 8),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOut,
+                        height: _searchResults.isEmpty
+                            ? 0
+                            : 56.0 * (_searchResults.length.clamp(1, 6)) + 16,
+                        child: _searchResults.isEmpty
+                            ? const SizedBox.shrink()
+                            : Container(
+                                margin: const EdgeInsets.only(top: 4, right: 64),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.9),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.4),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
                                     ),
-                                  ),
-                                  if (showBadge)
-                                    Positioned(
-                                      right: -8,
-                                      bottom: -10,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 3,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.sand,
-                                          borderRadius:
-                                              BorderRadius.circular(999),
-                                        ),
-                                        child: Text(
-                                          count > 99 ? '99+' : '$count',
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w900,
-                                            color: AppColors.navy,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              );
-                            }
-
-                            return unreadAsync.when(
-                              data: (count) => IconButton(
-                                tooltip: 'Bildirimler',
-                                onPressed: () => context.push('/notifications'),
-                                icon: badgeFor(count),
-                              ),
-                              loading: () => IconButton(
-                                tooltip: 'Bildirimler',
-                                onPressed: () => context.push('/notifications'),
-                                icon: badgeFor(0),
-                              ),
-                              error: (_, errorValue) => IconButton(
-                                tooltip: 'Bildirimler',
-                                onPressed: () => context.push('/notifications'),
-                                icon: badgeFor(0),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    if (_searchResults.isNotEmpty)
-                      Container(
-                        constraints: const BoxConstraints(maxHeight: 160),
-                        margin: const EdgeInsets.only(top: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.navy.withValues(alpha: 0.82),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.08),
-                          ),
-                        ),
-                        child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 8,
-                          ),
-                          shrinkWrap: true,
-                        itemCount: _searchResults.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 4),
-                          itemBuilder: (context, idx) {
-                            final spot = _searchResults[idx];
-                            return InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () {
-                                _searchController.text = spot.name;
-                                _searchFocusNode.unfocus();
-                                _selectSpot(spot);
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                  horizontal: 12,
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.location_on,
-                                        color: Colors.white70, size: 18),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        spot.name,
-                                        style: AppTextStyles.body.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    _PrivacyChip(level: spot.privacyLevel),
                                   ],
                                 ),
+                                child: _searchResults.isEmpty
+                                    ? const Center(
+                                        child: Text(
+                                          'Sonuç bulunamadı',
+                                          style: TextStyle(color: Colors.white54),
+                                        ),
+                                      )
+                                    : ListView.separated(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 8,
+                                          horizontal: 8,
+                                        ),
+                                        itemCount:
+                                            _searchResults.length.clamp(0, 6),
+                                        separatorBuilder: (_, __) =>
+                                            const SizedBox(height: 4),
+                                        itemBuilder: (context, idx) {
+                                          final spot = _searchResults[idx];
+                                          return InkWell(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            onTap: () {
+                                              _searchController.text = spot.name;
+                                              _searchFocusNode.unfocus();
+                                              _selectSpot(spot);
+                                              setState(() {
+                                                _searchResults = const [];
+                                              });
+                                            },
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 8,
+                                                horizontal: 10,
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.location_on,
+                                                    color: AppColors.teal,
+                                                    size: 18,
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          spot.name,
+                                                          style: const TextStyle(
+                                                            color: Colors.white,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                        if (spot.type != null)
+                                                          const SizedBox(
+                                                              height: 2),
+                                                        if (spot.type != null)
+                                                          Container(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 3,
+                                                            ),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color:
+                                                                  Colors.white12,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          999),
+                                                            ),
+                                                            child: Text(
+                                                              spot.type!,
+                                                              style:
+                                                                  const TextStyle(
+                                                                color: Colors
+                                                                    .white70,
+                                                                fontSize: 11,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  _PrivacyChip(
+                                                      level:
+                                                          spot.privacyLevel),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
                               ),
-                            );
-                          },
+                      ),
+                    ],
+                  ),
+                ),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final unreadAsync = ref.watch(unreadCountProvider);
+                    final onlineAsync = ref.watch(connectivityProvider);
+                    final online = onlineAsync.asData?.value ?? true;
+
+                    Widget badgeFor(int count) {
+                      final showBadge = count > 0;
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Icon(
+                            online
+                                ? Icons.cloud_done_outlined
+                                : Icons.cloud_off_outlined,
+                            color: online
+                                ? AppColors.foam.withValues(alpha: 0.75)
+                                : AppColors.warning.withValues(alpha: 0.85),
+                          ),
+                          Positioned(
+                            right: -6,
+                            top: -6,
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: online
+                                    ? AppColors.success
+                                    : AppColors.warning,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.navy,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (showBadge)
+                            Positioned(
+                              right: -8,
+                              bottom: -10,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.sand,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  count > 99 ? '99+' : '$count',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.navy,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: unreadAsync.when(
+                        data: (count) => IconButton(
+                          tooltip: 'Bildirimler',
+                          onPressed: () => context.push('/notifications'),
+                          icon: badgeFor(count),
+                        ),
+                        loading: () => IconButton(
+                          tooltip: 'Bildirimler',
+                          onPressed: () => context.push('/notifications'),
+                          icon: badgeFor(0),
+                        ),
+                        error: (_, __) => IconButton(
+                          tooltip: 'Bildirimler',
+                          onPressed: () => context.push('/notifications'),
+                          icon: badgeFor(0),
                         ),
                       ),
-                  ],
+                    );
+                  },
                 ),
-              ),
+              ],
             ),
           ),
 
