@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +15,7 @@ import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
 import 'package:balikci_app/features/checkin/vote_widget.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:balikci_app/shared/widgets/exif_badge.dart';
 
 /// Check-in ekranı — H5 sprint'i.
 class CheckinScreen extends StatefulWidget {
@@ -30,6 +32,8 @@ class _CheckinScreenState extends State<CheckinScreen> {
 
   SpotModel? _spot;
   CheckinModel? _createdCheckin;
+  Map<bool, int> _voteCounts = const {true: 0, false: 0};
+  bool? _exifVerifiedStatus;
   bool _loadingSpot = true;
   bool _submitting = false;
 
@@ -156,7 +160,15 @@ class _CheckinScreenState extends State<CheckinScreen> {
           checkinId: created.id,
           photoUrl: photoPath,
         );
+
+        // EXIF doğrulaması tetikleniyor; pending olarak gösterelim.
+        setState(() => _exifVerifiedStatus = null);
+        unawaited(_pollCheckinExifVerified(created.id));
       }
+
+      final voteCounts = await _checkinRepo.getVoteCounts(created.id);
+      final trueCount = voteCounts['true'] ?? 0;
+      final falseCount = voteCounts['false'] ?? 0;
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -166,7 +178,10 @@ class _CheckinScreenState extends State<CheckinScreen> {
         ),
       );
 
-      setState(() => _createdCheckin = created);
+      setState(() {
+        _createdCheckin = created;
+        _voteCounts = {true: trueCount, false: falseCount};
+      });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -178,6 +193,37 @@ class _CheckinScreenState extends State<CheckinScreen> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  Future<void> _pollCheckinExifVerified(String checkinId) async {
+    const attempts = 10; // 10 x 3 sn = 30 sn
+    const interval = Duration(seconds: 3);
+
+    for (var i = 0; i < attempts; i++) {
+      try {
+        final response = await SupabaseService.client
+            .from('checkins')
+            .select('exif_verified')
+            .eq('id', checkinId)
+            .maybeSingle();
+
+        final verified = response?['exif_verified'];
+        if (verified == true) {
+          if (!mounted) return;
+          setState(() => _exifVerifiedStatus = true);
+          return;
+        }
+      } catch (_) {
+        // Hata alırsak bir deneme daha yapacağız.
+      }
+
+      if (i == attempts - 1) break;
+      await Future.delayed(interval);
+    }
+
+    // 30 sn içinde true dönmediyse eşleşmedi kabul et.
+    if (!mounted) return;
+    setState(() => _exifVerifiedStatus = false);
   }
 
   @override
@@ -210,7 +256,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
                         const SizedBox(height: 16),
 
                         DropdownButtonFormField<String>(
-                          value: _crowdLevel,
+                          initialValue: _crowdLevel,
                           decoration: const InputDecoration(
                             labelText: 'Kalabalik (4 seviye)',
                           ),
@@ -228,7 +274,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
                         const SizedBox(height: 12),
 
                         DropdownButtonFormField<String>(
-                          value: _fishDensity,
+                          initialValue: _fishDensity,
                           decoration: const InputDecoration(
                             labelText: 'Balik yogunlugu (4 seviye)',
                           ),
@@ -287,8 +333,18 @@ class _CheckinScreenState extends State<CheckinScreen> {
                             'Bu check-in için Dogru/Yanlis oyu verin.',
                             style: AppTextStyles.body,
                           ),
+                          if (_pickedPhoto != null) ...[
+                            const SizedBox(height: 12),
+                            ExifBadge(exifVerified: _exifVerifiedStatus),
+                            const SizedBox(height: 12),
+                          ],
                           const SizedBox(height: 12),
-                          VoteWidget(checkinId: _createdCheckin!.id),
+                          VoteWidget(
+                            checkinId: _createdCheckin!.id,
+                            initialVoteCounts: _voteCounts,
+                            currentUserId:
+                                SupabaseService.auth.currentUser!.id,
+                          ),
                           const SizedBox(height: 20),
                         ],
                         TextButton(

@@ -1,19 +1,27 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/core/services/weather_service.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
 import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:balikci_app/data/repositories/checkin_repository.dart';
+import 'package:balikci_app/data/models/weather_model.dart';
+import 'package:balikci_app/data/models/shop_model.dart';
 import 'package:balikci_app/features/map/widgets/spot_marker.dart';
+import 'package:balikci_app/data/repositories/shop_repository.dart';
+import 'package:balikci_app/shared/providers/notification_provider.dart';
 
 /// Harita ekranı — H3 temel implementasyon.
 class MapScreen extends StatefulWidget {
@@ -28,15 +36,19 @@ class _MapScreenState extends State<MapScreen> {
 
   final SpotRepository _repository = SpotRepository();
   final CheckinRepository _checkinRepository = CheckinRepository();
+  final ShopRepository _shopRepository = ShopRepository();
   final MapController _mapController = MapController();
 
   /// FMTC basarisiz olursa ag uzerinden [NetworkTileProvider] (karo gorunur kalir).
   TileProvider _tileProvider = NetworkTileProvider();
 
   List<SpotModel> _spots = const [];
+  List<ShopModel> _shops = const [];
   Map<String, List<CheckinModel>> _activeCheckinsBySpotId = const {};
   bool _isLoading = true;
   String? _error;
+
+  bool _showShops = false;
 
   bool _checkingCheckins = false;
   Timer? _checkinPollTimer;
@@ -50,6 +62,9 @@ class _MapScreenState extends State<MapScreen> {
 
   final TextEditingController _searchController = TextEditingController();
   List<SpotModel> _searchResults = const [];
+
+  WeatherModel? _spotWeather;
+  bool _weatherLoading = false;
 
   @override
   void initState() {
@@ -79,6 +94,7 @@ class _MapScreenState extends State<MapScreen> {
       // Cache yoksa _tileProvider NetworkTileProvider olarak kalir.
     }
     await _loadSpots();
+    await _loadShops();
     // H5: Realtime ile check-in değişikliklerini yakalayacağız.
     // Polling sadece "solukluk/yaşlandırma" için (created_at tabanlı) çalışsın diye tutuluyor.
     _checkinPollTimer?.cancel();
@@ -89,6 +105,18 @@ class _MapScreenState extends State<MapScreen> {
     });
 
     _startCheckinsRealtime();
+  }
+
+  Future<void> _loadShops() async {
+    try {
+      final shops = await _shopRepository.getShops();
+      if (!mounted) return;
+      setState(() {
+        _shops = shops;
+      });
+    } catch (_) {
+      // Dükkan katmanı opsiyonel olduğu için hatayı sessiz geçiyoruz.
+    }
   }
 
   void _startCheckinsRealtime() {
@@ -160,11 +188,79 @@ class _MapScreenState extends State<MapScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_sheetController.isAttached) return;
       _sheetController.animateTo(
-        0.72,
+        0.32,
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
       );
     });
+
+    unawaited(_loadWeatherForSpot(spot));
+  }
+
+  Future<void> _loadWeatherForSpot(SpotModel spot) async {
+    setState(() => _weatherLoading = true);
+    try {
+      final w = await WeatherService.getWeatherForLocation(
+        lat: spot.lat,
+        lng: spot.lng,
+      );
+      if (!mounted) return;
+      // Kullanıcı hızlıca başka meraya geçtiyse eski sonucu ezmeyelim.
+      if (_sheetSpot?.id != spot.id) return;
+      setState(() => _spotWeather = w);
+    } catch (_) {
+      // Sessizce geç: kart placeholder kalsın.
+    } finally {
+      if (mounted) setState(() => _weatherLoading = false);
+    }
+  }
+
+  Future<void> _goToMyLocation() async {
+    final pos = await LocationService.getCurrentPosition();
+    if (!mounted) return;
+    if (pos == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Konum alinamadi. Izin veya GPS acik mi kontrol edin.'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+    try {
+      _mapController.move(LatLng(pos.latitude, pos.longitude), 15);
+    } catch (_) {}
+  }
+
+  Future<void> _openDirectionsForSpot(SpotModel spot) async {
+    final label = Uri.encodeComponent(spot.name);
+    final geo = Uri.parse(
+      'geo:${spot.lat},${spot.lng}?q=${spot.lat},${spot.lng}($label)',
+    );
+    final maps = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=${spot.lat},${spot.lng}',
+    );
+    try {
+      if (await launchUrl(geo, mode: LaunchMode.externalApplication)) return;
+    } catch (_) {}
+    try {
+      if (await launchUrl(maps, mode: LaunchMode.externalApplication)) return;
+    } catch (_) {}
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Harita acilamadi'),
+        backgroundColor: AppColors.danger,
+      ),
+    );
+  }
+
+  void _openCheckinForSpot(SpotModel spot) {
+    context.push('/checkin/${spot.id}');
+  }
+
+  void _openEditForSpot(SpotModel spot) {
+    context.push('/map/edit-spot', extra: spot);
   }
 
   void _onSearchChanged(String value) {
@@ -202,6 +298,23 @@ class _MapScreenState extends State<MapScreen> {
             child: GestureDetector(
               onTap: () => _selectSpot(spot),
               child: _buildSpotMarker(spot),
+            ),
+          ),
+        )
+        .toList();
+  }
+
+  List<Marker> _buildShopMarkers() {
+    return _shops
+        .map(
+          (shop) => Marker(
+            point: LatLng(shop.lat, shop.lng),
+            width: 44,
+            height: 44,
+            child: Icon(
+              Icons.storefront,
+              color: Colors.orange,
+              size: 32,
             ),
           ),
         )
@@ -268,6 +381,18 @@ class _MapScreenState extends State<MapScreen> {
       _ => 'Balık Yoğun',
     };
 
+    final uid = SupabaseService.auth.currentUser?.id;
+    final isOwner = sheetSpot != null && uid != null && uid == sheetSpot.userId;
+
+    final weather = _spotWeather;
+    final weatherTitle = weather?.fishingSummary?.trim().isNotEmpty == true
+        ? weather!.fishingSummary!.trim()
+        : (sheetSpot == null
+            ? 'Bir mera seç'
+            : 'Hava verisi yükleniyor...');
+    final windKmh = weather != null ? weather.windKmh.round().toString() : '—';
+    final tempC = weather != null ? weather.tempCelsius.round().toString() : '—';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -286,6 +411,10 @@ class _MapScreenState extends State<MapScreen> {
                   userAgentPackageName: 'com.balikciapp.balikci_app',
                   tileProvider: _tileProvider,
                 ),
+                if (_showShops)
+                  MarkerLayer(
+                    markers: _buildShopMarkers(),
+                  ),
                 MarkerClusterLayerWidget(
                   options: MarkerClusterLayerOptions(
                     markers: _buildMarkers(),
@@ -320,140 +449,272 @@ class _MapScreenState extends State<MapScreen> {
 
           // Üst: Arama + Hava kartı
           Positioned(
-            top: 12,
-            left: 16,
-            right: 16,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: _searchController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.black.withValues(alpha: 0.35),
-                    hintText: 'Mera ara...',
-                    hintStyle: const TextStyle(color: Colors.white70),
-                    prefixIcon: const Icon(Icons.search, color: Colors.white70),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  onChanged: _onSearchChanged,
-                ),
-                if (_searchResults.isNotEmpty)
-                  Container(
-                    constraints: const BoxConstraints(maxHeight: 160),
-                    margin: const EdgeInsets.only(top: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.75),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 8,
-                      ),
-                      shrinkWrap: true,
-                      itemCount: _searchResults.length,
-                      separatorBuilder: (context, _) =>
-                          const SizedBox(height: 4),
-                      itemBuilder: (context, idx) {
-                        final spot = _searchResults[idx];
-                        return InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            _searchController.text = spot.name;
-                            _selectSpot(spot);
+            left: 0,
+            right: 0,
+            top: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _searchController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.black.withValues(alpha: 0.35),
+                        hintText: 'Mera ara...',
+                        hintStyle: const TextStyle(color: Colors.white70),
+                        prefixIcon:
+                            const Icon(Icons.search, color: Colors.white70),
+                        suffixIcon: Consumer(
+                          builder: (context, ref, _) {
+                            final unreadAsync = ref.watch(
+                              unreadCountProvider,
+                            );
+
+                            Widget iconForCount(int count) {
+                              final showBadge = count > 0;
+                              return Stack(
+                                clipBehavior: Clip.none,
+                                alignment: Alignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.notifications_none,
+                                    color: Colors.white70,
+                                  ),
+                                  if (showBadge)
+                                    Positioned(
+                                      right: -8,
+                                      top: -8,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.accent,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Text(
+                                          count > 99 ? '99+' : '$count',
+                                          style: const TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            }
+
+                            return unreadAsync.when(
+                              data: (count) => IconButton(
+                                tooltip: 'Bildirimler',
+                                onPressed: () => context.push('/notifications'),
+                                icon: iconForCount(count),
+                              ),
+                              loading: () => IconButton(
+                                tooltip: 'Bildirimler',
+                                onPressed: () => context.push('/notifications'),
+                                icon: const Icon(
+                                  Icons.notifications_none,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                              error: (error, stackTrace) => IconButton(
+                                tooltip: 'Bildirimler',
+                                onPressed: () => context.push('/notifications'),
+                                icon: const Icon(
+                                  Icons.notifications_none,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            );
                           },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 12,
-                            ),
-                            child: Row(
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      onChanged: _onSearchChanged,
+                    ),
+                    if (_searchResults.isNotEmpty)
+                      Container(
+                        constraints: const BoxConstraints(maxHeight: 160),
+                        margin: const EdgeInsets.only(top: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.75),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: ListView.separated(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 8,
+                          ),
+                          shrinkWrap: true,
+                        itemCount: _searchResults.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 4),
+                          itemBuilder: (context, idx) {
+                            final spot = _searchResults[idx];
+                            return InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                _searchController.text = spot.name;
+                                _selectSpot(spot);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                  horizontal: 12,
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.location_on,
+                                        color: Colors.white70, size: 18),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        spot.name,
+                                        style: AppTextStyles.body.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: () => context.push('/weather'),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
-                                const Icon(Icons.location_on,
-                                    color: Colors.white70, size: 18),
-                                const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    spot.name,
-                                    style: AppTextStyles.body.copyWith(
+                                    weatherTitle,
+                                    style: const TextStyle(
                                       color: Colors.white,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
+                                if (_weatherLoading)
+                                  const SizedBox(
+                                    height: 18,
+                                    width: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                else
+                                  const Icon(
+                                    Icons.chevron_right,
+                                    color: Colors.white,
+                                  ),
                               ],
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              'Bugün hava tam f\u00fcler havas\u0131 ✅',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                const Icon(Icons.air, color: Colors.white),
+                                const SizedBox(width: 10),
+                                Text(
+                                  '$windKmh km/h',
+                                  style: AppTextStyles.body.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const Spacer(),
+                                const Icon(Icons.thermostat, color: Colors.white),
+                                const SizedBox(width: 10),
+                                Text(
+                                  '$tempC°C',
+                                  style: AppTextStyles.body.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              sheetSpot == null
+                                  ? 'Mera seçince hava burada güncellenir'
+                                  : 'Hava detayı için dokun',
+                              style: AppTextStyles.caption.copyWith(
+                                color: Colors.white70,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          const Icon(Icons.air, color: Colors.white),
-                          const SizedBox(width: 10),
-                          Text(
-                            '12 km/h',
-                            style: AppTextStyles.body.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          const Icon(Icons.thermostat, color: Colors.white),
-                          const SizedBox(width: 10),
-                          Text(
-                            '18\u00b0C',
-                            style: AppTextStyles.body.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'S\u0131cakl\u0131k',
-                        style: AppTextStyles.caption.copyWith(
-                          color: Colors.white70,
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Sağ: Harita aksiyonları (H4: mera ekle, konumuma git)
+          Positioned(
+            right: 16,
+            bottom: 16 + kBottomNavigationBarHeight,
+            child: Column(
+              children: [
+                _MapActionButton(
+                  icon: Icons.my_location,
+                  tooltip: 'Konumum',
+                  onPressed: _goToMyLocation,
+                ),
+                const SizedBox(height: 12),
+                _MapActionButton(
+                  icon: Icons.add_location_alt_outlined,
+                  tooltip: 'Mera ekle',
+                  onPressed: () async {
+                    final ok = await context.push<bool>('/map/add-spot');
+                    if (!mounted) return;
+                    if (ok == true) unawaited(_loadSpots());
+                  },
                 ),
               ],
+            ),
+          ),
+
+          // Top-right: Dükkanları göster/gizle
+          Positioned(
+            right: 16,
+            top: 120,
+            child: _MapActionButton(
+              icon: Icons.storefront,
+              tooltip: _showShops ? 'Dükkanları gizle' : 'Dükkanları göster',
+              onPressed: () {
+                setState(() => _showShops = !_showShops);
+              },
             ),
           ),
 
@@ -461,34 +722,34 @@ class _MapScreenState extends State<MapScreen> {
             const Center(child: CircularProgressIndicator()),
 
           // Alt: Draggable sheet
-          Positioned.fill(
+          Align(
+            alignment: Alignment.bottomCenter,
             child: DraggableScrollableSheet(
               controller: _sheetController,
-              initialChildSize: 0.14,
+              initialChildSize: 0.16,
               minChildSize: 0.12,
-              maxChildSize: 0.78,
+              // Üstteki arama/hava kartıyla çakışmayı azaltmak için max'i düşürdük.
+              maxChildSize: 0.45,
+              snap: true,
+              snapSizes: const [0.16, 0.32, 0.45],
               builder: (context, scrollController) {
                 final bottomPad = MediaQuery.of(context).padding.bottom;
                 return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: bottomPad + kBottomNavigationBarHeight,
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.65),
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(22),
-                      ),
+                  padding:
+                      EdgeInsets.only(bottom: bottomPad + kBottomNavigationBarHeight),
+                  child: Material(
+                    color: Colors.black.withValues(alpha: 0.70),
+                    elevation: 10,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(22),
                     ),
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(22),
-                      ),
-                      child: ListView(
-                        controller: scrollController,
-                        padding: const EdgeInsets.all(16),
-                        children: [
-                          Container(
+                    clipBehavior: Clip.antiAlias,
+                    child: ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        Center(
+                          child: Container(
                             height: 5,
                             width: 54,
                             decoration: BoxDecoration(
@@ -496,51 +757,98 @@ class _MapScreenState extends State<MapScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          const SizedBox(height: 12),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          sheetSpot?.name ?? 'Mera seç',
+                          style: AppTextStyles.h2.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.water_drop,
+                                color: Colors.lightBlueAccent),
+                            const SizedBox(width: 8),
+                            Text(
+                              fishDensityTitle,
+                              style: AppTextStyles.body.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.person, color: Colors.white70),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${activeCount.toString()} Kişi Balık Tutuyor',
+                              style: AppTextStyles.body.copyWith(
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+                        if (sheetSpot != null)
                           Text(
-                            sheetSpot?.name ?? 'Mera seç',
-                            style: AppTextStyles.h2.copyWith(
-                              color: Colors.white,
+                            sheetSpot.description?.trim().isNotEmpty == true
+                                ? sheetSpot.description!
+                                : 'Açıklama yok.',
+                            style: AppTextStyles.body.copyWith(
+                              color: Colors.white70,
+                            ),
+                          )
+                        else
+                          const SizedBox.shrink(),
+
+                        const SizedBox(height: 14),
+                        if (sheetSpot != null)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _openCheckinForSpot(sheetSpot),
+                                  icon: const Icon(Icons.check_circle_outline),
+                                  label: const Text('Check-in'),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () =>
+                                      _openDirectionsForSpot(sheetSpot),
+                                  icon: const Icon(Icons.directions),
+                                  label: const Text('Yol tarifi'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        if (sheetSpot != null && isOwner) ...[
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () => _openEditForSpot(sheetSpot),
+                              icon: const Icon(Icons.edit_outlined),
+                              label: const Text('Düzenle'),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.water_drop,
-                                  color: Colors.lightBlueAccent),
-                              const SizedBox(width: 8),
-                              Text(
-                                fishDensityTitle,
-                                style: AppTextStyles.body.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              const Icon(Icons.person,
-                                  color: Colors.white70),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${activeCount.toString()} Kişi Balık Tutuyor',
-                                style: AppTextStyles.body.copyWith(
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          // boşluk: scroll olabilsin
-                          const SizedBox(height: 24),
-                          const Text(
-                            'Detaylar yak\u0131nda...',
-                            style: TextStyle(color: Colors.white70),
-                          ),
                         ],
-                      ),
+
+                        const SizedBox(height: 18),
+                        Text(
+                          sheetSpot == null
+                              ? 'Haritada bir meraya dokunarak detaylara bakabilirsin.'
+                              : 'Aşağı kaydırıp kapatabilirsin.',
+                          style: const TextStyle(color: Colors.white70),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -581,13 +889,22 @@ class _MapScreenState extends State<MapScreen> {
               context.go('/home');
               break;
             case 1:
-              context.go('/logs');
+              context.go('/fish-log');
               break;
             case 2:
-              context.go('/notifications');
+              final spot = _sheetSpot;
+              if (spot == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('L\u00fctfen \u00f6nce bir mera se\u00e7in.'),
+                  ),
+                );
+                break;
+              }
+              _openCheckinForSpot(spot);
               break;
             case 3:
-              context.go('/rank/leaderboard');
+              context.go('/rank');
               break;
             case 4:
               context.go('/profile');
@@ -604,18 +921,43 @@ class _MapScreenState extends State<MapScreen> {
             label: 'G\u00fcnl\u00fck',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: 'Sosyal',
+            icon: Icon(Icons.anchor_outlined),
+            label: 'Check-in',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_bag_outlined),
-            label: 'Pazar',
+            icon: Icon(Icons.emoji_events_outlined),
+            label: 'S\u0131ralama',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             label: 'Profil',
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MapActionButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _MapActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.65),
+      shape: const CircleBorder(),
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: Icon(icon, color: Colors.white),
       ),
     );
   }

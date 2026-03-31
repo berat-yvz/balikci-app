@@ -55,6 +55,7 @@ Detay: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md).
 - Drift: `AppDatabase` **schemaVersion 2** — `local_spots` alanları (`verified`, `muhtarId`, `cachedAt`); migrasyon `database.dart` içinde.
 - Harita: cluster, FMTC tile store, `SpotDetailSheet` salt okunur + **Yol tarifi** (`geo` / Google Maps).
 - **H4 (mera):** `add_spot_screen` (ekle + sahip için güncelle), `pick_spot_location_screen`, `/map/add-spot`, `/map/edit-spot`, `/map/pick-location`; detay sheet **Düzenle**; haritada FAB **Mera ekle**. **Dükkan (`shops`) pinleri** FAZ E H15’e ertelendi.
+- **Harita UI entegrasyonu:** `MapScreen` üzerinde hızlı aksiyonlar (**Konumum**, **Mera ekle**), sheet içinde **Check-in / Yol tarifi / Düzenle** butonları ve arama alanında **Bildirim** kısayolu.
 - `/map` rotası hâlâ tanımlı; ana giriş yolu `/home` → `MainShell` → `MapScreen`.
 
 ---

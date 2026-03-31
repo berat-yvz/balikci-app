@@ -119,43 +119,62 @@ Timestamp çıkar → şu an ± 30 dakika ?
 
 ## M-04 — Hava Durumu & Cache Sistemi
 
+### Çalışma Mantığı
+- Sabit bölgeler yok, meralar bazında dinamik cache
+- Yeni mera eklendiğinde coğrafi yakınlık kontrolü yapılır
+- 25km yarıçapında aktif cache varsa o kullanılır
+- Yoksa Open-Meteo'dan yeni veri çekilir
+
 ### Cache Mimarisi
-```
-OpenWeatherMap API
-    ↓ (günde 6x, 12 bölge = 72 istek/gün)
-Edge Function: weather-cache (cron: her 4 saatte)
+Kullanıcı mera detayını açar
     ↓
-Supabase: weather_cache tablosu
+O meranın lat/lng'si alınır
     ↓
-Tüm kullanıcılar (sınırsız, API'ye hiç gitmiyor)
-```
+weather_cache'de 25km içinde 1 saatten 
+yeni kayıt var mı? (Haversine formülü)
+    ↓
+Var → cache'den göster (anında, istek yok)
+    ↓  
+Yok veya eski → Open-Meteo'dan çek → 
+cache'e yaz → göster
 
-### Türkiye Bölge Kodları
-```dart
-const weatherRegions = {
-  'istanbul':    {'lat': 41.015, 'lng': 28.979},
-  'izmir':       {'lat': 38.423, 'lng': 27.143},
-  'antalya':     {'lat': 36.896, 'lng': 30.713},
-  'trabzon':     {'lat': 41.005, 'lng': 39.716},
-  'canakkale':   {'lat': 40.144, 'lng': 26.406},
-  'bodrum':      {'lat': 37.034, 'lng': 27.430},
-  'fethiye':     {'lat': 36.621, 'lng': 29.116},
-  'sinop':       {'lat': 42.023, 'lng': 35.153},
-  'samsun':      {'lat': 41.286, 'lng': 36.330},
-  'mersin':      {'lat': 36.812, 'lng': 34.641},
-  'mugla':       {'lat': 37.215, 'lng': 28.363},
-  'balikesir':   {'lat': 39.649, 'lng': 27.889},
-};
-```
+### Yeni Mera Eklendiğinde
+fishing_spots INSERT trigger tetiklenir
+    ↓
+Edge Function: weather-on-spot-create çalışır
+    ↓
+25km içinde aktif cache var mı kontrol et
+    ↓
+Var → spot'a mevcut cache_id'yi bağla
+Yok → Open-Meteo'dan çek, yeni cache kaydı oluştur
 
-### Balıkçı Dili Çevirisi (Kural Tabanlı)
+### Cache Güncelleme
+- Her cache kaydı 1 saatte bir güncellenir
+- Güncelleme: sadece son 24 saatte aktif merası 
+  olan cache kayıtları güncellenir
+- Hiç merası kalmayan cache kaydı 7 gün sonra silinir
+
+### Open-Meteo API
+URL: https://api.open-meteo.com/v1/forecast
+Parametreler:
+  &hourly=temperature_2m,windspeed_10m,
+  winddirection_10m,precipitation,
+  weathercode
+  &daily=wave_height_max,
+  sea_surface_temperature_mean
+  &timezone=Europe/Istanbul
+  &forecast_days=1
+
+### Balıkçı Dili Çevirisi (30 Kural)
 | Koşul | Çıktı |
 |-------|-------|
-| Rüzgar < 15 km/h + Sıcaklık 18-24°C | "Bugün hava tam lüfer havası ✓" |
-| Rüzgar > 40 km/h | "Deniz patlak, çıkma ⚠️" |
-| Yağmur + Sıcaklık < 15°C | "Soğuk ve yağışlı, istavrit günü" |
-| Sisli + Görüş < 1km | "Sis var, tekneyle çıkma" |
-| Sıcaklık > 28°C + Sakin deniz | "Sıcak, derin sularda ara" |
+| windspeed < 15 + wave < 0.5 | "Deniz sakin, ideal gün ✓" |
+| windspeed > 40 | "Deniz patlak, çıkma ⚠️" |
+| precipitation > 0 + temp < 15 | "Soğuk ve yağışlı, istavrit günü" |
+| wave > 1.5 | "Dalgalı, tekneyle çıkma ⚠️" |
+| visibility < 1000 | "Sis var, dikkatli ol ⚠️" |
+| temp > 28 + windspeed < 10 | "Sıcak ve sakin, derin sularda ara" |
+| sea_temp 18-22 + windspeed < 20 | "Su sıcaklığı lüfer için ideal ✓" |
 
 ---
 

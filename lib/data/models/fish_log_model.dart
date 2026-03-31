@@ -8,6 +8,7 @@ class FishLogModel {
   final double? weight;
   final double? length;
   final String? photoUrl;
+  final bool? exifVerified;
   final Map<String, dynamic>? weatherSnapshot;
   final bool isPrivate;
   final bool released; // sürdürülebilirlik: balığı saldı
@@ -21,6 +22,7 @@ class FishLogModel {
     this.weight,
     this.length,
     this.photoUrl,
+    this.exifVerified,
     this.weatherSnapshot,
     this.isPrivate = false,
     this.released = false,
@@ -35,6 +37,7 @@ class FishLogModel {
         weight: (json['weight'] as num?)?.toDouble(),
         length: (json['length'] as num?)?.toDouble(),
         photoUrl: json['photo_url'] as String?,
+        exifVerified: json['exif_verified'] as bool?,
         weatherSnapshot:
             json['weather_snapshot'] as Map<String, dynamic>?,
         isPrivate: json['is_private'] as bool? ?? false,
@@ -50,6 +53,7 @@ class FishLogModel {
         'weight': weight,
         'length': length,
         'photo_url': photoUrl,
+        'exif_verified': exifVerified,
         'weather_snapshot': weatherSnapshot,
         'is_private': isPrivate,
         'released': released,

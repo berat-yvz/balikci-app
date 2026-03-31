@@ -1,6 +1,7 @@
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/constants/app_constants.dart';
 import 'package:balikci_app/data/models/checkin_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Check-in repository — checkins + checkin_votes CRUD.
 /// H5 ve H6 sprint görevleri.
@@ -84,8 +85,28 @@ class CheckinRepository {
         'voter_id': voterId,
         'vote': vote,
       });
-    } catch (_) {
-      // İkinci oy denemesi / duplicate durumlarını UI seviyesinde sessiz geçiyoruz.
+    } on PostgrestException catch (e) {
+      throw Exception('Oylama gönderilemedi: ${e.message}');
+    } catch (e) {
+      throw Exception('Oylama gönderilemedi: $e');
+    }
+  }
+
+  /// Unvote — kullanıcı oyunu geri alır.
+  Future<void> unvote({
+    required String checkinId,
+    required String voterId,
+  }) async {
+    try {
+      await _db
+          .from('checkin_votes')
+          .delete()
+          .eq('checkin_id', checkinId)
+          .eq('voter_id', voterId);
+    } on PostgrestException catch (e) {
+      throw Exception('Oylama geri alınamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Oylama geri alınamadı: $e');
     }
   }
 

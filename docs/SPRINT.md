@@ -110,6 +110,8 @@
 - [x] Konum seçimi: GPS (`LocationService`) veya `pick_spot_location_screen` ile haritada dokunma
 - [x] Yol tarifi: `geo:` + Google Maps yedek (`url_launcher`)
 - [x] `spot_detail_sheet.dart` — "Yol tarifi" butonu; `map_screen` FAB — "Mera ekle" (`/map/add-spot`)
+- [x] `map_screen.dart` — harita hızlı aksiyonları: **Konumum** + **Mera ekle** (UI'da erişilebilir)
+- [x] `map_screen.dart` — sheet aksiyonları: **Check-in / Yol tarifi / Düzenle (sahip)** (UI'da erişilebilir)
 
 **Çıktı:** Mera eklenip/düzenlenip haritada görünüyor, yol tarifi çalışıyor ✓ (Dükkan katmanı → H15.)
 

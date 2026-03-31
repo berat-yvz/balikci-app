@@ -108,6 +108,7 @@ CREATE TABLE fishing_spots (
   description TEXT,
   verified BOOLEAN DEFAULT FALSE,
   muhtar_id UUID REFERENCES users(id),
+  weather_cache_id UUID REFERENCES weather_cache(id),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
@@ -188,14 +189,24 @@ CREATE TABLE shadow_points (
 ```sql
 CREATE TABLE weather_cache (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  region_key TEXT UNIQUE NOT NULL,
-  lat DOUBLE PRECISION,
-  lng DOUBLE PRECISION,
-  data_json JSONB NOT NULL,
+  lat DOUBLE PRECISION NOT NULL,
+  lng DOUBLE PRECISION NOT NULL,
+  temperature DOUBLE PRECISION,
+  windspeed DOUBLE PRECISION,
+  wind_direction INTEGER,
+  wave_height DOUBLE PRECISION,
+  sea_surface_temperature DOUBLE PRECISION,
+  precipitation DOUBLE PRECISION,
+  weather_code INTEGER,
   fishing_summary TEXT,
-  fetched_at TIMESTAMPTZ DEFAULT NOW()
+  fetched_at TIMESTAMPTZ DEFAULT NOW(),
+  region_key TEXT UNIQUE  -- "lat_lng" formatında 
+                          -- en yakın 0.25 derece grid
 );
 ```
+
+Hava verisi sabit bölge değil, mera konumuna göre dinamik çekilir. 
+25km grid sistemi kullanılır.
 
 ### notifications
 ```sql
@@ -399,9 +410,14 @@ lib/
 ## Edge Functions
 
 ### weather-cache
-- **Tetikleyici:** Cron (her 4 saatte bir)
-- **Görev:** 12 bölge için OpenWeatherMap çek, `weather_cache` tablosuna yaz
+- **Tetikleyici:** Cron (her saat başı)
+- **Görev:** Saatte bir, son 24 saatte aktif merası olan cache kayıtlarını günceller
 - **Dosya:** `supabase/functions/weather-cache/index.ts`
+
+### weather-on-spot-create
+- **Tetikleyici:** `fishing_spots` INSERT trigger
+- **Görev:** Yeni mera eklendiğinde 25km yakınlık kontrolü, gerekirse Open-Meteo'dan çeker
+- **Dosya:** `supabase/functions/weather-on-spot-create/index.ts`
 
 ### exif-verify
 - **Tetikleyici:** Storage trigger (fotoğraf yüklenince)

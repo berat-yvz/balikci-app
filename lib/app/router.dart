@@ -150,11 +150,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/logs/add', builder: (context, state) => const AddLogScreen()),
       GoRoute(path: '/logs/stats', builder: (context, state) => const StatsScreen()),
 
+      // Fish Log (yeni path'ler)
+      GoRoute(path: '/fish-log', builder: (context, state) => const LogListScreen()),
+      GoRoute(
+        path: '/fish-log/add',
+        builder: (context, state) {
+          final spotId = state.uri.queryParameters['spotId'];
+          return AddLogScreen(spotId: spotId);
+        },
+      ),
+      GoRoute(path: '/fish-log/stats', builder: (context, state) => const StatsScreen()),
+
       // Rank
       GoRoute(path: '/rank', builder: (context, state) => const RankScreen()),
       GoRoute(
           path: '/rank/leaderboard',
           builder: (context, state) => const LeaderboardScreen()),
+      GoRoute(path: '/leaderboard', builder: (context, state) => const LeaderboardScreen()),
 
       // Knots
       GoRoute(path: '/knots', builder: (context, state) => const KnotsScreen()),
@@ -162,6 +174,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/knots/:knotId',
         builder: (_, state) =>
             KnotDetailScreen(knotId: state.pathParameters['knotId']!),
+      ),
+      GoRoute(
+        path: '/knots/:id',
+        builder: (_, state) =>
+            KnotDetailScreen(knotId: state.pathParameters['id']!),
       ),
 
       // Weather
@@ -178,7 +195,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Profile
       GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
       GoRoute(
+        path: '/profile/:userId',
+        builder: (context, state) =>
+            ProfileScreen(userId: state.pathParameters['userId']),
+      ),
+      GoRoute(
           path: '/profile/settings', builder: (context, state) => const SettingsScreen()),
+      GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
     ],
     errorBuilder: (_, state) => Scaffold(
       body: Center(child: Text('Sayfa bulunamadı: ${state.uri}')),
