@@ -14,7 +14,7 @@ class AppDatabase extends _$AppDatabase {
   static final AppDatabase instance = AppDatabase._();
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -32,6 +32,13 @@ class AppDatabase extends _$AppDatabase {
       if (from < 4) {
         await m.addColumn(syncQueue, syncQueue.tableNameValue);
         await m.addColumn(syncQueue, syncQueue.retryCount);
+      }
+      if (from < 5) {
+        // LocalFishLogs: released ve weatherSnapshot eklendi (H7)
+        await m.addColumn(
+            localFishLogs, localFishLogs.released as GeneratedColumn<Object>);
+        await m.addColumn(localFishLogs,
+            localFishLogs.weatherSnapshot as GeneratedColumn<Object>);
       }
     },
   );

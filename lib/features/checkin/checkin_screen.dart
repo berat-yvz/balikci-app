@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'dart:io';
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -13,11 +12,9 @@ import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
-import 'package:balikci_app/features/checkin/vote_widget.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:balikci_app/shared/widgets/exif_badge.dart';
 
-/// Check-in ekranı — H5 sprint'i.
+/// Check-in ekranı — H5 sprint'i, H6 UI/UX iyileştirmeleri.
 class CheckinScreen extends StatefulWidget {
   final String spotId;
   const CheckinScreen({super.key, required this.spotId});
@@ -32,8 +29,6 @@ class _CheckinScreenState extends State<CheckinScreen> {
 
   SpotModel? _spot;
   CheckinModel? _createdCheckin;
-  Map<bool, int> _voteCounts = const {true: 0, false: 0};
-  bool? _exifVerifiedStatus;
   bool _loadingSpot = true;
   bool _submitting = false;
 
@@ -66,8 +61,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
     required double lat2,
     required double lng2,
   }) {
-    // Haversine distance
-    const r = 6371000.0; // meters
+    const r = 6371000.0;
     final dLat = (lat2 - lat1) * (math.pi / 180.0);
     final dLng = (lng2 - lng1) * (math.pi / 180.0);
     final a =
@@ -161,15 +155,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
           checkinId: created.id,
           photoUrl: photoPath,
         );
-
-        // EXIF doğrulaması tetikleniyor; pending olarak gösterelim.
-        setState(() => _exifVerifiedStatus = null);
-        unawaited(_pollCheckinExifVerified(created.id));
       }
-
-      final voteCounts = await _checkinRepo.getVoteCounts(created.id);
-      final trueCount = voteCounts[true] ?? 0;
-      final falseCount = voteCounts[false] ?? 0;
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -181,11 +167,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
 
       setState(() {
         _createdCheckin = created;
-        _voteCounts = {true: trueCount, false: falseCount};
       });
-      if (!mounted) return;
-      context.pop(true);
-      return;
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -197,37 +179,6 @@ class _CheckinScreenState extends State<CheckinScreen> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
-  }
-
-  Future<void> _pollCheckinExifVerified(String checkinId) async {
-    const attempts = 10; // 10 x 3 sn = 30 sn
-    const interval = Duration(seconds: 3);
-
-    for (var i = 0; i < attempts; i++) {
-      try {
-        final response = await SupabaseService.client
-            .from('checkins')
-            .select('exif_verified')
-            .eq('id', checkinId)
-            .maybeSingle();
-
-        final verified = response?['exif_verified'];
-        if (verified == true) {
-          if (!mounted) return;
-          setState(() => _exifVerifiedStatus = true);
-          return;
-        }
-      } catch (_) {
-        // Hata alırsak bir deneme daha yapacağız.
-      }
-
-      if (i == attempts - 1) break;
-      await Future.delayed(interval);
-    }
-
-    // 30 sn içinde true dönmediyse eşleşmedi kabul et.
-    if (!mounted) return;
-    setState(() => _exifVerifiedStatus = false);
   }
 
   @override
@@ -254,48 +205,21 @@ class _CheckinScreenState extends State<CheckinScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    DropdownButtonFormField<String>(
-                      initialValue: _crowdLevel,
-                      decoration: const InputDecoration(
-                        labelText: 'Kalabalik (4 seviye)',
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 'yoğun', child: Text('Yogun')),
-                        DropdownMenuItem(
-                          value: 'normal',
-                          child: Text('Normal'),
-                        ),
-                        DropdownMenuItem(value: 'az', child: Text('Az')),
-                        DropdownMenuItem(value: 'boş', child: Text('Bos')),
-                      ],
-                      onChanged: (v) {
-                        if (v == null) return;
-                        setState(() => _crowdLevel = v);
-                      },
+                    _SegmentSelector(
+                      label: 'Balık yoğunluğu',
+                      options: const ['yok', 'az', 'normal', 'yoğun'],
+                      displayLabels: const ['Yok', 'Az', 'Normal', 'Yoğun'],
+                      value: _fishDensity,
+                      onChanged: (v) => setState(() => _fishDensity = v),
                     ),
-                    const SizedBox(height: 12),
-
-                    DropdownButtonFormField<String>(
-                      initialValue: _fishDensity,
-                      decoration: const InputDecoration(
-                        labelText: 'Balik yogunlugu (4 seviye)',
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 'yoğun', child: Text('Yogun')),
-                        DropdownMenuItem(
-                          value: 'normal',
-                          child: Text('Normal'),
-                        ),
-                        DropdownMenuItem(value: 'az', child: Text('Az')),
-                        DropdownMenuItem(value: 'yok', child: Text('Yok')),
-                      ],
-                      onChanged: (v) {
-                        if (v == null) return;
-                        setState(() => _fishDensity = v);
-                      },
+                    _SegmentSelector(
+                      label: 'Kalabalık',
+                      options: const ['boş', 'az', 'normal', 'yoğun'],
+                      displayLabels: const ['Boş', 'Az', 'Normal', 'Yoğun'],
+                      value: _crowdLevel,
+                      onChanged: (v) => setState(() => _crowdLevel = v),
                     ),
 
-                    const SizedBox(height: 16),
                     OutlinedButton.icon(
                       onPressed: _submitting ? null : _pickPhoto,
                       icon: const Icon(Icons.photo_camera_outlined),
@@ -329,37 +253,459 @@ class _CheckinScreenState extends State<CheckinScreen> {
 
                     const SizedBox(height: 12),
                     if (_createdCheckin != null) ...[
-                      Text('Oylama', style: AppTextStyles.h3),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Bu check-in için Dogru/Yanlis oyu verin.',
-                        style: AppTextStyles.body,
-                      ),
-                      if (_pickedPhoto != null) ...[
-                        const SizedBox(height: 12),
-                        ExifBadge(exifVerified: _exifVerifiedStatus),
-                        const SizedBox(height: 12),
-                      ],
+                      const SizedBox(height: 4),
+                      _CheckinResultCard(checkin: _createdCheckin!),
                       const SizedBox(height: 12),
-                      VoteWidget(
+                      _VoteSection(
                         checkinId: _createdCheckin!.id,
-                        checkinOwnerId: _createdCheckin!.userId,
-                        initialVoteCounts: _voteCounts,
-                        currentUserId: SupabaseService.auth.currentUser!.id,
+                        onHidden: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Check-in gizlendi, haritaya dönülüyor.'),
+                              backgroundColor: AppColors.danger,
+                            ),
+                          );
+                          final router = GoRouter.of(context);
+                          Future.delayed(
+                            const Duration(seconds: 1),
+                            () { if (mounted) router.pop(); },
+                          );
+                        },
                       ),
                       const SizedBox(height: 20),
                     ],
                     TextButton(
-                      onPressed: () {
-                        // Geri: route stack'inden çık.
-                        context.pop(false);
-                      },
+                      onPressed: () => context.pop(false),
                       child: const Text('Iptal'),
                     ),
                   ],
                 ),
               ),
             ),
+    );
+  }
+}
+
+// ── Segment Selector ──────────────────────────────────────────────────────────
+
+class _SegmentSelector extends StatelessWidget {
+  final String label;
+  final List<String> options;
+  final List<String> displayLabels;
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  const _SegmentSelector({
+    required this.label,
+    required this.options,
+    required this.displayLabels,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.caption.copyWith(
+            color: AppColors.muted,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: List.generate(options.length, (i) {
+            final isSelected = options[i] == value;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => onChanged(options[i]),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  margin: EdgeInsets.only(right: i < options.length - 1 ? 4 : 0),
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primaryLight : Colors.transparent,
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.muted.withValues(alpha: 0.4),
+                      width: isSelected ? 1.5 : 0.5,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    displayLabels[i],
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.caption.copyWith(
+                      color: isSelected ? AppColors.primary : AppColors.muted,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 14),
+      ],
+    );
+  }
+}
+
+// ── Check-in Sonuç Kartı ──────────────────────────────────────────────────────
+
+class _CheckinResultCard extends StatelessWidget {
+  final CheckinModel checkin;
+  const _CheckinResultCard({required this.checkin});
+
+  Color _densityColor(String? val) => switch (val) {
+        'yoğun' => AppColors.primary,
+        'normal' => const Color(0xFF378ADD),
+        'az' => AppColors.accent,
+        _ => AppColors.muted,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        children: [
+          _ResultRow(
+            label: 'Balık yoğunluğu',
+            value: checkin.fishDensity ?? '-',
+            dotColor: _densityColor(checkin.fishDensity),
+          ),
+          const Divider(height: 16, thickness: 0.5),
+          _ResultRow(
+            label: 'Kalabalık',
+            value: checkin.crowdLevel ?? '-',
+            dotColor: AppColors.muted,
+          ),
+          const Divider(height: 16, thickness: 0.5),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Doğrulanma',
+                style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+              ),
+              _VerifiedBadge(exifVerified: checkin.exifVerified),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResultRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color dotColor;
+  const _ResultRow({
+    required this.label,
+    required this.value,
+    required this.dotColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.muted)),
+        Row(children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            value,
+            style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ]),
+      ],
+    );
+  }
+}
+
+class _VerifiedBadge extends StatelessWidget {
+  final bool exifVerified;
+  const _VerifiedBadge({required this.exifVerified});
+
+  @override
+  Widget build(BuildContext context) {
+    if (exifVerified) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.primaryLight,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+        ),
+        child: Text(
+          '✓ Doğrulandı',
+          style: AppTextStyles.caption.copyWith(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        '⏳ EXIF bekleniyor',
+        style: AppTextStyles.caption.copyWith(
+          color: AppColors.accent,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Oy Bölümü ─────────────────────────────────────────────────────────────────
+
+class _VoteSection extends StatefulWidget {
+  final String checkinId;
+  final VoidCallback? onHidden;
+  const _VoteSection({required this.checkinId, this.onHidden});
+
+  @override
+  State<_VoteSection> createState() => _VoteSectionState();
+}
+
+class _VoteSectionState extends State<_VoteSection> {
+  final _repo = CheckinRepository();
+  bool _voting = false;
+  bool? _myVote;
+  bool _hidden = false;
+  int _trueCount = 0;
+  int _falseCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCounts();
+  }
+
+  Future<void> _loadCounts() async {
+    final counts = await _repo.getVoteCounts(widget.checkinId);
+    if (!mounted) return;
+    setState(() {
+      _trueCount = counts[true] ?? 0;
+      _falseCount = counts[false] ?? 0;
+    });
+  }
+
+  Future<void> _vote(bool vote) async {
+    if (_voting || _myVote != null) return;
+    final voterId = SupabaseService.auth.currentUser?.id;
+    if (voterId == null) return;
+    setState(() => _voting = true);
+    try {
+      await _repo.castVote(
+        checkinId: widget.checkinId,
+        voterId: voterId,
+        voteValue: vote,
+      );
+      setState(() {
+        _myVote = vote;
+        if (vote) {
+          _trueCount++;
+        } else {
+          _falseCount++;
+        }
+      });
+      final wasHidden = await _repo.evaluateAndHide(widget.checkinId);
+      if (!mounted) return;
+      if (wasHidden) {
+        setState(() => _hidden = true);
+        widget.onHidden?.call();
+      }
+    } finally {
+      if (mounted) setState(() => _voting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = _trueCount + _falseCount;
+    final falseRatio = total > 0 ? _falseCount / total : 0.0;
+    final trueRatio = total > 0 ? _trueCount / total : 0.0;
+
+    if (_hidden) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.danger.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
+        ),
+        child: Row(children: [
+          const Icon(Icons.visibility_off, size: 16, color: AppColors.danger),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Bu check-in yeterli yanlış oy aldığı için gizlendi.',
+              style: AppTextStyles.caption.copyWith(color: AppColors.danger),
+            ),
+          ),
+        ]),
+      );
+    }
+
+    final alreadyVoted = _myVote != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Bu raporu doğruluyor musun?',
+          style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(
+            child: _VoteChip(
+              label: 'Doğru',
+              icon: Icons.check_circle_outline,
+              color: AppColors.primary,
+              selected: _myVote == true,
+              disabled: _voting || alreadyVoted,
+              onTap: () => _vote(true),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _VoteChip(
+              label: 'Yanlış',
+              icon: Icons.cancel_outlined,
+              color: AppColors.danger,
+              selected: _myVote == false,
+              disabled: _voting || alreadyVoted,
+              onTap: () => _vote(false),
+            ),
+          ),
+        ]),
+        if (total > 0) ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Doğru: $_trueCount',
+                style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+              ),
+              Text(
+                'Yanlış: $_falseCount',
+                style: AppTextStyles.caption.copyWith(color: AppColors.danger),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: trueRatio,
+              minHeight: 6,
+              backgroundColor: AppColors.danger.withValues(alpha: 0.2),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            falseRatio >= 0.5
+                ? '${(falseRatio * 100).toStringAsFixed(0)}% yanlış — %70 eşiğinde gizlenir.'
+                : 'Topluluk bu raporu doğruluyor.',
+            style: AppTextStyles.caption.copyWith(
+              color: falseRatio >= 0.5 ? AppColors.danger : AppColors.muted,
+            ),
+          ),
+        ],
+        if (alreadyVoted) ...[
+          const SizedBox(height: 6),
+          Text(
+            'Oyunuz kaydedildi.',
+            style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _VoteChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final bool selected;
+  final bool disabled;
+  final VoidCallback onTap;
+
+  const _VoteChip({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.selected,
+    required this.disabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: disabled ? null : onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? color.withValues(alpha: 0.1) : Colors.transparent,
+          border: Border.all(
+            color: selected ? color : AppColors.muted.withValues(alpha: 0.4),
+            width: selected ? 1.5 : 0.5,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: disabled && !selected ? AppColors.muted : color,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: AppTextStyles.caption.copyWith(
+                color: disabled && !selected ? AppColors.muted : color,
+                fontWeight:
+                    selected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

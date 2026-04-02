@@ -829,6 +829,17 @@ class $LocalFishLogsTable extends LocalFishLogs
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _weatherSnapshotMeta = const VerificationMeta(
+    'weatherSnapshot',
+  );
+  @override
+  late final GeneratedColumn<String> weatherSnapshot = GeneratedColumn<String>(
+    'weather_snapshot',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _isPrivateMeta = const VerificationMeta(
     'isPrivate',
   );
@@ -838,10 +849,26 @@ class $LocalFishLogsTable extends LocalFishLogs
     aliasedName,
     false,
     type: DriftSqlType.bool,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'CHECK ("is_private" IN (0, 1))',
     ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _releasedMeta = const VerificationMeta(
+    'released',
+  );
+  @override
+  late final GeneratedColumn<bool> released = GeneratedColumn<bool>(
+    'released',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("released" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
   );
   static const VerificationMeta _isSyncedMeta = const VerificationMeta(
     'isSynced',
@@ -856,7 +883,7 @@ class $LocalFishLogsTable extends LocalFishLogs
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'CHECK ("is_synced" IN (0, 1))',
     ),
-    defaultValue: const Constant(true),
+    defaultValue: const Constant(false),
   );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
@@ -878,7 +905,9 @@ class $LocalFishLogsTable extends LocalFishLogs
     weight,
     length,
     photoUrl,
+    weatherSnapshot,
     isPrivate,
+    released,
     isSynced,
     createdAt,
   ];
@@ -939,13 +968,26 @@ class $LocalFishLogsTable extends LocalFishLogs
         photoUrl.isAcceptableOrUnknown(data['photo_url']!, _photoUrlMeta),
       );
     }
+    if (data.containsKey('weather_snapshot')) {
+      context.handle(
+        _weatherSnapshotMeta,
+        weatherSnapshot.isAcceptableOrUnknown(
+          data['weather_snapshot']!,
+          _weatherSnapshotMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_private')) {
       context.handle(
         _isPrivateMeta,
         isPrivate.isAcceptableOrUnknown(data['is_private']!, _isPrivateMeta),
       );
-    } else if (isInserting) {
-      context.missing(_isPrivateMeta);
+    }
+    if (data.containsKey('released')) {
+      context.handle(
+        _releasedMeta,
+        released.isAcceptableOrUnknown(data['released']!, _releasedMeta),
+      );
     }
     if (data.containsKey('is_synced')) {
       context.handle(
@@ -998,9 +1040,17 @@ class $LocalFishLogsTable extends LocalFishLogs
         DriftSqlType.string,
         data['${effectivePrefix}photo_url'],
       ),
+      weatherSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}weather_snapshot'],
+      ),
       isPrivate: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_private'],
+      )!,
+      released: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}released'],
       )!,
       isSynced: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
@@ -1027,7 +1077,9 @@ class LocalFishLog extends DataClass implements Insertable<LocalFishLog> {
   final double? weight;
   final double? length;
   final String? photoUrl;
+  final String? weatherSnapshot;
   final bool isPrivate;
+  final bool released;
   final bool isSynced;
   final DateTime createdAt;
   const LocalFishLog({
@@ -1038,7 +1090,9 @@ class LocalFishLog extends DataClass implements Insertable<LocalFishLog> {
     this.weight,
     this.length,
     this.photoUrl,
+    this.weatherSnapshot,
     required this.isPrivate,
+    required this.released,
     required this.isSynced,
     required this.createdAt,
   });
@@ -1060,7 +1114,11 @@ class LocalFishLog extends DataClass implements Insertable<LocalFishLog> {
     if (!nullToAbsent || photoUrl != null) {
       map['photo_url'] = Variable<String>(photoUrl);
     }
+    if (!nullToAbsent || weatherSnapshot != null) {
+      map['weather_snapshot'] = Variable<String>(weatherSnapshot);
+    }
     map['is_private'] = Variable<bool>(isPrivate);
+    map['released'] = Variable<bool>(released);
     map['is_synced'] = Variable<bool>(isSynced);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -1083,7 +1141,11 @@ class LocalFishLog extends DataClass implements Insertable<LocalFishLog> {
       photoUrl: photoUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(photoUrl),
+      weatherSnapshot: weatherSnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(weatherSnapshot),
       isPrivate: Value(isPrivate),
+      released: Value(released),
       isSynced: Value(isSynced),
       createdAt: Value(createdAt),
     );
@@ -1102,7 +1164,9 @@ class LocalFishLog extends DataClass implements Insertable<LocalFishLog> {
       weight: serializer.fromJson<double?>(json['weight']),
       length: serializer.fromJson<double?>(json['length']),
       photoUrl: serializer.fromJson<String?>(json['photoUrl']),
+      weatherSnapshot: serializer.fromJson<String?>(json['weatherSnapshot']),
       isPrivate: serializer.fromJson<bool>(json['isPrivate']),
+      released: serializer.fromJson<bool>(json['released']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -1118,7 +1182,9 @@ class LocalFishLog extends DataClass implements Insertable<LocalFishLog> {
       'weight': serializer.toJson<double?>(weight),
       'length': serializer.toJson<double?>(length),
       'photoUrl': serializer.toJson<String?>(photoUrl),
+      'weatherSnapshot': serializer.toJson<String?>(weatherSnapshot),
       'isPrivate': serializer.toJson<bool>(isPrivate),
+      'released': serializer.toJson<bool>(released),
       'isSynced': serializer.toJson<bool>(isSynced),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -1132,7 +1198,9 @@ class LocalFishLog extends DataClass implements Insertable<LocalFishLog> {
     Value<double?> weight = const Value.absent(),
     Value<double?> length = const Value.absent(),
     Value<String?> photoUrl = const Value.absent(),
+    Value<String?> weatherSnapshot = const Value.absent(),
     bool? isPrivate,
+    bool? released,
     bool? isSynced,
     DateTime? createdAt,
   }) => LocalFishLog(
@@ -1143,7 +1211,11 @@ class LocalFishLog extends DataClass implements Insertable<LocalFishLog> {
     weight: weight.present ? weight.value : this.weight,
     length: length.present ? length.value : this.length,
     photoUrl: photoUrl.present ? photoUrl.value : this.photoUrl,
+    weatherSnapshot: weatherSnapshot.present
+        ? weatherSnapshot.value
+        : this.weatherSnapshot,
     isPrivate: isPrivate ?? this.isPrivate,
+    released: released ?? this.released,
     isSynced: isSynced ?? this.isSynced,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -1156,7 +1228,11 @@ class LocalFishLog extends DataClass implements Insertable<LocalFishLog> {
       weight: data.weight.present ? data.weight.value : this.weight,
       length: data.length.present ? data.length.value : this.length,
       photoUrl: data.photoUrl.present ? data.photoUrl.value : this.photoUrl,
+      weatherSnapshot: data.weatherSnapshot.present
+          ? data.weatherSnapshot.value
+          : this.weatherSnapshot,
       isPrivate: data.isPrivate.present ? data.isPrivate.value : this.isPrivate,
+      released: data.released.present ? data.released.value : this.released,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -1172,7 +1248,9 @@ class LocalFishLog extends DataClass implements Insertable<LocalFishLog> {
           ..write('weight: $weight, ')
           ..write('length: $length, ')
           ..write('photoUrl: $photoUrl, ')
+          ..write('weatherSnapshot: $weatherSnapshot, ')
           ..write('isPrivate: $isPrivate, ')
+          ..write('released: $released, ')
           ..write('isSynced: $isSynced, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -1188,7 +1266,9 @@ class LocalFishLog extends DataClass implements Insertable<LocalFishLog> {
     weight,
     length,
     photoUrl,
+    weatherSnapshot,
     isPrivate,
+    released,
     isSynced,
     createdAt,
   );
@@ -1203,7 +1283,9 @@ class LocalFishLog extends DataClass implements Insertable<LocalFishLog> {
           other.weight == this.weight &&
           other.length == this.length &&
           other.photoUrl == this.photoUrl &&
+          other.weatherSnapshot == this.weatherSnapshot &&
           other.isPrivate == this.isPrivate &&
+          other.released == this.released &&
           other.isSynced == this.isSynced &&
           other.createdAt == this.createdAt);
 }
@@ -1216,7 +1298,9 @@ class LocalFishLogsCompanion extends UpdateCompanion<LocalFishLog> {
   final Value<double?> weight;
   final Value<double?> length;
   final Value<String?> photoUrl;
+  final Value<String?> weatherSnapshot;
   final Value<bool> isPrivate;
+  final Value<bool> released;
   final Value<bool> isSynced;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -1228,7 +1312,9 @@ class LocalFishLogsCompanion extends UpdateCompanion<LocalFishLog> {
     this.weight = const Value.absent(),
     this.length = const Value.absent(),
     this.photoUrl = const Value.absent(),
+    this.weatherSnapshot = const Value.absent(),
     this.isPrivate = const Value.absent(),
+    this.released = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1241,14 +1327,15 @@ class LocalFishLogsCompanion extends UpdateCompanion<LocalFishLog> {
     this.weight = const Value.absent(),
     this.length = const Value.absent(),
     this.photoUrl = const Value.absent(),
-    required bool isPrivate,
+    this.weatherSnapshot = const Value.absent(),
+    this.isPrivate = const Value.absent(),
+    this.released = const Value.absent(),
     this.isSynced = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        userId = Value(userId),
        species = Value(species),
-       isPrivate = Value(isPrivate),
        createdAt = Value(createdAt);
   static Insertable<LocalFishLog> custom({
     Expression<String>? id,
@@ -1258,7 +1345,9 @@ class LocalFishLogsCompanion extends UpdateCompanion<LocalFishLog> {
     Expression<double>? weight,
     Expression<double>? length,
     Expression<String>? photoUrl,
+    Expression<String>? weatherSnapshot,
     Expression<bool>? isPrivate,
+    Expression<bool>? released,
     Expression<bool>? isSynced,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -1271,7 +1360,9 @@ class LocalFishLogsCompanion extends UpdateCompanion<LocalFishLog> {
       if (weight != null) 'weight': weight,
       if (length != null) 'length': length,
       if (photoUrl != null) 'photo_url': photoUrl,
+      if (weatherSnapshot != null) 'weather_snapshot': weatherSnapshot,
       if (isPrivate != null) 'is_private': isPrivate,
+      if (released != null) 'released': released,
       if (isSynced != null) 'is_synced': isSynced,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -1286,7 +1377,9 @@ class LocalFishLogsCompanion extends UpdateCompanion<LocalFishLog> {
     Value<double?>? weight,
     Value<double?>? length,
     Value<String?>? photoUrl,
+    Value<String?>? weatherSnapshot,
     Value<bool>? isPrivate,
+    Value<bool>? released,
     Value<bool>? isSynced,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
@@ -1299,7 +1392,9 @@ class LocalFishLogsCompanion extends UpdateCompanion<LocalFishLog> {
       weight: weight ?? this.weight,
       length: length ?? this.length,
       photoUrl: photoUrl ?? this.photoUrl,
+      weatherSnapshot: weatherSnapshot ?? this.weatherSnapshot,
       isPrivate: isPrivate ?? this.isPrivate,
+      released: released ?? this.released,
       isSynced: isSynced ?? this.isSynced,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -1330,8 +1425,14 @@ class LocalFishLogsCompanion extends UpdateCompanion<LocalFishLog> {
     if (photoUrl.present) {
       map['photo_url'] = Variable<String>(photoUrl.value);
     }
+    if (weatherSnapshot.present) {
+      map['weather_snapshot'] = Variable<String>(weatherSnapshot.value);
+    }
     if (isPrivate.present) {
       map['is_private'] = Variable<bool>(isPrivate.value);
+    }
+    if (released.present) {
+      map['released'] = Variable<bool>(released.value);
     }
     if (isSynced.present) {
       map['is_synced'] = Variable<bool>(isSynced.value);
@@ -1355,7 +1456,9 @@ class LocalFishLogsCompanion extends UpdateCompanion<LocalFishLog> {
           ..write('weight: $weight, ')
           ..write('length: $length, ')
           ..write('photoUrl: $photoUrl, ')
+          ..write('weatherSnapshot: $weatherSnapshot, ')
           ..write('isPrivate: $isPrivate, ')
+          ..write('released: $released, ')
           ..write('isSynced: $isSynced, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -2588,7 +2691,9 @@ typedef $$LocalFishLogsTableCreateCompanionBuilder =
       Value<double?> weight,
       Value<double?> length,
       Value<String?> photoUrl,
-      required bool isPrivate,
+      Value<String?> weatherSnapshot,
+      Value<bool> isPrivate,
+      Value<bool> released,
       Value<bool> isSynced,
       required DateTime createdAt,
       Value<int> rowid,
@@ -2602,7 +2707,9 @@ typedef $$LocalFishLogsTableUpdateCompanionBuilder =
       Value<double?> weight,
       Value<double?> length,
       Value<String?> photoUrl,
+      Value<String?> weatherSnapshot,
       Value<bool> isPrivate,
+      Value<bool> released,
       Value<bool> isSynced,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -2652,8 +2759,18 @@ class $$LocalFishLogsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get weatherSnapshot => $composableBuilder(
+    column: $table.weatherSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<bool> get isPrivate => $composableBuilder(
     column: $table.isPrivate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get released => $composableBuilder(
+    column: $table.released,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2712,8 +2829,18 @@ class $$LocalFishLogsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get weatherSnapshot => $composableBuilder(
+    column: $table.weatherSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isPrivate => $composableBuilder(
     column: $table.isPrivate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get released => $composableBuilder(
+    column: $table.released,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -2758,8 +2885,16 @@ class $$LocalFishLogsTableAnnotationComposer
   GeneratedColumn<String> get photoUrl =>
       $composableBuilder(column: $table.photoUrl, builder: (column) => column);
 
+  GeneratedColumn<String> get weatherSnapshot => $composableBuilder(
+    column: $table.weatherSnapshot,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get isPrivate =>
       $composableBuilder(column: $table.isPrivate, builder: (column) => column);
+
+  GeneratedColumn<bool> get released =>
+      $composableBuilder(column: $table.released, builder: (column) => column);
 
   GeneratedColumn<bool> get isSynced =>
       $composableBuilder(column: $table.isSynced, builder: (column) => column);
@@ -2806,7 +2941,9 @@ class $$LocalFishLogsTableTableManager
                 Value<double?> weight = const Value.absent(),
                 Value<double?> length = const Value.absent(),
                 Value<String?> photoUrl = const Value.absent(),
+                Value<String?> weatherSnapshot = const Value.absent(),
                 Value<bool> isPrivate = const Value.absent(),
+                Value<bool> released = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -2818,7 +2955,9 @@ class $$LocalFishLogsTableTableManager
                 weight: weight,
                 length: length,
                 photoUrl: photoUrl,
+                weatherSnapshot: weatherSnapshot,
                 isPrivate: isPrivate,
+                released: released,
                 isSynced: isSynced,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -2832,7 +2971,9 @@ class $$LocalFishLogsTableTableManager
                 Value<double?> weight = const Value.absent(),
                 Value<double?> length = const Value.absent(),
                 Value<String?> photoUrl = const Value.absent(),
-                required bool isPrivate,
+                Value<String?> weatherSnapshot = const Value.absent(),
+                Value<bool> isPrivate = const Value.absent(),
+                Value<bool> released = const Value.absent(),
                 Value<bool> isSynced = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
@@ -2844,7 +2985,9 @@ class $$LocalFishLogsTableTableManager
                 weight: weight,
                 length: length,
                 photoUrl: photoUrl,
+                weatherSnapshot: weatherSnapshot,
                 isPrivate: isPrivate,
+                released: released,
                 isSynced: isSynced,
                 createdAt: createdAt,
                 rowid: rowid,

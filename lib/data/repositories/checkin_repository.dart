@@ -228,6 +228,34 @@ class CheckinRepository {
     }
   }
 
+  /// %70+ yanlış oy geldiğinde check-in'i gizle.
+  /// is_active = false yaparak haritadan ve listelerden kaldırır.
+  /// RLS: sadece service_role veya check-in sahibi update yapabilir.
+  /// MVP'de bu çağrıyı client-side score-calculator yerine yaparız.
+  Future<void> hideCheckin(String checkinId) async {
+    await _db
+        .from('checkins')
+        .update({'is_active': false})
+        .eq('id', checkinId);
+  }
+
+  /// Oy sayılarını hesapla; eşik aşıldıysa check-in'i gizle.
+  /// Dönüş: true → gizlendi, false → henüz eşik aşılmadı
+  Future<bool> evaluateAndHide(String checkinId) async {
+    final counts = await getVoteCounts(checkinId);
+    final falseCount = counts[false] ?? 0;
+    final total = (counts[true] ?? 0) + falseCount;
+
+    if (total < 3) return false; // minimum 3 oy şartı
+
+    final ratio = falseCount / total;
+    if (ratio >= AppConstants.voteThresholdPercent) {
+      await hideCheckin(checkinId);
+      return true;
+    }
+    return false;
+  }
+
   /// Oylama istatistiği — score-calculator Edge Function'ı da bunu kullanır
   Future<Map<bool, int>> getVoteCounts(String checkinId) async {
     try {

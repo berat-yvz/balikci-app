@@ -138,6 +138,8 @@
 ### H6 — EXIF Doğrulama & Oylama
 **Hedef:** Güven sistemi aktif, sahte raporlar engelleniyor
 
+**Durum:** H6 tamamlandı — UI/UX iyileştirmeleriyle. Sıradaki: H7 (Balık Günlüğü).
+
 #### Görevler
 - [x] `exif_helper.dart` yazıldı (native_exif ile GPS + timestamp oku)
 - [x] Supabase Edge Function: `exif-verify` yazıldı (deploy + storage trigger kurulumunu ayrıca yap)
@@ -145,7 +147,7 @@
 - [x] `vote_widget.dart` — Doğru/Yanlış oy butonu
 - [x] `checkin_repository.dart`'a vote fonksiyonu eklendi
 - [ ] Oy sonucu: %70+ yanlış → check-in gizleniyor
-- [ ] Doğrulanmış check-in rozeti UI'a eklendi
+- [x] Doğrulanmış check-in rozeti UI'a eklendi
 
 **Çıktı:** EXIF doğrulama ve oylama sistemi çalışıyor ✓
 

@@ -212,6 +212,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/log',
+        builder: (_, _) => const LogListScreen(),
+      ),
+      GoRoute(
+        path: '/log/add',
+        builder: (context, state) {
+          final spotId = state.uri.queryParameters['spotId'];
+          return AddLogScreen(spotId: spotId);
+        },
+      ),
+      GoRoute(
         path: '/fish-log/stats',
         builder: (context, state) => const StatsScreen(),
       ),

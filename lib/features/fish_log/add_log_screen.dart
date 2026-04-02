@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -135,7 +136,11 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
               weight: Value(weight),
               length: Value(length),
               photoUrl: Value(finalPhotoUrl),
-              isPrivate: _isPrivate,
+              weatherSnapshot: Value(
+                weatherSnapshot != null ? jsonEncode(weatherSnapshot) : null,
+              ),
+              isPrivate: Value(_isPrivate),
+              released: Value(_released),
               isSynced: Value(online),
               createdAt: now,
             ),

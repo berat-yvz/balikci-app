@@ -22,7 +22,6 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
   final _checkinRepo = CheckinRepository();
   List<CheckinModel> _checkins = const [];
   bool _loadingCheckins = true;
-  final Map<String, Map<bool, int>> _voteCountsByCheckinId = {};
 
   @override
   void initState() {
@@ -79,16 +78,9 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
     try {
       final items = await _checkinRepo.getCheckinsForSpot(widget.spot.id);
       final limited = items.take(5).toList();
-      final voteMap = <String, Map<bool, int>>{};
-      for (final c in limited) {
-        voteMap[c.id] = await _checkinRepo.getVoteCounts(c.id);
-      }
       if (!mounted) return;
       setState(() {
         _checkins = limited;
-        _voteCountsByCheckinId
-          ..clear()
-          ..addAll(voteMap);
       });
     } finally {
       if (mounted) setState(() => _loadingCheckins = false);
@@ -317,9 +309,6 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
                 final userLabel = checkin.username ?? 'Kullanıcı';
                 final crowd = _crowdMeta(checkin.crowdLevel);
                 final fish = _fishMeta(checkin.fishDensity);
-                final voteCounts =
-                    _voteCountsByCheckinId[checkin.id] ??
-                    const {true: 0, false: 0};
                 return Card(
                   margin: const EdgeInsets.only(bottom: 10),
                   color: const Color(0xFF132236),
@@ -377,14 +366,12 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
                             _chip(fish.$1, fish.$2),
                             if (checkin.photoUrl != null)
                               _exifBadge(_exifStatusForList(checkin)),
+                            _CheckinStatusBadge(checkin: checkin),
                           ],
                         ),
                         const SizedBox(height: 10),
                         VoteWidget(
                           checkinId: checkin.id,
-                          checkinOwnerId: checkin.userId,
-                          initialVoteCounts: voteCounts,
-                          currentUserId: uid ?? '',
                         ),
                       ],
                     ),
@@ -415,6 +402,65 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CheckinStatusBadge extends StatelessWidget {
+  final CheckinModel checkin;
+  const _CheckinStatusBadge({required this.checkin});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!checkin.isActive) return const SizedBox.shrink();
+
+    if (checkin.isStale) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: AppColors.muted.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          'Eskiyor',
+          style: AppTextStyles.caption.copyWith(
+            fontSize: 10,
+            color: AppColors.muted,
+          ),
+        ),
+      );
+    }
+    if (checkin.exifVerified) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: AppColors.primaryLight,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+        ),
+        child: Text(
+          '✓ Doğrulandı',
+          style: AppTextStyles.caption.copyWith(
+            fontSize: 10,
+            color: AppColors.primary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        'EXIF bekleniyor',
+        style: AppTextStyles.caption.copyWith(
+          fontSize: 10,
+          color: AppColors.accent,
         ),
       ),
     );
