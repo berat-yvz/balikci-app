@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -10,6 +11,7 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/weather_service.dart';
 import 'package:balikci_app/data/local/database.dart';
+import 'package:balikci_app/data/models/weather_model.dart';
 import 'package:balikci_app/data/repositories/fish_log_repository.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/sync_provider.dart';
@@ -35,6 +37,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
   bool _isPrivate = false;
   bool _released = false;
   bool _saving = false;
+  WeatherModel? _weatherSnapshot;
   final _picker = ImagePicker();
   String? _selectedPhotoPath;
 
@@ -109,6 +112,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
             'region_key': weather.regionKey,
             'fetched_at': weather.fetchedAt.toIso8601String(),
           };
+          if (mounted) setState(() => _weatherSnapshot = weather);
         }
       }
 
@@ -135,7 +139,11 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
               weight: Value(weight),
               length: Value(length),
               photoUrl: Value(finalPhotoUrl),
-              isPrivate: _isPrivate,
+              weatherSnapshot: Value(
+                weatherSnapshot != null ? jsonEncode(weatherSnapshot) : null,
+              ),
+              isPrivate: Value(_isPrivate),
+              released: Value(_released),
               isSynced: Value(online),
               createdAt: now,
             ),
@@ -240,6 +248,35 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                   style: AppTextStyles.caption.copyWith(color: AppColors.muted),
                 ),
                 const SizedBox(height: 16),
+                if (_weatherSnapshot != null) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.secondary.withValues(alpha: 0.2),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Row(children: [
+                      const Icon(Icons.wb_sunny_outlined,
+                          size: 16, color: AppColors.secondary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _weatherSnapshot!.fishingSummary ??
+                              '${_weatherSnapshot!.tempCelsius.toStringAsFixed(0)}°C · '
+                              '${_weatherSnapshot!.windKmh.toStringAsFixed(0)} km/s rüzgar',
+                          style: AppTextStyles.caption
+                              .copyWith(color: AppColors.secondary),
+                        ),
+                      ),
+                    ]),
+                  ),
+                ],
                 OutlinedButton.icon(
                   onPressed: isLoading ? null : _pickPhoto,
                   icon: const Icon(Icons.photo_library_outlined),
