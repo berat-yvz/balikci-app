@@ -118,17 +118,19 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Animasyonlu arka plan
-                      AnimatedBuilder(
-                        animation: _c,
-                        builder: (context, _) => CustomPaint(
-                          size: Size.infinite,
-                          painter: _EmptyStatePainter(
-                            t: _c.value,
-                            kind: widget.contextType,
+                      // Canvas animasyonu yalnızca emoji yoksa göster;
+                      // emoji olan durumlarda TextPainter gri kutu çizmez.
+                      if (_contextEmoji == null)
+                        AnimatedBuilder(
+                          animation: _c,
+                          builder: (context, _) => CustomPaint(
+                            size: Size.infinite,
+                            painter: _EmptyStatePainter(
+                              t: _c.value,
+                              kind: widget.contextType,
+                            ),
                           ),
                         ),
-                      ),
                       // Emoji — Text widget olarak göster (Canvas TextPainter
                       // Android'de emoji'yi gri kutu çizebilir)
                       if (_contextEmoji != null)

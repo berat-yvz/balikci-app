@@ -265,13 +265,12 @@ class _WeatherDetailGrid extends StatelessWidget {
           label: 'Sıcaklık',
           value: '${weather.tempCelsius.toStringAsFixed(1)}°C',
         ),
-        _DetailTile(
-          icon: '🌊',
-          label: 'Dalga',
-          value: weather.waveHeight != null
-              ? '${weather.waveHeight!.toStringAsFixed(1)} m'
-              : 'Veri yok',
-        ),
+        if (weather.waveHeight != null)
+          _DetailTile(
+            icon: '🌊',
+            label: 'Dalga',
+            value: '${weather.waveHeight!.toStringAsFixed(1)} m',
+          ),
         _DetailTile(
           icon: '💧',
           label: 'Nem',

@@ -166,12 +166,13 @@ ThemeData buildAppTheme() {
       ),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: AppColors.navy,
-      selectedItemColor: AppColors.teal,
-      unselectedItemColor: Color(0xFF9FB2C9),
+      backgroundColor: Color(0xFF0D1B2A),
+      selectedItemColor: AppColors.primary,
+      unselectedItemColor: AppColors.muted,
       type: BottomNavigationBarType.fixed,
       showSelectedLabels: true,
       showUnselectedLabels: true,
+      elevation: 0,
     ),
     textTheme: base.textTheme.copyWith(
       displaySmall: base.textTheme.displaySmall?.copyWith(
