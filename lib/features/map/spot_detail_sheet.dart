@@ -207,7 +207,6 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
     final latestFish = latest == null ? null : _fishMeta(latest.fishDensity);
 
     return Container(
-      height: 560,
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -220,8 +219,14 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          16 + MediaQuery.of(context).padding.bottom,
+        ),
         child: ListView(
+          shrinkWrap: true,
           children: [
             Center(
               child: Container(
@@ -254,6 +259,15 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
                   ? widget.spot.description!
                   : 'Aciklama yok.',
               style: AppTextStyles.body,
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _openCheckin(context),
+                icon: const Icon(Icons.check_circle_outline, size: 18),
+                label: const Text('Check-in Yap'),
+              ),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -385,15 +399,11 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
                 if (isOwner)
                   TextButton(
                     onPressed: () => _openEdit(context),
-                    child: const Text('Duzenle'),
+                    child: const Text('Düzenle'),
                   ),
                 TextButton(
-                  onPressed: () => _openCheckin(context),
-                  child: const Text('Check-in'),
-                ),
-                TextButton(
                   onPressed: () => _openDirections(context),
-                  child: const Text('Yol tarifi'),
+                  child: const Text('Yol Tarifi'),
                 ),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),

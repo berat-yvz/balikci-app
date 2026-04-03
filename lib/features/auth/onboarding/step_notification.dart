@@ -143,7 +143,7 @@ class _StepNotificationState extends State<StepNotification>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.notifications, size: 80, color: AppColors.primary),
+          const Icon(Icons.notifications_active, size: 80, color: AppColors.accent),
           const SizedBox(height: 32),
           const Text(
             'Balık Haberlerini Kaçırma',
