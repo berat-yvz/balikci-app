@@ -23,7 +23,7 @@ final myFishLogsProvider = FutureProvider.autoDispose<List<FishLogModel>>((
   final user = ref.watch(currentUserProvider);
   if (user == null) return const [];
   final repo = ref.read(fishLogRepositoryProvider);
-  return repo.getLogs(user.id, limit: AppConstants.pageSize * 3);
+  return repo.getMyLogs(user.id);
 });
 
 /// Giriş yapmış kullanıcının günlük istatistikleri.
