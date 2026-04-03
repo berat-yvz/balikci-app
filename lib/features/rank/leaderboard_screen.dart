@@ -270,8 +270,8 @@ class _LeaderboardRow extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: highlight
-            ? AppColors.primary.withValues(alpha: 0.10)
-            : Colors.white,
+            ? AppColors.primaryLight.withValues(alpha: 0.15)
+            : AppColors.dark.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(14),
         border: highlight
             ? Border.all(color: AppColors.primary.withValues(alpha: 0.35))

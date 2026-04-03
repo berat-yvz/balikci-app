@@ -91,10 +91,7 @@ class _LogListScreenState extends ConsumerState<LogListScreen> {
           });
 
           if (logs.isEmpty) {
-            return EmptyStateWidget(
-              title: 'Henüz av kaydı yok',
-              subtitle: 'İlk balığını kaydetmek için aşağıdaki butona dokun.',
-              icon: Icons.menu_book_outlined,
+            return EmptyStateWidget.noFishLogs(
               buttonLabel: 'İlk kaydı oluştur',
               onButtonPressed: () {
                 Navigator.of(context).pushNamed('/logs/add');

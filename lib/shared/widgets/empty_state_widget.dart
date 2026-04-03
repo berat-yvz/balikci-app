@@ -77,6 +77,13 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
     super.dispose();
   }
 
+  String? get _contextEmoji => switch (widget.contextType) {
+    EmptyStateContext.noFishLogs => '🎣',
+    EmptyStateContext.mapNoSpots => '🐟',
+    EmptyStateContext.noNotifications => '🔔',
+    EmptyStateContext.generic => null,
+  };
+
   @override
   Widget build(BuildContext context) {
     final title = widget.title;
@@ -108,16 +115,31 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
               children: [
                 SizedBox(
                   height: 120,
-                  child: AnimatedBuilder(
-                    animation: _c,
-                    builder: (context, _) {
-                      return CustomPaint(
-                        painter: _EmptyStatePainter(
-                          t: _c.value,
-                          kind: widget.contextType,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Animasyonlu arka plan
+                      AnimatedBuilder(
+                        animation: _c,
+                        builder: (context, _) => CustomPaint(
+                          size: Size.infinite,
+                          painter: _EmptyStatePainter(
+                            t: _c.value,
+                            kind: widget.contextType,
+                          ),
                         ),
-                      );
-                    },
+                      ),
+                      // Emoji — Text widget olarak göster (Canvas TextPainter
+                      // Android'de emoji'yi gri kutu çizebilir)
+                      if (_contextEmoji != null)
+                        Text(
+                          _contextEmoji!,
+                          style: const TextStyle(
+                            fontSize: 52,
+                            color: Colors.white,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 10),

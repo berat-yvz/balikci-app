@@ -971,7 +971,8 @@ class _MapScreenState extends State<MapScreen> {
                     clipBehavior: Clip.antiAlias,
                     child: ListView(
                       controller: scrollController,
-                      padding: const EdgeInsets.all(16),
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                       children: [
                         Center(
                           child: Container(
