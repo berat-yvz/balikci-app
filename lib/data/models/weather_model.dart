@@ -46,29 +46,37 @@ class WeatherModel {
   double get tempCelsius => (temperature ?? 0).toDouble();
   double get windKmh => (windspeed ?? 0).toDouble();
 
-  factory WeatherModel.fromJson(Map<String, dynamic> json) => WeatherModel(
-    id: json['id'] as String,
-    lat: (json['lat'] as num).toDouble(),
-    lng: (json['lng'] as num).toDouble(),
-    temperature: (json['temperature'] as num?)?.toDouble(),
-    windspeed: (json['windspeed'] as num?)?.toDouble(),
-    windDirection: json['wind_direction'] as int?,
-    waveHeight: (json['wave_height'] as num?)?.toDouble(),
-    seaSurfaceTemperature: (json['sea_surface_temperature'] as num?)
-        ?.toDouble(),
-    precipitation: (json['precipitation'] as num?)?.toDouble(),
-    humidity: (json['humidity'] as num?)?.toDouble(),
-    visibilityKm:
-        (json['visibility_km'] as num?)?.toDouble() ??
-        ((json['visibility'] as num?)?.toDouble() != null
-            ? (json['visibility'] as num).toDouble() / 1000
-            : null),
-    cloudCover:
-        (json['cloud_cover'] as num?)?.toDouble() ??
-        (json['cloudiness'] as num?)?.toDouble(),
-    weatherCode: json['weather_code'] as int?,
-    fishingSummary: json['fishing_summary'] as String?,
-    fetchedAt: DateTime.parse(json['fetched_at'] as String),
-    regionKey: json['region_key'] as String?,
-  );
+  factory WeatherModel.fromJson(Map<String, dynamic> json) {
+    // data_json: OpenWeather API response (JSONB, units=metric → Celsius)
+    final dataJson = json['data_json'] as Map<String, dynamic>?;
+    final main    = dataJson?['main']   as Map<String, dynamic>?;
+    final wind    = dataJson?['wind']   as Map<String, dynamic>?;
+    final clouds  = dataJson?['clouds'] as Map<String, dynamic>?;
+    final rain    = dataJson?['rain']   as Map<String, dynamic>?;
+    final weatherList = dataJson?['weather'] as List?;
+    final windSpeedMs = (wind?['speed'] as num?)?.toDouble();
+
+    return WeatherModel(
+      id: json['id'] as String? ?? '',
+      lat: (json['lat'] as num?)?.toDouble() ?? 0,
+      lng: (json['lng'] as num?)?.toDouble() ?? 0,
+      temperature: (main?['temp'] as num?)?.toDouble(),          // already °C
+      windspeed: windSpeedMs != null ? windSpeedMs * 3.6 : null, // m/s → km/h
+      windDirection: (wind?['deg'] as num?)?.toInt(),
+      waveHeight: null, // OpenWeather basic API'de yok
+      seaSurfaceTemperature: null,
+      precipitation: (rain?['1h'] as num?)?.toDouble(),
+      humidity: (main?['humidity'] as num?)?.toDouble(),
+      visibilityKm: dataJson?['visibility'] != null
+          ? (dataJson!['visibility'] as num).toDouble() / 1000
+          : null,
+      cloudCover: (clouds?['all'] as num?)?.toDouble(),
+      weatherCode: (weatherList != null && weatherList.isNotEmpty)
+          ? (weatherList[0] as Map<String, dynamic>)['id'] as int? ?? 800
+          : 800,
+      fishingSummary: json['fishing_summary'] as String?,
+      fetchedAt: DateTime.parse(json['fetched_at'] as String),
+      regionKey: json['region_key'] as String?,
+    );
+  }
 }

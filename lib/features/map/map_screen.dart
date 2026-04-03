@@ -567,9 +567,9 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          // H9: Kompakt hava kartı
+          // H9: Kompakt hava kartı — arama çubuğu (48px) altına yerleşir
           Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
+            top: MediaQuery.of(context).padding.top + 8 + 48 + 8,
             left: 0,
             right: 0,
             child: const WeatherCard(),
