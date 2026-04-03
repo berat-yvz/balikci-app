@@ -51,6 +51,10 @@ import 'package:balikci_app/features/notifications/notification_settings_screen.
 import 'package:balikci_app/features/profile/profile_screen.dart';
 import 'package:balikci_app/features/profile/settings_screen.dart';
 
+/// Bildirim yönlendirme ve genel navigasyon için global key.
+/// NotificationService bu key üzerinden GoRouter.of(context).go() çağırır.
+final appNavigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authRepo = ref.watch(authRepositoryProvider);
   final isOnboardingCompleted = ref.watch(onboardingStateProvider);
@@ -61,6 +65,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
+    navigatorKey: appNavigatorKey,
     refreshListenable: refresh,
     initialLocation: '/splash',
     redirect: (context, state) {
