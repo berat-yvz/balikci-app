@@ -270,11 +270,11 @@ class _LeaderboardRow extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: highlight
-            ? AppColors.primaryLight.withValues(alpha: 0.15)
+            ? AppColors.primaryLight.withValues(alpha: 0.12)
             : AppColors.dark.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(14),
         border: highlight
-            ? Border.all(color: AppColors.primary.withValues(alpha: 0.35))
+            ? Border.all(color: AppColors.primary, width: 1.5)
             : null,
       ),
       child: Row(
@@ -299,6 +299,23 @@ class _LeaderboardRow extends StatelessWidget {
               ],
             ),
           ),
+          if (highlight)
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const Text(
+                'Sen',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           Text('${user.totalScore}', style: AppTextStyles.h3),
         ],
       ),

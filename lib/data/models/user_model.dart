@@ -22,10 +22,21 @@ class UserModel {
     required this.createdAt,
   });
 
+  /// Otomatik üretilmiş `user_xxxxxxxx` kullanıcı adını e-posta ön ekiyle değiştirir.
+  static String _resolveUsername(String? raw, String email) {
+    if (raw != null && raw.isNotEmpty && !RegExp(r'^user_[0-9a-f]{6,}$').hasMatch(raw)) {
+      return raw;
+    }
+    return email.split('@').first;
+  }
+
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
     id: json['id'] as String,
-    email: json['email'] as String,
-    username: json['username'] as String,
+    email: json['email'] as String? ?? '',
+    username: _resolveUsername(
+      json['username'] as String?,
+      json['email'] as String? ?? '',
+    ),
     avatarUrl: json['avatar_url'] as String?,
     rank: json['rank'] as String? ?? 'acemi',
     totalScore: json['total_score'] as int? ?? 0,
