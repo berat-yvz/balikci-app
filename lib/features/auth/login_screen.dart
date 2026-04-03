@@ -24,6 +24,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _googleLoading = false;
 
   late final AnimationController _shakeController;
   late final Animation<double> _shake;
@@ -389,38 +390,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             ),
                             const SizedBox(height: 10),
                             _GoogleOutlineButton(
-                              onPressed: authState.isLoading
+                              loading: _googleLoading,
+                              onPressed: (authState.isLoading || _googleLoading)
                                   ? null
                                   : () async {
-                                      await ref
-                                          .read(authNotifierProvider.notifier)
-                                          .signInWithGoogle();
-                                      if (!context.mounted) return;
-                                      if (ref
-                                          .read(authNotifierProvider)
-                                          .hasError) {
-                                        return;
-                                      }
-                                      if (ref
-                                          .read(authRepositoryProvider)
-                                          .isLoggedIn()) {
-                                        final done = ref.read(
-                                          onboardingStateProvider,
-                                        );
-                                        context.go(
-                                          done ? '/home' : '/onboarding',
-                                        );
-                                      } else {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Tarayıcıda Google ile girişi tamamlayın; '
-                                              'uygulamaya döndüğünüzde oturum açılır.',
+                                      setState(() => _googleLoading = true);
+                                      try {
+                                        await ref
+                                            .read(authNotifierProvider.notifier)
+                                            .signInWithGoogle();
+                                        if (!context.mounted) return;
+                                        if (ref
+                                            .read(authNotifierProvider)
+                                            .hasError) {
+                                          return;
+                                        }
+                                        if (ref
+                                            .read(authRepositoryProvider)
+                                            .isLoggedIn()) {
+                                          final done = ref.read(
+                                            onboardingStateProvider,
+                                          );
+                                          context.go(
+                                            done ? '/home' : '/onboarding',
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Tarayıcıda Google ile girişi tamamlayın; '
+                                                'uygulamaya döndüğünüzde oturum açılır.',
+                                              ),
                                             ),
-                                          ),
-                                        );
+                                          );
+                                        }
+                                      } finally {
+                                        if (mounted) {
+                                          setState(() => _googleLoading = false);
+                                        }
                                       }
                                     },
                             ),
@@ -567,7 +576,8 @@ class _TealGradientButton extends StatelessWidget {
 
 class _GoogleOutlineButton extends StatelessWidget {
   final VoidCallback? onPressed;
-  const _GoogleOutlineButton({required this.onPressed});
+  final bool loading;
+  const _GoogleOutlineButton({required this.onPressed, this.loading = false});
 
   @override
   Widget build(BuildContext context) {
@@ -582,29 +592,45 @@ class _GoogleOutlineButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(6),
+        child: loading
+            ? const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Text('Google ile bağlanıyor...'),
+                ],
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'G',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text('Google ile Giriş'),
+                ],
               ),
-              alignment: Alignment.center,
-              child: const Text(
-                'G',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Text('Google ile Giriş'),
-          ],
-        ),
       ),
     );
   }
