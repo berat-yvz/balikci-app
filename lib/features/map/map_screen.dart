@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -75,9 +74,6 @@ class _MapScreenState extends State<MapScreen> {
 
   double _currentZoom = 10;
 
-  SpotModel? _nearbySpotForFab;
-  bool _checkingNearby = false;
-  Timer? _nearbyTimer;
 
   @override
   void initState() {
@@ -90,7 +86,6 @@ class _MapScreenState extends State<MapScreen> {
     unawaited(_checkinsRealtimeChannel?.unsubscribe());
     _checkinsRealtimeChannel = null;
     _checkinPollTimer?.cancel();
-    _nearbyTimer?.cancel();
     _sheetController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
@@ -119,13 +114,6 @@ class _MapScreenState extends State<MapScreen> {
     });
 
     _startCheckinsRealtime();
-
-    // Nearby spot detection for "Check-in Yap" FAB.
-    _nearbyTimer?.cancel();
-    _nearbyTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
-      unawaited(_updateNearbySpotForFab());
-    });
-    unawaited(_updateNearbySpotForFab());
   }
 
   Future<void> _loadShops() async {
@@ -317,68 +305,6 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  double _distanceMeters({
-    required double lat1,
-    required double lng1,
-    required double lat2,
-    required double lng2,
-  }) {
-    const r = 6371000.0; // meters
-    final dLat = (lat2 - lat1) * (math.pi / 180.0);
-    final dLng = (lng2 - lng1) * (math.pi / 180.0);
-    final a =
-        math.sin(dLat / 2) * math.sin(dLat / 2) +
-        math.cos(lat1 * (math.pi / 180.0)) *
-            math.cos(lat2 * (math.pi / 180.0)) *
-            math.sin(dLng / 2) *
-            math.sin(dLng / 2);
-    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-    return r * c;
-  }
-
-  Future<void> _updateNearbySpotForFab() async {
-    if (_checkingNearby) return;
-    if (!mounted) return;
-    if (_spots.isEmpty) return;
-    _checkingNearby = true;
-    try {
-      final pos = await LocationService.getCurrentPosition();
-      if (!mounted) return;
-      if (pos == null) {
-        setState(() => _nearbySpotForFab = null);
-        return;
-      }
-
-      SpotModel? best;
-      double bestDist = double.infinity;
-      for (final s in _spots) {
-        final d = _distanceMeters(
-          lat1: s.lat,
-          lng1: s.lng,
-          lat2: pos.latitude,
-          lng2: pos.longitude,
-        );
-        if (d < bestDist) {
-          bestDist = d;
-          best = s;
-        }
-      }
-
-      // Visible if within 500m.
-      setState(() {
-        if (best != null && bestDist <= 500) {
-          _nearbySpotForFab = best;
-        } else {
-          _nearbySpotForFab = null;
-        }
-      });
-    } catch (_) {
-      // Silently ignore.
-    } finally {
-      _checkingNearby = false;
-    }
-  }
-
   List<Marker> _buildMarkers() {
     return _spots
         .map(
@@ -489,22 +415,6 @@ class _MapScreenState extends State<MapScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _nearbySpotForFab == null
-          ? null
-          : Padding(
-              padding: EdgeInsets.only(bottom: checkinFabBottom),
-              child: SizedBox(
-                height: 52,
-                child: FloatingActionButton.extended(
-                  onPressed: () => _openCheckinForSpot(_nearbySpotForFab!),
-                  backgroundColor: AppColors.teal,
-                  foregroundColor: AppColors.foam,
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text('Check-in Yap'),
-                ),
-              ),
-            ),
       body: Stack(
         children: [
           Positioned.fill(
