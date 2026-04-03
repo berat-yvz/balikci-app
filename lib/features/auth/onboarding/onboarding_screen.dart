@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/notification_service.dart';
 import 'package:balikci_app/shared/providers/preferences_provider.dart';
@@ -77,7 +78,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   Future<void> _finishOnboarding() async {
     await ref.read(onboardingStateProvider.notifier).completeOnboarding();
     if (!mounted) return;
-    context.go('/home');
+    context.go(AppRoutes.home);
   }
 
   void _nextPage() {

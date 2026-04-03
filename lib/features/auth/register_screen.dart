@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
@@ -47,7 +48,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
       final session = SupabaseService.client.auth.currentSession;
       if (session != null) {
-        context.go('/onboarding');
+        context.go(AppRoutes.onboarding);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -57,7 +58,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ),
           ),
         );
-        context.go('/login');
+        context.go(AppRoutes.login);
       }
     }
   }
@@ -232,7 +233,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             }
                             if (ref.read(authRepositoryProvider).isLoggedIn()) {
                               final done = ref.read(onboardingStateProvider);
-                              context.go(done ? '/home' : '/onboarding');
+                              context.go(done ? AppRoutes.home : AppRoutes.onboarding);
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -253,7 +254,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   TextButton(
                     onPressed: authState.isLoading
                         ? null
-                        : () => context.go('/login'),
+                        : () => context.go(AppRoutes.login),
                     child: const Text('Zaten hesabın var mı? Giriş yap'),
                   ),
                 ],

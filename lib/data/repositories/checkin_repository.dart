@@ -15,7 +15,7 @@ class CheckinRepository {
     try {
       final response = await _db
           .from('checkins')
-          .select()
+          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_active, true_votes, false_votes, created_at')
           .eq('spot_id', spotId)
           .eq('is_active', true)
           .order('created_at', ascending: false);
@@ -33,7 +33,7 @@ class CheckinRepository {
     try {
       final response = await _db
           .from('checkins')
-          .select()
+          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_active, true_votes, false_votes, created_at')
           .eq('is_active', true)
           .order('created_at', ascending: false)
           .range(0, limit - 1);
@@ -59,7 +59,7 @@ class CheckinRepository {
 
       final response = await _db
           .from('checkins')
-          .select()
+          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_active, true_votes, false_votes, created_at')
           .gte('created_at', threshold.toIso8601String())
           .order('created_at', ascending: false)
           .range(0, limit - 1);
@@ -78,7 +78,7 @@ class CheckinRepository {
       final response = await _db
           .from('checkins')
           .insert(data)
-          .select()
+          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_active, true_votes, false_votes, created_at')
           .single();
       return CheckinModel.fromJson(response);
     } on PostgrestException catch (e) {

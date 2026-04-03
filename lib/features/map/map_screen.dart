@@ -12,6 +12,7 @@ import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
@@ -288,7 +289,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _openEditForSpot(SpotModel spot) {
-    context.push('/map/edit-spot', extra: spot);
+    context.push(AppRoutes.mapEditSpot, extra: spot);
   }
 
   void _onSearchChanged(String value) {
@@ -878,17 +879,17 @@ class _MapScreenState extends State<MapScreen> {
                       child: unreadAsync.when(
                         data: (count) => IconButton(
                           tooltip: 'Bildirimler',
-                          onPressed: () => context.push('/notifications'),
+                          onPressed: () => context.push(AppRoutes.notifications),
                           icon: badgeFor(count),
                         ),
                         loading: () => IconButton(
                           tooltip: 'Bildirimler',
-                          onPressed: () => context.push('/notifications'),
+                          onPressed: () => context.push(AppRoutes.notifications),
                           icon: badgeFor(0),
                         ),
                         error: (_, _) => IconButton(
                           tooltip: 'Bildirimler',
-                          onPressed: () => context.push('/notifications'),
+                          onPressed: () => context.push(AppRoutes.notifications),
                           icon: badgeFor(0),
                         ),
                       ),

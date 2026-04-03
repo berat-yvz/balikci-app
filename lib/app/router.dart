@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/go_router_refresh.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
@@ -67,25 +68,25 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: appNavigatorKey,
     refreshListenable: refresh,
-    initialLocation: '/splash',
+    initialLocation: AppRoutes.splash,
     redirect: (context, state) {
       final isLoggedIn = authRepo.isLoggedIn();
       final path = state.uri.path;
 
       // Splash için kontrol yok
-      if (path == '/splash') return null;
+      if (path == AppRoutes.splash) return null;
 
       final isAuthFlow =
-          path == '/login' ||
-          path == '/register' ||
-          path == '/reset-callback' ||
-          path == '/reset-password';
+          path == AppRoutes.login ||
+          path == AppRoutes.register ||
+          path == AppRoutes.resetCallback ||
+          path == AppRoutes.resetPassword;
 
       // 1. Durum: Kullanıcı giriş yapmamış
       if (!isLoggedIn) {
         if (!isAuthFlow) {
           // Giriş yapmamış kişi korumalı ya da onboarding sayfasına gidemez
-          return '/login';
+          return AppRoutes.login;
         }
         return null;
       }
@@ -94,17 +95,17 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Eğer yetkilendirme ekranlarına (/login, /register) gitmek isterse:
       if (isAuthFlow) {
-        return isOnboardingCompleted ? '/home' : '/onboarding';
+        return isOnboardingCompleted ? AppRoutes.home : AppRoutes.onboarding;
       }
 
       // Onboarding tamamlanmamışsa VE başka (korumalı) bir yere gitmeye çalışıyorsa:
-      if (!isOnboardingCompleted && path != '/onboarding') {
-        return '/onboarding';
+      if (!isOnboardingCompleted && path != AppRoutes.onboarding) {
+        return AppRoutes.onboarding;
       }
 
       // Onboarding TAMAMLANMIŞSA VE zorla onboarding'e gitmek istiyorsa:
-      if (isOnboardingCompleted && path == '/onboarding') {
-        return '/home';
+      if (isOnboardingCompleted && path == AppRoutes.onboarding) {
+        return AppRoutes.home;
       }
 
       return null;
@@ -112,26 +113,26 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       // Splash
       GoRoute(
-        path: '/splash',
+        path: AppRoutes.splash,
         builder: (context, state) => const SplashScreen(),
       ),
 
       // Auth
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(path: AppRoutes.login, builder: (context, state) => const LoginScreen()),
       GoRoute(
-        path: '/register',
+        path: AppRoutes.register,
         builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
-        path: '/reset-callback',
+        path: AppRoutes.resetCallback,
         builder: (context, state) => const ResetPasswordScreen(),
       ),
       GoRoute(
-        path: '/reset-password',
+        path: AppRoutes.resetPassword,
         builder: (context, state) => const ResetPasswordScreen(),
       ),
       GoRoute(
-        path: '/onboarding',
+        path: AppRoutes.onboarding,
         builder: (context, state) => const OnboardingScreen(),
       ),
 
@@ -139,36 +140,36 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) => MainShell(child: child),
         routes: [
           GoRoute(
-            path: '/home',
+            path: AppRoutes.home,
             builder: (context, state) => const MapScreen(),
           ),
           GoRoute(
-            path: '/fish-log',
+            path: AppRoutes.fishLog,
             builder: (context, state) => const LogListScreen(),
           ),
           GoRoute(
-            path: '/rank',
+            path: AppRoutes.rank,
             builder: (context, state) => const RankScreen(),
           ),
           GoRoute(
-            path: '/weather',
+            path: AppRoutes.weather,
             builder: (context, state) => const WeatherScreen(),
           ),
           GoRoute(
-            path: '/profile',
+            path: AppRoutes.profile,
             builder: (context, state) => const ProfileScreen(),
           ),
         ],
       ),
 
       // Map (ana ekran)
-      GoRoute(path: '/map', builder: (context, state) => const MapScreen()),
+      GoRoute(path: AppRoutes.map, builder: (context, state) => const MapScreen()),
       GoRoute(
-        path: '/map/add-spot',
+        path: AppRoutes.mapAddSpot,
         builder: (context, state) => const AddSpotScreen(),
       ),
       GoRoute(
-        path: '/map/edit-spot',
+        path: AppRoutes.mapEditSpot,
         builder: (context, state) {
           final extra = state.extra;
           if (extra is! SpotModel) {
@@ -178,7 +179,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/map/pick-location',
+        path: AppRoutes.mapPickLocation,
         builder: (context, state) {
           final extra = state.extra;
           return PickSpotLocationScreen(
@@ -189,63 +190,63 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Check-in
       GoRoute(
-        path: '/checkin/:spotId',
+        path: '${AppRoutes.checkin}/:spotId',
         builder: (_, state) =>
             CheckinScreen(spotId: state.pathParameters['spotId']!),
       ),
 
-      // Fish Log
+      // Fish Log (legacy paths)
       GoRoute(
-        path: '/logs',
+        path: AppRoutes.logs,
         builder: (context, state) => const LogListScreen(),
       ),
       GoRoute(
-        path: '/logs/add',
+        path: AppRoutes.logsAdd,
         builder: (context, state) => const AddLogScreen(),
       ),
       GoRoute(
-        path: '/logs/stats',
+        path: AppRoutes.logsStats,
         builder: (context, state) => const StatsScreen(),
       ),
 
       // Fish Log (yeni path'ler)
       GoRoute(
-        path: '/fish-log/add',
+        path: AppRoutes.fishLogAdd,
         builder: (context, state) {
           final spotId = state.uri.queryParameters['spotId'];
           return AddLogScreen(spotId: spotId);
         },
       ),
       GoRoute(
-        path: '/log',
+        path: AppRoutes.log,
         builder: (_, _) => const LogListScreen(),
       ),
       GoRoute(
-        path: '/log/add',
+        path: AppRoutes.logAdd,
         builder: (context, state) {
           final spotId = state.uri.queryParameters['spotId'];
           return AddLogScreen(spotId: spotId);
         },
       ),
       GoRoute(
-        path: '/fish-log/stats',
+        path: AppRoutes.fishLogStats,
         builder: (context, state) => const StatsScreen(),
       ),
 
       // Rank
       GoRoute(
-        path: '/rank/leaderboard',
+        path: AppRoutes.rankLeaderboard,
         builder: (context, state) => const LeaderboardScreen(),
       ),
       GoRoute(
-        path: '/leaderboard',
+        path: AppRoutes.leaderboard,
         builder: (context, state) => const LeaderboardScreen(),
       ),
 
       // Knots
-      GoRoute(path: '/knots', builder: (context, state) => const KnotsScreen()),
+      GoRoute(path: AppRoutes.knots, builder: (context, state) => const KnotsScreen()),
       GoRoute(
-        path: '/knots/detail',
+        path: AppRoutes.knotsDetail,
         builder: (_, state) {
           final extra = state.extra;
           if (extra is! KnotModel) {
@@ -259,26 +260,26 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Notifications
       GoRoute(
-        path: '/notifications',
+        path: AppRoutes.notifications,
         builder: (context, state) => const NotificationListScreen(),
       ),
       GoRoute(
-        path: '/notifications/settings',
+        path: AppRoutes.notificationsSettings,
         builder: (context, state) => const NotificationSettingsScreen(),
       ),
 
       // Profile
       GoRoute(
-        path: '/profile/:userId',
+        path: '${AppRoutes.profile}/:userId',
         builder: (context, state) =>
             ProfileScreen(userId: state.pathParameters['userId']),
       ),
       GoRoute(
-        path: '/profile/settings',
+        path: AppRoutes.profileSettings,
         builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
-        path: '/settings',
+        path: AppRoutes.settings,
         builder: (context, state) => const SettingsScreen(),
       ),
     ],

@@ -17,7 +17,7 @@ class SpotRepository {
     try {
       final response = await _db
           .from('fishing_spots')
-          .select()
+          .select('id, user_id, name, lat, lng, type, privacy_level, description, verified, muhtar_id, created_at')
           .range(offset, offset + limit - 1);
       final remote = response.map<SpotModel>(SpotModel.fromJson).toList();
       await _cacheSpots(remote);
@@ -41,7 +41,7 @@ class SpotRepository {
     try {
       final response = await _db
           .from('fishing_spots')
-          .select()
+          .select('id, user_id, name, lat, lng, type, privacy_level, description, verified, muhtar_id, created_at')
           .gte('lat', minLat)
           .lte('lat', maxLat)
           .gte('lng', minLng)
@@ -62,7 +62,7 @@ class SpotRepository {
     try {
       final data = await _db
           .from('fishing_spots')
-          .select()
+          .select('id, user_id, name, lat, lng, type, privacy_level, description, verified, muhtar_id, created_at')
           .eq('id', id)
           .single();
       return SpotModel.fromJson(data);
@@ -77,7 +77,7 @@ class SpotRepository {
       final response = await _db
           .from('fishing_spots')
           .insert(spotData)
-          .select()
+          .select('id, user_id, name, lat, lng, type, privacy_level, description, verified, muhtar_id, created_at')
           .single();
       final created = SpotModel.fromJson(response);
       await _cacheSpots([created]);

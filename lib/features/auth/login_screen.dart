@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -230,7 +231,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         final prevUser = previous is AsyncData<User?> ? previous.value : null;
         if (u != null && u != prevUser) {
           final done = ref.read(onboardingStateProvider);
-          context.go(done ? '/home' : '/onboarding');
+          context.go(done ? AppRoutes.home : AppRoutes.onboarding);
         }
       }
     });
@@ -412,7 +413,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                             onboardingStateProvider,
                                           );
                                           context.go(
-                                            done ? '/home' : '/onboarding',
+                                            done ? AppRoutes.home : AppRoutes.onboarding,
                                           );
                                         } else {
                                           ScaffoldMessenger.of(
@@ -443,7 +444,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   TextButton(
                     onPressed: authState.isLoading
                         ? null
-                        : () => context.go('/register'),
+                        : () => context.go(AppRoutes.register),
                     style: TextButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
                       foregroundColor: AppColors.foam.withValues(alpha: 0.92),

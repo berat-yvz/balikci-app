@@ -16,7 +16,7 @@ class NotificationRepository {
     try {
       final response = await _db
           .from('notifications')
-          .select()
+          .select('id, user_id, type, title, body, data_json, read, created_at')
           .eq('user_id', currentUserId)
           .order('created_at', ascending: false)
           .limit(limit);

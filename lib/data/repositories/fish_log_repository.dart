@@ -39,7 +39,7 @@ class FishLogRepository {
     try {
       final response = await _remote
           .from('fish_logs')
-          .select()
+          .select('id, user_id, spot_id, species, weight, length, photo_url, exif_verified, weather_snapshot, is_private, released, created_at')
           .eq('user_id', userId)
           .order('created_at', ascending: false);
       final logs = response.map<FishLogModel>(FishLogModel.fromJson).toList();
@@ -54,7 +54,7 @@ class FishLogRepository {
   Future<FishLogModel?> addLog(Map<String, dynamic> data) async {
     try {
       final response =
-          await _remote.from('fish_logs').insert(data).select().single();
+          await _remote.from('fish_logs').insert(data).select('id, user_id, spot_id, species, weight, length, photo_url, exif_verified, weather_snapshot, is_private, released, created_at').single();
       final log = FishLogModel.fromJson(response);
       await _upsertLocalLog(log, isSynced: true);
       return log;
@@ -105,7 +105,7 @@ class FishLogRepository {
       final response = await _remote
           .from('fish_logs')
           .insert(data)
-          .select()
+          .select('id, user_id, spot_id, species, weight, length, photo_url, exif_verified, weather_snapshot, is_private, released, created_at')
           .single();
       return FishLogModel.fromJson(response);
     } on PostgrestException catch (e) {

@@ -9,7 +9,7 @@ class ShopRepository {
 
   Future<List<ShopModel>> getShops() async {
     try {
-      final response = await _db.from('shops').select();
+      final response = await _db.from('shops').select('id, name, lat, lng, type, phone, hours, added_by, verified');
       return (response as List)
           .map((row) => ShopModel.fromJson(row as Map<String, dynamic>))
           .toList();

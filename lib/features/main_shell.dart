@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 
 class MainShell extends StatelessWidget {
@@ -8,10 +9,10 @@ class MainShell extends StatelessWidget {
   const MainShell({super.key, required this.child});
 
   int _currentIndexFromPath(String path) {
-    if (path.startsWith('/fish-log')) return 1;
-    if (path.startsWith('/rank')) return 2;
-    if (path.startsWith('/weather')) return 3;
-    if (path.startsWith('/profile')) return 4;
+    if (path.startsWith(AppRoutes.fishLog)) return 1;
+    if (path.startsWith(AppRoutes.rank)) return 2;
+    if (path.startsWith(AppRoutes.weather)) return 3;
+    if (path.startsWith(AppRoutes.profile)) return 4;
     return 0;
   }
 
@@ -20,11 +21,11 @@ class MainShell extends StatelessWidget {
     final path = GoRouterState.of(context).uri.path;
     final currentIndex = _currentIndexFromPath(path);
     const tabRoutes = <String>[
-      '/home',
-      '/fish-log',
-      '/rank',
-      '/weather',
-      '/profile',
+      AppRoutes.home,
+      AppRoutes.fishLog,
+      AppRoutes.rank,
+      AppRoutes.weather,
+      AppRoutes.profile,
     ];
 
     return Scaffold(

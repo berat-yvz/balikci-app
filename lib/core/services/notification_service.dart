@@ -3,6 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/router.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 
@@ -90,11 +91,11 @@ class NotificationService {
 
   /// FCM data['type'] değerine göre hedef route döner.
   static String _routeForType(String? type) => switch (type) {
-    'checkin' => '/map',
-    'fish_log' => '/log',
-    'rank' => '/rank',
-    'vote' => '/map',
-    _ => '/home',
+    'checkin' => AppRoutes.map,
+    'fish_log' => AppRoutes.log,
+    'rank' => AppRoutes.rank,
+    'vote' => AppRoutes.map,
+    _ => AppRoutes.home,
   };
 
   /// appNavigatorKey üzerinden go_router ile yönlendir.

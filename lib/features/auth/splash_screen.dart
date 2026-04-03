@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/preferences_provider.dart';
@@ -29,9 +30,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final isLoggedIn = ref.read(isLoggedInProvider);
     final onboardingDone = ref.read(onboardingStateProvider);
     if (isLoggedIn) {
-      context.go(onboardingDone ? '/home' : '/onboarding');
+      context.go(onboardingDone ? AppRoutes.home : AppRoutes.onboarding);
     } else {
-      context.go('/login');
+      context.go(AppRoutes.login);
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/models/user_model.dart';
@@ -257,7 +258,7 @@ class _ProfileContent extends ConsumerWidget {
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                 ),
-                onPressed: () => context.go('/fish-log'),
+                onPressed: () => context.go(AppRoutes.fishLog),
                 icon: const Icon(Icons.list_alt_outlined),
                 label: const Text('Günlüğüm'),
               ),
@@ -270,7 +271,7 @@ class _ProfileContent extends ConsumerWidget {
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                 ),
-                onPressed: () => context.push('/settings'),
+                onPressed: () => context.push(AppRoutes.settings),
                 icon: const Icon(Icons.settings_outlined),
                 label: const Text('Ayarlar'),
               ),

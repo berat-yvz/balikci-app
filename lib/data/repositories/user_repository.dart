@@ -13,7 +13,7 @@ class UserRepository {
     try {
       final data = await _db
           .from('users')
-          .select()
+          .select('id, email, username, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at')
           .eq('id', userId)
           .maybeSingle();
       if (data == null) return null;
@@ -59,7 +59,7 @@ class UserRepository {
     try {
       final response = await _db
           .from('users')
-          .select()
+          .select('id, email, username, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at')
           .order('total_score', ascending: false)
           .limit(limit);
       final users = response.map<UserModel>(UserModel.fromJson).toList();
