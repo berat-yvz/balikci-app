@@ -266,6 +266,10 @@ class _LeaderboardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Highlight kartı açık arka plan alır → koyu metin; diğerleri koyu arka plan → açık metin.
+    final textColor = highlight ? AppColors.dark : Colors.white;
+    final subtitleColor = highlight ? Colors.black54 : AppColors.muted;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -289,12 +293,13 @@ class _LeaderboardRow extends StatelessWidget {
                   '$rank. ${user.username}',
                   style: AppTextStyles.body.copyWith(
                     fontWeight: FontWeight.w800,
+                    color: textColor,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'Toplam puan: ${user.totalScore}',
-                  style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+                  style: AppTextStyles.caption.copyWith(color: subtitleColor),
                 ),
               ],
             ),
@@ -316,7 +321,10 @@ class _LeaderboardRow extends StatelessWidget {
                 ),
               ),
             ),
-          Text('${user.totalScore}', style: AppTextStyles.h3),
+          Text(
+            '${user.totalScore}',
+            style: AppTextStyles.h3.copyWith(color: textColor),
+          ),
         ],
       ),
     );
