@@ -1,12 +1,15 @@
 /// Hava durumu modeli — ARCHITECTURE.md `weather_cache` tablosu referans.
 /// MVP_PLAN.md M-04 balıkçı dili çevirisi bu model üzerinden çalışır.
 class WeatherModel {
-  // cleaned: ekran detayları için ek alanlar eklendi
   final String id;
   final double lat;
   final double lng;
 
-  /// Open-Meteo'dan normalize edilerek yazılmış alanlar.
+  /// Ham OpenWeather response (JSONB). fromJson path'inde dolu,
+  /// Drift cache path'inde null — getter'lar buna göre fallback yapar.
+  final Map<String, dynamic>? dataJson;
+
+  /// Drift cache path için stored alanlar (dataJson yoksa kullanılır).
   final double? temperature; // °C
   final double? windspeed; // km/h
   final int? windDirection; // derece
@@ -16,18 +19,21 @@ class WeatherModel {
   final double? humidity; // %
   final double? visibilityKm; // km
   final double? cloudCover; // %
-  final int? weatherCode;
 
-  final String? fishingSummary; // Balıkçı dili özeti (Edge Function üretir)
+  // weatherCode: getter olarak tanımlandı (aşağıya bak)
+  final int? _weatherCode;
+
+  final String? fishingSummary;
   final DateTime fetchedAt;
 
-  /// "lat_lng" formatında 0.25 derece grid anahtarı (unique).
+  /// "region_key" — weather_cache tablosunda unique.
   final String? regionKey;
 
   const WeatherModel({
     required this.id,
     required this.lat,
     required this.lng,
+    this.dataJson,
     required this.temperature,
     required this.windspeed,
     required this.windDirection,
@@ -37,38 +43,72 @@ class WeatherModel {
     required this.humidity,
     required this.visibilityKm,
     required this.cloudCover,
-    required this.weatherCode,
+    int? weatherCode,
     required this.fishingSummary,
     required this.fetchedAt,
     required this.regionKey,
-  });
+  }) : _weatherCode = weatherCode;
 
-  double get tempCelsius => (temperature ?? 0).toDouble();
-  double get windKmh => (windspeed ?? 0).toDouble();
+  // ── Computed getters ───────────────────────────────────────
 
-  factory WeatherModel.fromJson(Map<String, dynamic> json) => WeatherModel(
-    id: json['id'] as String,
-    lat: (json['lat'] as num).toDouble(),
-    lng: (json['lng'] as num).toDouble(),
-    temperature: (json['temperature'] as num?)?.toDouble(),
-    windspeed: (json['windspeed'] as num?)?.toDouble(),
-    windDirection: json['wind_direction'] as int?,
-    waveHeight: (json['wave_height'] as num?)?.toDouble(),
-    seaSurfaceTemperature: (json['sea_surface_temperature'] as num?)
-        ?.toDouble(),
-    precipitation: (json['precipitation'] as num?)?.toDouble(),
-    humidity: (json['humidity'] as num?)?.toDouble(),
-    visibilityKm:
-        (json['visibility_km'] as num?)?.toDouble() ??
-        ((json['visibility'] as num?)?.toDouble() != null
-            ? (json['visibility'] as num).toDouble() / 1000
-            : null),
-    cloudCover:
-        (json['cloud_cover'] as num?)?.toDouble() ??
-        (json['cloudiness'] as num?)?.toDouble(),
-    weatherCode: json['weather_code'] as int?,
-    fishingSummary: json['fishing_summary'] as String?,
-    fetchedAt: DateTime.parse(json['fetched_at'] as String),
-    regionKey: json['region_key'] as String?,
-  );
+  /// Sıcaklık °C. dataJson varsa direkt oku (units=metric → zaten Celsius).
+  double get tempCelsius {
+    if (dataJson != null) {
+      return (dataJson!['main']?['temp'] as num?)?.toDouble() ?? 0.0;
+    }
+    return (temperature ?? 0).toDouble();
+  }
+
+  /// Rüzgar km/s. dataJson varsa m/s → km/s çevir.
+  double get windKmh {
+    if (dataJson != null) {
+      return ((dataJson!['wind']?['speed'] as num?)?.toDouble() ?? 0.0) * 3.6;
+    }
+    return (windspeed ?? 0).toDouble();
+  }
+
+  /// OpenWeather hava kodu. dataJson['weather'][0]['id'], bulunamazsa 800.
+  int? get weatherCode {
+    if (dataJson != null) {
+      final list = dataJson!['weather'];
+      if (list is List && list.isNotEmpty) {
+        return (list[0] as Map<String, dynamic>)['id'] as int? ?? 800;
+      }
+      return 800;
+    }
+    return _weatherCode;
+  }
+
+  factory WeatherModel.fromJson(Map<String, dynamic> json) {
+    final dataJson = json['data_json'] as Map<String, dynamic>?;
+    final main     = dataJson?['main']   as Map<String, dynamic>?;
+    final wind     = dataJson?['wind']   as Map<String, dynamic>?;
+    final clouds   = dataJson?['clouds'] as Map<String, dynamic>?;
+    final rain     = dataJson?['rain']   as Map<String, dynamic>?;
+    final windSpeedMs = (wind?['speed'] as num?)?.toDouble();
+
+    return WeatherModel(
+      id:       json['id']  as String? ?? '',
+      lat:      (json['lat'] as num?)?.toDouble() ?? 0,
+      lng:      (json['lng'] as num?)?.toDouble() ?? 0,
+      dataJson: dataJson,
+      // Stored fields (getter'lar dataJson varken bunları kullanmaz,
+      // Drift cache path için yedek olarak tutulur)
+      temperature:             (main?['temp']     as num?)?.toDouble(),
+      windspeed:               windSpeedMs != null ? windSpeedMs * 3.6 : null,
+      windDirection:           (wind?['deg']      as num?)?.toInt(),
+      waveHeight:              null,
+      seaSurfaceTemperature:   null,
+      precipitation:           (rain?['1h']       as num?)?.toDouble(),
+      humidity:                (main?['humidity'] as num?)?.toDouble(),
+      visibilityKm:            dataJson?['visibility'] != null
+          ? (dataJson!['visibility'] as num).toDouble() / 1000
+          : null,
+      cloudCover:              (clouds?['all']    as num?)?.toDouble(),
+      weatherCode:             null, // getter dataJson'dan okur
+      fishingSummary:          json['fishing_summary'] as String?,
+      fetchedAt:               DateTime.parse(json['fetched_at'] as String),
+      regionKey:               json['region_key'] as String?,
+    );
+  }
 }

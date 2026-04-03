@@ -21,7 +21,6 @@ class AppDatabase extends _$AppDatabase {
     onCreate: (m) async => m.createAll(),
     onUpgrade: (m, from, to) async {
       if (from < 2) {
-        // LocalSpots: fishing_spots cache alanlari ile hizala
         await m.addColumn(localSpots, localSpots.verified);
         await m.addColumn(localSpots, localSpots.muhtarId);
         await m.addColumn(localSpots, localSpots.cachedAt);

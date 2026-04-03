@@ -23,6 +23,7 @@ import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
 import 'package:balikci_app/data/models/shop_model.dart';
 import 'package:balikci_app/features/map/widgets/spot_marker.dart';
+import 'package:balikci_app/features/map/widgets/weather_card.dart';
 import 'package:balikci_app/data/repositories/shop_repository.dart';
 import 'package:balikci_app/shared/providers/connectivity_provider.dart';
 import 'package:balikci_app/shared/providers/notification_provider.dart';
@@ -564,6 +565,14 @@ class _MapScreenState extends State<MapScreen> {
                   ),
               ],
             ),
+          ),
+
+          // H9: Kompakt hava kartı — arama çubuğu (48px) altına yerleşir
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8 + 48 + 8,
+            left: 0,
+            right: 0,
+            child: const WeatherCard(),
           ),
 
           // Üst: Arama (floating) + sync + bildirimler
