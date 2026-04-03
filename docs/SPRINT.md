@@ -194,14 +194,14 @@
 **Hedef:** Balıkçı dilinde hava kartı çalışıyor
 
 #### Görevler
-- [ ] Edge Function: `weather-cache` yazıldı ve deploy edildi
+- [x] Edge Function: `weather-cache` yazıldı ve deploy edildi
 - [ ] Supabase cron job: her 4 saatte weather-cache tetikleniyor
-- [ ] `weather_model.dart` yazıldı
-- [ ] `weather_service.dart` — en yakın bölge verisini çek
-- [ ] Balıkçı dili çevirisi: 30 kural tablosu yazıldı
-- [ ] `weather_card_widget.dart` — ana ekranda hava kartı
-- [ ] `weather_screen.dart` — detaylı hava ekranı (7 günlük)
-- [ ] Hava verisi Drift'te cache'leniyor (offline)
+- [x] `weather_model.dart` yazıldı
+- [x] `weather_service.dart` — en yakın bölge verisini çek
+- [x] Balıkçı dili çevirisi: 30 kural tablosu yazıldı (`FishingWeatherUtils`)
+- [x] `weather_card_widget.dart` — ana ekranda hava kartı
+- [x] `weather_screen.dart` — detaylı hava ekranı (bölge seçici + balıkçı skoru)
+- [x] Hava verisi Drift'te cache'leniyor (offline)
 
 **Çıktı:** Hava kartı açılıyor, balıkçı dili yorumu gösteriliyor ✓
 

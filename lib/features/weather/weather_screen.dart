@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 
 import 'package:balikci_app/app/theme.dart';
-import 'package:balikci_app/core/services/location_service.dart';
+import 'package:balikci_app/core/constants/weather_regions.dart';
 import 'package:balikci_app/core/services/weather_service.dart';
-import 'package:balikci_app/core/utils/weather_translator.dart';
+import 'package:balikci_app/core/utils/fishing_weather_utils.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
 
-/// Hava durumu detay ekranı.
+/// Detaylı hava durumu ekranı — H9 sprint.
 class WeatherScreen extends StatefulWidget {
-  // cleaned: H9 için tam hava durumu ekranı uygulandı
   const WeatherScreen({super.key});
 
   @override
@@ -16,264 +15,447 @@ class WeatherScreen extends StatefulWidget {
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
-  WeatherModel? _weather;
-  String? _error;
+  final List<WeatherModel> _allRegions = [];
+  WeatherModel? _selected;
+  String _selectedKey = 'istanbul';
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadWeather();
+    _load();
   }
 
-  Future<void> _loadWeather() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  Future<void> _load() async {
+    setState(() => _loading = true);
     try {
-      final pos = await LocationService.getCurrentPosition();
-      if (pos == null) {
-        throw Exception('Konum alınamadı. Lütfen konum iznini kontrol et.');
-      }
-      final weather = await WeatherService.getWeatherForLocation(
-        lat: pos.latitude,
-        lng: pos.longitude,
-      );
-      if (weather == null) {
-        throw Exception('Bölgene ait hava verisi bulunamadı.');
-      }
+      final all = await WeatherService.getAllCaches();
       if (!mounted) return;
-      setState(() => _weather = weather);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      setState(() {
+        _allRegions
+          ..clear()
+          ..addAll(all);
+        _selected = all.isNotEmpty
+            ? all.firstWhere(
+                (w) => w.regionKey == _selectedKey,
+                orElse: () => all.first,
+              )
+            : null;
+        if (_selected != null) _selectedKey = _selected!.regionKey ?? '';
+      });
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  String _regionToTr(String? key) {
-    final raw = (key ?? 'bilinmiyor').toLowerCase();
-    if (raw.contains('karadeniz')) return 'Karadeniz Bölgesi';
-    if (raw.contains('marmara')) return 'Marmara Bölgesi';
-    if (raw.contains('ege')) return 'Ege Bölgesi';
-    if (raw.contains('akdeniz')) return 'Akdeniz Bölgesi';
-    if (raw.contains('ic_anadolu') || raw.contains('iç_anadolu')) {
-      return 'İç Anadolu Bölgesi';
-    }
-    if (raw.contains('dogu_anadolu') || raw.contains('doğu_anadolu')) {
-      return 'Doğu Anadolu Bölgesi';
-    }
-    if (raw.contains('guneydogu') || raw.contains('güneydoğu')) {
-      return 'Güneydoğu Anadolu Bölgesi';
-    }
-    return key ?? 'Bilinmiyor';
-  }
-
-  String _ago(DateTime time) {
-    final diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 1) return 'az önce';
-    return '${diff.inMinutes} dk önce';
+  void _selectRegion(String key) {
+    final found = _allRegions.where((w) => w.regionKey == key);
+    if (found.isEmpty) return;
+    setState(() {
+      _selectedKey = key;
+      _selected = found.first;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final weather = _weather;
-    final translated = weather == null
-        ? null
-        : WeatherTranslator.translate(
-            windSpeedKmh: weather.windspeed ?? 0,
-            waveHeightM: weather.waveHeight ?? 0,
-            tempC: weather.temperature ?? 0,
-            weatherCode: weather.weatherCode,
-          );
-
     return Scaffold(
       appBar: AppBar(title: const Text('Hava Durumu')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(_error!, style: AppTextStyles.body),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: _loadWeather,
-                    child: const Text('Tekrar Dene'),
-                  ),
-                ],
-              ),
-            )
-          : weather == null || translated == null
-          ? const Center(child: Text('Hava verisi bulunamadı.'))
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Container(
+          : _allRegions.isEmpty
+              ? _EmptyWeather(onRetry: _load)
+              : ListView(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: translated.color.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: translated.color.withValues(alpha: 0.5),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            translated.icon,
-                            style: const TextStyle(fontSize: 64),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              translated.summary,
-                              style: AppTextStyles.h2.copyWith(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
+                  children: [
+                    // ── Bölge seçici ───────────────────────
+                    SizedBox(
+                      height: 36,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: weatherRegions.length,
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(width: 6),
+                        itemBuilder: (_, i) {
+                          final key =
+                              weatherRegions.keys.elementAt(i);
+                          final label = _regionLabel(key);
+                          final selected = key == _selectedKey;
+                          return GestureDetector(
+                            onTap: () => _selectRegion(key),
+                            child: AnimatedContainer(
+                              duration:
+                                  const Duration(milliseconds: 150),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: selected
+                                    ? AppColors.primary
+                                        .withValues(alpha: 0.25)
+                                    : Colors.transparent,
+                                border: Border.all(
+                                  color: selected
+                                      ? AppColors.primary
+                                      : AppColors.muted
+                                          .withValues(alpha: 0.3),
+                                  width: selected ? 1.5 : 0.5,
+                                ),
+                                borderRadius:
+                                    BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                label,
+                                style: AppTextStyles.caption.copyWith(
+                                  color: selected
+                                      ? AppColors.primary
+                                      : AppColors.muted,
+                                  fontWeight: selected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        translated.fishingAdvice,
-                        style: AppTextStyles.body.copyWith(
-                          color: Colors.white70,
-                          fontStyle: FontStyle.italic,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          'Son güncelleme: ${_ago(weather.fetchedAt)}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    if (_selected != null) ...[
+                      _WeatherHeroCard(weather: _selected!),
+                      const SizedBox(height: 16),
+                      _WeatherDetailGrid(weather: _selected!),
+                      const SizedBox(height: 16),
+                      _FishingTipsCard(weather: _selected!),
+                      const SizedBox(height: 16),
+                      _UpdateInfo(weather: _selected!),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  childAspectRatio: 2.4,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  children: [
-                    _WeatherTile(
-                      icon: '🌡️',
-                      label: 'Sıcaklık',
-                      value:
-                          '${(weather.temperature ?? 0).toStringAsFixed(1)} °C',
-                    ),
-                    _WeatherTile(
-                      icon: '💨',
-                      label: 'Rüzgar',
-                      value:
-                          '${(weather.windspeed ?? 0).toStringAsFixed(1)} km/h',
-                    ),
-                    _WeatherTile(
-                      icon: '🌊',
-                      label: 'Dalga',
-                      value: weather.waveHeight == null
-                          ? '-'
-                          : '${weather.waveHeight!.toStringAsFixed(1)} m',
-                    ),
-                    _WeatherTile(
-                      icon: '💧',
-                      label: 'Nem',
-                      value: weather.humidity == null
-                          ? '-'
-                          : '%${weather.humidity!.toStringAsFixed(0)}',
-                    ),
-                    _WeatherTile(
-                      icon: '👁️',
-                      label: 'Görüş',
-                      value: weather.visibilityKm == null
-                          ? '-'
-                          : '${weather.visibilityKm!.toStringAsFixed(1)} km',
-                    ),
-                    _WeatherTile(
-                      icon: '☁️',
-                      label: 'Bulutluluk',
-                      value: weather.cloudCover == null
-                          ? '-'
-                          : '%${weather.cloudCover!.toStringAsFixed(0)}',
-                    ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Text(
-                      '📍 Bölge: ${_regionToTr(weather.regionKey)}',
-                      style: AppTextStyles.body.copyWith(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
+    );
+  }
+
+  String _regionLabel(String key) => switch (key) {
+        'istanbul' => 'İstanbul',
+        'izmir' => 'İzmir',
+        'antalya' => 'Antalya',
+        'trabzon' => 'Trabzon',
+        'canakkale' => 'Çanakkale',
+        'bodrum' => 'Bodrum',
+        'fethiye' => 'Fethiye',
+        'sinop' => 'Sinop',
+        'samsun' => 'Samsun',
+        'mersin' => 'Mersin',
+        'mugla' => 'Muğla',
+        'balikesir' => 'Balıkesir',
+        _ => key,
+      };
+}
+
+// ── Alt widget'lar ──────────────────────────────────────────
+
+class _WeatherHeroCard extends StatelessWidget {
+  final WeatherModel weather;
+  const _WeatherHeroCard({required this.weather});
+
+  String _weatherIcon(int code) {
+    if (code == 800) return '☀️';
+    if (code > 800) return '⛅';
+    if (code >= 700) return '🌫️';
+    if (code >= 600) return '❄️';
+    if (code >= 500) return '🌧️';
+    if (code >= 300) return '🌦️';
+    if (code >= 200) return '⛈️';
+    return '🌤️';
+  }
+
+  Color _scoreColor(int score) {
+    if (score >= 75) return AppColors.primary;
+    if (score >= 50) return AppColors.accent;
+    if (score >= 25) return const Color(0xFFE07B39);
+    return AppColors.danger;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final score = FishingWeatherUtils.getFishingScore(weather);
+    final summary = FishingWeatherUtils.getSummary(weather);
+    final icon = _weatherIcon(weather.weatherCode ?? 0);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.3),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 52)),
+          const SizedBox(height: 8),
+          Text(
+            '${weather.tempCelsius.toStringAsFixed(1)}°C',
+            style: AppTextStyles.h1.copyWith(color: Colors.white),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            summary,
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w500,
             ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 5,
+            ),
+            decoration: BoxDecoration(
+              color: _scoreColor(score).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: _scoreColor(score).withValues(alpha: 0.4),
+                width: 0.5,
+              ),
+            ),
+            child: Text(
+              '${FishingWeatherUtils.getScoreEmoji(score)} '
+              'Balıkçılık skoru: $score/100 — '
+              '${FishingWeatherUtils.getScoreLabel(score)}',
+              style: AppTextStyles.caption.copyWith(
+                color: _scoreColor(score),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _WeatherTile extends StatelessWidget {
-  const _WeatherTile({
+class _WeatherDetailGrid extends StatelessWidget {
+  final WeatherModel weather;
+  const _WeatherDetailGrid({required this.weather});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      childAspectRatio: 2.4,
+      children: [
+        _DetailTile(
+          icon: '💨',
+          label: 'Rüzgar',
+          value: '${weather.windKmh.toStringAsFixed(0)} km/s',
+        ),
+        _DetailTile(
+          icon: '🌡️',
+          label: 'Sıcaklık',
+          value: '${weather.tempCelsius.toStringAsFixed(1)}°C',
+        ),
+        _DetailTile(
+          icon: '🌊',
+          label: 'Dalga',
+          value: weather.waveHeight != null
+              ? '${weather.waveHeight!.toStringAsFixed(1)} m'
+              : 'Veri yok',
+        ),
+        _DetailTile(
+          icon: '💧',
+          label: 'Nem',
+          value: weather.humidity != null
+              ? '%${weather.humidity!.toStringAsFixed(0)}'
+              : 'Veri yok',
+        ),
+        _DetailTile(
+          icon: '👁️',
+          label: 'Görüş',
+          value: weather.visibilityKm != null
+              ? '${weather.visibilityKm!.toStringAsFixed(1)} km'
+              : 'Veri yok',
+        ),
+        _DetailTile(
+          icon: '☁️',
+          label: 'Bulutluluk',
+          value: weather.cloudCover != null
+              ? '%${weather.cloudCover!.toStringAsFixed(0)}'
+              : 'Veri yok',
+        ),
+      ],
+    );
+  }
+}
+
+class _DetailTile extends StatelessWidget {
+  final String icon, label, value;
+  const _DetailTile({
     required this.icon,
     required this.label,
     required this.value,
   });
 
-  final String icon;
-  final String label;
-  final String value;
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppColors.muted.withValues(alpha: 0.15),
+          width: 0.5,
+        ),
       ),
       child: Row(
         children: [
-          Text(icon, style: const TextStyle(fontSize: 18)),
+          Text(icon, style: const TextStyle(fontSize: 20)),
           const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  value,
-                  style: AppTextStyles.body.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: AppTextStyles.caption.copyWith(
+                  fontSize: 11,
+                  color: AppColors.muted,
                 ),
-                Text(
-                  label,
-                  style: AppTextStyles.caption.copyWith(color: Colors.white70),
+              ),
+              Text(
+                value,
+                style: AppTextStyles.caption.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
                 ),
-              ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FishingTipsCard extends StatelessWidget {
+  final WeatherModel weather;
+  const _FishingTipsCard({required this.weather});
+
+  @override
+  Widget build(BuildContext context) {
+    final wind = weather.windKmh;
+    final temp = weather.tempCelsius;
+
+    final tips = <String>[];
+    if (wind < 15) tips.add('✓ Rüzgar ideal seviyede');
+    if (wind > 25) tips.add('⚠️ Rüzgar yüksek, dikkatli ol');
+    if (temp >= 16 && temp <= 24) tips.add('✓ Su sıcaklığı balık için ideal');
+    if (temp > 28) tips.add('⚠️ Çok sıcak, derin sulara bak');
+    if (temp < 10) tips.add('⚠️ Soğuk su, yavaş balıklar');
+    if (tips.isEmpty) tips.add('Koşullar ortalama, denemeye değer');
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.muted.withValues(alpha: 0.15),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Balıkçı Tüyoları',
+            style: AppTextStyles.caption.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppColors.muted,
             ),
+          ),
+          const SizedBox(height: 10),
+          ...tips.map(
+            (tip) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                tip,
+                style: AppTextStyles.caption.copyWith(
+                  color: tip.startsWith('✓')
+                      ? AppColors.primary
+                      : tip.startsWith('⚠️')
+                          ? AppColors.accent
+                          : Colors.white70,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UpdateInfo extends StatelessWidget {
+  final WeatherModel weather;
+  const _UpdateInfo({required this.weather});
+
+  @override
+  Widget build(BuildContext context) {
+    final ago = DateTime.now().difference(weather.fetchedAt);
+    final label = ago.inMinutes < 60
+        ? '${ago.inMinutes} dakika önce güncellendi'
+        : '${ago.inHours} saat önce güncellendi';
+
+    return Text(
+      '🕐 $label',
+      style: AppTextStyles.caption.copyWith(
+        color: AppColors.muted,
+        fontSize: 11,
+      ),
+      textAlign: TextAlign.center,
+    );
+  }
+}
+
+class _EmptyWeather extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _EmptyWeather({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('🌐', style: TextStyle(fontSize: 48)),
+          const SizedBox(height: 12),
+          Text(
+            'Hava verisi bulunamadı',
+            style: AppTextStyles.h3.copyWith(color: Colors.white),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Supabase weather_cache tablosu boş olabilir.\n'
+            'Edge Function deploy edildi mi?',
+            style: AppTextStyles.body.copyWith(color: AppColors.muted),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: onRetry,
+            child: const Text('Tekrar Dene'),
           ),
         ],
       ),

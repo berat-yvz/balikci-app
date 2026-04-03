@@ -1,206 +1,141 @@
 import 'package:flutter/material.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/weather_service.dart';
-import 'package:balikci_app/core/utils/weather_translator.dart';
+import 'package:balikci_app/core/utils/fishing_weather_utils.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
 
-/// Harita alt şeridi için compact hava kartı.
-///
-/// Bu widget, [WeatherService.getWeatherForLocation] ile `lat/lng` bazlı
-/// `weather_cache` içinden en yakın veriyi çeker.
-class WeatherCard extends StatelessWidget {
-  final double lat;
-  final double lng;
+/// Harita üstünde gösterilen kompakt hava kartı — H9.
+class WeatherCard extends StatefulWidget {
+  const WeatherCard({super.key});
 
-  const WeatherCard({super.key, required this.lat, required this.lng});
+  @override
+  State<WeatherCard> createState() => _WeatherCardState();
+}
+
+class _WeatherCardState extends State<WeatherCard> {
+  WeatherModel? _weather;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final pos = await LocationService.getCurrentPosition();
+      WeatherModel? weather;
+      if (pos != null) {
+        weather = await WeatherService.getWeatherForLocation(
+          lat: pos.latitude,
+          lng: pos.longitude,
+        );
+      }
+      // Konum alınamazsa İstanbul'u göster
+      weather ??= await WeatherService.getWeatherByRegionKey('istanbul');
+      if (!mounted) return;
+      setState(() => _weather = weather);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<WeatherModel?>(
-      future: WeatherService.getWeatherForLocation(lat: lat, lng: lng),
-      builder: (context, snapshot) {
-        final w = snapshot.data;
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return _cardSkeleton();
-        }
-
-        if (w == null) {
-          return _cardError();
-        }
-
-        final wind = w.windKmh;
-        final wave = w.waveHeight ?? 0;
-        final temp = w.tempCelsius;
-
-        final translated = WeatherTranslator.translate(
-          windSpeedKmh: wind,
-          waveHeightM: wave,
-          tempC: temp,
-          weatherCode: w.weatherCode,
-        );
-
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
+    if (_loading) {
+      return Container(
+        margin: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.surface.withValues(alpha: 0.92),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.muted.withValues(alpha: 0.2),
+            width: 0.5,
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 8,
-                height: 92,
-                decoration: BoxDecoration(
-                  color: translated.color,
-                  borderRadius: const BorderRadius.horizontal(
-                    left: Radius.circular(16),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            translated.icon,
-                            style: const TextStyle(fontSize: 22),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              translated.summary,
-                              style: AppTextStyles.body.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        translated.fishingAdvice,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.muted,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.thermostat_outlined,
-                            size: 16,
-                            color: AppColors.secondary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${w.tempCelsius.round()}°C',
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppColors.dark,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const Spacer(),
-                          const Icon(
-                            Icons.air_outlined,
-                            size: 16,
-                            color: AppColors.secondary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${w.windKmh.round()} km/h',
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppColors.dark,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (w.waveHeight != null)
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            'Dalga: ${w.waveHeight!.toStringAsFixed(1)}m',
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppColors.muted,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+        ),
+        child: const SizedBox(
+          height: 16,
+          width: 16,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
 
-  Widget _cardSkeleton() {
+    final w = _weather;
+    if (w == null) return const SizedBox.shrink();
+
+    final score = FishingWeatherUtils.getFishingScore(w);
+    final scoreEmoji = FishingWeatherUtils.getScoreEmoji(score);
+    final summary = FishingWeatherUtils.getSummary(w);
+
     return Container(
-      height: 92,
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: const Row(
-        children: [
-          SizedBox(width: 8),
-          Expanded(child: LinearProgressIndicator()),
+        color: AppColors.surface.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.muted.withValues(alpha: 0.2),
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _cardError() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
-      ),
-      padding: const EdgeInsets.all(12),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 8,
-            height: 92,
-            decoration: BoxDecoration(
-              color: AppColors.danger,
-              borderRadius: const BorderRadius.horizontal(
-                left: Radius.circular(16),
+          // Sol: sıcaklık
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${w.tempCelsius.toStringAsFixed(0)}°C',
+                style: AppTextStyles.h3.copyWith(color: Colors.white),
               ),
-            ),
+              Text(
+                '${w.windKmh.toStringAsFixed(0)} km/s rüzgar',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.muted,
+                  fontSize: 11,
+                ),
+              ),
+            ],
           ),
           const SizedBox(width: 12),
+          // Orta: balıkçı özeti
           Expanded(
             child: Text(
-              'Hava verisi bulunamadı.',
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.danger,
-                fontWeight: FontWeight.w800,
+              summary,
+              style: AppTextStyles.caption.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
+          ),
+          const SizedBox(width: 8),
+          // Sağ: skor
+          Column(
+            children: [
+              Text(scoreEmoji, style: const TextStyle(fontSize: 18)),
+              Text(
+                '$score',
+                style: AppTextStyles.caption.copyWith(
+                  fontSize: 11,
+                  color: AppColors.muted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ],
       ),
