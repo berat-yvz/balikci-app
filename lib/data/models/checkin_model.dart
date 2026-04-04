@@ -10,6 +10,7 @@ class CheckinModel {
   final String? photoUrl;
   final bool exifVerified;
   final bool isActive;
+  final bool isHidden;
   final int trueVotes;
   final int falseVotes;
   final DateTime createdAt;
@@ -24,6 +25,7 @@ class CheckinModel {
     this.photoUrl,
     this.exifVerified = false,
     this.isActive = true,
+    this.isHidden = false,
     this.trueVotes = 0,
     this.falseVotes = 0,
     required this.createdAt,
@@ -35,13 +37,6 @@ class CheckinModel {
   /// Rapor 6 saatten eski mi? (haritadan kaldır)
   bool get isExpired => DateTime.now().difference(createdAt).inHours >= 6;
 
-  /// En az 3 yanlış oy ve %70 üstü yanlış oranında rapor gizlenir.
-  bool get isHidden {
-    final total = trueVotes + falseVotes;
-    if (falseVotes < 3 || total == 0) return false;
-    return (falseVotes / total) > 0.70;
-  }
-
   factory CheckinModel.fromJson(Map<String, dynamic> json) => CheckinModel(
     id: json['id'] as String,
     userId: json['user_id'] as String,
@@ -52,6 +47,7 @@ class CheckinModel {
     photoUrl: json['photo_url'] as String?,
     exifVerified: json['exif_verified'] as bool? ?? false,
     isActive: json['is_active'] as bool? ?? true,
+    isHidden: json['is_hidden'] as bool? ?? false,
     trueVotes: (json['true_votes'] as num?)?.toInt() ?? 0,
     falseVotes: (json['false_votes'] as num?)?.toInt() ?? 0,
     createdAt: DateTime.parse(json['created_at'] as String),
@@ -67,6 +63,7 @@ class CheckinModel {
     'photo_url': photoUrl,
     'exif_verified': exifVerified,
     'is_active': isActive,
+    'is_hidden': isHidden,
     'true_votes': trueVotes,
     'false_votes': falseVotes,
     'created_at': createdAt.toIso8601String(),
