@@ -485,18 +485,14 @@ class _MapScreenState extends State<MapScreen> {
             child: const WeatherCard(),
           ),
 
-          // Üst: Arama (floating) + sync + bildirimler
+          // Üst: Arama (floating)
           Positioned(
             left: 16,
             right: 16,
             top: MediaQuery.of(context).padding.top + 8,
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
                       Container(
                         height: 52,
                         decoration: BoxDecoration(
@@ -616,10 +612,7 @@ class _MapScreenState extends State<MapScreen> {
                         child: _searchResults.isEmpty
                             ? const SizedBox.shrink()
                             : Container(
-                                margin: const EdgeInsets.only(
-                                  top: 4,
-                                  right: 64,
-                                ),
+                                margin: const EdgeInsets.only(top: 4),
                                 decoration: BoxDecoration(
                                   color: Colors.black.withValues(alpha: 0.9),
                                   borderRadius: BorderRadius.circular(16),
@@ -748,9 +741,42 @@ class _MapScreenState extends State<MapScreen> {
                                       ),
                               ),
                       ),
-                    ],
-                  ),
+              ],
+            ),
+          ),
+
+          // Sağ alt: harita aksiyonları
+          Positioned(
+            right: 16,
+            bottom: mapFabBottom,
+            child: Column(
+              children: [
+                _MapActionButton(
+                  icon: Icons.my_location,
+                  tooltip: 'Konumum',
+                  onPressed: _goToMyLocation,
                 ),
+                const SizedBox(height: 12),
+                _MapActionButton(
+                  icon: Icons.add_location_alt_outlined,
+                  tooltip: 'Mera ekle',
+                  onPressed: () async {
+                    final ok = await context.push<bool>('/map/add-spot');
+                    if (!mounted) return;
+                    if (ok == true) unawaited(_loadSpots());
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // Top-right: Bildirim + Katman toggles
+          Positioned(
+            right: 12,
+            top: MediaQuery.of(context).padding.top + 8,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
                 Consumer(
                   builder: (context, ref, _) {
                     final unreadAsync = ref.watch(unreadCountProvider);
@@ -815,69 +841,36 @@ class _MapScreenState extends State<MapScreen> {
                       );
                     }
 
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: unreadAsync.when(
-                        data: (count) => IconButton(
-                          tooltip: 'Bildirimler',
-                          onPressed: () => context.push(AppRoutes.notifications),
-                          icon: badgeFor(count),
-                        ),
-                        loading: () => IconButton(
-                          tooltip: 'Bildirimler',
-                          onPressed: () => context.push(AppRoutes.notifications),
-                          icon: badgeFor(0),
-                        ),
-                        error: (_, _) => IconButton(
-                          tooltip: 'Bildirimler',
-                          onPressed: () => context.push(AppRoutes.notifications),
-                          icon: badgeFor(0),
-                        ),
+                    return unreadAsync.when(
+                      data: (count) => IconButton(
+                        tooltip: 'Bildirimler',
+                        onPressed: () => context.push(AppRoutes.notifications),
+                        icon: badgeFor(count),
+                      ),
+                      loading: () => IconButton(
+                        tooltip: 'Bildirimler',
+                        onPressed: () => context.push(AppRoutes.notifications),
+                        icon: badgeFor(0),
+                      ),
+                      error: (_, _) => IconButton(
+                        tooltip: 'Bildirimler',
+                        onPressed: () => context.push(AppRoutes.notifications),
+                        icon: badgeFor(0),
                       ),
                     );
                   },
                 ),
-              ],
-            ),
-          ),
-
-          // Sağ alt: harita aksiyonları
-          Positioned(
-            right: 16,
-            bottom: mapFabBottom,
-            child: Column(
-              children: [
-                _MapActionButton(
-                  icon: Icons.my_location,
-                  tooltip: 'Konumum',
-                  onPressed: _goToMyLocation,
-                ),
-                const SizedBox(height: 12),
-                _MapActionButton(
-                  icon: Icons.add_location_alt_outlined,
-                  tooltip: 'Mera ekle',
-                  onPressed: () async {
-                    final ok = await context.push<bool>('/map/add-spot');
-                    if (!mounted) return;
-                    if (ok == true) unawaited(_loadSpots());
-                  },
+                const SizedBox(height: 8),
+                _LayerToggleGroup(
+                  showSpots: _showSpots,
+                  showShops: _showShops,
+                  showWeather: _showWeatherOverlay,
+                  onToggleSpots: () => setState(() => _showSpots = !_showSpots),
+                  onToggleShops: () => setState(() => _showShops = !_showShops),
+                  onToggleWeather: () =>
+                      setState(() => _showWeatherOverlay = !_showWeatherOverlay),
                 ),
               ],
-            ),
-          ),
-
-          // Top-right: Katman toggles (spots / shops / weather)
-          Positioned(
-            right: 12,
-            top: 66,
-            child: _LayerToggleGroup(
-              showSpots: _showSpots,
-              showShops: _showShops,
-              showWeather: _showWeatherOverlay,
-              onToggleSpots: () => setState(() => _showSpots = !_showSpots),
-              onToggleShops: () => setState(() => _showShops = !_showShops),
-              onToggleWeather: () =>
-                  setState(() => _showWeatherOverlay = !_showWeatherOverlay),
             ),
           ),
 
