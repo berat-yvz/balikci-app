@@ -281,18 +281,20 @@ class _MapScreenState extends State<MapScreen> {
   void _onSearchChanged(String value) {
     final q = value.trim();
     if (q.isEmpty) {
+      // Arama boşken tüm meraları göster (max 8)
       setState(() {
-        _searchResults = const [];
+        _searchResults = _spots.take(8).toList();
       });
       return;
     }
 
-    // Hızlı arama: ilk birkaç sonucu alıp erken kesiyoruz.
+    // İsim ve tür üzerinden filtrele
     final qLower = q.toLowerCase();
     final results = <SpotModel>[];
     for (final spot in _spots) {
-      final name = spot.name;
-      if (name.toLowerCase().contains(qLower)) {
+      final name = spot.name.toLowerCase();
+      final type = (spot.type ?? '').toLowerCase();
+      if (name.contains(qLower) || type.contains(qLower)) {
         results.add(spot);
         if (results.length >= 8) break;
       }
@@ -425,6 +427,12 @@ class _MapScreenState extends State<MapScreen> {
                     setState(() => _currentZoom = z);
                   }
                 },
+                onTap: (_, point) {
+                  if (_searchResults.isNotEmpty) {
+                    _searchFocusNode.unfocus();
+                    setState(() => _searchResults = const []);
+                  }
+                },
               ),
               children: [
                 TileLayer(
@@ -524,11 +532,8 @@ class _MapScreenState extends State<MapScreen> {
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 14),
                         ),
-                        onChanged: (value) {
-                          _onSearchChanged(value);
-                          setState(() {});
-                        },
-                        onTap: () => setState(() {}),
+                        onChanged: _onSearchChanged,
+                        onTap: () => _onSearchChanged(_searchController.text),
                       ),
                       const SizedBox(height: 8),
                       AnimatedContainer(
