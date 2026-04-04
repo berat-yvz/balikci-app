@@ -384,9 +384,7 @@ class _MapScreenState extends State<MapScreen> {
     const sheetMaxSize = 0.85;
 
     final screenHeight = MediaQuery.of(context).size.height;
-    final navBottom = MediaQuery.of(context).padding.bottom;
     final mapFabBottom = (sheetMinSize * screenHeight) + 72;
-    final checkinFabBottom = (sheetMinSize * screenHeight) + navBottom + 16;
 
     final sheetSpot = _sheetSpot;
     final sheetCheckins = sheetSpot == null
