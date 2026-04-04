@@ -53,7 +53,7 @@ class _MapScreenState extends State<MapScreen> {
 
   bool _showShops = false;
   bool _showSpots = true;
-  bool _showWeatherOverlay = false;
+  final bool _showWeatherOverlay = false;
 
   bool _checkingCheckins = false;
   Timer? _checkinPollTimer;
@@ -800,8 +800,7 @@ class _MapScreenState extends State<MapScreen> {
                   showWeather: _showWeatherOverlay,
                   onToggleSpots: () => setState(() => _showSpots = !_showSpots),
                   onToggleShops: () => setState(() => _showShops = !_showShops),
-                  onToggleWeather: () =>
-                      setState(() => _showWeatherOverlay = !_showWeatherOverlay),
+                  onToggleWeather: () => context.push(AppRoutes.weather),
                 ),
               ],
             ),
