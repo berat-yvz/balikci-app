@@ -395,9 +395,13 @@ class _CheckinResultCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Doğrulanma',
-                style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFF0F6E56),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               _VerifiedBadge(exifVerified: checkin.exifVerified),
             ],
@@ -423,7 +427,14 @@ class _ResultRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.muted)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 15,
+            color: Color(0xFF0F6E56),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         Row(children: [
           Container(
             width: 8,
@@ -433,7 +444,11 @@ class _ResultRow extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             value,
-            style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: 15,
+              color: Colors.black87,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ]),
       ],
@@ -580,7 +595,11 @@ class _VoteSectionState extends State<_VoteSection> {
       children: [
         Text(
           'Bu raporu doğruluyor musun?',
-          style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
         ),
         const SizedBox(height: 8),
         Row(children: [
@@ -588,7 +607,7 @@ class _VoteSectionState extends State<_VoteSection> {
             child: _VoteChip(
               label: 'Doğru',
               icon: Icons.check_circle_outline,
-              color: AppColors.primary,
+              color: const Color(0xFF0F6E56),
               selected: _myVote == true,
               disabled: _voting || alreadyVoted,
               onTap: () => _vote(true),
@@ -599,7 +618,7 @@ class _VoteSectionState extends State<_VoteSection> {
             child: _VoteChip(
               label: 'Yanlış',
               icon: Icons.cancel_outlined,
-              color: AppColors.danger,
+              color: Colors.red,
               selected: _myVote == false,
               disabled: _voting || alreadyVoted,
               onTap: () => _vote(false),
