@@ -1467,6 +1467,811 @@ class LocalFishLogsCompanion extends UpdateCompanion<LocalFishLog> {
   }
 }
 
+class $FishLogsTable extends FishLogs with TableInfo<$FishLogsTable, FishLog> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FishLogsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spotIdMeta = const VerificationMeta('spotId');
+  @override
+  late final GeneratedColumn<String> spotId = GeneratedColumn<String>(
+    'spot_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fishTypeMeta = const VerificationMeta(
+    'fishType',
+  );
+  @override
+  late final GeneratedColumn<String> fishType = GeneratedColumn<String>(
+    'fish_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _weightKgMeta = const VerificationMeta(
+    'weightKg',
+  );
+  @override
+  late final GeneratedColumn<double> weightKg = GeneratedColumn<double>(
+    'weight_kg',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lengthCmMeta = const VerificationMeta(
+    'lengthCm',
+  );
+  @override
+  late final GeneratedColumn<double> lengthCm = GeneratedColumn<double>(
+    'length_cm',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _photoUrlMeta = const VerificationMeta(
+    'photoUrl',
+  );
+  @override
+  late final GeneratedColumn<String> photoUrl = GeneratedColumn<String>(
+    'photo_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isPrivateMeta = const VerificationMeta(
+    'isPrivate',
+  );
+  @override
+  late final GeneratedColumn<bool> isPrivate = GeneratedColumn<bool>(
+    'is_private',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_private" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _isReleasedMeta = const VerificationMeta(
+    'isReleased',
+  );
+  @override
+  late final GeneratedColumn<bool> isReleased = GeneratedColumn<bool>(
+    'is_released',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_released" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _weatherSnapshotMeta = const VerificationMeta(
+    'weatherSnapshot',
+  );
+  @override
+  late final GeneratedColumn<String> weatherSnapshot = GeneratedColumn<String>(
+    'weather_snapshot',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _caughtAtMeta = const VerificationMeta(
+    'caughtAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> caughtAt = GeneratedColumn<DateTime>(
+    'caught_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _syncedMeta = const VerificationMeta('synced');
+  @override
+  late final GeneratedColumn<bool> synced = GeneratedColumn<bool>(
+    'synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    spotId,
+    fishType,
+    weightKg,
+    lengthCm,
+    photoUrl,
+    notes,
+    isPrivate,
+    isReleased,
+    weatherSnapshot,
+    caughtAt,
+    createdAt,
+    synced,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'fish_logs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FishLog> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('spot_id')) {
+      context.handle(
+        _spotIdMeta,
+        spotId.isAcceptableOrUnknown(data['spot_id']!, _spotIdMeta),
+      );
+    }
+    if (data.containsKey('fish_type')) {
+      context.handle(
+        _fishTypeMeta,
+        fishType.isAcceptableOrUnknown(data['fish_type']!, _fishTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fishTypeMeta);
+    }
+    if (data.containsKey('weight_kg')) {
+      context.handle(
+        _weightKgMeta,
+        weightKg.isAcceptableOrUnknown(data['weight_kg']!, _weightKgMeta),
+      );
+    }
+    if (data.containsKey('length_cm')) {
+      context.handle(
+        _lengthCmMeta,
+        lengthCm.isAcceptableOrUnknown(data['length_cm']!, _lengthCmMeta),
+      );
+    }
+    if (data.containsKey('photo_url')) {
+      context.handle(
+        _photoUrlMeta,
+        photoUrl.isAcceptableOrUnknown(data['photo_url']!, _photoUrlMeta),
+      );
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('is_private')) {
+      context.handle(
+        _isPrivateMeta,
+        isPrivate.isAcceptableOrUnknown(data['is_private']!, _isPrivateMeta),
+      );
+    }
+    if (data.containsKey('is_released')) {
+      context.handle(
+        _isReleasedMeta,
+        isReleased.isAcceptableOrUnknown(data['is_released']!, _isReleasedMeta),
+      );
+    }
+    if (data.containsKey('weather_snapshot')) {
+      context.handle(
+        _weatherSnapshotMeta,
+        weatherSnapshot.isAcceptableOrUnknown(
+          data['weather_snapshot']!,
+          _weatherSnapshotMeta,
+        ),
+      );
+    }
+    if (data.containsKey('caught_at')) {
+      context.handle(
+        _caughtAtMeta,
+        caughtAt.isAcceptableOrUnknown(data['caught_at']!, _caughtAtMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('synced')) {
+      context.handle(
+        _syncedMeta,
+        synced.isAcceptableOrUnknown(data['synced']!, _syncedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FishLog map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FishLog(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      spotId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}spot_id'],
+      ),
+      fishType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fish_type'],
+      )!,
+      weightKg: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}weight_kg'],
+      ),
+      lengthCm: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}length_cm'],
+      ),
+      photoUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}photo_url'],
+      ),
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      isPrivate: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_private'],
+      )!,
+      isReleased: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_released'],
+      )!,
+      weatherSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}weather_snapshot'],
+      ),
+      caughtAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}caught_at'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      synced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}synced'],
+      )!,
+    );
+  }
+
+  @override
+  $FishLogsTable createAlias(String alias) {
+    return $FishLogsTable(attachedDatabase, alias);
+  }
+}
+
+class FishLog extends DataClass implements Insertable<FishLog> {
+  final String id;
+  final String userId;
+  final String? spotId;
+  final String fishType;
+  final double? weightKg;
+  final double? lengthCm;
+  final String? photoUrl;
+  final String? notes;
+  final bool isPrivate;
+  final bool isReleased;
+  final String? weatherSnapshot;
+  final DateTime caughtAt;
+  final DateTime createdAt;
+  final bool synced;
+  const FishLog({
+    required this.id,
+    required this.userId,
+    this.spotId,
+    required this.fishType,
+    this.weightKg,
+    this.lengthCm,
+    this.photoUrl,
+    this.notes,
+    required this.isPrivate,
+    required this.isReleased,
+    this.weatherSnapshot,
+    required this.caughtAt,
+    required this.createdAt,
+    required this.synced,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    if (!nullToAbsent || spotId != null) {
+      map['spot_id'] = Variable<String>(spotId);
+    }
+    map['fish_type'] = Variable<String>(fishType);
+    if (!nullToAbsent || weightKg != null) {
+      map['weight_kg'] = Variable<double>(weightKg);
+    }
+    if (!nullToAbsent || lengthCm != null) {
+      map['length_cm'] = Variable<double>(lengthCm);
+    }
+    if (!nullToAbsent || photoUrl != null) {
+      map['photo_url'] = Variable<String>(photoUrl);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['is_private'] = Variable<bool>(isPrivate);
+    map['is_released'] = Variable<bool>(isReleased);
+    if (!nullToAbsent || weatherSnapshot != null) {
+      map['weather_snapshot'] = Variable<String>(weatherSnapshot);
+    }
+    map['caught_at'] = Variable<DateTime>(caughtAt);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['synced'] = Variable<bool>(synced);
+    return map;
+  }
+
+  FishLogsCompanion toCompanion(bool nullToAbsent) {
+    return FishLogsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      spotId: spotId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(spotId),
+      fishType: Value(fishType),
+      weightKg: weightKg == null && nullToAbsent
+          ? const Value.absent()
+          : Value(weightKg),
+      lengthCm: lengthCm == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lengthCm),
+      photoUrl: photoUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(photoUrl),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      isPrivate: Value(isPrivate),
+      isReleased: Value(isReleased),
+      weatherSnapshot: weatherSnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(weatherSnapshot),
+      caughtAt: Value(caughtAt),
+      createdAt: Value(createdAt),
+      synced: Value(synced),
+    );
+  }
+
+  factory FishLog.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FishLog(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      spotId: serializer.fromJson<String?>(json['spotId']),
+      fishType: serializer.fromJson<String>(json['fishType']),
+      weightKg: serializer.fromJson<double?>(json['weightKg']),
+      lengthCm: serializer.fromJson<double?>(json['lengthCm']),
+      photoUrl: serializer.fromJson<String?>(json['photoUrl']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      isPrivate: serializer.fromJson<bool>(json['isPrivate']),
+      isReleased: serializer.fromJson<bool>(json['isReleased']),
+      weatherSnapshot: serializer.fromJson<String?>(json['weatherSnapshot']),
+      caughtAt: serializer.fromJson<DateTime>(json['caughtAt']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      synced: serializer.fromJson<bool>(json['synced']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'spotId': serializer.toJson<String?>(spotId),
+      'fishType': serializer.toJson<String>(fishType),
+      'weightKg': serializer.toJson<double?>(weightKg),
+      'lengthCm': serializer.toJson<double?>(lengthCm),
+      'photoUrl': serializer.toJson<String?>(photoUrl),
+      'notes': serializer.toJson<String?>(notes),
+      'isPrivate': serializer.toJson<bool>(isPrivate),
+      'isReleased': serializer.toJson<bool>(isReleased),
+      'weatherSnapshot': serializer.toJson<String?>(weatherSnapshot),
+      'caughtAt': serializer.toJson<DateTime>(caughtAt),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'synced': serializer.toJson<bool>(synced),
+    };
+  }
+
+  FishLog copyWith({
+    String? id,
+    String? userId,
+    Value<String?> spotId = const Value.absent(),
+    String? fishType,
+    Value<double?> weightKg = const Value.absent(),
+    Value<double?> lengthCm = const Value.absent(),
+    Value<String?> photoUrl = const Value.absent(),
+    Value<String?> notes = const Value.absent(),
+    bool? isPrivate,
+    bool? isReleased,
+    Value<String?> weatherSnapshot = const Value.absent(),
+    DateTime? caughtAt,
+    DateTime? createdAt,
+    bool? synced,
+  }) => FishLog(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    spotId: spotId.present ? spotId.value : this.spotId,
+    fishType: fishType ?? this.fishType,
+    weightKg: weightKg.present ? weightKg.value : this.weightKg,
+    lengthCm: lengthCm.present ? lengthCm.value : this.lengthCm,
+    photoUrl: photoUrl.present ? photoUrl.value : this.photoUrl,
+    notes: notes.present ? notes.value : this.notes,
+    isPrivate: isPrivate ?? this.isPrivate,
+    isReleased: isReleased ?? this.isReleased,
+    weatherSnapshot: weatherSnapshot.present
+        ? weatherSnapshot.value
+        : this.weatherSnapshot,
+    caughtAt: caughtAt ?? this.caughtAt,
+    createdAt: createdAt ?? this.createdAt,
+    synced: synced ?? this.synced,
+  );
+  FishLog copyWithCompanion(FishLogsCompanion data) {
+    return FishLog(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      spotId: data.spotId.present ? data.spotId.value : this.spotId,
+      fishType: data.fishType.present ? data.fishType.value : this.fishType,
+      weightKg: data.weightKg.present ? data.weightKg.value : this.weightKg,
+      lengthCm: data.lengthCm.present ? data.lengthCm.value : this.lengthCm,
+      photoUrl: data.photoUrl.present ? data.photoUrl.value : this.photoUrl,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      isPrivate: data.isPrivate.present ? data.isPrivate.value : this.isPrivate,
+      isReleased: data.isReleased.present
+          ? data.isReleased.value
+          : this.isReleased,
+      weatherSnapshot: data.weatherSnapshot.present
+          ? data.weatherSnapshot.value
+          : this.weatherSnapshot,
+      caughtAt: data.caughtAt.present ? data.caughtAt.value : this.caughtAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      synced: data.synced.present ? data.synced.value : this.synced,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FishLog(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('spotId: $spotId, ')
+          ..write('fishType: $fishType, ')
+          ..write('weightKg: $weightKg, ')
+          ..write('lengthCm: $lengthCm, ')
+          ..write('photoUrl: $photoUrl, ')
+          ..write('notes: $notes, ')
+          ..write('isPrivate: $isPrivate, ')
+          ..write('isReleased: $isReleased, ')
+          ..write('weatherSnapshot: $weatherSnapshot, ')
+          ..write('caughtAt: $caughtAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('synced: $synced')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    spotId,
+    fishType,
+    weightKg,
+    lengthCm,
+    photoUrl,
+    notes,
+    isPrivate,
+    isReleased,
+    weatherSnapshot,
+    caughtAt,
+    createdAt,
+    synced,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FishLog &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.spotId == this.spotId &&
+          other.fishType == this.fishType &&
+          other.weightKg == this.weightKg &&
+          other.lengthCm == this.lengthCm &&
+          other.photoUrl == this.photoUrl &&
+          other.notes == this.notes &&
+          other.isPrivate == this.isPrivate &&
+          other.isReleased == this.isReleased &&
+          other.weatherSnapshot == this.weatherSnapshot &&
+          other.caughtAt == this.caughtAt &&
+          other.createdAt == this.createdAt &&
+          other.synced == this.synced);
+}
+
+class FishLogsCompanion extends UpdateCompanion<FishLog> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String?> spotId;
+  final Value<String> fishType;
+  final Value<double?> weightKg;
+  final Value<double?> lengthCm;
+  final Value<String?> photoUrl;
+  final Value<String?> notes;
+  final Value<bool> isPrivate;
+  final Value<bool> isReleased;
+  final Value<String?> weatherSnapshot;
+  final Value<DateTime> caughtAt;
+  final Value<DateTime> createdAt;
+  final Value<bool> synced;
+  final Value<int> rowid;
+  const FishLogsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.spotId = const Value.absent(),
+    this.fishType = const Value.absent(),
+    this.weightKg = const Value.absent(),
+    this.lengthCm = const Value.absent(),
+    this.photoUrl = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.isPrivate = const Value.absent(),
+    this.isReleased = const Value.absent(),
+    this.weatherSnapshot = const Value.absent(),
+    this.caughtAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.synced = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FishLogsCompanion.insert({
+    required String id,
+    required String userId,
+    this.spotId = const Value.absent(),
+    required String fishType,
+    this.weightKg = const Value.absent(),
+    this.lengthCm = const Value.absent(),
+    this.photoUrl = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.isPrivate = const Value.absent(),
+    this.isReleased = const Value.absent(),
+    this.weatherSnapshot = const Value.absent(),
+    this.caughtAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.synced = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       fishType = Value(fishType);
+  static Insertable<FishLog> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? spotId,
+    Expression<String>? fishType,
+    Expression<double>? weightKg,
+    Expression<double>? lengthCm,
+    Expression<String>? photoUrl,
+    Expression<String>? notes,
+    Expression<bool>? isPrivate,
+    Expression<bool>? isReleased,
+    Expression<String>? weatherSnapshot,
+    Expression<DateTime>? caughtAt,
+    Expression<DateTime>? createdAt,
+    Expression<bool>? synced,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (spotId != null) 'spot_id': spotId,
+      if (fishType != null) 'fish_type': fishType,
+      if (weightKg != null) 'weight_kg': weightKg,
+      if (lengthCm != null) 'length_cm': lengthCm,
+      if (photoUrl != null) 'photo_url': photoUrl,
+      if (notes != null) 'notes': notes,
+      if (isPrivate != null) 'is_private': isPrivate,
+      if (isReleased != null) 'is_released': isReleased,
+      if (weatherSnapshot != null) 'weather_snapshot': weatherSnapshot,
+      if (caughtAt != null) 'caught_at': caughtAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (synced != null) 'synced': synced,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FishLogsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String?>? spotId,
+    Value<String>? fishType,
+    Value<double?>? weightKg,
+    Value<double?>? lengthCm,
+    Value<String?>? photoUrl,
+    Value<String?>? notes,
+    Value<bool>? isPrivate,
+    Value<bool>? isReleased,
+    Value<String?>? weatherSnapshot,
+    Value<DateTime>? caughtAt,
+    Value<DateTime>? createdAt,
+    Value<bool>? synced,
+    Value<int>? rowid,
+  }) {
+    return FishLogsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      spotId: spotId ?? this.spotId,
+      fishType: fishType ?? this.fishType,
+      weightKg: weightKg ?? this.weightKg,
+      lengthCm: lengthCm ?? this.lengthCm,
+      photoUrl: photoUrl ?? this.photoUrl,
+      notes: notes ?? this.notes,
+      isPrivate: isPrivate ?? this.isPrivate,
+      isReleased: isReleased ?? this.isReleased,
+      weatherSnapshot: weatherSnapshot ?? this.weatherSnapshot,
+      caughtAt: caughtAt ?? this.caughtAt,
+      createdAt: createdAt ?? this.createdAt,
+      synced: synced ?? this.synced,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (spotId.present) {
+      map['spot_id'] = Variable<String>(spotId.value);
+    }
+    if (fishType.present) {
+      map['fish_type'] = Variable<String>(fishType.value);
+    }
+    if (weightKg.present) {
+      map['weight_kg'] = Variable<double>(weightKg.value);
+    }
+    if (lengthCm.present) {
+      map['length_cm'] = Variable<double>(lengthCm.value);
+    }
+    if (photoUrl.present) {
+      map['photo_url'] = Variable<String>(photoUrl.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (isPrivate.present) {
+      map['is_private'] = Variable<bool>(isPrivate.value);
+    }
+    if (isReleased.present) {
+      map['is_released'] = Variable<bool>(isReleased.value);
+    }
+    if (weatherSnapshot.present) {
+      map['weather_snapshot'] = Variable<String>(weatherSnapshot.value);
+    }
+    if (caughtAt.present) {
+      map['caught_at'] = Variable<DateTime>(caughtAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (synced.present) {
+      map['synced'] = Variable<bool>(synced.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FishLogsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('spotId: $spotId, ')
+          ..write('fishType: $fishType, ')
+          ..write('weightKg: $weightKg, ')
+          ..write('lengthCm: $lengthCm, ')
+          ..write('photoUrl: $photoUrl, ')
+          ..write('notes: $notes, ')
+          ..write('isPrivate: $isPrivate, ')
+          ..write('isReleased: $isReleased, ')
+          ..write('weatherSnapshot: $weatherSnapshot, ')
+          ..write('caughtAt: $caughtAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('synced: $synced, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SyncQueueTable extends SyncQueue
     with TableInfo<$SyncQueueTable, SyncQueueData> {
   @override
@@ -2315,6 +3120,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $LocalSpotsTable localSpots = $LocalSpotsTable(this);
   late final $LocalFishLogsTable localFishLogs = $LocalFishLogsTable(this);
+  late final $FishLogsTable fishLogs = $FishLogsTable(this);
   late final $SyncQueueTable syncQueue = $SyncQueueTable(this);
   late final $LocalWeatherTable localWeather = $LocalWeatherTable(this);
   @override
@@ -2324,6 +3130,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     localSpots,
     localFishLogs,
+    fishLogs,
     syncQueue,
     localWeather,
   ];
@@ -3017,6 +3824,375 @@ typedef $$LocalFishLogsTableProcessedTableManager =
       LocalFishLog,
       PrefetchHooks Function()
     >;
+typedef $$FishLogsTableCreateCompanionBuilder =
+    FishLogsCompanion Function({
+      required String id,
+      required String userId,
+      Value<String?> spotId,
+      required String fishType,
+      Value<double?> weightKg,
+      Value<double?> lengthCm,
+      Value<String?> photoUrl,
+      Value<String?> notes,
+      Value<bool> isPrivate,
+      Value<bool> isReleased,
+      Value<String?> weatherSnapshot,
+      Value<DateTime> caughtAt,
+      Value<DateTime> createdAt,
+      Value<bool> synced,
+      Value<int> rowid,
+    });
+typedef $$FishLogsTableUpdateCompanionBuilder =
+    FishLogsCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<String?> spotId,
+      Value<String> fishType,
+      Value<double?> weightKg,
+      Value<double?> lengthCm,
+      Value<String?> photoUrl,
+      Value<String?> notes,
+      Value<bool> isPrivate,
+      Value<bool> isReleased,
+      Value<String?> weatherSnapshot,
+      Value<DateTime> caughtAt,
+      Value<DateTime> createdAt,
+      Value<bool> synced,
+      Value<int> rowid,
+    });
+
+class $$FishLogsTableFilterComposer
+    extends Composer<_$AppDatabase, $FishLogsTable> {
+  $$FishLogsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spotId => $composableBuilder(
+    column: $table.spotId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fishType => $composableBuilder(
+    column: $table.fishType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get weightKg => $composableBuilder(
+    column: $table.weightKg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get lengthCm => $composableBuilder(
+    column: $table.lengthCm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get photoUrl => $composableBuilder(
+    column: $table.photoUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPrivate => $composableBuilder(
+    column: $table.isPrivate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isReleased => $composableBuilder(
+    column: $table.isReleased,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get weatherSnapshot => $composableBuilder(
+    column: $table.weatherSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get caughtAt => $composableBuilder(
+    column: $table.caughtAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get synced => $composableBuilder(
+    column: $table.synced,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FishLogsTableOrderingComposer
+    extends Composer<_$AppDatabase, $FishLogsTable> {
+  $$FishLogsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spotId => $composableBuilder(
+    column: $table.spotId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fishType => $composableBuilder(
+    column: $table.fishType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get weightKg => $composableBuilder(
+    column: $table.weightKg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get lengthCm => $composableBuilder(
+    column: $table.lengthCm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get photoUrl => $composableBuilder(
+    column: $table.photoUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPrivate => $composableBuilder(
+    column: $table.isPrivate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isReleased => $composableBuilder(
+    column: $table.isReleased,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get weatherSnapshot => $composableBuilder(
+    column: $table.weatherSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get caughtAt => $composableBuilder(
+    column: $table.caughtAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get synced => $composableBuilder(
+    column: $table.synced,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FishLogsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FishLogsTable> {
+  $$FishLogsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get spotId =>
+      $composableBuilder(column: $table.spotId, builder: (column) => column);
+
+  GeneratedColumn<String> get fishType =>
+      $composableBuilder(column: $table.fishType, builder: (column) => column);
+
+  GeneratedColumn<double> get weightKg =>
+      $composableBuilder(column: $table.weightKg, builder: (column) => column);
+
+  GeneratedColumn<double> get lengthCm =>
+      $composableBuilder(column: $table.lengthCm, builder: (column) => column);
+
+  GeneratedColumn<String> get photoUrl =>
+      $composableBuilder(column: $table.photoUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<bool> get isPrivate =>
+      $composableBuilder(column: $table.isPrivate, builder: (column) => column);
+
+  GeneratedColumn<bool> get isReleased => $composableBuilder(
+    column: $table.isReleased,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get weatherSnapshot => $composableBuilder(
+    column: $table.weatherSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get caughtAt =>
+      $composableBuilder(column: $table.caughtAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get synced =>
+      $composableBuilder(column: $table.synced, builder: (column) => column);
+}
+
+class $$FishLogsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FishLogsTable,
+          FishLog,
+          $$FishLogsTableFilterComposer,
+          $$FishLogsTableOrderingComposer,
+          $$FishLogsTableAnnotationComposer,
+          $$FishLogsTableCreateCompanionBuilder,
+          $$FishLogsTableUpdateCompanionBuilder,
+          (FishLog, BaseReferences<_$AppDatabase, $FishLogsTable, FishLog>),
+          FishLog,
+          PrefetchHooks Function()
+        > {
+  $$FishLogsTableTableManager(_$AppDatabase db, $FishLogsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FishLogsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FishLogsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FishLogsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String?> spotId = const Value.absent(),
+                Value<String> fishType = const Value.absent(),
+                Value<double?> weightKg = const Value.absent(),
+                Value<double?> lengthCm = const Value.absent(),
+                Value<String?> photoUrl = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<bool> isPrivate = const Value.absent(),
+                Value<bool> isReleased = const Value.absent(),
+                Value<String?> weatherSnapshot = const Value.absent(),
+                Value<DateTime> caughtAt = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> synced = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FishLogsCompanion(
+                id: id,
+                userId: userId,
+                spotId: spotId,
+                fishType: fishType,
+                weightKg: weightKg,
+                lengthCm: lengthCm,
+                photoUrl: photoUrl,
+                notes: notes,
+                isPrivate: isPrivate,
+                isReleased: isReleased,
+                weatherSnapshot: weatherSnapshot,
+                caughtAt: caughtAt,
+                createdAt: createdAt,
+                synced: synced,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                Value<String?> spotId = const Value.absent(),
+                required String fishType,
+                Value<double?> weightKg = const Value.absent(),
+                Value<double?> lengthCm = const Value.absent(),
+                Value<String?> photoUrl = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<bool> isPrivate = const Value.absent(),
+                Value<bool> isReleased = const Value.absent(),
+                Value<String?> weatherSnapshot = const Value.absent(),
+                Value<DateTime> caughtAt = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> synced = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FishLogsCompanion.insert(
+                id: id,
+                userId: userId,
+                spotId: spotId,
+                fishType: fishType,
+                weightKg: weightKg,
+                lengthCm: lengthCm,
+                photoUrl: photoUrl,
+                notes: notes,
+                isPrivate: isPrivate,
+                isReleased: isReleased,
+                weatherSnapshot: weatherSnapshot,
+                caughtAt: caughtAt,
+                createdAt: createdAt,
+                synced: synced,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FishLogsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FishLogsTable,
+      FishLog,
+      $$FishLogsTableFilterComposer,
+      $$FishLogsTableOrderingComposer,
+      $$FishLogsTableAnnotationComposer,
+      $$FishLogsTableCreateCompanionBuilder,
+      $$FishLogsTableUpdateCompanionBuilder,
+      (FishLog, BaseReferences<_$AppDatabase, $FishLogsTable, FishLog>),
+      FishLog,
+      PrefetchHooks Function()
+    >;
 typedef $$SyncQueueTableCreateCompanionBuilder =
     SyncQueueCompanion Function({
       Value<int> id,
@@ -3465,6 +4641,8 @@ class $AppDatabaseManager {
       $$LocalSpotsTableTableManager(_db, _db.localSpots);
   $$LocalFishLogsTableTableManager get localFishLogs =>
       $$LocalFishLogsTableTableManager(_db, _db.localFishLogs);
+  $$FishLogsTableTableManager get fishLogs =>
+      $$FishLogsTableTableManager(_db, _db.fishLogs);
   $$SyncQueueTableTableManager get syncQueue =>
       $$SyncQueueTableTableManager(_db, _db.syncQueue);
   $$LocalWeatherTableTableManager get localWeather =>

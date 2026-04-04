@@ -7,14 +7,36 @@ import 'package:balikci_app/data/local/sync_queue.dart';
 
 part 'database.g.dart';
 
-@DriftDatabase(tables: [LocalSpots, LocalFishLogs, SyncQueue, LocalWeather])
+/// H7 — Balık günlüğü tablosu (Supabase fish_logs şemasıyla uyumlu).
+/// UUID alanlar SQLite'ta TEXT olarak saklanır.
+class FishLogs extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()();
+  TextColumn get spotId => text().nullable()();
+  TextColumn get fishType => text()();
+  RealColumn get weightKg => real().nullable()();
+  RealColumn get lengthCm => real().nullable()();
+  TextColumn get photoUrl => text().nullable()();
+  TextColumn get notes => text().nullable()();
+  BoolColumn get isPrivate => boolean().withDefault(const Constant(false))();
+  BoolColumn get isReleased => boolean().withDefault(const Constant(false))();
+  TextColumn get weatherSnapshot => text().nullable()();
+  DateTimeColumn get caughtAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  BoolColumn get synced => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [LocalSpots, LocalFishLogs, FishLogs, SyncQueue, LocalWeather])
 class AppDatabase extends _$AppDatabase {
   AppDatabase._() : super(_openConnection());
 
   static final AppDatabase instance = AppDatabase._();
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -38,6 +60,9 @@ class AppDatabase extends _$AppDatabase {
             localFishLogs, localFishLogs.released as GeneratedColumn<Object>);
         await m.addColumn(localFishLogs,
             localFishLogs.weatherSnapshot as GeneratedColumn<Object>);
+      }
+      if (from < 6) {
+        await m.createTable(fishLogs);
       }
     },
   );
