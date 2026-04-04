@@ -98,7 +98,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       final p = await Geolocator.checkPermission();
       if (!mounted) return;
       setState(() => _locationPermission = p);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Konum izni durumu alınamadı: $e');
+    }
   }
 
   Future<void> _requestLocation() async {
@@ -127,7 +129,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       final s = await FirebaseMessaging.instance.getNotificationSettings();
       if (!mounted) return;
       setState(() => _notifStatus = s.authorizationStatus);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Bildirim izni durumu alınamadı: $e');
+    }
   }
 
   Future<void> _requestNotifications() async {
@@ -144,7 +148,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       if (_notifAllowed) {
         try {
           await NotificationService.syncFcmToken();
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('FCM token senkronizasyonu başarısız: $e');
+        }
       }
     } finally {
       if (mounted) setState(() => _busyNotif = false);

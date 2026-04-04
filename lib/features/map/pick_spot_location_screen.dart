@@ -35,7 +35,9 @@ class _PickSpotLocationScreenState extends State<PickSpotLocationScreen> {
             () => _tileProvider = FMTCStore('balikci_map_h3').getTileProvider(),
           );
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('FMTC tile cache başlatılamadı: $e');
+      }
     });
   }
 

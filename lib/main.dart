@@ -85,7 +85,9 @@ Future<void> main() async {
       if (initial != null) {
         await SupabaseService.client.auth.getSessionFromUrl(initial);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('App link oturumu açılamadı: $e');
+    }
   }
 
   final prefs = await SharedPreferences.getInstance();

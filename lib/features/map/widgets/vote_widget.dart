@@ -57,7 +57,9 @@ class _VoteWidgetState extends ConsumerState<VoteWidget> {
           .eq('voter_id', userId)
           .maybeSingle();
       if (mounted && response != null) setState(() => _hasVoted = true);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Oy durumu kontrol edilemedi: $e');
+    }
   }
 
   Future<void> _vote(String voteType) async {

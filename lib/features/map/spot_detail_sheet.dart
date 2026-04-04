@@ -41,12 +41,16 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
       if (await launchUrl(geo, mode: LaunchMode.externalApplication)) {
         return;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('geo: URL açılamadı: $e');
+    }
     try {
       if (await launchUrl(maps, mode: LaunchMode.externalApplication)) {
         return;
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Google Maps URL açılamadı: $e');
+    }
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

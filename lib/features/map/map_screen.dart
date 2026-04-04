@@ -235,7 +235,9 @@ class _MapScreenState extends State<MapScreen> {
     }
     try {
       _mapController.move(LatLng(pos.latitude, pos.longitude), 15);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Harita konuma taşınamadı: $e');
+    }
   }
 
   Future<void> _openDirectionsForSpot(SpotModel spot) async {
@@ -248,10 +250,14 @@ class _MapScreenState extends State<MapScreen> {
     );
     try {
       if (await launchUrl(geo, mode: LaunchMode.externalApplication)) return;
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('geo: URL açılamadı: $e');
+    }
     try {
       if (await launchUrl(maps, mode: LaunchMode.externalApplication)) return;
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Google Maps URL açılamadı: $e');
+    }
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
