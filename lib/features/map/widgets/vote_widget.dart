@@ -63,8 +63,8 @@ class _VoteWidgetState extends ConsumerState<VoteWidget> {
       });
       setState(() {
         _hasVoted = true;
-        if (voteType == 'true') _trueVotes++;
-        else _falseVotes++;
+        if (voteType == 'true') { _trueVotes++; }
+        else { _falseVotes++; }
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
