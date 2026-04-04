@@ -316,7 +316,9 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                     child: Text(
                       'Geri bıraktım 🐟',
                       style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w600),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87),
                     ),
                   ),
                   Transform.scale(
@@ -357,7 +359,9 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                     child: Text(
                       'Gizli kayıt',
                       style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w600),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87),
                     ),
                   ),
                   Transform.scale(
