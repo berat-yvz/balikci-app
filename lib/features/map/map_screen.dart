@@ -53,7 +53,6 @@ class _MapScreenState extends State<MapScreen> {
 
   bool _showShops = false;
   bool _showSpots = true;
-  final bool _showWeatherOverlay = false;
 
   bool _checkingCheckins = false;
   Timer? _checkinPollTimer;
@@ -440,7 +439,6 @@ class _MapScreenState extends State<MapScreen> {
                   userAgentPackageName: 'com.balikciapp.balikci_app',
                   tileProvider: _tileProvider,
                 ),
-                if (_showWeatherOverlay) ColoredBox(color: Colors.transparent),
                 if (_showShops) MarkerLayer(markers: _buildShopMarkers()),
                 if (_showSpots)
                   MarkerClusterLayerWidget(
@@ -797,10 +795,8 @@ class _MapScreenState extends State<MapScreen> {
                 _LayerToggleGroup(
                   showSpots: _showSpots,
                   showShops: _showShops,
-                  showWeather: _showWeatherOverlay,
                   onToggleSpots: () => setState(() => _showSpots = !_showSpots),
                   onToggleShops: () => setState(() => _showShops = !_showShops),
-                  onToggleWeather: () => context.push(AppRoutes.weather),
                 ),
               ],
             ),
@@ -1017,18 +1013,14 @@ class _PrivacyChip extends StatelessWidget {
 class _LayerToggleGroup extends StatelessWidget {
   final bool showSpots;
   final bool showShops;
-  final bool showWeather;
   final VoidCallback onToggleSpots;
   final VoidCallback onToggleShops;
-  final VoidCallback onToggleWeather;
 
   const _LayerToggleGroup({
     required this.showSpots,
     required this.showShops,
-    required this.showWeather,
     required this.onToggleSpots,
     required this.onToggleShops,
-    required this.onToggleWeather,
   });
 
   @override
@@ -1047,13 +1039,6 @@ class _LayerToggleGroup extends StatelessWidget {
           label: 'Dükkan',
           active: showShops,
           onPressed: onToggleShops,
-        ),
-        const SizedBox(height: 10),
-        _LayerToggleButton(
-          icon: Icons.cloud_outlined,
-          label: 'Hava',
-          active: showWeather,
-          onPressed: onToggleWeather,
         ),
       ],
     );
