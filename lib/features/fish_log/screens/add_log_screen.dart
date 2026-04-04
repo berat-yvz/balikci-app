@@ -205,7 +205,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade400, width: 2),
+                border: Border.all(color: const Color(0xFF0F6E56), width: 2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: DropdownButtonHideUnderline(
@@ -255,6 +255,11 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                             borderSide: BorderSide(
                                 color: Colors.grey.shade400, width: 2),
                           ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                                color: Color(0xFF0F6E56), width: 2),
+                          ),
                         ),
                       ),
                     ],
@@ -283,6 +288,11 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
                                 color: Colors.grey.shade400, width: 2),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                                color: Color(0xFF0F6E56), width: 2),
                           ),
                         ),
                       ),
@@ -398,6 +408,11 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                   borderSide:
                       BorderSide(color: Colors.grey.shade400, width: 2),
                 ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: Color(0xFF0F6E56), width: 2),
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -408,7 +423,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
               child: ElevatedButton.icon(
                 onPressed: _isLoading ? null : _save,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1565C0),
+                  backgroundColor: const Color(0xFF0F6E56),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),

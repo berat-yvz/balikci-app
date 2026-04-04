@@ -34,7 +34,7 @@ class LogListScreen extends ConsumerWidget {
           await context.push('/fish-log/add');
           ref.invalidate(fishLogsProvider);
         },
-        backgroundColor: const Color(0xFF1565C0),
+        backgroundColor: const Color(0xFF0F6E56),
         icon: const Icon(Icons.add, size: 28, color: Colors.white),
         label: const Text(
           'Yeni Kayıt',
@@ -92,7 +92,7 @@ class LogListScreen extends ConsumerWidget {
                         ref.invalidate(fishLogsProvider);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1565C0),
+                        backgroundColor: const Color(0xFF0F6E56),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 24),
                         shape: RoundedRectangleBorder(
@@ -287,7 +287,7 @@ class _LogCard extends ConsumerWidget {
                     TextButton.icon(
                       onPressed: () => _confirmDelete(context, ref),
                       style: TextButton.styleFrom(
-                          foregroundColor: Colors.red),
+                          foregroundColor: Colors.red.shade400),
                       icon: const Icon(Icons.delete_outline, size: 22),
                       label: const Text('Sil',
                           style: TextStyle(fontSize: 16)),
