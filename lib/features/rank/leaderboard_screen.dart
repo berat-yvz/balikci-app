@@ -266,14 +266,10 @@ class _LeaderboardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Highlight kartı koyu arka plan → beyaz yazı; diğerleri beyaz arka plan → siyah yazı.
-    final textColor = highlight ? Colors.white : Colors.black87;
-    final subtitleColor = highlight ? Colors.white70 : Colors.black54;
-
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: highlight ? const Color(0xFF1A2E44) : Colors.white,
+        color: highlight ? const Color(0xFF1A2E44) : const Color(0xFF12233A),
         borderRadius: BorderRadius.circular(14),
         border: highlight
             ? Border.all(color: AppColors.primary, width: 1.5)
@@ -289,16 +285,28 @@ class _LeaderboardRow extends StatelessWidget {
               children: [
                 Text(
                   '$rank. ${user.username}',
-                  style: AppTextStyles.body.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: textColor,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   'Toplam puan: ${user.totalScore}',
-                  style: AppTextStyles.caption.copyWith(color: subtitleColor),
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
                 ),
+                if (user.rank.isNotEmpty)
+                  Text(
+                    user.rank,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -321,7 +329,11 @@ class _LeaderboardRow extends StatelessWidget {
             ),
           Text(
             '${user.totalScore}',
-            style: AppTextStyles.h3.copyWith(color: textColor),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
