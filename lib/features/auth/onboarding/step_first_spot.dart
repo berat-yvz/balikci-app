@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 
 class StepFirstSpot extends StatelessWidget {
@@ -15,42 +17,39 @@ class StepFirstSpot extends StatelessWidget {
           const Icon(Icons.anchor, size: 80, color: AppColors.primary),
           const SizedBox(height: 32),
           const Text(
-            'Balıkçı Topluluğuna Hoş Geldin!',
+            'Her Şey Hazır! 🎣',
             style: AppTextStyles.h2,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           const Text(
-            'Mera keşfet, av kaydet, rütbe kazan. Haydi başlayalım!',
+            'Haritayı aç, yakınındaki meralara bak.\nİlk check-in\'ini yap, topluluğa katıl.',
             style: AppTextStyles.body,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 48),
-
-          // Rütbe Bilgileri Panosu
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.2),
+          const SizedBox(height: 32),
+          Row(
+            children: [
+              Expanded(
+                child: _ActionCard(
+                  icon: Icons.map_rounded,
+                  title: 'Haritayı Keşfet',
+                  description: 'Yakınındaki meraları gör',
+                  onTap: () => context.go(AppRoutes.home),
+                ),
               ),
-            ),
-            child: const Column(
-              children: [
-                _RankRow(icon: '🪝', label: 'Acemi'),
-                SizedBox(height: 8),
-                _RankRow(icon: '🎣', label: 'Olta Kurdu'),
-                SizedBox(height: 8),
-                _RankRow(icon: '⚓', label: 'Usta'),
-                SizedBox(height: 8),
-                _RankRow(icon: '🌊', label: 'Deniz Reisi'),
-              ],
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _ActionCard(
+                  icon: Icons.add_location_rounded,
+                  title: 'Mera Ekle',
+                  description: 'Bildiğin bir mera var mı?',
+                  onTap: () => context.go(AppRoutes.home),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 32),
-
           ElevatedButton(
             onPressed: () async {
               await onFinish?.call();
@@ -58,7 +57,7 @@ class StepFirstSpot extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.secondary,
             ),
-            child: const Text('Haritayı Keşfet'),
+            child: const Text('Hadi Başlayalım!'),
           ),
         ],
       ),
@@ -66,24 +65,55 @@ class StepFirstSpot extends StatelessWidget {
   }
 }
 
-class _RankRow extends StatelessWidget {
-  final String icon;
-  final String label;
+class _ActionCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback onTap;
 
-  const _RankRow({required this.icon, required this.label});
+  const _ActionCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(icon, style: const TextStyle(fontSize: 24)),
-        const SizedBox(width: 12),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
         ),
-      ],
+        child: Column(
+          children: [
+            Icon(icon, color: AppColors.primary, size: 32),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.foam,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.foam.withValues(alpha: 0.60),
+                fontSize: 11,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

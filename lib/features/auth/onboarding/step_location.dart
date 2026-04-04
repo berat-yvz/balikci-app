@@ -216,20 +216,42 @@ class _StepLocationState extends State<StepLocation>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.location_on, size: 80, color: AppColors.primary),
+          const Icon(Icons.location_on_rounded, size: 80, color: AppColors.primary),
           const SizedBox(height: 32),
           const Text(
-            'Yakınındaki Meraları Gör',
+            'Seni Nerede Arayayım?',
             style: AppTextStyles.h2,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           const Text(
-            'Konumunu paylaşarak yakınındaki balık meralarını ve anlık durumları görebilirsin.',
+            'Yakınındaki meraları, aktif check-in\'leri ve hava durumunu gösterebilmem için konumuna ihtiyacım var.',
             style: AppTextStyles.body,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.lock_outline_rounded,
+                size: 14,
+                color: Colors.white.withValues(alpha: 0.45),
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  'Konumun yalnızca yakın mera gösterimi için kullanılır, asla paylaşılmaz.',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.45),
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           ElevatedButton(
             onPressed: (allowed || _busy)
                 ? null
@@ -237,7 +259,7 @@ class _StepLocationState extends State<StepLocation>
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.secondary,
             ),
-            child: Text(allowed ? 'Konum izni verildi' : 'Konum İznini Ver'),
+            child: Text(allowed ? 'Konum izni verildi ✓' : 'Konum İznini Ver'),
           ),
         ],
       ),

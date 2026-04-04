@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/notification_service.dart';
+import 'package:balikci_app/features/auth/onboarding/step_welcome.dart';
 import 'package:balikci_app/shared/providers/preferences_provider.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -82,7 +83,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   }
 
   void _nextPage() {
-    if (_currentPage < 2) {
+    if (_currentPage < 3) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOut,
@@ -190,10 +191,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                     controller: _pageController,
                     onPageChanged: (i) => setState(() => _currentPage = i),
                     children: [
+                      const StepWelcome(),
                       _OnboardingPage(
-                        title: 'Konum',
+                        title: 'Seni Nerede Arayayım?',
                         subtitle:
-                            'Yakındaki meraları ve “yakınındaysa check-in” butonunu açmak için konum izni ver.',
+                            'Yakınındaki meraları, aktif check-in\'leri ve hava durumunu gösterebilmem için konumuna ihtiyacım var.',
                         illustration: AnimatedBuilder(
                           animation: _pinDropController,
                           builder: (context, _) {
@@ -213,9 +215,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         onSecondary: () => _nextPage(),
                       ),
                       _OnboardingPage(
-                        title: 'Bildirim',
+                        title: 'Balık Tutulurken Haberdar Ol',
                         subtitle:
-                            'Favori meranda hareket olursa haberin olsun. Balık kaçmaz.',
+                            'Favori merana check-in gelince, yakında yoğunluk artınca veya sabah hava ideale dönünce seni bilgilendireyim.',
                         illustration: AnimatedBuilder(
                           animation: _bellRippleController,
                           builder: (context, _) {
@@ -235,11 +237,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         onSecondary: () => _nextPage(),
                       ),
                       _OnboardingPage(
-                        title: 'İlk Mera',
+                        title: 'Her Şey Hazır! 🎣',
                         subtitle:
-                            'Mera keşfet, av kaydet, rütbe kazan. Tek elle hızlı kullan, sahada iş gör.',
+                            'Haritayı aç, yakınındaki meralara bak.\nİlk check-in\'ini yap, topluluğa katıl.',
                         illustration: const _FishingHeroIllustration(),
-                        primaryLabel: 'Başla',
+                        primaryLabel: 'Hadi Başlayalım!',
                         primaryEnabled: true,
                         onPrimary: _finishOnboarding,
                         secondaryLabel: null,
@@ -264,7 +266,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(3, (i) {
+                        children: List.generate(4, (i) {
                           final active = i == _currentPage;
                           return AnimatedContainer(
                             duration: const Duration(milliseconds: 220),
@@ -286,7 +288,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         height: 48,
                         child: ElevatedButton(
                           onPressed: _nextPage,
-                          child: Text(_currentPage == 2 ? 'Başla' : 'İleri'),
+                          child: Text(_currentPage == 3 ? 'Hadi Başlayalım!' : 'İleri'),
                         ),
                       ),
                     ],

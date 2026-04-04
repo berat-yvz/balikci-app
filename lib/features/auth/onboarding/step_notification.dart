@@ -143,31 +143,71 @@ class _StepNotificationState extends State<StepNotification>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.notifications_active, size: 80, color: AppColors.accent),
+          const Icon(Icons.notifications_active_rounded, size: 80, color: AppColors.accent),
           const SizedBox(height: 32),
           const Text(
-            'Balık Haberlerini Kaçırma',
+            'Balık Tutulurken Haberdar Ol',
             style: AppTextStyles.h2,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           const Text(
-            'Yakınında balık tutulduğunda, favori meranda hareket olduğunda seni haberdar edelim.',
+            'Favori merana check-in gelince, yakında yoğunluk artınca veya sabah hava ideale dönünce seni bilgilendireyim.',
             style: AppTextStyles.body,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 24),
+          const _NotifTypeRow(emoji: '🎣', label: 'Favori merana yeni check-in'),
+          const SizedBox(height: 10),
+          const _NotifTypeRow(emoji: '🌊', label: 'Sabah hava ve akıntı özeti'),
+          const SizedBox(height: 10),
+          const _NotifTypeRow(emoji: '🏆', label: 'Puan ve rütbe bildirimleri'),
+          const SizedBox(height: 32),
           ElevatedButton(
             onPressed: (allowed || _busy) ? null : _onPressAllowNotifications,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.secondary,
             ),
             child: Text(
-              allowed ? 'Bildirim izni verildi' : 'Bildirimlere İzin Ver',
+              allowed ? 'Bildirim izni verildi ✓' : 'Bildirimlere İzin Ver',
             ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Günde en fazla 5 bildirim. İstediğin zaman kapatabilirsin.',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.45),
+              fontSize: 12,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
+    );
+  }
+}
+
+class _NotifTypeRow extends StatelessWidget {
+  final String emoji;
+  final String label;
+
+  const _NotifTypeRow({required this.emoji, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 16)),
+        const SizedBox(width: 10),
+        Text(
+          label,
+          style: AppTextStyles.body.copyWith(
+            color: AppColors.foam.withValues(alpha: 0.80),
+            fontSize: 13,
+          ),
+        ),
+      ],
     );
   }
 }
