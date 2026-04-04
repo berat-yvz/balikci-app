@@ -266,16 +266,14 @@ class _LeaderboardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Highlight kartı açık arka plan alır → koyu metin; diğerleri koyu arka plan → açık metin.
-    final textColor = highlight ? AppColors.dark : Colors.white;
-    final subtitleColor = highlight ? Colors.black54 : AppColors.muted;
+    // Highlight kartı koyu arka plan → beyaz yazı; diğerleri beyaz arka plan → siyah yazı.
+    final textColor = highlight ? Colors.white : Colors.black87;
+    final subtitleColor = highlight ? Colors.white70 : Colors.black54;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: highlight
-            ? AppColors.primaryLight.withValues(alpha: 0.12)
-            : AppColors.dark.withValues(alpha: 0.3),
+        color: highlight ? const Color(0xFF1A2E44) : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: highlight
             ? Border.all(color: AppColors.primary, width: 1.5)
