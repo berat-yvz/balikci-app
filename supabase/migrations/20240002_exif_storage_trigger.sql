@@ -1,55 +1,47 @@
--- Storage trigger: fish-photos bucket'a fotoğraf yüklenince exif-verify Edge Function'ı tetikle
--- Bu trigger Supabase Dashboard > Database > Functions kısmında da görünür
+-- pg_net extension'ı etkinleştir (Supabase'de varsayılan açık olmalı)
+CREATE EXTENSION IF NOT EXISTS pg_net;
 
+-- Edge Function URL'i ve anahtarı direkt gömüyoruz
+-- (Bu migration sadece Supabase Dashboard SQL Editor'dan çalışır, kaynak kodda service_role_key olmaz)
 CREATE OR REPLACE FUNCTION storage.trigger_exif_verify()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  checkin_id uuid;
-  file_path text;
+  checkin_id text;
+  parts text[];
 BEGIN
-  -- Yüklenen dosyanın path'inden check-in ID'sini çıkar
-  -- Beklenen format: checkins/{checkin_id}/{filename}
-  file_path := NEW.name;
+  -- Beklenen path formatı: checkins/{checkin_id}/{filename}
+  IF NEW.bucket_id = 'fish-photos' AND NEW.name LIKE 'checkins/%' THEN
+    parts := string_to_array(NEW.name, '/');
+    IF array_length(parts, 1) >= 2 THEN
+      checkin_id := parts[2];
 
-  IF file_path LIKE 'checkins/%' THEN
-    checkin_id := (string_to_array(file_path, '/'))[2]::uuid;
-
-    -- Edge Function'ı HTTP ile çağır
-    PERFORM net.http_post(
-      url := current_setting('app.supabase_url') || '/functions/v1/exif-verify',
-      headers := jsonb_build_object(
-        'Content-Type', 'application/json',
-        'Authorization', 'Bearer ' || current_setting('app.service_role_key')
-      ),
-      body := jsonb_build_object(
-        'checkinId', checkin_id,
-        'storagePath', file_path,
-        'bucket', NEW.bucket_id
-      )
-    );
+      PERFORM net.http_post(
+        url     := 'https://bcsihxgekoqwbovbmlog.supabase.co/functions/v1/exif-verify',
+        headers := jsonb_build_object(
+          'Content-Type',  'application/json',
+          'Authorization', 'Bearer BURAYA_SERVICE_ROLE_KEY_YAZ'
+        ),
+        body    := jsonb_build_object(
+          'checkinId',   checkin_id,
+          'storagePath', NEW.name,
+          'bucket',      NEW.bucket_id
+        )::text
+      );
+    END IF;
   END IF;
 
   RETURN NEW;
 EXCEPTION WHEN OTHERS THEN
-  -- Trigger hatası ana işlemi engellemez
   RAISE WARNING 'exif-verify trigger hatası: %', SQLERRM;
   RETURN NEW;
 END;
 $$;
 
--- Trigger'ı storage.objects tablosuna bağla
-DROP TRIGGER IF EXISTS on_storage_object_created ON storage.objects;
-CREATE TRIGGER on_storage_object_created
+DROP TRIGGER IF EXISTS on_fish_photo_uploaded ON storage.objects;
+CREATE TRIGGER on_fish_photo_uploaded
   AFTER INSERT ON storage.objects
   FOR EACH ROW
-  WHEN (NEW.bucket_id = 'fish-photos')
   EXECUTE FUNCTION storage.trigger_exif_verify();
-
--- app settings (supabase_url ve service_role_key Dashboard > Settings > API'den alınır)
--- Bu değerleri Supabase Dashboard > Database > Settings kısmında ALTER SYSTEM ile set et:
--- ALTER SYSTEM SET app.supabase_url = 'https://bcsihxgekoqwbovbmlog.supabase.co';
--- ALTER SYSTEM SET app.service_role_key = 'YOUR_SERVICE_ROLE_KEY';
--- SELECT pg_reload_conf();
