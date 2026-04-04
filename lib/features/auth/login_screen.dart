@@ -253,10 +253,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    AppColors.navy,
-                    const Color(0xFF07182D),
-                    AppColors.background,
+                    const Color(0xFF0A1628),
+                    const Color(0xFF0D2137),
+                    const Color(0xFF0A1628),
                   ],
+                  stops: const [0.0, 0.5, 1.0],
                 ),
               ),
             ),
@@ -467,43 +468,113 @@ class _LogoLockup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 52,
-          height: 52,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.65),
+            color: AppColors.primary.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.teal.withValues(alpha: 0.35)),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.3),
+              width: 1.2,
+            ),
           ),
           child: const Icon(
             Icons.anchor_rounded,
-            color: AppColors.foam,
+            color: AppColors.primary,
             size: 30,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 14),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Balıkçı',
-              style: AppTextStyles.h1.copyWith(
-                color: AppColors.foam,
-                height: 1.0,
-              ),
+            Row(
+              children: [
+                const Text(
+                  'Balıkçı',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const _FishAnimation(),
+              ],
             ),
             Text(
               'Super App',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.muted,
-                fontWeight: FontWeight.w700,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: Colors.white.withValues(alpha: 0.5),
+                letterSpacing: 1.5,
               ),
             ),
           ],
         ),
       ],
+    );
+  }
+}
+
+class _FishAnimation extends StatefulWidget {
+  const _FishAnimation();
+
+  @override
+  State<_FishAnimation> createState() => _FishAnimationState();
+}
+
+class _FishAnimationState extends State<_FishAnimation>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _swimX;
+  late Animation<double> _wobble;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+
+    _swimX = Tween<double>(begin: -6, end: 6).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    _wobble = Tween<double>(begin: -0.08, end: 0.08).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(_swimX.value, 0),
+          child: Transform.rotate(
+            angle: _wobble.value,
+            child: const Text(
+              '🐟',
+              style: TextStyle(fontSize: 28),
+            ),
+          ),
+        );
+      },
     );
   }
 }
