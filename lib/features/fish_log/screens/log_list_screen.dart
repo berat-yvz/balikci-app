@@ -71,7 +71,7 @@ class LogListScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('🎣', style: TextStyle(fontSize: 72)),
+                  const Text('🐟', style: TextStyle(fontSize: 72)),
                   const SizedBox(height: 16),
                   const Text(
                     'Henüz kayıt yok',
