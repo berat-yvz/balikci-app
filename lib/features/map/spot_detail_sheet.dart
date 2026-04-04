@@ -300,6 +300,10 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
                 'Son rapor ${_formatAgo(latest.createdAt)}',
                 style: const TextStyle(color: Colors.white70),
               ),
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: VoteWidget(checkinId: latest.id),
+              ),
             ],
             const SizedBox(height: 16),
             Text(
