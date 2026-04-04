@@ -44,8 +44,15 @@ class _MainShellState extends State<MainShell> {
     final path = GoRouterState.of(context).uri.path;
     _currentIndex = _indexFromPath(path);
 
-    return Scaffold(
-      body: widget.child,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          context.go(AppRoutes.home);
+        }
+      },
+      child: Scaffold(
+        body: widget.child,
       bottomNavigationBar: BottomAppBar(
         color: const Color(0xFF0D1B2E),
         elevation: 8,
@@ -102,6 +109,7 @@ class _MainShellState extends State<MainShell> {
         child: const Icon(Icons.map, color: Colors.white, size: 32),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    ),
     );
   }
 }
