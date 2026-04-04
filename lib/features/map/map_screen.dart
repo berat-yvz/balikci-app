@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -488,119 +486,49 @@ class _MapScreenState extends State<MapScreen> {
           // Üst: Arama (floating)
           Positioned(
             left: 16,
-            right: 16,
+            right: 72,
             top: MediaQuery.of(context).padding.top + 8,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                      Container(
-                        height: 52,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(26),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.35),
-                              blurRadius: 24,
-                              offset: const Offset(0, 6),
-                            ),
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.12),
-                              blurRadius: 16,
-                              spreadRadius: -2,
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(26),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(26),
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Colors.white.withValues(alpha: 0.13),
-                                    Colors.white.withValues(alpha: 0.06),
-                                  ],
-                                ),
-                                border: Border.all(
-                                  color: _searchFocusNode.hasFocus
-                                      ? AppColors.primary.withValues(alpha: 0.6)
-                                      : Colors.white.withValues(alpha: 0.18),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  const SizedBox(width: 16),
-                                  Icon(
-                                    Icons.search_rounded,
-                                    color: AppColors.primary,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _searchController,
-                                      focusNode: _searchFocusNode,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                      ),
-                                      decoration: InputDecoration(
-                                        hintText: 'Mera, tür veya bölge ara...',
-                                        hintStyle: TextStyle(
-                                          color: Colors.white.withValues(alpha: 0.45),
-                                          fontSize: 14.5,
-                                          fontWeight: FontWeight.w400,
-                                          letterSpacing: 0.1,
-                                        ),
-                                        border: InputBorder.none,
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.zero,
-                                      ),
-                                      onChanged: (value) {
-                                        _onSearchChanged(value);
-                                        setState(() {});
-                                      },
-                                      onTap: () => setState(() {}),
-                                    ),
-                                  ),
-                                  if (_searchController.text.isNotEmpty)
-                                    IconButton(
-                                      tooltip: 'Temizle',
-                                      icon: const Icon(
-                                        Icons.close,
-                                        size: 18,
-                                        color: Colors.white,
-                                      ),
-                                      onPressed: () {
-                                        _searchController.clear();
-                                        _onSearchChanged('');
-                                        _searchFocusNode.unfocus();
-                                        setState(() {});
-                                      },
-                                    )
-                                  else ...[
-                                    Container(
-                                      width: 1,
-                                      height: 20,
-                                      color: Colors.white.withValues(alpha: 0.15),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Icon(
-                                      Icons.tune_rounded,
-                                      color: Colors.white.withValues(alpha: 0.55),
-                                      size: 19,
-                                    ),
-                                    const SizedBox(width: 16),
-                                  ],
-                                ],
-                              ),
-                            ),
+                      TextField(
+                        controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Mera, tür veya bölge ara...',
+                          hintStyle: const TextStyle(
+                              color: Colors.white70, fontSize: 16),
+                          prefixIcon: const Icon(Icons.search,
+                              color: Colors.white70, size: 26),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  tooltip: 'Temizle',
+                                  icon: const Icon(Icons.close,
+                                      size: 18, color: Colors.white),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _onSearchChanged('');
+                                    _searchFocusNode.unfocus();
+                                    setState(() {});
+                                  },
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: const Color(0xFF1A2E44),
+                          border: const OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(14)),
+                            borderSide: BorderSide.none,
                           ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
                         ),
+                        onChanged: (value) {
+                          _onSearchChanged(value);
+                          setState(() {});
+                        },
+                        onTap: () => setState(() {}),
                       ),
                       const SizedBox(height: 8),
                       AnimatedContainer(
