@@ -11,8 +11,8 @@
 
 | Faz | Haftalar | Odak | Durum |
 |-----|---------|------|-------|
-| Faz A | H1–H2 | Kurulum & Auth | 🟡 |
-| Faz B | H3–H6 | Harita & Check-in Çekirdeği | 🔄 |
+| Faz A | H1–H2 | Kurulum & Auth | ✅ |
+| Faz B | H3–H6 | Harita & Check-in Çekirdeği | 🔄 (H6 kısmen) |
 | Faz C | H7–H10 | Günlük, Puan, Hava, Bildirim | ⏳ |
 | Faz D | H11–H13 | Offline & Motivasyon UI | ⏳ |
 | Faz E | H14–H16 | Test, Polish & Launch | ⏳ |
@@ -69,7 +69,7 @@
 
 ## FAZ B — Harita & Check-in Çekirdeği (H3–H6)
 
-**Durum:** H3 tamamlandı; H4 mera ekleme/düzenleme tamam. **Sıradaki odak:** H5 (Check-in) → H6 (EXIF & oylama). **Haritada dükkan (`shops`) pinleri** planın sonuna alındı (bkz. H15).
+**Durum:** H3 ✅ H4 ✅ H5 ✅ tamamlandı; H6 kısmen tamamlandı (3 görev kaldı: Storage trigger, %70 yanlış oy gizleme, rozet UI). **Sıradaki odak:** H6 kalan görevler → H7 Balık Günlüğü. **Haritada dükkan (`shops`) pinleri** planın sonuna alındı (bkz. H15).
 
 ### H3 — Harita Temeli
 **Hedef:** Harita açılıyor, meralar görünüyor
