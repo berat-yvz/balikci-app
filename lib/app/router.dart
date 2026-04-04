@@ -28,8 +28,8 @@ import 'package:balikci_app/features/map/pick_spot_location_screen.dart';
 import 'package:balikci_app/features/checkin/checkin_screen.dart';
 
 // Features — Fish Log
-import 'package:balikci_app/features/fish_log/log_list_screen.dart';
-import 'package:balikci_app/features/fish_log/add_log_screen.dart';
+import 'package:balikci_app/features/fish_log/screens/log_list_screen.dart';
+import 'package:balikci_app/features/fish_log/screens/add_log_screen.dart';
 import 'package:balikci_app/features/fish_log/stats_screen.dart';
 
 // Features — Rank
@@ -212,21 +212,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Fish Log (yeni path'ler)
       GoRoute(
         path: AppRoutes.fishLogAdd,
-        builder: (context, state) {
-          final spotId = state.uri.queryParameters['spotId'];
-          return AddLogScreen(spotId: spotId);
-        },
+        builder: (context, state) => const AddLogScreen(),
       ),
       GoRoute(
         path: AppRoutes.log,
-        builder: (_, _) => const LogListScreen(),
+        builder: (ctx, s) => const LogListScreen(),
       ),
       GoRoute(
         path: AppRoutes.logAdd,
-        builder: (context, state) {
-          final spotId = state.uri.queryParameters['spotId'];
-          return AddLogScreen(spotId: spotId);
-        },
+        builder: (context, state) => const AddLogScreen(),
       ),
       GoRoute(
         path: AppRoutes.fishLogStats,
