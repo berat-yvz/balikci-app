@@ -199,7 +199,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
             // Balık türü seç
             const Text(
               'Balık Türü *',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Container(
@@ -212,14 +212,14 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                 child: DropdownButton<String>(
                   value: _selectedFishType,
                   hint: const Text('Balık seçin...',
-                      style: TextStyle(fontSize: 18)),
+                      style: TextStyle(fontSize: 15)),
                   isExpanded: true,
                   icon: const Icon(Icons.arrow_drop_down, size: 32),
                   items: _fishTypes
                       .map((fish) => DropdownMenuItem(
                             value: fish,
                             child: Text(fish,
-                                style: const TextStyle(fontSize: 18)),
+                                style: const TextStyle(fontSize: 16)),
                           ))
                       .toList(),
                   onChanged: (val) =>
@@ -238,16 +238,16 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                     children: [
                       const Text('Ağırlık (kg)',
                           style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _weightController,
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
-                        style: const TextStyle(fontSize: 18),
+                        style: const TextStyle(fontSize: 15),
                         decoration: InputDecoration(
                           hintText: '0.0',
-                          hintStyle: const TextStyle(fontSize: 18),
+                          hintStyle: const TextStyle(fontSize: 15),
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 16),
                           border: OutlineInputBorder(
@@ -272,16 +272,16 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                     children: [
                       const Text('Uzunluk (cm)',
                           style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _lengthController,
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
-                        style: const TextStyle(fontSize: 18),
+                        style: const TextStyle(fontSize: 15),
                         decoration: InputDecoration(
                           hintText: '0.0',
-                          hintStyle: const TextStyle(fontSize: 18),
+                          hintStyle: const TextStyle(fontSize: 15),
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 16),
                           border: OutlineInputBorder(
@@ -326,7 +326,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                     child: Text(
                       'Geri bıraktım 🐟',
                       style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Colors.black87),
                     ),
@@ -369,7 +369,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                     child: Text(
                       'Gizli kayıt',
                       style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Colors.black87),
                     ),
@@ -391,17 +391,17 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
             // Not alanı
             const Text(
               'Not (isteğe bağlı)',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _notesController,
               maxLines: 3,
-              style: const TextStyle(fontSize: 18),
+              style: const TextStyle(fontSize: 15),
               decoration: InputDecoration(
                 hintText: 'Nasıl bir gündü? Ne yedirdin?',
                 hintStyle:
-                    const TextStyle(fontSize: 16, color: Colors.grey),
+                    const TextStyle(fontSize: 15, color: Colors.grey),
                 contentPadding: const EdgeInsets.all(16),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -442,7 +442,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                 label: Text(
                   _isLoading ? 'Kaydediliyor...' : 'KAYDET',
                   style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold),
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ),

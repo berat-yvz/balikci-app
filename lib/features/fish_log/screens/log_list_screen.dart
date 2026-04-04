@@ -179,7 +179,7 @@ class _LogCard extends ConsumerWidget {
                       child: Text(
                         log.fishType,
                         style: const TextStyle(
-                          fontSize: 22,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -196,7 +196,7 @@ class _LogCard extends ConsumerWidget {
                         child: const Text(
                           '🔄 Bırakıldı',
                           style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 13,
                               color: Colors.blue,
                               fontWeight: FontWeight.bold),
                         ),
@@ -215,7 +215,7 @@ class _LogCard extends ConsumerWidget {
                         child: const Text(
                           '🔒 Gizli',
                           style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 13,
                               color: Colors.orange,
                               fontWeight: FontWeight.bold),
                         ),
@@ -242,7 +242,7 @@ class _LogCard extends ConsumerWidget {
                       const SizedBox(width: 4),
                       Text(
                         '${log.weightKg!.toStringAsFixed(1)} kg',
-                        style: const TextStyle(fontSize: 16),
+                        style: const TextStyle(fontSize: 15),
                       ),
                       const SizedBox(width: 16),
                     ],
@@ -252,7 +252,7 @@ class _LogCard extends ConsumerWidget {
                       const SizedBox(width: 4),
                       Text(
                         '${log.lengthCm!.toStringAsFixed(1)} cm',
-                        style: const TextStyle(fontSize: 16),
+                        style: const TextStyle(fontSize: 15),
                       ),
                     ],
                   ],
@@ -264,7 +264,7 @@ class _LogCard extends ConsumerWidget {
                   Text(
                     log.notes!,
                     style: const TextStyle(
-                        fontSize: 15, color: Colors.black87),
+                        fontSize: 14, color: Colors.black87),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -281,7 +281,7 @@ class _LogCard extends ConsumerWidget {
                     Text(
                       _formatDate(log.caughtAt),
                       style: const TextStyle(
-                          fontSize: 15, color: Colors.grey),
+                          fontSize: 14, color: Colors.grey),
                     ),
                     const Spacer(),
                     TextButton.icon(
@@ -290,7 +290,7 @@ class _LogCard extends ConsumerWidget {
                           foregroundColor: Colors.red.shade400),
                       icon: const Icon(Icons.delete_outline, size: 22),
                       label: const Text('Sil',
-                          style: TextStyle(fontSize: 16)),
+                          style: TextStyle(fontSize: 15)),
                     ),
                   ],
                 ),
