@@ -9,11 +9,11 @@ class CheckinModel {
   final String? fishDensity; // yoğun | normal | az | yok
   final String? photoUrl;
   final bool exifVerified;
-  final bool isActive;
   final bool isHidden;
   final int trueVotes;
   final int falseVotes;
   final DateTime createdAt;
+  final DateTime? expiresAt;
 
   const CheckinModel({
     required this.id,
@@ -24,12 +24,19 @@ class CheckinModel {
     this.fishDensity,
     this.photoUrl,
     this.exifVerified = false,
-    this.isActive = true,
     this.isHidden = false,
     this.trueVotes = 0,
     this.falseVotes = 0,
     required this.createdAt,
+    this.expiresAt,
   });
+
+  /// Bildirim aktif mi? Gizlenmemiş ve süresi dolmamış olmalı.
+  bool get isActive {
+    if (isHidden) return false;
+    if (expiresAt == null) return false;
+    return expiresAt!.isAfter(DateTime.now());
+  }
 
   /// Rapor 2 saatten eski mi? (soluk gösterim için)
   bool get isStale => DateTime.now().difference(createdAt).inHours >= 2;
@@ -46,11 +53,13 @@ class CheckinModel {
     fishDensity: json['fish_density'] as String?,
     photoUrl: json['photo_url'] as String?,
     exifVerified: json['exif_verified'] as bool? ?? false,
-    isActive: json['is_active'] as bool? ?? true,
     isHidden: json['is_hidden'] as bool? ?? false,
     trueVotes: (json['true_votes'] as num?)?.toInt() ?? 0,
     falseVotes: (json['false_votes'] as num?)?.toInt() ?? 0,
     createdAt: DateTime.parse(json['created_at'] as String),
+    expiresAt: json['expires_at'] != null
+        ? DateTime.parse(json['expires_at'] as String)
+        : null,
   );
 
   Map<String, dynamic> toJson() => {
@@ -62,11 +71,11 @@ class CheckinModel {
     'fish_density': fishDensity,
     'photo_url': photoUrl,
     'exif_verified': exifVerified,
-    'is_active': isActive,
     'is_hidden': isHidden,
     'true_votes': trueVotes,
     'false_votes': falseVotes,
     'created_at': createdAt.toIso8601String(),
+    'expires_at': expiresAt?.toIso8601String(),
   };
 
   static String? _parseUsername(dynamic usersField) {

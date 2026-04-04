@@ -15,10 +15,10 @@ class CheckinRepository {
     try {
       final response = await _db
           .from('checkins')
-          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_active, is_hidden, true_votes, false_votes, created_at')
+          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_hidden, true_votes, false_votes, created_at, expires_at')
           .eq('spot_id', spotId)
-          .eq('is_active', true)
           .eq('is_hidden', false)
+          .gt('expires_at', DateTime.now().toIso8601String())
           .order('created_at', ascending: false);
       return response.map<CheckinModel>(CheckinModel.fromJson).toList();
     } on PostgrestException catch (e) {
@@ -34,9 +34,9 @@ class CheckinRepository {
     try {
       final response = await _db
           .from('checkins')
-          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_active, is_hidden, true_votes, false_votes, created_at')
-          .eq('is_active', true)
+          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_hidden, true_votes, false_votes, created_at, expires_at')
           .eq('is_hidden', false)
+          .gt('expires_at', DateTime.now().toIso8601String())
           .order('created_at', ascending: false)
           .range(0, limit - 1);
 
@@ -61,7 +61,7 @@ class CheckinRepository {
 
       final response = await _db
           .from('checkins')
-          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_active, is_hidden, true_votes, false_votes, created_at')
+          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_hidden, true_votes, false_votes, created_at, expires_at')
           .eq('is_hidden', false)
           .gte('created_at', threshold.toIso8601String())
           .order('created_at', ascending: false)
@@ -81,13 +81,19 @@ class CheckinRepository {
       final response = await _db
           .from('checkins')
           .insert(data)
-          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_active, is_hidden, true_votes, false_votes, created_at')
+          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_hidden, true_votes, false_votes, created_at, expires_at')
           .single();
       return CheckinModel.fromJson(response);
     } on PostgrestException catch (e) {
-      throw Exception('Check-in oluşturulamadı: ${e.message}');
+      if (e.message.contains('aktif bir bildirim')) {
+        throw Exception('Bu mera için zaten aktif bildirim var! 2 saat bekleyin. ⏳');
+      }
+      throw Exception('Bildirim oluşturulamadı: ${e.message}');
     } catch (e) {
-      throw Exception('Check-in oluşturulamadı: $e');
+      if (e.toString().contains('aktif bir bildirim')) {
+        throw Exception('Bu mera için zaten aktif bildirim var! 2 saat bekleyin. ⏳');
+      }
+      throw Exception('Bildirim oluşturulamadı: $e');
     }
   }
 
@@ -146,11 +152,11 @@ class CheckinRepository {
           fishDensity: base.fishDensity,
           photoUrl: base.photoUrl,
           exifVerified: base.exifVerified,
-          isActive: base.isActive,
           isHidden: base.isHidden,
           trueVotes: trueVotes,
           falseVotes: falseVotes,
           createdAt: base.createdAt,
+          expiresAt: base.expiresAt,
         );
         final total = trueVotes + falseVotes;
         final falseRatio = total == 0 ? 0.0 : (falseVotes / total);
