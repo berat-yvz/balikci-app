@@ -4,6 +4,7 @@ import '../../../core/services/supabase_service.dart';
 
 class VoteWidget extends ConsumerStatefulWidget {
   final String checkinId;
+  final String checkinUserId;
   final bool isVerified;
   final int trueVotes;
   final int falseVotes;
@@ -11,6 +12,7 @@ class VoteWidget extends ConsumerStatefulWidget {
   const VoteWidget({
     super.key,
     required this.checkinId,
+    required this.checkinUserId,
     this.isVerified = false,
     this.trueVotes = 0,
     this.falseVotes = 0,
@@ -22,6 +24,7 @@ class VoteWidget extends ConsumerStatefulWidget {
 
 class _VoteWidgetState extends ConsumerState<VoteWidget> {
   bool _hasVoted = false;
+  bool _isOwnCheckin = false;
   bool _isLoading = false;
   late int _trueVotes;
   late int _falseVotes;
@@ -38,6 +41,15 @@ class _VoteWidgetState extends ConsumerState<VoteWidget> {
     try {
       final userId = SupabaseService.auth.currentUser?.id;
       if (userId == null) return;
+      if (userId == widget.checkinUserId) {
+        if (mounted) {
+          setState(() {
+            _isOwnCheckin = true;
+            _hasVoted = true;
+          });
+        }
+        return;
+      }
       final response = await SupabaseService.client
           .from('checkin_votes')
           .select('id')
@@ -143,20 +155,28 @@ class _VoteWidgetState extends ConsumerState<VoteWidget> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.green.shade50,
+              color: _isOwnCheckin ? Colors.blue.shade50 : Colors.green.shade50,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green.shade300),
+              border: Border.all(
+                color: _isOwnCheckin
+                    ? Colors.blue.shade300
+                    : Colors.green.shade300,
+              ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 28),
-                SizedBox(width: 8),
+                Icon(
+                  _isOwnCheckin ? Icons.info_outline : Icons.check_circle,
+                  color: _isOwnCheckin ? Colors.blue : Colors.green,
+                  size: 28,
+                ),
+                const SizedBox(width: 8),
                 Text(
-                  'Oyunuz alındı 👍',
+                  _isOwnCheckin ? 'Kendi bildiriminiz' : 'Oyunuz alındı 👍',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                    color: _isOwnCheckin ? Colors.blue : Colors.green,
                   ),
                 ),
               ],
