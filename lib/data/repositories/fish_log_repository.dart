@@ -146,6 +146,7 @@ class FishLogRepository {
       throw Exception('Günlük kaydı silinemedi: $e');
     }
     await (_db.delete(_db.localFishLogs)..where((t) => t.id.equals(id))).go();
+    await (_db.delete(_db.fishLogs)..where((t) => t.id.equals(id))).go();
   }
 
   /// Tür bazlı istatistik.
@@ -218,6 +219,49 @@ class FishLogRepository {
   }
 
   // ─── LOCAL (DRIFT) ────────────────────────────────────────
+
+  /// `FishLogs` Drift tablosunu döner — remote önce, hata durumunda local cache.
+  Future<List<FishLog>> getLogs() async {
+    final userId = SupabaseService.auth.currentUser?.id ?? '';
+    try {
+      final response = await _remote
+          .from('fish_logs')
+          .select(
+            'id, user_id, spot_id, species, weight, length, photo_url, notes, is_private, released, created_at',
+          )
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+      for (final row in response) {
+        await _db.into(_db.fishLogs).insertOnConflictUpdate(
+              FishLogsCompanion(
+                id: Value(row['id'] as String),
+                userId: Value(row['user_id'] as String),
+                spotId: Value(row['spot_id'] as String?),
+                fishType: Value(row['species'] as String? ?? ''),
+                weightKg: Value((row['weight'] as num?)?.toDouble()),
+                lengthCm: Value((row['length'] as num?)?.toDouble()),
+                photoUrl: Value(row['photo_url'] as String?),
+                notes: Value(row['notes'] as String?),
+                isPrivate: Value(row['is_private'] as bool? ?? false),
+                isReleased: Value(row['released'] as bool? ?? false),
+                weatherSnapshot: const Value(null),
+                caughtAt: Value(
+                  row['created_at'] != null
+                      ? DateTime.parse(row['created_at'] as String)
+                      : DateTime.now(),
+                ),
+                synced: const Value(true),
+              ),
+            );
+      }
+    } catch (_) {
+      // offline: aşağıda local cache dönülecek
+    }
+    return (_db.select(_db.fishLogs)
+          ..where((t) => t.userId.equals(userId))
+          ..orderBy([(t) => OrderingTerm.desc(t.caughtAt)]))
+        .get();
+  }
 
   /// Drift cache'den kayıtları döner.
   Future<List<FishLogModel>> getCachedLogs(String userId) async {
