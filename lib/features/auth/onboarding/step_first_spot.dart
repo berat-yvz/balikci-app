@@ -23,7 +23,7 @@ class StepFirstSpot extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Haritayı aç, yakınındaki meralara bak.\nİlk check-in\'ini yap, topluluğa katıl.',
+            'Haritayı aç, yakınındaki meralara bak.\nİlk bildirimi yap, topluluğa katıl.',
             style: AppTextStyles.body,
             textAlign: TextAlign.center,
           ),

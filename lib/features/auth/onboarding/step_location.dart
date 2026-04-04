@@ -225,7 +225,7 @@ class _StepLocationState extends State<StepLocation>
           ),
           const SizedBox(height: 16),
           const Text(
-            'Yakınındaki meraları, aktif check-in\'leri ve hava durumunu gösterebilmem için konumuna ihtiyacım var.',
+            'Yakınındaki meraları, aktif bildirimleri ve hava durumunu gösterebilmem için konumuna ihtiyacım var.',
             style: AppTextStyles.body,
             textAlign: TextAlign.center,
           ),

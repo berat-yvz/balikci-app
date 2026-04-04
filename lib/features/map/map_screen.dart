@@ -882,7 +882,7 @@ class _MapScreenState extends State<MapScreen> {
                                   onPressed: () =>
                                       _openCheckinForSpot(sheetSpot),
                                   icon: Icons.check_circle_outline,
-                                  label: 'Check-in Yap',
+                                  label: 'Balık Var!',
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -1253,7 +1253,7 @@ class _ActivePulseCountState extends State<_ActivePulseCount>
               ),
             const SizedBox(width: 8),
             Text(
-              '$count aktif check-in',
+              '$count aktif bildirim',
               style: TextStyle(
                 color: AppColors.foam.withValues(alpha: 0.88),
                 fontWeight: FontWeight.w800,
@@ -1416,7 +1416,7 @@ class _RecentCheckinsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     if (checkins.isEmpty) {
       return Text(
-        'Son check-in yok.',
+        'Son bildirim yok.',
         style: AppTextStyles.caption.copyWith(
           color: AppColors.foam.withValues(alpha: 0.70),
         ),
@@ -1427,7 +1427,7 @@ class _RecentCheckinsRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Son Check-in\'ler',
+          'Son Bildirimler',
           style: AppTextStyles.h3.copyWith(color: AppColors.foam, fontSize: 14),
         ),
         const SizedBox(height: 10),
@@ -1518,7 +1518,7 @@ class _EmptySheetHints extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Seçilen merada: $fishDensityTitle. Aktif check-in ve hava burada görünür.',
+              'Seçilen merada: $fishDensityTitle. Aktif bildirim ve hava burada görünür.',
               style: TextStyle(
                 color: AppColors.foam.withValues(alpha: 0.78),
                 fontSize: 12,

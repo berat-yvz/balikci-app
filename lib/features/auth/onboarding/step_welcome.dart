@@ -87,7 +87,7 @@ class StepWelcome extends StatelessWidget {
                               iconColor: AppColors.accent,
                               title: 'Puan Kazan, Rütbe Al',
                               description:
-                                  'Mera paylaş, check-in yap, topluluktan puan kazan. Acemi\'den Deniz Reisi\'ne ilerle.',
+                                  'Mera paylaş, Balık Var bildir, topluluktan puan kazan. Acemi\'den Deniz Reisi\'ne ilerle.',
                             ),
                           ],
                         ),

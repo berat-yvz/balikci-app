@@ -228,7 +228,7 @@ class _ProfileContent extends ConsumerWidget {
               _showExplanation(
                 context,
                 'Toplam puan nedir?',
-                'Check-in, doğru rapor oyları ve günlük kayıtlar puan kazandırır. Toplam puan rütbeni belirler.',
+                'Balık bildirimi, doğru rapor oyları ve günlük kayıtlar puan kazandırır. Toplam puan rütbeni belirler.',
               );
             },
             onTapSustainability: () {

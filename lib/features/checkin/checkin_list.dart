@@ -18,12 +18,12 @@ class CheckinList extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Check-in Listesi',
+              'Balık Bildirimleri',
               style: AppTextStyles.h3.copyWith(color: Colors.white),
             ),
             const SizedBox(height: 8),
             Text(
-              'Bu mera için check-in kayıtları yakında burada listelenecek.',
+              'Bu mera için bildirimler yakında burada listelenecek.',
               style: AppTextStyles.caption.copyWith(color: Colors.white70),
             ),
           ],

@@ -135,7 +135,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Check-in olusturulamadi'),
+            content: Text('Bildirim gönderilemedi'),
             backgroundColor: AppColors.danger,
           ),
         );
@@ -160,7 +160,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Check-in yapildi ✓'),
+          content: Text('Bildirim gönderildi ✓'),
           backgroundColor: AppColors.primary,
         ),
       );
@@ -172,7 +172,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Check-in olusturulamadi: $e'),
+          content: Text('Bildirim gönderilemedi: $e'),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -187,7 +187,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
     final canSubmit = !_loadingSpot && spot != null && !_submitting;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Check-in')),
+      appBar: AppBar(title: const Text('Balık Bildirimi')),
       body: _loadingSpot
           ? const Center(child: CircularProgressIndicator())
           : spot == null
@@ -248,7 +248,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text('Konum dogrula ve check-in yap'),
+                          : const Text('Konumu Doğrula ve Bildir'),
                     ),
 
                     const SizedBox(height: 12),
@@ -261,7 +261,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
                         onHidden: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Check-in gizlendi, haritaya dönülüyor.'),
+                              content: Text('Bildirim gizlendi, haritaya dönülüyor.'),
                               backgroundColor: AppColors.danger,
                             ),
                           );
@@ -565,7 +565,7 @@ class _VoteSectionState extends State<_VoteSection> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Bu check-in yeterli yanlış oy aldığı için gizlendi.',
+              'Bu bildirim yeterli yanlış oy aldığı için gizlendi.',
               style: AppTextStyles.caption.copyWith(color: AppColors.danger),
             ),
           ),

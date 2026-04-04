@@ -195,7 +195,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                       _OnboardingPage(
                         title: 'Seni Nerede Arayayım?',
                         subtitle:
-                            'Yakınındaki meraları, aktif check-in\'leri ve hava durumunu gösterebilmem için konumuna ihtiyacım var.',
+                            'Yakınındaki meraları, aktif bildirimleri ve hava durumunu gösterebilmem için konumuna ihtiyacım var.',
                         illustration: AnimatedBuilder(
                           animation: _pinDropController,
                           builder: (context, _) {
@@ -217,7 +217,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                       _OnboardingPage(
                         title: 'Balık Tutulurken Haberdar Ol',
                         subtitle:
-                            'Favori merana check-in gelince, yakında yoğunluk artınca veya sabah hava ideale dönünce seni bilgilendireyim.',
+                            'Favori merana yeni bildirim gelince, yakında yoğunluk artınca veya sabah hava ideale dönünce seni bilgilendireyim.',
                         illustration: AnimatedBuilder(
                           animation: _bellRippleController,
                           builder: (context, _) {
@@ -239,7 +239,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                       _OnboardingPage(
                         title: 'Her Şey Hazır! 🎣',
                         subtitle:
-                            'Haritayı aç, yakınındaki meralara bak.\nİlk check-in\'ini yap, topluluğa katıl.',
+                            'Haritayı aç, yakınındaki meralara bak.\nİlk bildirimi yap, topluluğa katıl.',
                         illustration: const _FishingHeroIllustration(),
                         primaryLabel: 'Hadi Başlayalım!',
                         primaryEnabled: true,

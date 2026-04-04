@@ -52,7 +52,7 @@ class _VoteWidgetState extends State<VoteWidget> {
         widget.onHidden?.call();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Check-in yeterli yanlış oy aldı ve gizlendi.'),
+            content: Text('Bildirim yeterli yanlış oy aldı ve gizlendi.'),
             backgroundColor: AppColors.danger,
           ),
         );
@@ -83,7 +83,7 @@ class _VoteWidgetState extends State<VoteWidget> {
             Icon(Icons.visibility_off, size: 16, color: AppColors.danger),
             SizedBox(width: 6),
             Text(
-              'Bu check-in gizlendi.',
+              'Bu bildirim gizlendi.',
               style: TextStyle(color: AppColors.danger, fontSize: 13),
             ),
           ],

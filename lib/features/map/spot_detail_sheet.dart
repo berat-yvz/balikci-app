@@ -266,7 +266,7 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
               child: ElevatedButton.icon(
                 onPressed: () => _openCheckin(context),
                 icon: const Icon(Icons.check_circle_outline, size: 18),
-                label: const Text('Check-in Yap'),
+                label: const Text('Balık Var!'),
               ),
             ),
             const SizedBox(height: 16),
@@ -303,7 +303,7 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
             ],
             const SizedBox(height: 16),
             Text(
-              'Son Check-in\'ler (${_checkins.length})',
+              'Son Bildirimler (${_checkins.length})',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -315,7 +315,7 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
               const Center(child: CircularProgressIndicator())
             else if (_checkins.isEmpty)
               const Text(
-                "Henüz check-in yok. İlk check-in'i sen yap! 🎣",
+                'Henüz bildirim yok. İlk bildirimi sen yap! 🎣',
                 style: TextStyle(color: Colors.white70),
               )
             else
