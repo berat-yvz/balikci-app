@@ -497,78 +497,111 @@ class _MapScreenState extends State<MapScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.75),
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.35),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                              border: Border.all(
-                                color: _searchFocusNode.hasFocus
-                                    ? AppColors.primary
-                                    : Colors.transparent,
-                              ),
+                      Container(
+                        height: 52,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(26),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.35),
+                              blurRadius: 24,
+                              offset: const Offset(0, 6),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.search,
-                                  color: Colors.white60,
-                                  size: 20,
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.12),
+                              blurRadius: 16,
+                              spreadRadius: -2,
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(26),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(26),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.white.withValues(alpha: 0.13),
+                                    Colors.white.withValues(alpha: 0.06),
+                                  ],
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _searchController,
-                                    focusNode: _searchFocusNode,
-                                    style: const TextStyle(color: Colors.white),
-                                    decoration: InputDecoration(
-                                      hintText: _searchController.text.isEmpty
-                                          ? 'Mera ara...'
-                                          : null,
-                                      hintStyle: const TextStyle(
-                                        color: Colors.white38,
-                                        fontStyle: FontStyle.italic,
+                                border: Border.all(
+                                  color: _searchFocusNode.hasFocus
+                                      ? AppColors.primary.withValues(alpha: 0.6)
+                                      : Colors.white.withValues(alpha: 0.18),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const SizedBox(width: 16),
+                                  Icon(
+                                    Icons.search_rounded,
+                                    color: AppColors.primary,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _searchController,
+                                      focusNode: _searchFocusNode,
+                                      style: const TextStyle(
+                                        color: Colors.white,
                                       ),
-                                      border: InputBorder.none,
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.zero,
+                                      decoration: InputDecoration(
+                                        hintText: 'Mera, tür veya bölge ara...',
+                                        hintStyle: TextStyle(
+                                          color: Colors.white.withValues(alpha: 0.45),
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w400,
+                                          letterSpacing: 0.1,
+                                        ),
+                                        border: InputBorder.none,
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                      onChanged: (value) {
+                                        _onSearchChanged(value);
+                                        setState(() {});
+                                      },
+                                      onTap: () => setState(() {}),
                                     ),
-                                    onChanged: (value) {
-                                      _onSearchChanged(value);
-                                      setState(() {});
-                                    },
-                                    onTap: () => setState(() {}),
                                   ),
-                                ),
-                                if (_searchController.text.isNotEmpty)
-                                  IconButton(
-                                    tooltip: 'Temizle',
-                                    icon: const Icon(
-                                      Icons.close,
-                                      size: 18,
-                                      color: Colors.white,
+                                  if (_searchController.text.isNotEmpty)
+                                    IconButton(
+                                      tooltip: 'Temizle',
+                                      icon: const Icon(
+                                        Icons.close,
+                                        size: 18,
+                                        color: Colors.white,
+                                      ),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        _onSearchChanged('');
+                                        _searchFocusNode.unfocus();
+                                        setState(() {});
+                                      },
+                                    )
+                                  else ...[
+                                    Container(
+                                      width: 1,
+                                      height: 20,
+                                      color: Colors.white.withValues(alpha: 0.15),
                                     ),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      _onSearchChanged('');
-                                      _searchFocusNode.unfocus();
-                                      setState(() {});
-                                    },
-                                  ),
-                              ],
+                                    const SizedBox(width: 12),
+                                    Icon(
+                                      Icons.tune_rounded,
+                                      color: Colors.white.withValues(alpha: 0.55),
+                                      size: 19,
+                                    ),
+                                    const SizedBox(width: 16),
+                                  ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
