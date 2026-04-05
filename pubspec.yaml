@@ -55,7 +55,6 @@ dependencies:
 dev_dependencies:
   build_runner: ^2.4.9
   drift_dev: ^2.18.0
-  flutter_launcher_icons: ^0.14.1
   flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
@@ -75,7 +74,6 @@ flutter:
   assets:
     - .env
     - assets/knots/
-    - assets/icon/
     - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
@@ -104,11 +102,3 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-flutter_launcher_icons:
-  android: "launcher_icon"
-  ios: true
-  image_path: "assets/icon/app_icon.png"
-  min_sdk_android: 21
-  remove_alpha_ios: true
-  adaptive_icon_background: "#0A2A2F"
-  adaptive_icon_foreground: "assets/icon/app_icon.png"
