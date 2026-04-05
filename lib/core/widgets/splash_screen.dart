@@ -45,8 +45,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           children: [
             SvgPicture.asset(
               'assets/images/logo.svg',
-              width: 160,
-              height: 160,
+              width: 120,
+              height: 120,
             ),
             const SizedBox(height: 24),
             const Text(
