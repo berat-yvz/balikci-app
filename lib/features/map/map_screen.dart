@@ -399,9 +399,9 @@ class _MapScreenState extends State<MapScreen> {
               mapController: _mapController,
               options: MapOptions(
                 initialCenter: const LatLng(39.0, 35.0),
-                initialZoom: 7.0,
+                initialZoom: 6.5,
                 minZoom: 5.0,
-                maxZoom: 18.0,
+                maxZoom: 19.0,
                 onPositionChanged: (pos, _) {
                   final z = pos.zoom;
                   if ((z - _currentZoom).abs() >= 0.01 && mounted) {
@@ -417,15 +417,8 @@ class _MapScreenState extends State<MapScreen> {
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                  maxZoom: 19,
-                  maxNativeZoom: 19,
-                  tileSize: 256,
-                  keepBuffer: 2,
-                  userAgentPackageName: 'com.balikci.app',
-                ),
-                TileLayer(
-                  urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+                  urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                  subdomains: const ['a', 'b', 'c', 'd'],
                   maxZoom: 19,
                   maxNativeZoom: 19,
                   tileSize: 256,
@@ -934,7 +927,7 @@ class _MapScreenState extends State<MapScreen> {
             bottom: 90,
             right: 8,
             child: Text(
-              '© Esri © OpenStreetMap contributors',
+              '© CartoDB © OpenStreetMap',
               style: TextStyle(fontSize: 9, color: Colors.black54),
             ),
           ),
