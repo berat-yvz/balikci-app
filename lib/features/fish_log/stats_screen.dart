@@ -254,12 +254,12 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? AppColors.dark;
+    final c = color ?? AppColors.foam;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFF132236),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
               color: AppColors.muted.withValues(alpha: 0.15), width: 0.5),

@@ -201,12 +201,12 @@ class _PodiumPerson extends StatelessWidget {
                     width: size,
                     height: size,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: const Color(0xFF12233A),
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
                         color: highlight
                             ? AppColors.primary.withValues(alpha: 0.7)
-                            : Colors.black.withValues(alpha: 0.06),
+                            : AppColors.muted.withValues(alpha: 0.2),
                       ),
                       boxShadow: [
                         BoxShadow(

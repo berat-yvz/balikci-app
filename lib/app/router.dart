@@ -81,8 +81,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isAuthFlow =
           path == AppRoutes.login ||
           path == AppRoutes.register ||
-          path == AppRoutes.resetCallback ||
-          path == AppRoutes.resetPassword;
+          path == AppRoutes.resetCallback;
 
       // 1. Durum: Kullanıcı giriş yapmamış
       if (!isLoggedIn) {
@@ -127,10 +126,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.resetCallback,
-        builder: (context, state) => const ResetPasswordScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.resetPassword,
         builder: (context, state) => const ResetPasswordScreen(),
       ),
       GoRoute(

@@ -97,7 +97,7 @@ class _LeaderboardRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: highlight
             ? AppColors.primary.withValues(alpha: 0.10)
-            : Colors.white,
+            : const Color(0xFF12233A),
         borderRadius: BorderRadius.circular(14),
         border: highlight
             ? Border.all(color: AppColors.primary.withValues(alpha: 0.35))

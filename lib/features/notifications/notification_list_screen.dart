@@ -134,7 +134,7 @@ class _NotificationTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFF132236),
             borderRadius: BorderRadius.circular(14),
             border: unread
                 ? Border.all(color: AppColors.accent.withValues(alpha: 0.5))
