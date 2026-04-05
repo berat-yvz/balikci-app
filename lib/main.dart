@@ -5,8 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/router.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/notification_service.dart';
@@ -73,6 +76,12 @@ Future<void> main() async {
       final user = data.session?.user;
       if (user != null) {
         unawaited(AuthRepository().ensureUserProfile(user));
+      }
+      if (data.event == AuthChangeEvent.passwordRecovery) {
+        final context = appNavigatorKey.currentContext;
+        if (context != null && context.mounted) {
+          GoRouter.of(context).go(AppRoutes.resetCallback);
+        }
       }
     });
 
