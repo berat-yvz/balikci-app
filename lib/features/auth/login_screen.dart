@@ -89,7 +89,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       barrierDismissible: true,
       builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setDialogState) {
+          builder: (_, setDialogState) {
             return AlertDialog(
               title: Row(
                 children: [
