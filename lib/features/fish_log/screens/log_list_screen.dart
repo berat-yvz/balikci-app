@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import 'package:balikci_app/app/theme.dart';
 import '../../../data/local/database.dart';
 import '../../../shared/providers/fish_log_provider.dart';
 
@@ -17,44 +19,35 @@ class LogListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFF0A1628),
         title: const Text(
           '🎣 Balık Günlüğüm',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, size: 28),
+            icon: const Icon(Icons.refresh, size: 28, color: Colors.white),
             onPressed: () => ref.invalidate(fishLogsProvider),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await context.push('/fish-log/add');
-          ref.invalidate(fishLogsProvider);
-        },
-        backgroundColor: const Color(0xFF0F6E56),
-        icon: const Icon(Icons.add, size: 28, color: Colors.white),
-        label: const Text(
-          'Yeni Kayıt',
-          style: TextStyle(
-              fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-      ),
       body: logsAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const Icon(Icons.error_outline,
+                  size: 64, color: AppColors.danger),
               const SizedBox(height: 16),
               const Text(
                 'Kayıtlar yüklenemedi',
-                style: TextStyle(fontSize: 18),
+                style: TextStyle(fontSize: 18, color: Colors.white),
               ),
               const SizedBox(height: 12),
               ElevatedButton(
@@ -71,17 +64,21 @@ class LogListScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('🐟', style: TextStyle(fontSize: 72)),
+                  const Text('🐟', style: TextStyle(fontSize: 64)),
                   const SizedBox(height: 16),
                   const Text(
                     'Henüz kayıt yok',
                     style: TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   const Text(
                     'İlk balığını kaydet!',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                    style: TextStyle(
+                        fontSize: 15, color: Color(0xFF8EA0B5)),
                   ),
                   const SizedBox(height: 32),
                   SizedBox(
@@ -92,9 +89,10 @@ class LogListScreen extends ConsumerWidget {
                         ref.invalidate(fishLogsProvider);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0F6E56),
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 24),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -103,7 +101,9 @@ class LogListScreen extends ConsumerWidget {
                       label: const Text(
                         'Yeni Kayıt Ekle',
                         style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
@@ -113,17 +113,16 @@ class LogListScreen extends ConsumerWidget {
           }
 
           return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(fishLogsProvider);
-            },
+            onRefresh: () async => ref.invalidate(fishLogsProvider),
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
               itemCount: logs.length,
               itemBuilder: (context, index) {
                 final log = logs[index];
-                return _LogCard(log: log, onDeleted: () {
-                  ref.invalidate(fishLogsProvider);
-                });
+                return _LogCard(
+                  log: log,
+                  onDeleted: () => ref.invalidate(fishLogsProvider),
+                );
               },
             ),
           );
@@ -143,7 +142,14 @@ class _LogCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: const Color(0xFF132236),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: AppColors.teal.withValues(alpha: 0.25),
+          width: 1,
+        ),
+      ),
       elevation: 3,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,9 +166,9 @@ class _LogCard extends ConsumerWidget {
                 fit: BoxFit.cover,
                 errorBuilder: (context2, err, stack) => Container(
                   height: 180,
-                  color: Colors.grey.shade200,
+                  color: const Color(0xFF0B1C33),
                   child: const Icon(Icons.image_not_supported,
-                      size: 48, color: Colors.grey),
+                      size: 48, color: AppColors.muted),
                 ),
               ),
             ),
@@ -179,54 +185,24 @@ class _LogCard extends ConsumerWidget {
                       child: Text(
                         log.fishType,
                         style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
                         ),
                       ),
                     ),
                     if (log.isReleased)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          border: Border.all(color: Colors.blue, width: 1.5),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          '🔄 Bırakıldı',
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.blue,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
+                      _Badge(label: '🔄 Bırakıldı'),
                     if (log.isPrivate) ...[
                       const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.shade50,
-                          border: Border.all(
-                              color: Colors.orange, width: 1.5),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          '🔒 Gizli',
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.orange,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
+                      _Badge(label: '🔒 Gizli'),
                     ],
                     if (!log.synced) ...[
                       const SizedBox(width: 6),
                       const Tooltip(
                         message: 'Senkronize edilmedi',
                         child: Icon(Icons.cloud_off,
-                            color: Colors.grey, size: 22),
+                            color: AppColors.muted, size: 22),
                       ),
                     ],
                   ],
@@ -238,21 +214,29 @@ class _LogCard extends ConsumerWidget {
                   children: [
                     if (log.weightKg != null) ...[
                       const Icon(Icons.monitor_weight_outlined,
-                          size: 20, color: Colors.grey),
+                          size: 20, color: AppColors.muted),
                       const SizedBox(width: 4),
                       Text(
                         '${log.weightKg!.toStringAsFixed(1)} kg',
-                        style: const TextStyle(fontSize: 15),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
                       const SizedBox(width: 16),
                     ],
                     if (log.lengthCm != null) ...[
                       const Icon(Icons.straighten,
-                          size: 20, color: Colors.grey),
+                          size: 20, color: AppColors.muted),
                       const SizedBox(width: 4),
                       Text(
                         '${log.lengthCm!.toStringAsFixed(1)} cm',
-                        style: const TextStyle(fontSize: 15),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ],
@@ -264,7 +248,7 @@ class _LogCard extends ConsumerWidget {
                   Text(
                     log.notes!,
                     style: const TextStyle(
-                        fontSize: 14, color: Colors.black87),
+                        fontSize: 14, color: Colors.white70),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -276,18 +260,18 @@ class _LogCard extends ConsumerWidget {
                 Row(
                   children: [
                     const Icon(Icons.access_time,
-                        size: 18, color: Colors.grey),
+                        size: 18, color: AppColors.muted),
                     const SizedBox(width: 4),
                     Text(
                       _formatDate(log.caughtAt),
                       style: const TextStyle(
-                          fontSize: 14, color: Colors.grey),
+                          fontSize: 14, color: AppColors.muted),
                     ),
                     const Spacer(),
                     TextButton.icon(
                       onPressed: () => _confirmDelete(context, ref),
                       style: TextButton.styleFrom(
-                          foregroundColor: Colors.red.shade400),
+                          foregroundColor: AppColors.danger),
                       icon: const Icon(Icons.delete_outline, size: 22),
                       label: const Text('Sil',
                           style: TextStyle(fontSize: 15)),
@@ -323,11 +307,10 @@ class _LogCard extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style:
-                ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger),
             child: const Text('Sil',
-                style: TextStyle(
-                    fontSize: 16, color: Colors.white)),
+                style: TextStyle(fontSize: 16, color: Colors.white)),
           ),
         ],
       ),
@@ -337,5 +320,29 @@ class _LogCard extends ConsumerWidget {
       await ref.read(fishLogRepositoryProvider).deleteLog(log.id);
       onDeleted();
     }
+  }
+}
+
+class _Badge extends StatelessWidget {
+  final String label;
+  const _Badge({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0B1C33),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 13,
+          color: Colors.white70,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 }

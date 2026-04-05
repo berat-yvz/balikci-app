@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+
+import 'package:balikci_app/app/theme.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../data/repositories/fish_log_repository.dart';
 
@@ -69,9 +72,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
       final userId = SupabaseService.auth.currentUser?.id ?? 'unknown';
       final fileName =
           'fish_logs/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
-      await SupabaseService.storage
-          .from('fish-photos')
-          .upload(fileName, file);
+      await SupabaseService.storage.from('fish-photos').upload(fileName, file);
       return SupabaseService.storage
           .from('fish-photos')
           .getPublicUrl(fileName);
@@ -87,7 +88,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
         const SnackBar(
           content: Text('Lütfen balık türü seçin',
               style: TextStyle(fontSize: 16)),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppColors.warning,
         ),
       );
       return;
@@ -113,9 +114,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
             ? double.tryParse(_lengthController.text)
             : null,
         photoUrl: photoUrl,
-        notes: _notesController.text.isNotEmpty
-            ? _notesController.text
-            : null,
+        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
         isPrivate: _isPrivate,
         released: _isReleased,
       );
@@ -125,7 +124,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
           const SnackBar(
             content: Text('Kayıt eklendi! 🎣',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
             duration: Duration(seconds: 2),
           ),
         );
@@ -137,7 +136,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
           const SnackBar(
             content: Text('Kayıt eklenemedi, tekrar deneyin',
                 style: TextStyle(fontSize: 16)),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.danger,
           ),
         );
       }
@@ -146,13 +145,50 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
     }
   }
 
+  // ── Shared input decoration ─────────────────────────────
+  InputDecoration _fieldDecoration({required String hint}) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(fontSize: 16, color: Color(0xFF8EA0B5)),
+      filled: true,
+      fillColor: const Color(0xFF132236),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide:
+            const BorderSide(color: Color(0xFF24415F), width: 1.5),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide:
+            const BorderSide(color: Color(0xFF24415F), width: 1.5),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.teal, width: 2),
+      ),
+    );
+  }
+
+  static const _labelStyle = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w700,
+    color: Colors.white,
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFF0A1628),
         title: const Text(
           '🎣 Yeni Balık Kaydı',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
         ),
         centerTitle: true,
       ),
@@ -161,15 +197,18 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Fotoğraf seç
+            // ── Fotoğraf seç ──────────────────────────────
             GestureDetector(
               onTap: _pickImage,
               child: Container(
                 height: 180,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: const Color(0xFF132236),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade300, width: 2),
+                  border: Border.all(
+                    color: AppColors.muted.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
                   image: _selectedImage != null
                       ? DecorationImage(
                           image: FileImage(_selectedImage!),
@@ -182,12 +221,15 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.add_a_photo,
-                              size: 56, color: Colors.grey),
+                              size: 56, color: Color(0xFF8EA0B5)),
                           SizedBox(height: 8),
                           Text(
                             'Fotoğraf Ekle',
                             style: TextStyle(
-                                fontSize: 18, color: Colors.grey),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF8EA0B5),
+                            ),
                           ),
                         ],
                       )
@@ -196,31 +238,39 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Balık türü seç
-            const Text(
-              'Balık Türü *',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            // ── Balık türü ────────────────────────────────
+            const Text('Balık Türü *', style: _labelStyle),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFF0F6E56), width: 2),
+                color: const Color(0xFF132236),
+                border: Border.all(color: AppColors.teal, width: 1.5),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: _selectedFishType,
-                  hint: const Text('Balık seçin...',
-                      style: TextStyle(fontSize: 15)),
+                  dropdownColor: const Color(0xFF132236),
+                  hint: const Text(
+                    'Balık seçin...',
+                    style: TextStyle(fontSize: 16, color: AppColors.muted),
+                  ),
+                  style: const TextStyle(fontSize: 16, color: Colors.white),
                   isExpanded: true,
-                  icon: const Icon(Icons.arrow_drop_down, size: 32),
+                  icon: const Icon(Icons.arrow_drop_down,
+                      size: 32, color: AppColors.muted),
                   items: _fishTypes
-                      .map((fish) => DropdownMenuItem(
-                            value: fish,
-                            child: Text(fish,
-                                style: const TextStyle(fontSize: 16)),
-                          ))
+                      .map(
+                        (fish) => DropdownMenuItem(
+                          value: fish,
+                          child: Text(
+                            fish,
+                            style: const TextStyle(
+                                fontSize: 16, color: Colors.white),
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (val) =>
                       setState(() => _selectedFishType = val),
@@ -229,38 +279,22 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Ağırlık ve Uzunluk yan yana
+            // ── Ağırlık ve Uzunluk ────────────────────────
             Row(
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Ağırlık (kg)',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text('Ağırlık (kg)', style: _labelStyle),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _weightController,
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
-                        style: const TextStyle(fontSize: 15),
-                        decoration: InputDecoration(
-                          hintText: '0.0',
-                          hintStyle: const TextStyle(fontSize: 15),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 16),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                                color: Colors.grey.shade400, width: 2),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                                color: Color(0xFF0F6E56), width: 2),
-                          ),
-                        ),
+                        style: const TextStyle(
+                            fontSize: 16, color: Colors.white),
+                        decoration: _fieldDecoration(hint: '0.0'),
                       ),
                     ],
                   ),
@@ -270,31 +304,15 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Uzunluk (cm)',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text('Uzunluk (cm)', style: _labelStyle),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _lengthController,
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
-                        style: const TextStyle(fontSize: 15),
-                        decoration: InputDecoration(
-                          hintText: '0.0',
-                          hintStyle: const TextStyle(fontSize: 15),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 16),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                                color: Colors.grey.shade400, width: 2),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                                color: Color(0xFF0F6E56), width: 2),
-                          ),
-                        ),
+                        style: const TextStyle(
+                            fontSize: 16, color: Colors.white),
+                        decoration: _fieldDecoration(hint: '0.0'),
                       ),
                     ],
                   ),
@@ -303,32 +321,34 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Geri bıraktım toggle
+            // ── Geri bıraktım toggle ──────────────────────
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: _isReleased
-                    ? Colors.blue.shade50
-                    : Colors.grey.shade50,
+                    ? const Color(0xFF0B1C33)
+                    : const Color(0xFF132236),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: _isReleased
-                      ? Colors.blue.shade300
-                      : Colors.grey.shade300,
-                  width: 2,
+                      ? AppColors.teal
+                      : AppColors.muted.withValues(alpha: 0.3),
+                  width: 1.5,
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.water, size: 32, color: Colors.blue),
+                  const Icon(Icons.water, size: 32, color: AppColors.teal),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Text(
                       'Geri bıraktım 🐟',
                       style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   Transform.scale(
@@ -337,7 +357,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                       value: _isReleased,
                       onChanged: (val) =>
                           setState(() => _isReleased = val),
-                      activeThumbColor: Colors.blue,
+                      activeThumbColor: AppColors.teal,
                     ),
                   ),
                 ],
@@ -345,33 +365,35 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Gizli kayıt toggle
+            // ── Gizli kayıt toggle ────────────────────────
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: _isPrivate
-                    ? Colors.orange.shade50
-                    : Colors.grey.shade50,
+                    ? const Color(0xFF0B1C33)
+                    : const Color(0xFF132236),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: _isPrivate
-                      ? Colors.orange.shade300
-                      : Colors.grey.shade300,
-                  width: 2,
+                      ? AppColors.accent
+                      : AppColors.muted.withValues(alpha: 0.3),
+                  width: 1.5,
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.lock_outline, size: 32,
-                      color: Colors.orange),
+                  const Icon(Icons.lock_outline,
+                      size: 32, color: AppColors.accent),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Text(
                       'Gizli kayıt',
                       style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   Transform.scale(
@@ -380,7 +402,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                       value: _isPrivate,
                       onChanged: (val) =>
                           setState(() => _isPrivate = val),
-                      activeThumbColor: Colors.orange,
+                      activeThumbColor: AppColors.accent,
                     ),
                   ),
                 ],
@@ -388,42 +410,46 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Not alanı
-            const Text(
-              'Not (isteğe bağlı)',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            // ── Not alanı ─────────────────────────────────
+            const Text('Not (isteğe bağlı)', style: _labelStyle),
             const SizedBox(height: 8),
             TextFormField(
               controller: _notesController,
               maxLines: 3,
-              style: const TextStyle(fontSize: 15),
+              style: const TextStyle(fontSize: 16, color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Nasıl bir gündü? Ne yedirdin?',
-                hintStyle:
-                    const TextStyle(fontSize: 15, color: Colors.grey),
+                hintStyle: const TextStyle(
+                    fontSize: 16, color: Color(0xFF8EA0B5)),
+                filled: true,
+                fillColor: const Color(0xFF132236),
                 contentPadding: const EdgeInsets.all(16),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      BorderSide(color: Colors.grey.shade400, width: 2),
+                  borderSide: const BorderSide(
+                      color: Color(0xFF24415F), width: 1.5),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                      color: Color(0xFF24415F), width: 1.5),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide:
-                      const BorderSide(color: Color(0xFF0F6E56), width: 2),
+                      const BorderSide(color: AppColors.teal, width: 2),
                 ),
               ),
             ),
             const SizedBox(height: 32),
 
-            // Kaydet butonu
+            // ── KAYDET butonu ─────────────────────────────
             SizedBox(
-              height: 60,
+              height: 56,
               child: ElevatedButton.icon(
                 onPressed: _isLoading ? null : _save,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F6E56),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -442,7 +468,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                 label: Text(
                   _isLoading ? 'Kaydediliyor...' : 'KAYDET',
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                      fontSize: 16, fontWeight: FontWeight.w700),
                 ),
               ),
             ),
