@@ -111,3 +111,7 @@ flutter_launcher_icons:
   min_sdk_android: 21
   ios: true
   remove_alpha_ios: true
+  adaptive_icon_background: "transparent"
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
+  web:
+    generate: false
