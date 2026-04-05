@@ -9,8 +9,10 @@ import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/preferences_provider.dart';
 
+// Core Widgets
+import 'package:balikci_app/core/widgets/splash_screen.dart';
+
 // Features — Auth
-import 'package:balikci_app/features/auth/splash_screen.dart';
 import 'package:balikci_app/features/auth/login_screen.dart';
 import 'package:balikci_app/features/auth/register_screen.dart';
 import 'package:balikci_app/features/auth/reset_password_screen.dart';
