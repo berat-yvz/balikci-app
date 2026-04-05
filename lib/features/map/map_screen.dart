@@ -6,7 +6,6 @@ import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
-import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
@@ -35,15 +34,11 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  static final LatLng _initialCenter = LatLng(41.015, 28.979); // Istanbul
 
   final SpotRepository _repository = SpotRepository();
   final CheckinRepository _checkinRepository = CheckinRepository();
   final ShopRepository _shopRepository = ShopRepository();
   final MapController _mapController = MapController();
-
-  /// FMTC basarisiz olursa ag uzerinden [NetworkTileProvider] (karo gorunur kalir).
-  TileProvider _tileProvider = NetworkTileProvider();
 
   List<SpotModel> _spots = const [];
   List<ShopModel> _shops = const [];
@@ -90,27 +85,8 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _initializeCacheAndLoad() async {
-    try {
-      await FMTCObjectBoxBackend().initialise();
-      if (mounted) {
-        setState(
-          () => _tileProvider = FMTCStore('balikci_map_h3').getTileProvider(),
-        );
-      }
-    } catch (_) {
-      // Cache yoksa _tileProvider NetworkTileProvider olarak kalir.
-    }
     await _loadSpots();
     await _loadShops();
-    // H5: Realtime ile check-in değişikliklerini yakalayacağız.
-    // Polling sadece "solukluk/yaşlandırma" için (created_at tabanlı) çalışsın diye tutuluyor.
-    _checkinPollTimer?.cancel();
-    _checkinPollTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
-      if (!mounted) return;
-      setState(() {});
-    });
-
-    _startCheckinsRealtime();
   }
 
   Future<void> _loadShops() async {
@@ -125,31 +101,6 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  void _startCheckinsRealtime() {
-    if (_checkinsRealtimeChannel != null) return;
-
-    try {
-      // Basit yaklaşım: checkins değişince global aktif check-in'i tekrar çekiyoruz.
-      // (Realtime event yoğunluğunda DB load'u artırmamak için _refreshActiveCheckins içi guard var.)
-      _checkinsRealtimeChannel = SupabaseService.client.channel(
-        'realtime:public:checkins',
-      );
-
-      _checkinsRealtimeChannel!
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'checkins',
-            callback: (payload) {
-              // Insert/Update/Delete geldiğinde aktif checkin listesini güncelle.
-              unawaited(_refreshActiveCheckins());
-            },
-          )
-          .subscribe();
-    } catch (_) {
-      // Realtime başarısız olursa polling ile yaşamaya devam ederiz.
-    }
-  }
 
   Future<void> _loadSpots() async {
     setState(() {
@@ -447,8 +398,10 @@ class _MapScreenState extends State<MapScreen> {
             child: FlutterMap(
               mapController: _mapController,
               options: MapOptions(
-                initialCenter: _initialCenter,
-                initialZoom: 10,
+                initialCenter: const LatLng(39.0, 35.0),
+                initialZoom: 6.0,
+                minZoom: 5.0,
+                maxZoom: 18.0,
                 onPositionChanged: (pos, _) {
                   final z = pos.zoom;
                   if ((z - _currentZoom).abs() >= 0.01 && mounted) {
@@ -464,9 +417,13 @@ class _MapScreenState extends State<MapScreen> {
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.balikciapp.balikci_app',
-                  tileProvider: _tileProvider,
+                  urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                  subdomains: const ['a', 'b', 'c', 'd'],
+                  maxZoom: 18,
+                  maxNativeZoom: 18,
+                  tileSize: 256,
+                  keepBuffer: 2,
+                  userAgentPackageName: 'com.balikci.app',
                 ),
                 if (_showShops) MarkerLayer(markers: _buildShopMarkers()),
                 if (_showSpots)
@@ -477,28 +434,18 @@ class _MapScreenState extends State<MapScreen> {
                       size: const Size(42, 42),
                       builder: (context, markers) {
                         return Container(
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
-                            color: AppColors.teal.withValues(alpha: 0.88),
+                            color: const Color(0xFF0F6E56),
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.foam.withValues(alpha: 0.85),
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.25),
-                                blurRadius: 10,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))],
                           ),
                           child: Center(
                             child: Text(
                               markers.length.toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w900,
-                              ),
+                              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
                             ),
                           ),
                         );
@@ -976,6 +923,14 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),
             ),
+          const Positioned(
+            bottom: 90,
+            right: 8,
+            child: Text(
+              '© CartoDB © OpenStreetMap',
+              style: TextStyle(fontSize: 9, color: Colors.black54),
+            ),
+          ),
         ],
       ),
     );

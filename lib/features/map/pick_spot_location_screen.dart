@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -20,25 +19,12 @@ class _PickSpotLocationScreenState extends State<PickSpotLocationScreen> {
   static final LatLng _fallback = LatLng(41.015, 28.979);
 
   final MapController _mapController = MapController();
-  TileProvider _tileProvider = NetworkTileProvider();
   LatLng? _picked;
 
   @override
   void initState() {
     super.initState();
     _picked = widget.initial;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      try {
-        await FMTCObjectBoxBackend().initialise();
-        if (mounted) {
-          setState(
-            () => _tileProvider = FMTCStore('balikci_map_h3').getTileProvider(),
-          );
-        }
-      } catch (e) {
-        debugPrint('FMTC tile cache başlatılamadı: $e');
-      }
-    });
   }
 
   void _confirm() {
@@ -78,9 +64,13 @@ class _PickSpotLocationScreenState extends State<PickSpotLocationScreen> {
         ),
         children: [
           TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.balikciapp.balikci_app',
-            tileProvider: _tileProvider,
+            urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+            subdomains: const ['a', 'b', 'c', 'd'],
+            maxZoom: 18,
+            maxNativeZoom: 18,
+            tileSize: 256,
+            keepBuffer: 2,
+            userAgentPackageName: 'com.balikci.app',
           ),
           if (_picked != null)
             MarkerLayer(
