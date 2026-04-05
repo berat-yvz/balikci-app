@@ -22,91 +22,106 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('tr_TR');
 
   final startupErrors = <String>[];
 
-  try {
-    await dotenv.load(fileName: '.env');
-  } catch (e) {
-    startupErrors.add(
-      ".env yüklenemedi. Kök dizinde '.env' olduğundan ve pubspec.yaml assets'te listelendiğinden emin ol.\n$e",
-    );
-  }
-
-  if (startupErrors.isEmpty) {
+  // Hata yakalamayı kolaylaştıran yardımcı
+  Future<void> safe(Future<void> Function() fn, String msg) async {
     try {
-      await Firebase.initializeApp();
+      await fn();
     } catch (e) {
-      startupErrors.add(
-        "Firebase başlatılamadı (genelde android/app/google-services.json eksik).\n$e",
-      );
+      startupErrors.add('$msg\n$e');
     }
   }
 
-  if (startupErrors.isEmpty) {
-    try {
-      await SupabaseService.initialize();
-    } catch (e) {
-      startupErrors.add(
-        "Supabase başlatılamadı (.env: SUPABASE_URL, SUPABASE_ANON_KEY).\n$e",
-      );
-    }
-  }
+  // ── Grup 1: Birbirinden bağımsız — paralel çalıştır ────────────────────
+  // Firebase: google-services.json'dan okur, dotenv'e ihtiyaç yok.
+  // dotenv, SharedPrefs ve date formatting da birbirinden bağımsız.
+  SharedPreferences? prefs;
+  await Future.wait([
+    initializeDateFormatting('tr_TR'),
+    safe(
+      () => dotenv.load(fileName: '.env'),
+      ".env yüklenemedi. Kök dizinde '.env' olduğundan ve pubspec.yaml assets'te listelendiğinden emin ol.",
+    ),
+    safe(
+      () => Firebase.initializeApp(),
+      "Firebase başlatılamadı (genelde android/app/google-services.json eksik).",
+    ),
+    SharedPreferences.getInstance().then((p) => prefs = p),
+  ]);
 
+  // AppDatabase: senkron singleton — binding init sonrası güvenli
   if (startupErrors.isEmpty) {
     try {
       final _ = AppDatabase.instance;
       SyncService(AppDatabase.instance).startListening();
     } catch (e) {
-      startupErrors.add("Yerel veritabanı başlatılamadı.\n$e");
+      startupErrors.add('Yerel veritabanı başlatılamadı.\n$e');
     }
   }
 
-  if (startupErrors.isEmpty) {
-    try {
-      await NotificationService.initialize();
-    } catch (e) {
-      startupErrors.add("Bildirim servisi başlatılamadı.\n$e");
-    }
+  if (startupErrors.isNotEmpty) {
+    runApp(ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs!)],
+      child: StartupErrorApp(errors: startupErrors),
+    ));
+    return;
   }
 
-  if (startupErrors.isEmpty) {
-    SupabaseService.client.auth.onAuthStateChange.listen((data) {
-      final user = data.session?.user;
-      if (user != null) {
-        unawaited(AuthRepository().ensureUserProfile(user));
-      }
-      if (data.event == AuthChangeEvent.passwordRecovery) {
-        final context = appNavigatorKey.currentContext;
-        if (context != null && context.mounted) {
-          GoRouter.of(context).go(AppRoutes.resetCallback);
-        }
-      }
-    });
+  // ── Grup 2: dotenv + Firebase gerektirir — paralel çalıştır ────────────
+  // Supabase: SUPABASE_URL / SUPABASE_ANON_KEY için dotenv gerekli.
+  // NotificationService: FCM için Firebase gerekli.
+  await Future.wait([
+    safe(
+      () => SupabaseService.initialize(),
+      'Supabase başlatılamadı (.env: SUPABASE_URL, SUPABASE_ANON_KEY).',
+    ),
+    safe(
+      () => NotificationService.initialize(),
+      'Bildirim servisi başlatılamadı.',
+    ),
+  ]);
 
-    final appLinks = AppLinks();
-    appLinks.uriLinkStream.listen((uri) async {
-      await SupabaseService.client.auth.getSessionFromUrl(uri);
-    });
-    try {
-      final initial = await appLinks.getInitialLink();
-      if (initial != null) {
-        await SupabaseService.client.auth.getSessionFromUrl(initial);
-      }
-    } catch (e) {
-      debugPrint('App link oturumu açılamadı: $e');
-    }
+  if (startupErrors.isNotEmpty) {
+    runApp(ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs!)],
+      child: StartupErrorApp(errors: startupErrors),
+    ));
+    return;
   }
 
-  final prefs = await SharedPreferences.getInstance();
+  // ── Auth dinleyici + App Links ──────────────────────────────────────────
+  SupabaseService.client.auth.onAuthStateChange.listen((data) {
+    final user = data.session?.user;
+    if (user != null) {
+      unawaited(AuthRepository().ensureUserProfile(user));
+    }
+    if (data.event == AuthChangeEvent.passwordRecovery) {
+      final context = appNavigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        GoRouter.of(context).go(AppRoutes.resetCallback);
+      }
+    }
+  });
+
+  final appLinks = AppLinks();
+  appLinks.uriLinkStream.listen((uri) async {
+    await SupabaseService.client.auth.getSessionFromUrl(uri);
+  });
+  try {
+    final initial = await appLinks.getInitialLink();
+    if (initial != null) {
+      await SupabaseService.client.auth.getSessionFromUrl(initial);
+    }
+  } catch (e) {
+    debugPrint('App link oturumu açılamadı: $e');
+  }
 
   runApp(
     ProviderScope(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-      child: startupErrors.isEmpty
-          ? const BalikciApp()
-          : StartupErrorApp(errors: startupErrors),
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs!)],
+      child: const BalikciApp(),
     ),
   );
 }
