@@ -4,7 +4,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
-import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/preferences_provider.dart';
 
@@ -39,7 +38,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: const Color(0xFF0F6E56),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
