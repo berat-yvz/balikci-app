@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/app/theme.dart';
-import 'package:balikci_app/core/services/weather_service.dart';
 import 'package:balikci_app/core/utils/fishing_weather_utils.dart';
 import 'package:balikci_app/data/models/hourly_weather_model.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
@@ -17,113 +16,85 @@ class WeatherScreen extends ConsumerStatefulWidget {
 }
 
 class _WeatherScreenState extends ConsumerState<WeatherScreen> {
-  WeatherModel? _selected;
-  bool _loading = true;
-
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _onRefresh();
-    });
-  }
-
-  Future<void> _load() async {
-    setState(() => _loading = true);
-    try {
-      final all = await WeatherService.getAllCaches();
-      if (!mounted) return;
-      WeatherModel? istanbul;
-      for (final w in all) {
-        if (w.regionKey == 'istanbul') {
-          istanbul = w;
-          break;
-        }
-      }
-      setState(() {
-        _selected = istanbul;
-      });
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+    // Artık otomatik yükleme provider tarafından yapılıyor
   }
 
   Future<void> _onRefresh() async {
     await ref.read(istanbulWeatherProvider.notifier).refresh();
-    await _load();
   }
 
   @override
   Widget build(BuildContext context) {
-    final hourlyAsync = ref.watch(istanbulWeatherProvider);
+    final weatherAsync = ref.watch(istanbulWeatherProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Hava Durumu')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _selected == null
-          ? _EmptyWeather(onRetry: _load)
-          : RefreshIndicator(
-              onRefresh: _onRefresh,
-              color: AppColors.primary,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  // ── İstanbul saatlik tahmin ──────────────
-                  Text(
-                    'Otomatik güncellenen İstanbul verileri',
-                    style: AppTextStyles.h3.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'İstanbul için en güncel saatlik tahmin burada.',
-                    style: AppTextStyles.body.copyWith(color: AppColors.muted),
-                  ),
-                  const SizedBox(height: 12),
-                  hourlyAsync.when(
-                    loading: () => Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    error: (_, _) => Text(
+      appBar: AppBar(
+        title: const Text('Hava Durumu'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _onRefresh,
+            tooltip: 'Hava durumunu güncelle',
+          ),
+        ],
+      ),
+      body: weatherAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => _EmptyWeather(onRetry: _onRefresh),
+        data: (data) => RefreshIndicator(
+          onRefresh: _onRefresh,
+          color: AppColors.primary,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // ── İstanbul saatlik tahmin ──────────────
+              Text(
+                'İstanbul',
+                style: AppTextStyles.h3.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              data.hourly.isEmpty
+                  ? Text(
                       'Hava verisi alınamadı',
                       style: AppTextStyles.caption.copyWith(
                         color: Colors.white70,
                       ),
-                    ),
-                    data: (hours) => SizedBox(
+                    )
+                  : SizedBox(
                       height: 130,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: hours.length,
+                        itemCount: data.hourly.length,
                         itemBuilder: (context, index) {
-                          return _HourlyWeatherCard(hour: hours[index]);
+                          return _HourlyWeatherCard(hour: data.hourly[index]);
                         },
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-                  if (_selected != null) ...[
-                    _WeatherHeroCard(weather: _selected!),
-                    const SizedBox(height: 16),
-                    _WeatherDetailGrid(weather: _selected!),
-                    const SizedBox(height: 16),
-                    _FishingTipsCard(weather: _selected!),
-                    const SizedBox(height: 24),
-                  ],
-
-                  if (_selected != null) ...[
-                    _UpdateInfo(weather: _selected!),
-                    const SizedBox(height: 16),
-                  ],
-                ],
-              ),
-            ),
+              if (data.current != null) ...[
+                _WeatherHeroCard(weather: data.current!),
+                const SizedBox(height: 16),
+                _WeatherDetailGrid(weather: data.current!),
+                const SizedBox(height: 16),
+                _FishingTipsCard(weather: data.current!),
+                const SizedBox(height: 16),
+                _UpdateInfo(
+                  weather: data.current!,
+                  lastUpdated: data.lastUpdated,
+                ),
+                const SizedBox(height: 16),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -426,22 +397,41 @@ class _FishingTipsCard extends StatelessWidget {
 
 class _UpdateInfo extends StatelessWidget {
   final WeatherModel weather;
-  const _UpdateInfo({required this.weather});
+  final DateTime lastUpdated;
+  const _UpdateInfo({required this.weather, required this.lastUpdated});
 
   @override
   Widget build(BuildContext context) {
-    final ago = DateTime.now().difference(weather.fetchedAt);
+    final ago = DateTime.now().difference(lastUpdated);
     final label = ago.inMinutes < 60
         ? '${ago.inMinutes} dakika önce güncellendi'
         : '${ago.inHours} saat önce güncellendi';
 
-    return Text(
-      '🕐 $label',
-      style: AppTextStyles.caption.copyWith(
-        color: AppColors.muted,
-        fontSize: 11,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.muted.withValues(alpha: 0.2),
+          width: 0.5,
+        ),
       ),
-      textAlign: TextAlign.center,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('🕐', style: TextStyle(fontSize: 14)),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.muted,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

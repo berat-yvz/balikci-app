@@ -137,15 +137,6 @@ class WeatherService {
     }
   }
 
-  /// Tüm cache kayıtlarını döner.
-  static Future<List<WeatherModel>> getAllCaches() async {
-    final response = await _db
-        .from('weather_cache')
-        .select()
-        .order('fetched_at');
-    return response.map<WeatherModel>(WeatherModel.fromJson).toList();
-  }
-
   static const double _istanbulLat = 41.0082;
   static const double _istanbulLng = 28.9784;
 
@@ -177,13 +168,15 @@ class WeatherService {
 
       final result = <HourlyWeatherModel>[];
       for (int i = 0; i < times.length; i++) {
-        result.add(HourlyWeatherModel.fromOpenMeteo(
-          timeStr: times[i] as String,
-          temperature: (temps[i] as num).toDouble(),
-          windspeed: (winds[i] as num).toDouble(),
-          precipitation: (precips[i] as num).toDouble(),
-          weatherCode: (codes[i] as num).toInt(),
-        ));
+        result.add(
+          HourlyWeatherModel.fromOpenMeteo(
+            timeStr: times[i] as String,
+            temperature: (temps[i] as num).toDouble(),
+            windspeed: (winds[i] as num).toDouble(),
+            precipitation: (precips[i] as num).toDouble(),
+            weatherCode: (codes[i] as num).toInt(),
+          ),
+        );
       }
       return result;
     } catch (_) {
