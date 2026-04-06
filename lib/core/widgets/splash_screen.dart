@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
+import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/preferences_provider.dart';
 
@@ -22,7 +23,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(milliseconds: 1200));
     if (!mounted) return;
 
     final isLoggedIn = ref.read(isLoggedInProvider);
@@ -38,24 +39,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A2A2F),
+      backgroundColor: const Color(0xFF132236),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SvgPicture.asset(
               'assets/images/logo.svg',
-              width: 120,
-              height: 120,
+              width: 180,
+              height: 180,
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'Balıkçı',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+            const SizedBox(height: 40),
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+              strokeWidth: 2,
             ),
           ],
         ),
