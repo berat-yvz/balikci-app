@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/app/theme.dart';
-import 'package:balikci_app/core/constants/weather_regions.dart';
 import 'package:balikci_app/core/services/weather_service.dart';
 import 'package:balikci_app/core/utils/fishing_weather_utils.dart';
 import 'package:balikci_app/data/models/hourly_weather_model.dart';
@@ -18,15 +17,15 @@ class WeatherScreen extends ConsumerStatefulWidget {
 }
 
 class _WeatherScreenState extends ConsumerState<WeatherScreen> {
-  final List<WeatherModel> _allRegions = [];
   WeatherModel? _selected;
-  String _selectedKey = 'istanbul';
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _onRefresh();
+    });
   }
 
   Future<void> _load() async {
@@ -34,35 +33,24 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     try {
       final all = await WeatherService.getAllCaches();
       if (!mounted) return;
+      WeatherModel? istanbul;
+      for (final w in all) {
+        if (w.regionKey == 'istanbul') {
+          istanbul = w;
+          break;
+        }
+      }
       setState(() {
-        _allRegions
-          ..clear()
-          ..addAll(all);
-        _selected = all.isNotEmpty
-            ? all.firstWhere(
-                (w) => w.regionKey == _selectedKey,
-                orElse: () => all.first,
-              )
-            : null;
-        if (_selected != null) _selectedKey = _selected!.regionKey ?? '';
+        _selected = istanbul;
       });
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  void _selectRegion(String key) {
-    final found = _allRegions.where((w) => w.regionKey == key);
-    if (found.isEmpty) return;
-    setState(() {
-      _selectedKey = key;
-      _selected = found.first;
-    });
-  }
-
   Future<void> _onRefresh() async {
-    await _load();
     await ref.read(istanbulWeatherProvider.notifier).refresh();
+    await _load();
   }
 
   @override
@@ -73,7 +61,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       appBar: AppBar(title: const Text('Hava Durumu')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : _allRegions.isEmpty
+          : _selected == null
           ? _EmptyWeather(onRetry: _load)
           : RefreshIndicator(
               onRefresh: _onRefresh,
@@ -120,55 +108,6 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // ── Bölge seçici ───────────────────────
-                  SizedBox(
-                    height: 36,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: weatherRegions.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 6),
-                      itemBuilder: (_, i) {
-                        final key = weatherRegions.keys.elementAt(i);
-                        final label = _regionLabel(key);
-                        final selected = key == _selectedKey;
-                        return GestureDetector(
-                          onTap: () => _selectRegion(key),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: selected
-                                  ? AppColors.primary.withValues(alpha: 0.25)
-                                  : Colors.transparent,
-                              border: Border.all(
-                                color: selected
-                                    ? AppColors.primary
-                                    : AppColors.muted.withValues(alpha: 0.3),
-                                width: selected ? 1.5 : 0.5,
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              label,
-                              style: AppTextStyles.caption.copyWith(
-                                color: selected
-                                    ? AppColors.primary
-                                    : AppColors.muted,
-                                fontWeight: selected
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
                   if (_selected != null) ...[
                     _WeatherHeroCard(weather: _selected!),
                     const SizedBox(height: 16),
@@ -187,22 +126,6 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
             ),
     );
   }
-
-  String _regionLabel(String key) => switch (key) {
-    'istanbul' => 'İstanbul',
-    'izmir' => 'İzmir',
-    'antalya' => 'Antalya',
-    'trabzon' => 'Trabzon',
-    'canakkale' => 'Çanakkale',
-    'bodrum' => 'Bodrum',
-    'fethiye' => 'Fethiye',
-    'sinop' => 'Sinop',
-    'samsun' => 'Samsun',
-    'mersin' => 'Mersin',
-    'mugla' => 'Muğla',
-    'balikesir' => 'Balıkesir',
-    _ => key,
-  };
 }
 
 // ── Alt widget'lar ──────────────────────────────────────────
