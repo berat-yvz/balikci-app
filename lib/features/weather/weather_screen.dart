@@ -490,8 +490,9 @@ class _WeatherHeroCard extends StatelessWidget {
               'Balıkçılık skoru: $score/100 — '
               '${FishingWeatherUtils.getScoreLabel(score)}',
               style: AppTextStyles.caption.copyWith(
+                fontSize: 15,
                 color: _scoreColor(score),
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -590,14 +591,15 @@ class _DetailTile extends StatelessWidget {
               Text(
                 label,
                 style: AppTextStyles.caption.copyWith(
-                  fontSize: 11,
+                  fontSize: 13,
                   color: AppColors.muted,
                 ),
               ),
               Text(
                 value,
                 style: AppTextStyles.caption.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
               ),
@@ -720,8 +722,7 @@ class _EmptyWeather extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Supabase weather_cache tablosu boş olabilir.\n'
-            'Edge Function deploy edildi mi?',
+            'Hava durumu yüklenemedi.\nLütfen internet bağlantınızı kontrol edin.',
             style: AppTextStyles.body.copyWith(color: AppColors.muted),
             textAlign: TextAlign.center,
           ),

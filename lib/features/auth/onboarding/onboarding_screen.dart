@@ -82,6 +82,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     context.go(AppRoutes.home);
   }
 
+  String get _bottomLabel {
+    if (_currentPage == 1 && !_locationAllowed) return 'Konum İzni Ver';
+    if (_currentPage == 2 && !_notifAllowed) return 'Bildirimlere İzin Ver';
+    if (_currentPage == 3) return 'Hadi Başlayalım!';
+    return 'İleri';
+  }
+
+  VoidCallback get _primaryAction {
+    if (_currentPage == 1 && !_locationAllowed) return _requestLocation;
+    if (_currentPage == 2 && !_notifAllowed) return _requestNotifications;
+    if (_currentPage == 3) return _finishOnboarding;
+    return _nextPage;
+  }
+
   void _nextPage() {
     if (_currentPage < 3) {
       _pageController.nextPage(
@@ -199,9 +213,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                     children: [
                       const StepWelcome(),
                       _OnboardingPage(
-                        title: 'Seni Nerede Arayayım?',
-                        subtitle:
-                            'Yakınındaki meraları, aktif bildirimleri ve hava durumunu gösterebilmem için konumuna ihtiyacım var.',
+                        title: _locationAllowed
+                            ? 'Konum İzni Verildi ✓'
+                            : 'Seni Nerede Arayayım?',
+                        subtitle: _locationAllowed
+                            ? 'Harika! Yakınındaki meraları ve hava durumunu görebilirsin.'
+                            : 'Yakınındaki meraları, aktif bildirimleri ve hava durumunu gösterebilmem için konumuna ihtiyacım var.',
                         illustration: AnimatedBuilder(
                           animation: _pinDropController,
                           builder: (context, _) {
@@ -212,18 +229,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                             );
                           },
                         ),
-                        primaryLabel: _locationAllowed
-                            ? 'Konum izni verildi ✓'
-                            : 'Konum İzni Ver',
-                        primaryEnabled: !_locationAllowed && !_busyLocation,
-                        onPrimary: _requestLocation,
-                        secondaryLabel: 'İstersen sonra',
-                        onSecondary: () => _nextPage(),
                       ),
                       _OnboardingPage(
-                        title: 'Balık Tutulurken Haberdar Ol',
-                        subtitle:
-                            'Favori merana yeni bildirim gelince, yakında yoğunluk artınca veya sabah hava ideale dönünce seni bilgilendireyim.',
+                        title: _notifAllowed
+                            ? 'Bildirimler Açık ✓'
+                            : 'Balık Tutulurken Haberdar Ol',
+                        subtitle: _notifAllowed
+                            ? 'Harika! Favori meranızda yoğunluk artınca seni haber vereceğiz.'
+                            : 'Favori merana yeni bildirim gelince, yakında yoğunluk artınca veya sabah hava ideale dönünce seni bilgilendireyim.',
                         illustration: AnimatedBuilder(
                           animation: _bellRippleController,
                           builder: (context, _) {
@@ -234,24 +247,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                             );
                           },
                         ),
-                        primaryLabel: _notifAllowed
-                            ? 'Bildirim izni verildi ✓'
-                            : 'Bildirimlere İzin Ver',
-                        primaryEnabled: !_notifAllowed && !_busyNotif,
-                        onPrimary: _requestNotifications,
-                        secondaryLabel: 'İstersen sonra',
-                        onSecondary: () => _nextPage(),
                       ),
-                      _OnboardingPage(
+                      const _OnboardingPage(
                         title: 'Her Şey Hazır! 🎣',
                         subtitle:
                             'Haritayı aç, yakınındaki meralara bak.\nİlk bildirimi yap, topluluğa katıl.',
-                        illustration: const _FishingHeroIllustration(),
-                        primaryLabel: 'Hadi Başlayalım!',
-                        primaryEnabled: true,
-                        onPrimary: _finishOnboarding,
-                        secondaryLabel: null,
-                        onSecondary: null,
+                        illustration: _FishingHeroIllustration(),
                       ),
                     ],
                   ),
@@ -291,10 +292,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                       const SizedBox(height: 10),
                       SizedBox(
                         width: double.infinity,
-                        height: 48,
+                        height: 52,
                         child: ElevatedButton(
-                          onPressed: _nextPage,
-                          child: Text(_currentPage == 3 ? 'Hadi Başlayalım!' : 'İleri'),
+                          onPressed: _primaryAction,
+                          child: Text(_bottomLabel),
                         ),
                       ),
                     ],
@@ -314,22 +315,10 @@ class _OnboardingPage extends StatelessWidget {
   final String subtitle;
   final Widget illustration;
 
-  final String primaryLabel;
-  final bool primaryEnabled;
-  final VoidCallback onPrimary;
-
-  final String? secondaryLabel;
-  final VoidCallback? onSecondary;
-
   const _OnboardingPage({
     required this.title,
     required this.subtitle,
     required this.illustration,
-    required this.primaryLabel,
-    required this.primaryEnabled,
-    required this.onPrimary,
-    required this.secondaryLabel,
-    required this.onSecondary,
   });
 
   @override
@@ -375,47 +364,14 @@ class _OnboardingPage extends StatelessWidget {
                                 fontSize: 18,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 8),
                             Text(
                               subtitle,
                               style: AppTextStyles.body.copyWith(
-                                color: AppColors.foam.withValues(alpha: 0.78),
-                                fontSize: 13,
+                                color: AppColors.foam.withValues(alpha: 0.82),
+                                fontSize: 15,
                               ),
                             ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 48,
-                              child: ElevatedButton(
-                                onPressed: primaryEnabled ? onPrimary : null,
-                                child: Text(primaryLabel),
-                              ),
-                            ),
-                            if (secondaryLabel != null) ...[
-                              const SizedBox(height: 8),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 48,
-                                child: OutlinedButton(
-                                  onPressed: onSecondary,
-                                  style: OutlinedButton.styleFrom(
-                                    side: BorderSide(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.18,
-                                      ),
-                                    ),
-                                    foregroundColor: AppColors.foam.withValues(
-                                      alpha: 0.90,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  child: Text(secondaryLabel!),
-                                ),
-                              ),
-                            ],
                           ],
                         ),
                       ),

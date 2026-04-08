@@ -72,16 +72,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const ListTile(
-            leading: Icon(Icons.notifications_outlined, color: Colors.white70),
-            title: Text('Bildirimler'),
-            subtitle: Text('Bildirim tercihlerini düzenle'),
+          ListTile(
+            leading: const Icon(Icons.notifications_outlined, color: AppColors.teal),
+            title: const Text('Bildirimler',
+                style: TextStyle(fontWeight: FontWeight.w700)),
+            subtitle: const Text('Bildirim tercihlerini düzenle'),
+            trailing: const Icon(Icons.chevron_right, color: Colors.white38),
+            onTap: () => context.push(AppRoutes.notificationsSettings),
           ),
           const Divider(height: 32),
-          const ListTile(
-            leading: Icon(Icons.privacy_tip_outlined, color: Colors.white70),
-            title: Text('Gizlilik'),
-            subtitle: Text('Hesap ve görünürlük ayarları'),
+          ListTile(
+            leading: const Icon(Icons.privacy_tip_outlined,
+                color: Colors.white70),
+            title: const Text('Gizlilik',
+                style: TextStyle(fontWeight: FontWeight.w700)),
+            subtitle: const Text('Yakında'),
+            enabled: false,
           ),
           const SizedBox(height: 32),
           const Divider(),

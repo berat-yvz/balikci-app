@@ -78,7 +78,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
     if (pos == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Konum alinamadi. Izin veya GPS acik mi kontrol edin.'),
+          content: Text('Konum alınamadı. İzin veya GPS açık mı kontrol edin.'),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -120,7 +120,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
     if (_lat == null || _lng == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Konum secin (GPS veya harita)'),
+          content: Text('Konum seçin (GPS veya harita)'),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -159,7 +159,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isEdit ? 'Mera guncellendi' : 'Mera eklendi'),
+          content: Text(_isEdit ? 'Mera güncellendi' : 'Mera eklendi'),
           backgroundColor: AppColors.pinPublic,
         ),
       );
@@ -180,7 +180,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? 'Mera duzenle' : 'Mera ekle')),
+      appBar: AppBar(title: Text(_isEdit ? 'Mera Düzenle' : 'Mera Ekle')),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -189,8 +189,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
             TextFormField(
               controller: _nameCtrl,
               decoration: const InputDecoration(
-                labelText: 'Mera adi',
-                border: OutlineInputBorder(),
+                labelText: 'Mera Adı',
               ),
               textCapitalization: TextCapitalization.sentences,
               validator: (v) =>
@@ -200,8 +199,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
             TextFormField(
               controller: _descCtrl,
               decoration: const InputDecoration(
-                labelText: 'Aciklama (istege bagli)',
-                border: OutlineInputBorder(),
+                labelText: 'Açıklama (isteğe bağlı)',
               ),
               maxLines: 3,
               textCapitalization: TextCapitalization.sentences,
@@ -209,8 +207,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
             const SizedBox(height: 16),
             InputDecorator(
               decoration: const InputDecoration(
-                labelText: 'Tur',
-                border: OutlineInputBorder(),
+                labelText: 'Tür',
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
@@ -231,7 +228,6 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
             InputDecorator(
               decoration: const InputDecoration(
                 labelText: 'Gizlilik',
-                border: OutlineInputBorder(),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
@@ -274,21 +270,31 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _saving ? null : _pickOnMap,
                     icon: const Icon(Icons.map),
-                    label: const Text('Haritada sec'),
+                    label: const Text('Haritada Seç'),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 28),
-            FilledButton(
-              onPressed: _saving ? null : _submit,
-              child: _saving
-                  ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Kaydet'),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: FilledButton(
+                onPressed: _saving ? null : _submit,
+                child: _saving
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text(
+                        'Kaydet',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+              ),
             ),
           ],
         ),

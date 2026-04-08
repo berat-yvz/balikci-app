@@ -270,8 +270,10 @@ class _CheckinScreenState extends State<CheckinScreen> {
                     Text(spot.name, style: AppTextStyles.h2),
                     const SizedBox(height: 8),
                     Text(
-                      'Konum dogrulama: GPS ±${AppConstants.checkinRadiusMeters}m',
-                      style: AppTextStyles.body,
+                      'Mera yakınında olduğunuz doğrulanacak.',
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.muted,
+                      ),
                     ),
                     const SizedBox(height: 16),
 
@@ -382,12 +384,12 @@ class _SegmentSelector extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTextStyles.caption.copyWith(
+          style: AppTextStyles.body.copyWith(
             color: AppColors.muted,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Row(
           children: List.generate(options.length, (i) {
             final isSelected = options[i] == value;
@@ -396,8 +398,8 @@ class _SegmentSelector extends StatelessWidget {
                 onTap: () => onChanged(options[i]),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 160),
-                  margin: EdgeInsets.only(right: i < options.length - 1 ? 4 : 0),
-                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  margin: EdgeInsets.only(right: i < options.length - 1 ? 5 : 0),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
                     color: isSelected ? AppColors.primaryLight : Colors.transparent,
                     border: Border.all(
@@ -406,15 +408,16 @@ class _SegmentSelector extends StatelessWidget {
                           : AppColors.muted.withValues(alpha: 0.4),
                       width: isSelected ? 1.5 : 0.5,
                     ),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     displayLabels[i],
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.caption.copyWith(
+                    style: TextStyle(
+                      fontSize: 15,
                       color: isSelected ? AppColors.primary : AppColors.muted,
                       fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w400,
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                 ),

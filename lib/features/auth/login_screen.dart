@@ -137,7 +137,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         dialogError!,
                         style: const TextStyle(
                           color: AppColors.danger,
-                          fontSize: 12,
+                          fontSize: 15,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -376,11 +376,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 onPressed: authState.isLoading
                                     ? null
                                     : _showForgotPasswordDialog,
-                                child: Text(
+                                style: TextButton.styleFrom(
+                                  minimumSize: const Size(48, 48),
+                                  foregroundColor: AppColors.primary,
+                                ),
+                                child: const Text(
                                   'Şifremi Unuttum',
-                                  style: AppTextStyles.caption.copyWith(
-                                    color: AppColors.primary,
-                                    fontSize: 13,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
@@ -506,9 +510,9 @@ class _LogoLockup extends StatelessWidget {
             Text(
               'Super App',
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.white.withValues(alpha: 0.75),
                 letterSpacing: 1.5,
               ),
             ),

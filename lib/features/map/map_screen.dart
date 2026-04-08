@@ -623,7 +623,7 @@ class _MapScreenState extends State<MapScreen> {
                                                                     color: Colors
                                                                         .white70,
                                                                     fontSize:
-                                                                        11,
+                                                                        13,
                                                                   ),
                                                             ),
                                                           ),
@@ -981,7 +981,7 @@ class _PrivacyChip extends StatelessWidget {
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.w800,
-          fontSize: 11,
+          fontSize: 13,
         ),
       ),
     );
@@ -1068,7 +1068,7 @@ class _LayerToggleButton extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: fg,
-                  fontSize: 10,
+                  fontSize: 13,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -1295,8 +1295,8 @@ class _MiniStat extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: AppColors.foam.withValues(alpha: 0.70),
-            fontSize: 11,
+            color: AppColors.foam.withValues(alpha: 0.75),
+            fontSize: 13,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -1306,7 +1306,7 @@ class _MiniStat extends StatelessWidget {
           style: const TextStyle(
             color: AppColors.foam,
             fontWeight: FontWeight.w900,
-            fontSize: 13,
+            fontSize: 15,
           ),
         ),
       ],

@@ -41,52 +41,107 @@ class _PickSpotLocationScreenState extends State<PickSpotLocationScreen> {
   @override
   Widget build(BuildContext context) {
     final center = _picked ?? widget.initial ?? _fallback;
+    final bottomPad = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Konum sec'),
-        actions: [
-          IconButton(
-            onPressed: _confirm,
-            icon: const Icon(Icons.check),
-            tooltip: 'Sec',
-          ),
-        ],
-      ),
-      body: FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(
-          initialCenter: center,
-          initialZoom: 14,
-          onTap: (_, point) {
-            setState(() => _picked = point);
-          },
-        ),
+      appBar: AppBar(title: const Text('Konum Seç')),
+      body: Stack(
         children: [
-          TileLayer(
-            urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-            subdomains: const ['a', 'b', 'c', 'd'],
-            maxZoom: 18,
-            maxNativeZoom: 18,
-            tileSize: 256,
-            keepBuffer: 2,
-            userAgentPackageName: 'com.balikci.app',
-          ),
-          if (_picked != null)
-            MarkerLayer(
-              markers: [
-                Marker(
-                  point: _picked!,
-                  width: 44,
-                  height: 44,
-                  child: Icon(
-                    Icons.place,
-                    color: AppColors.pinPublic,
-                    size: 40,
-                  ),
-                ),
-              ],
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: center,
+              initialZoom: 14,
+              onTap: (_, point) {
+                setState(() => _picked = point);
+              },
             ),
+            children: [
+              TileLayer(
+                urlTemplate:
+                    'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                subdomains: const ['a', 'b', 'c', 'd'],
+                maxZoom: 18,
+                maxNativeZoom: 18,
+                tileSize: 256,
+                keepBuffer: 2,
+                userAgentPackageName: 'com.balikci.app',
+              ),
+              if (_picked != null)
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _picked!,
+                      width: 48,
+                      height: 48,
+                      child: const Icon(
+                        Icons.place,
+                        color: AppColors.pinPublic,
+                        size: 44,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+
+          // Üst hint banner
+          Positioned(
+            top: 12,
+            left: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.navy.withValues(alpha: 0.90),
+                borderRadius: BorderRadius.circular(14),
+                border:
+                    Border.all(color: Colors.white.withValues(alpha: 0.12)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.touch_app_outlined,
+                      color: AppColors.teal, size: 22),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _picked == null
+                          ? 'Mera konumunu işaretlemek için haritaya dokun'
+                          : 'Konum seçildi. Onaylamak için aşağıdaki butona bas.',
+                      style: const TextStyle(
+                        color: AppColors.foam,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Alt onay butonu
+          Positioned(
+            bottom: bottomPad + 16,
+            left: 16,
+            right: 16,
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: _picked != null ? _confirm : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _picked != null
+                      ? AppColors.teal
+                      : AppColors.muted,
+                ),
+                icon: const Icon(Icons.check_circle_outline),
+                label: const Text(
+                  'Bu Konumu Onayla',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

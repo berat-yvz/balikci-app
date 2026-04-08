@@ -395,7 +395,7 @@ class _ScoreRow extends StatelessWidget {
                   children: [
                     const Text(
                       'Toplam Puan',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -432,7 +432,7 @@ class _ScoreRow extends StatelessWidget {
                   children: [
                     const Text(
                       'Sürdürülebilirlik',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -547,7 +547,7 @@ class _RankProgress extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Sonraki: $nextRank. $xpToNext puan kaldı.',
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
             ),
           ],
         ),
@@ -668,7 +668,7 @@ class _StatBox extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               label,
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
             ),
           ],
         ),

@@ -52,8 +52,8 @@ class StepWelcome extends StatelessWidget {
                       Text(
                         'Gerçek balıkçılardan anlık mera raporları.\nHava, akıntı, balık yoğunluğu — tek uygulamada.',
                         style: AppTextStyles.body.copyWith(
-                          color: AppColors.foam.withValues(alpha: 0.72),
-                          fontSize: 13.5,
+                          color: AppColors.foam.withValues(alpha: 0.82),
+                          fontSize: 15,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -141,16 +141,16 @@ class _FeatureRow extends StatelessWidget {
                 title,
                 style: AppTextStyles.body.copyWith(
                   color: AppColors.foam,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
                 ),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 4),
               Text(
                 description,
                 style: AppTextStyles.body.copyWith(
-                  color: AppColors.foam.withValues(alpha: 0.62),
-                  fontSize: 12,
+                  color: AppColors.foam.withValues(alpha: 0.75),
+                  fontSize: 14,
                 ),
               ),
             ],

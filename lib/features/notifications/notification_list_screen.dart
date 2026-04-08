@@ -36,7 +36,7 @@ class NotificationListScreen extends ConsumerWidget {
               }
             },
             icon: const Icon(Icons.done_all_outlined),
-            label: const Text('Tümünü Okundu İşaretle'),
+            label: const Text('Tümünü Oku'),
           ),
         ],
       ),
@@ -168,6 +168,7 @@ class _NotificationTile extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.caption.copyWith(
+                        fontSize: 15,
                         color: AppColors.muted,
                       ),
                     ),
