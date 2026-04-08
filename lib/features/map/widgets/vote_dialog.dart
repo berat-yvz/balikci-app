@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/services/score_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:balikci_app/data/repositories/checkin_repository.dart';
@@ -104,15 +107,22 @@ class _VoteDialogState extends State<VoteDialog> {
           return;
         }
 
-        // Pozitif oy: bildirim sahibine haber ver
+        // Pozitif oy: bildirim sahibine puan + bildirim ver
         final ownerId = widget.checkin.userId;
         if (vote && ownerId != uid) {
-          await NotificationRepository().sendNotification(
-            userId: ownerId,
-            title: '👍 Bildiriminiz Doğru Bulundu',
-            body: 'Bir balıkçı bildiriminizi doğru olarak değerlendirdi.',
-            data: {'type': 'vote', 'spot_id': widget.checkin.spotId},
+          unawaited(ScoreService.award(ownerId, ScoreSource.correctVote));
+          unawaited(
+            NotificationRepository().sendNotification(
+              userId: ownerId,
+              title: '👍 Bildiriminiz Doğru Bulundu',
+              body: 'Bir balıkçı bildiriminizi doğru olarak değerlendirdi.',
+              data: {'type': 'vote', 'spot_id': widget.checkin.spotId},
+            ),
           );
+        }
+        // Yanlış oy: bildirim sahibinin puanını düş
+        if (!vote && ownerId != uid) {
+          unawaited(ScoreService.award(ownerId, ScoreSource.wrongReport));
         }
       }
 

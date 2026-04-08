@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:io';
 
@@ -10,6 +11,7 @@ import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
+import 'package:balikci_app/core/services/score_service.dart';
 import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/data/repositories/notification_repository.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
@@ -178,13 +180,18 @@ class _CheckinScreenState extends State<CheckinScreen> {
         _createdCheckin = created;
       });
 
+      // Kullanıcıya check-in puanı ver (EXIF doğrulaması yoksa unverified)
+      unawaited(ScoreService.award(uid, ScoreSource.checkinUnverified));
+
       // Mera sahibi farklı biriyse ona bildirim gönder
       if (spot.userId != uid) {
-        await NotificationRepository().sendNotification(
-          userId: spot.userId,
-          title: '🎣 Meranızda Balık Var!',
-          body: '${spot.name} merasında yeni bildirim geldi.',
-          data: {'type': 'checkin', 'spot_id': spot.id},
+        unawaited(
+          NotificationRepository().sendNotification(
+            userId: spot.userId,
+            title: '🎣 Meranızda Balık Var!',
+            body: '${spot.name} merasında yeni bildirim geldi.',
+            data: {'type': 'checkin', 'spot_id': spot.id},
+          ),
         );
       }
     } catch (e) {

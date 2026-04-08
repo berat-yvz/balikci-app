@@ -52,7 +52,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         : null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil')),
+      appBar: AppBar(
+        title: profileAsync.when(
+          data: (u) => Text(
+            widget.userId != null && u != null ? u.username : 'Profil',
+          ),
+          loading: () => const Text('Profil'),
+          error: (error, stack) => const Text('Profil'),
+        ),
+      ),
       body: profileAsync.when(
         data: (user) {
           if (user == null) {
@@ -251,17 +259,32 @@ class _ProfileContent extends ConsumerWidget {
           _SectionTitle(title: 'Hızlı İşlemler'),
           const SizedBox(height: 10),
           if (isSelf) ...[
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () => context.go(AppRoutes.fishLog),
+                    icon: const Icon(Icons.list_alt_outlined),
+                    label: const Text('Günlüğüm'),
+                  ),
                 ),
-                onPressed: () => context.go(AppRoutes.fishLog),
-                icon: const Icon(Icons.list_alt_outlined),
-                label: const Text('Günlüğüm'),
-              ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1A2F47),
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () => context.push(AppRoutes.fishLogStats),
+                    icon: const Icon(Icons.bar_chart_rounded),
+                    label: const Text('İstatistik'),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 10),
             SizedBox(
@@ -468,18 +491,20 @@ class _RankProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Eşikler score-calculator Edge Function ile birebir uyumlu:
+    // acemi=0, olta_kurdu=500, usta=2000, deniz_reisi=5000
     final thresholds = <String, int>{
-      'acemi': 100,
-      'olta_kurdu': 500,
-      'usta': 2000,
-      'deniz_reisi': 2000,
+      'acemi': 500,
+      'olta_kurdu': 2000,
+      'usta': 5000,
+      'deniz_reisi': 5000,
     };
 
     final lower = switch (currentRank) {
       'acemi' => 0,
-      'olta_kurdu' => 100,
-      'usta' => 500,
-      'deniz_reisi' => 2000,
+      'olta_kurdu' => 500,
+      'usta' => 2000,
+      'deniz_reisi' => 5000,
       _ => 0,
     };
 
@@ -518,9 +543,9 @@ class _RankProgress extends StatelessWidget {
 
     final xpToNext = (next - totalScore).clamp(0, next);
     final nextRank = switch (currentRank) {
-      'acemi' => 'Olta Kurdu',
-      'olta_kurdu' => 'Usta',
-      'usta' => 'Deniz Reisi',
+      'acemi' => 'Olta Kurdu (500 puan)',
+      'olta_kurdu' => 'Usta (2.000 puan)',
+      'usta' => 'Deniz Reisi (5.000 puan)',
       _ => 'Olta Kurdu',
     };
 

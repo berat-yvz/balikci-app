@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/services/score_service.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../data/repositories/fish_log_repository.dart';
@@ -138,6 +140,12 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
         released: _isReleased,
         weatherSnapshot: weatherSnapshot,
       );
+
+      // Gizli değilse puan ver
+      if (!_isPrivate) {
+        final source = _isReleased ? ScoreSource.releaseExif : ScoreSource.fishLogPublic;
+        unawaited(ScoreService.award(userId, source));
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

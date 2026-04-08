@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/models/fish_log_model.dart';
@@ -78,6 +80,19 @@ class _StatsScreenState extends State<StatsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('İstatistiklerim')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          await context.push(AppRoutes.fishLogAdd);
+          _load(); // Geri dönünce yenile
+        },
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add, size: 26),
+        label: const Text(
+          'Yeni Kayıt',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        ),
+      ),
       body: _logs.isEmpty
           ? const Center(child: Text('Henüz av kaydın yok.'))
           : ListView(

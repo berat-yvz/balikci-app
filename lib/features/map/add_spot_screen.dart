@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/location_service.dart';
+import 'package:balikci_app/core/services/score_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/repositories/auth_repository.dart';
@@ -156,6 +159,11 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
               : _descCtrl.text.trim(),
         });
       }
+      // Yeni mera oluşturulduysa (güncelleme değil) puan ver
+      if (!_isEdit && _privacy == 'public') {
+        unawaited(ScoreService.award(uid, ScoreSource.spotPublic));
+      }
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
