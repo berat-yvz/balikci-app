@@ -266,8 +266,9 @@ class _MapScreenState extends State<MapScreen> {
         .map(
           (spot) => Marker(
             point: LatLng(spot.lat, spot.lng),
-            width: _currentZoom > 13 ? 56 : 48,
-            height: _currentZoom > 13 ? 56 : 48,
+            // Zoom > 13'te isim etiketi için ekstra yükseklik
+            width: _currentZoom > 13 ? 72 : 52,
+            height: _currentZoom > 13 ? 80 : 52,
             child: GestureDetector(
               onTap: () => _selectSpot(spot),
               child: _buildSpotMarker(spot),
@@ -290,39 +291,25 @@ class _MapScreenState extends State<MapScreen> {
         .toList();
   }
 
-  double _getCheckinOpacity(DateTime? expiresAt) {
-    if (expiresAt == null) return 0.3;
-    final remaining = expiresAt.difference(DateTime.now());
-    if (remaining.isNegative) return 0.3;
-    if (remaining.inMinutes < 30) return 0.5;
-    if (remaining.inMinutes < 60) return 0.7;
-    return 1.0;
-  }
-
   Widget _buildSpotMarker(SpotModel spot) {
     final checkins = _activeCheckinsBySpotId[spot.id];
     final activeCount = checkins?.where((c) => !c.isStale).length ?? 0;
-    final hasStale = checkins?.any((c) => c.isStale) ?? false;
 
-    // En uzun süresi kalan check-in'in expiresAt'ini bul
-    DateTime? bestExpiresAt;
+    // En son check-in'den bu yana geçen süre (dakika) — SpotMarker'ın
+    // smooth solma ve renk tonu sistemini besler.
+    int? ageMinutes;
     if (checkins != null && checkins.isNotEmpty) {
-      for (final c in checkins) {
-        if (bestExpiresAt == null ||
-            (c.expiresAt != null && c.expiresAt!.isAfter(bestExpiresAt))) {
-          bestExpiresAt = c.expiresAt;
-        }
-      }
+      // Liste createdAt desc sıralıdır; ilk eleman en yeni check-in.
+      ageMinutes =
+          DateTime.now().difference(checkins.first.createdAt).inMinutes;
     }
 
-    return Opacity(
-      opacity: _getCheckinOpacity(bestExpiresAt),
-      child: SpotMarker(
-        privacyLevel: spot.privacyLevel,
-        activeCheckinCount: activeCount,
-        hasStaleCheckins: hasStale,
-        zoom: _currentZoom,
-      ),
+    return SpotMarker(
+      privacyLevel: spot.privacyLevel,
+      activeCheckinCount: activeCount,
+      checkinAgeMinutes: ageMinutes,
+      zoom: _currentZoom,
+      spotName: spot.name,
     );
   }
 
