@@ -26,6 +26,17 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     await ref.read(istanbulWeatherProvider.notifier).refresh();
   }
 
+  List<HourlyWeatherModel> _hoursFromNow(List<HourlyWeatherModel> source) {
+    final now = DateTime.now();
+    final currentHour = DateTime(now.year, now.month, now.day, now.hour);
+    final filtered = source.where((h) => !h.time.isBefore(currentHour)).toList()
+      ..sort((a, b) => a.time.compareTo(b.time));
+
+    // Önümüzdeki 12 saat, okunabilirlik için yeterli.
+    if (filtered.length > 12) return filtered.take(12).toList();
+    return filtered;
+  }
+
   @override
   Widget build(BuildContext context) {
     final weatherAsync = ref.watch(istanbulWeatherProvider);
@@ -66,16 +77,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                         color: Colors.white70,
                       ),
                     )
-                  : SizedBox(
-                      height: 130,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: data.hourly.length,
-                        itemBuilder: (context, index) {
-                          return _HourlyWeatherCard(hour: data.hourly[index]);
-                        },
-                      ),
-                    ),
+                  : _HourlyWeatherChart(hours: _hoursFromNow(data.hourly)),
               const SizedBox(height: 24),
 
               if (data.current != null) ...[
@@ -101,46 +103,166 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
 
 // ── Alt widget'lar ──────────────────────────────────────────
 
-class _HourlyWeatherCard extends StatelessWidget {
-  final HourlyWeatherModel hour;
-  const _HourlyWeatherCard({required this.hour});
+class _HourlyWeatherChart extends StatelessWidget {
+  final List<HourlyWeatherModel> hours;
+  const _HourlyWeatherChart({required this.hours});
 
   @override
   Widget build(BuildContext context) {
+    if (hours.isEmpty) {
+      return Text(
+        'Saatlik veri şu an için yok',
+        style: AppTextStyles.caption.copyWith(color: Colors.white70),
+      );
+    }
+
+    final minTemp = hours
+        .map((h) => h.temperature)
+        .reduce((a, b) => a < b ? a : b);
+    final maxTemp = hours
+        .map((h) => h.temperature)
+        .reduce((a, b) => a > b ? a : b);
+    final firstHour = hours.first;
+
     return Container(
-      width: 72,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFF1A2F47),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white10),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${hour.time.hour.toString().padLeft(2, '0')}:00',
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              _legendChip(
+                '${firstHour.time.hour.toString().padLeft(2, '0')}:00 itibariyle',
+                const Color(0xFF2C9EFF),
+              ),
+              _legendChip(
+                'En düşük ${minTemp.round()}°C',
+                const Color(0xFF33D17A),
+              ),
+              _legendChip(
+                'En yüksek ${maxTemp.round()}°C',
+                const Color(0xFFFFA63D),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 220,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: hours.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                final hour = hours[index];
+                return _HourBar(
+                  hour: hour,
+                  minTemp: minTemp,
+                  maxTemp: maxTemp,
+                  isNow: index == 0,
+                );
+              },
             ),
           ),
-          const SizedBox(height: 6),
-          Text(hour.weatherEmoji, style: const TextStyle(fontSize: 22)),
-          const SizedBox(height: 6),
+        ],
+      ),
+    );
+  }
+
+  Widget _legendChip(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.65)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _HourBar extends StatelessWidget {
+  final HourlyWeatherModel hour;
+  final double minTemp;
+  final double maxTemp;
+  final bool isNow;
+
+  const _HourBar({
+    required this.hour,
+    required this.minTemp,
+    required this.maxTemp,
+    required this.isNow,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tempRange = (maxTemp - minTemp).abs() < 0.1 ? 1.0 : (maxTemp - minTemp);
+    final normalized = ((hour.temperature - minTemp) / tempRange).clamp(0.0, 1.0);
+    final barHeight = 36.0 + (normalized * 86.0);
+
+    return SizedBox(
+      width: 74,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text(hour.weatherEmoji, style: const TextStyle(fontSize: 24)),
+          const SizedBox(height: 2),
           Text(
             '${hour.temperature.round()}°',
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            height: barHeight,
+            width: 28,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Color(0xFF2C9EFF), Color(0xFFFFA63D)],
+              ),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isNow ? Colors.white : Colors.white30,
+                width: isNow ? 2 : 1,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${hour.time.hour.toString().padLeft(2, '0')}:00',
+            style: TextStyle(
+              color: isNow ? Colors.white : Colors.white70,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 2),
           Text(
-            '${hour.windspeed.round()} km/s',
-            style: const TextStyle(color: Colors.white54, fontSize: 10),
+            '${hour.windspeed.round()} km/sa',
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
