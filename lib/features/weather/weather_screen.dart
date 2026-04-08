@@ -61,7 +61,6 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // ── İstanbul saatlik tahmin ──────────────
               Text(
                 'İstanbul',
                 style: AppTextStyles.h3.copyWith(
@@ -69,15 +68,6 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 12),
-              data.hourly.isEmpty
-                  ? Text(
-                      'Hava verisi alınamadı',
-                      style: AppTextStyles.caption.copyWith(
-                        color: Colors.white70,
-                      ),
-                    )
-                  : _HourlyWeatherChart(hours: _hoursFromNow(data.hourly)),
               const SizedBox(height: 24),
 
               if (data.current != null) ...[
@@ -93,6 +83,23 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                 ),
                 const SizedBox(height: 16),
               ],
+
+              Text(
+                'Saatlik Tahmin',
+                style: AppTextStyles.h3.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              data.hourly.isEmpty
+                  ? Text(
+                      'Saatlik hava verisi alınamadı',
+                      style: AppTextStyles.caption.copyWith(
+                        color: Colors.white70,
+                      ),
+                    )
+                  : _HourlyWeatherChart(hours: _hoursFromNow(data.hourly)),
             ],
           ),
         ),
@@ -107,6 +114,10 @@ class _HourlyWeatherChart extends StatelessWidget {
   final List<HourlyWeatherModel> hours;
   const _HourlyWeatherChart({required this.hours});
 
+  // Her saat sütununun genişliği — 45+ kullanıcı için geniş tutuyoruz.
+  static const double _colW = 76.0;
+  static const double _chartH = 160.0;
+
   @override
   Widget build(BuildContext context) {
     if (hours.isEmpty) {
@@ -116,58 +127,96 @@ class _HourlyWeatherChart extends StatelessWidget {
       );
     }
 
-    final minTemp = hours
-        .map((h) => h.temperature)
-        .reduce((a, b) => a < b ? a : b);
-    final maxTemp = hours
-        .map((h) => h.temperature)
-        .reduce((a, b) => a > b ? a : b);
-    final firstHour = hours.first;
+    final minTemp =
+        hours.map((h) => h.temperature).reduce((a, b) => a < b ? a : b);
+    final maxTemp =
+        hours.map((h) => h.temperature).reduce((a, b) => a > b ? a : b);
+    final totalW = (hours.length * _colW).toDouble();
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
         color: const Color(0xFF1A2F47),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
+          // ── Min/Max özet çipleri ─────────────────────
+          Row(
             children: [
-              _legendChip(
-                '${firstHour.time.hour.toString().padLeft(2, '0')}:00 itibariyle',
-                const Color(0xFF2C9EFF),
-              ),
-              _legendChip(
-                'En düşük ${minTemp.round()}°C',
-                const Color(0xFF33D17A),
-              ),
-              _legendChip(
-                'En yüksek ${maxTemp.round()}°C',
-                const Color(0xFFFFA63D),
-              ),
+              _chip('En düşük  ${minTemp.round()}°C', const Color(0xFF4CB2FF)),
+              const SizedBox(width: 8),
+              _chip('En yüksek  ${maxTemp.round()}°C', const Color(0xFFFFA63D)),
             ],
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 220,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: hours.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (context, index) {
-                final hour = hours[index];
-                return _HourBar(
-                  hour: hour,
-                  minTemp: minTemp,
-                  maxTemp: maxTemp,
-                  isNow: index == 0,
-                );
-              },
+          const SizedBox(height: 16),
+
+          // ── Yatay kaydırmalı grafik + etiketler ──────
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: totalW,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Çizgi grafik alanı
+                  SizedBox(
+                    width: totalW,
+                    height: _chartH,
+                    child: CustomPaint(
+                      size: Size(totalW, _chartH),
+                      painter: _LineChartPainter(
+                        hours: hours,
+                        minTemp: minTemp,
+                        maxTemp: maxTemp,
+                        colW: _colW,
+                        chartH: _chartH,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // ── Saat + rüzgar etiketi ─────────────
+                  Row(
+                    children: [
+                      for (int i = 0; i < hours.length; i++)
+                        SizedBox(
+                          width: _colW,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${hours[i].time.hour.toString().padLeft(2, '0')}:00',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: i == 0
+                                      ? Colors.white
+                                      : Colors.white60,
+                                  fontSize: 14,
+                                  fontWeight: i == 0
+                                      ? FontWeight.w900
+                                      : FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '💨 ${hours[i].windspeed.round()} km/s',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Color(0xFF88BBFF),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -175,18 +224,18 @@ class _HourlyWeatherChart extends StatelessWidget {
     );
   }
 
-  Widget _legendChip(String text, Color color) {
+  Widget _chip(String text, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.18),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.65)),
+        border: Border.all(color: color.withValues(alpha: 0.6)),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: color,
           fontSize: 13,
           fontWeight: FontWeight.w700,
         ),
@@ -195,79 +244,168 @@ class _HourlyWeatherChart extends StatelessWidget {
   }
 }
 
-class _HourBar extends StatelessWidget {
-  final HourlyWeatherModel hour;
+class _LineChartPainter extends CustomPainter {
+  final List<HourlyWeatherModel> hours;
   final double minTemp;
   final double maxTemp;
-  final bool isNow;
+  final double colW;
+  final double chartH;
 
-  const _HourBar({
-    required this.hour,
+  const _LineChartPainter({
+    required this.hours,
     required this.minTemp,
     required this.maxTemp,
-    required this.isNow,
+    required this.colW,
+    required this.chartH,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final tempRange = (maxTemp - minTemp).abs() < 0.1 ? 1.0 : (maxTemp - minTemp);
-    final normalized = ((hour.temperature - minTemp) / tempRange).clamp(0.0, 1.0);
-    final barHeight = 36.0 + (normalized * 86.0);
+  // Sıcaklık değerini Y koordinatına dönüştür.
+  // topPad: sıcaklık etiketi + emoji için bırakılan boşluk.
+  static const double _topPad = 52.0;
+  static const double _botPad = 10.0;
 
-    return SizedBox(
-      width: 74,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Text(hour.weatherEmoji, style: const TextStyle(fontSize: 24)),
-          const SizedBox(height: 2),
-          Text(
-            '${hour.temperature.round()}°',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            height: barHeight,
-            width: 28,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [Color(0xFF2C9EFF), Color(0xFFFFA63D)],
-              ),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isNow ? Colors.white : Colors.white30,
-                width: isNow ? 2 : 1,
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${hour.time.hour.toString().padLeft(2, '0')}:00',
-            style: TextStyle(
-              color: isNow ? Colors.white : Colors.white70,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            '${hour.windspeed.round()} km/sa',
-            style: const TextStyle(
-              color: Colors.white60,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
+  List<Offset> _calcPoints(Size size) {
+    final drawH = size.height - _topPad - _botPad;
+    final tempRange =
+        (maxTemp - minTemp).abs() < 0.5 ? 1.0 : (maxTemp - minTemp);
+    return [
+      for (int i = 0; i < hours.length; i++)
+        Offset(
+          colW * i + colW / 2,
+          _topPad +
+              drawH *
+                  (1.0 -
+                      ((hours[i].temperature - minTemp) / tempRange)
+                          .clamp(0.0, 1.0)),
+        ),
+    ];
   }
+
+  // Noktalar arasında yumuşak kübik bezier yolu oluşturur.
+  Path _smoothPath(List<Offset> pts) {
+    final path = Path()..moveTo(pts[0].dx, pts[0].dy);
+    for (int i = 0; i < pts.length - 1; i++) {
+      final midX = (pts[i].dx + pts[i + 1].dx) / 2;
+      path.cubicTo(
+        midX, pts[i].dy,
+        midX, pts[i + 1].dy,
+        pts[i + 1].dx, pts[i + 1].dy,
+      );
+    }
+    return path;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (hours.isEmpty) return;
+
+    final pts = _calcPoints(size);
+    final drawH = size.height - _topPad - _botPad;
+
+    // ── Yatay grid çizgileri ──────────────────────────
+    final gridPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.09)
+      ..strokeWidth = 1;
+    for (int i = 1; i <= 3; i++) {
+      final y = _topPad + drawH * i / 4;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    // ── Gradyan dolgu (çizginin altı) ────────────────
+    final fillPath = _smoothPath(pts)
+      ..lineTo(pts.last.dx, _topPad + drawH)
+      ..lineTo(pts.first.dx, _topPad + drawH)
+      ..close();
+    canvas.drawPath(
+      fillPath,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            const Color(0xFF4CB2FF).withValues(alpha: 0.38),
+            const Color(0xFF4CB2FF).withValues(alpha: 0.02),
+          ],
+        ).createShader(
+          Rect.fromLTWH(0, _topPad, size.width, drawH),
+        )
+        ..style = PaintingStyle.fill,
+    );
+
+    // ── Çizgi ────────────────────────────────────────
+    canvas.drawPath(
+      _smoothPath(pts),
+      Paint()
+        ..color = const Color(0xFF4CB2FF)
+        ..strokeWidth = 2.8
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+
+    // ── Her nokta: halka + sıcaklık etiketi ──────────
+    for (int i = 0; i < pts.length; i++) {
+      final isNow = i == 0;
+      final dotR = isNow ? 6.5 : 5.0;
+
+      // Dış beyaz halka
+      canvas.drawCircle(
+        pts[i],
+        dotR + 2,
+        Paint()..color = const Color(0xFF1A2F47),
+      );
+      // Renkli nokta
+      canvas.drawCircle(
+        pts[i],
+        dotR,
+        Paint()..color = isNow ? Colors.white : const Color(0xFF4CB2FF),
+      );
+
+      // Sıcaklık etiketi (noktanın üstünde)
+      final tempSpan = TextSpan(
+        text: '${hours[i].temperature.round()}°',
+        style: TextStyle(
+          color: isNow ? Colors.white : Colors.white70,
+          fontSize: isNow ? 18 : 15,
+          fontWeight: FontWeight.w800,
+        ),
+      );
+      final tempPainter = TextPainter(
+        text: tempSpan,
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tempPainter.paint(
+        canvas,
+        Offset(
+          pts[i].dx - tempPainter.width / 2,
+          pts[i].dy - dotR - tempPainter.height - 6,
+        ),
+      );
+
+      // Hava emojisi (etiketin üstünde)
+      final emojiSpan = TextSpan(
+        text: hours[i].weatherEmoji,
+        style: const TextStyle(fontSize: 20),
+      );
+      final emojiPainter = TextPainter(
+        text: emojiSpan,
+        textDirection: TextDirection.ltr,
+      )..layout();
+      emojiPainter.paint(
+        canvas,
+        Offset(
+          pts[i].dx - emojiPainter.width / 2,
+          pts[i].dy - dotR - tempPainter.height - emojiPainter.height - 8,
+        ),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _LineChartPainter old) =>
+      old.hours != hours ||
+      old.minTemp != minTemp ||
+      old.maxTemp != maxTemp;
 }
 
 class _WeatherHeroCard extends StatelessWidget {
