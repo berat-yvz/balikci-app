@@ -1,11 +1,14 @@
 /// Saatlik hava tahmin verisi — Open-Meteo forecast + marine API.
 class HourlyWeatherModel {
   final DateTime time;
-  final double temperature; // °C
-  final double windspeed; // km/h
-  final double precipitation; // mm
-  final int weatherCode; // Open-Meteo WMO kodu
-  final double? waveHeight; // metre (marine-api.open-meteo.com)
+  final double temperature;             // °C (hava)
+  final double windspeed;              // km/h
+  final double precipitation;          // mm
+  final int weatherCode;               // Open-Meteo WMO kodu
+  final double? waveHeight;            // m (marine-api)
+  final double? seaSurfaceTemperature; // °C (marine-api)
+  final double? currentVelocity;       // m/s (marine-api)
+  final double? currentDirection;      // derece, 0=kuzey (marine-api)
 
   const HourlyWeatherModel({
     required this.time,
@@ -14,6 +17,9 @@ class HourlyWeatherModel {
     required this.precipitation,
     required this.weatherCode,
     this.waveHeight,
+    this.seaSurfaceTemperature,
+    this.currentVelocity,
+    this.currentDirection,
   });
 
   /// Open-Meteo WMO kodundan emoji döner.
@@ -27,6 +33,15 @@ class HourlyWeatherModel {
     return '🌡️';
   }
 
+  /// Akıntı yönünü ok karakterine çevirir (8 ana yön).
+  String? get currentDirectionArrow {
+    final d = currentDirection;
+    if (d == null) return null;
+    const arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'];
+    final index = ((d + 22.5) / 45).floor() % 8;
+    return arrows[index];
+  }
+
   factory HourlyWeatherModel.fromOpenMeteo({
     required String timeStr,
     required double temperature,
@@ -34,6 +49,9 @@ class HourlyWeatherModel {
     required double precipitation,
     required int weatherCode,
     double? waveHeight,
+    double? seaSurfaceTemperature,
+    double? currentVelocity,
+    double? currentDirection,
   }) {
     return HourlyWeatherModel(
       time: DateTime.parse(timeStr),
@@ -42,6 +60,9 @@ class HourlyWeatherModel {
       precipitation: precipitation,
       weatherCode: weatherCode,
       waveHeight: waveHeight,
+      seaSurfaceTemperature: seaSurfaceTemperature,
+      currentVelocity: currentVelocity,
+      currentDirection: currentDirection,
     );
   }
 }

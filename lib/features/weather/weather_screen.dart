@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/utils/fishing_weather_utils.dart';
+import 'package:balikci_app/core/utils/moon_phase_utils.dart';
 import 'package:balikci_app/data/models/hourly_weather_model.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
@@ -61,14 +62,27 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text(
-                'İstanbul',
-                style: AppTextStyles.h3.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.bold,
-                ),
+              // Konum başlığı — GPS veya fallback göstergesi
+              Row(
+                children: [
+                  Icon(
+                    data.gpsUsed ? Icons.gps_fixed : Icons.location_city,
+                    color: data.gpsUsed
+                        ? AppColors.primary
+                        : AppColors.muted,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    data.gpsUsed ? 'Konumunuz' : 'İstanbul (varsayılan)',
+                    style: AppTextStyles.h3.copyWith(
+                      color: data.gpsUsed ? AppColors.primary : AppColors.muted,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               if (data.current != null) ...[
                 _WeatherHeroCard(weather: data.current!),
@@ -76,6 +90,10 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                 _WeatherDetailGrid(weather: data.current!),
                 const SizedBox(height: 16),
               ],
+
+              // Ay fazı kartı
+              _MoonPhaseCard(),
+              const SizedBox(height: 20),
 
               Text(
                 'Saatlik Tahmin',
@@ -217,6 +235,27 @@ class _HourlyWeatherChart extends StatelessWidget {
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     color: Color(0xFF4DD9AC),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              if (hours[i].seaSurfaceTemperature != null)
+                                Text(
+                                  '🌡 ${hours[i].seaSurfaceTemperature!.toStringAsFixed(1)}°',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Color(0xFFFFB74D),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              if (hours[i].currentVelocity != null)
+                                Text(
+                                  '${hours[i].currentDirectionArrow ?? '→'} '
+                                  '${(hours[i].currentVelocity! * 100).round()} cm/s',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Color(0xFFCE93D8),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -696,6 +735,90 @@ class _UpdateInfo extends StatelessWidget {
               color: AppColors.muted,
               fontSize: 12,
               fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Anlık ay fazını hesaplar ve balıkçılık ipucu ile gösterir.
+class _MoonPhaseCard extends StatelessWidget {
+  const _MoonPhaseCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final moon = MoonPhaseUtils.calculate();
+    final pct = (moon.illumination * 100).round();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A2F47),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(moon.emoji, style: const TextStyle(fontSize: 44)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      moon.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '%$pct aydınlık',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: moon.illumination,
+                    backgroundColor: Colors.white12,
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFFFFF176),
+                    ),
+                    minHeight: 6,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  moon.fishingTip,
+                  style: const TextStyle(
+                    color: Color(0xFFB0BEC5),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

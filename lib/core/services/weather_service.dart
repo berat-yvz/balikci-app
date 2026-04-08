@@ -13,7 +13,6 @@ import 'package:drift/drift.dart' as drift;
 ///
 /// Mimari: Open-Meteo → Edge Function / spot-create hook → weather_cache → bu servis
 class WeatherService {
-  // cleaned: Drift cache + Supabase fallback akışı 30dk tazelikle güncellendi
   WeatherService._();
 
   static final _db = SupabaseService.client;
@@ -22,8 +21,11 @@ class WeatherService {
   static const double _cacheRadiusKm = 25;
   static const Duration _freshness = Duration(minutes: 30);
 
+  // Fallback koordinatlar (GPS alınamazsa)
+  static const double _fallbackLat = 41.0082; // İstanbul
+  static const double _fallbackLng = 28.9784;
+
   /// Kullanıcı konumuna en yakın (25km içinde) taze cache verisini döner.
-  /// Bulunamazsa 25km içindeki en yakın (eski olabilir) cache döner.
   static Future<WeatherModel?> getWeatherForLocation({
     required double lat,
     required double lng,
@@ -56,7 +58,6 @@ class WeatherService {
 
     final now = DateTime.now().toUtc();
     final freshAfter = now.subtract(_freshness);
-
     final bbox = _bboxForRadiusKm(lat: lat, lng: lng, radiusKm: _cacheRadiusKm);
 
     try {
@@ -137,31 +138,34 @@ class WeatherService {
     }
   }
 
-  static const double _istanbulLat = 41.0082;
-  static const double _istanbulLng = 28.9784;
-
-  /// İstanbul için Open-Meteo forecast + marine API'den 24 saatlik tahmin çeker.
-  /// Dalga yükseklikleri marine-api.open-meteo.com'dan eklenir.
-  /// Hata durumunda boş liste döner.
-  static Future<List<HourlyWeatherModel>> fetchIstanbulHourlyForecast() async {
+  /// Verilen koordinat için Open-Meteo forecast + marine API'den
+  /// 24 saatlik tahmin çeker.
+  ///
+  /// Marine verisi (dalga, su sıcaklığı, akıntı) opsiyoneldir;
+  /// hata olursa sessizce devam edilir.
+  ///
+  /// [lat], [lng] belirtilmezse İstanbul koordinatları kullanılır.
+  static Future<List<HourlyWeatherModel>> fetchHourlyForecast({
+    double lat = _fallbackLat,
+    double lng = _fallbackLng,
+  }) async {
     try {
-      // ── 1. Forecast (sıcaklık, rüzgar, yağış, kod) ──────────────────────
       final forecastUri = Uri.parse(
         'https://api.open-meteo.com/v1/forecast'
-        '?latitude=$_istanbulLat'
-        '&longitude=$_istanbulLng'
+        '?latitude=$lat'
+        '&longitude=$lng'
         '&hourly=temperature_2m,windspeed_10m,precipitation,weathercode'
-        '&timezone=Europe%2FIstanbul'
+        '&timezone=auto'
         '&forecast_days=1',
       );
 
-      // ── 2. Marine (dalga yüksekliği) ─────────────────────────────────────
       final marineUri = Uri.parse(
         'https://marine-api.open-meteo.com/v1/marine'
-        '?latitude=$_istanbulLat'
-        '&longitude=$_istanbulLng'
-        '&hourly=wave_height'
-        '&timezone=Europe%2FIstanbul'
+        '?latitude=$lat'
+        '&longitude=$lng'
+        '&hourly=wave_height,sea_surface_temperature'
+        ',ocean_current_velocity,ocean_current_direction'
+        '&timezone=auto'
         '&forecast_days=1',
       );
 
@@ -177,17 +181,27 @@ class WeatherService {
 
       final forecastBody = await fetch(forecastUri);
 
-      // Marine API opsiyonel — hata olsa da devam edilir.
+      // Marine verileri — opsiyonel
       List<double?>? waveHeights;
+      List<double?>? seaTemps;
+      List<double?>? currentVelocities;
+      List<double?>? currentDirections;
       try {
         final marineBody = await fetch(marineUri);
         final marineData = jsonDecode(marineBody) as Map<String, dynamic>;
         final marineHourly = marineData['hourly'] as Map<String, dynamic>;
-        waveHeights = (marineHourly['wave_height'] as List)
-            .map((v) => v == null ? null : (v as num).toDouble())
-            .toList();
+
+        List<double?> parseList(String key) =>
+            (marineHourly[key] as List? ?? [])
+                .map((v) => v == null ? null : (v as num).toDouble())
+                .toList();
+
+        waveHeights = parseList('wave_height');
+        seaTemps = parseList('sea_surface_temperature');
+        currentVelocities = parseList('ocean_current_velocity');
+        currentDirections = parseList('ocean_current_direction');
       } catch (_) {
-        // Marine verisi alınamazsa dalga gösterilmez; uygulama çalışmaya devam eder.
+        // Marine verisi yoksa devam et
       }
 
       client.close();
@@ -212,6 +226,18 @@ class WeatherService {
             waveHeight: (waveHeights != null && i < waveHeights.length)
                 ? waveHeights[i]
                 : null,
+            seaSurfaceTemperature:
+                (seaTemps != null && i < seaTemps.length)
+                    ? seaTemps[i]
+                    : null,
+            currentVelocity:
+                (currentVelocities != null && i < currentVelocities.length)
+                    ? currentVelocities[i]
+                    : null,
+            currentDirection:
+                (currentDirections != null && i < currentDirections.length)
+                    ? currentDirections[i]
+                    : null,
           ),
         );
       }
@@ -220,6 +246,12 @@ class WeatherService {
       return [];
     }
   }
+
+  /// Geriye dönük uyumluluk için — eski çağrılar bozulmasın.
+  static Future<List<HourlyWeatherModel>> fetchIstanbulHourlyForecast() =>
+      fetchHourlyForecast(lat: _fallbackLat, lng: _fallbackLng);
+
+  // ── Yardımcılar ────────────────────────────────────────────────────────────
 
   static double _haversineKm(
     double lat1,
@@ -253,7 +285,6 @@ class WeatherService {
     required double lng,
     required double radiusKm,
   }) {
-    // 1 deg lat ~ 111km. 1 deg lng ~ 111km * cos(lat)
     final dLat = radiusKm / 111.0;
     final cosLat = MathHelpers.cos(_degToRad(lat)).abs().clamp(0.2, 1.0);
     final dLng = radiusKm / (111.0 * cosLat);
@@ -280,7 +311,6 @@ class _BBox {
   });
 }
 
-// dart:math kullanmadan küçük yardımcılar (min import + tree-shake)
 class MathHelpers {
   static double sin(double x) => math.sin(x);
   static double cos(double x) => math.cos(x);

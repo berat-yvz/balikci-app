@@ -3,6 +3,23 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 
+/// Haftalık sıralama için kullanıcı + aktivite girişi.
+class WeeklyRankEntry {
+  final String userId;
+  final String username;
+  final String? avatarUrl;
+  final String rank;
+  final int checkinCount;
+
+  const WeeklyRankEntry({
+    required this.userId,
+    required this.username,
+    required this.avatarUrl,
+    required this.rank,
+    required this.checkinCount,
+  });
+}
+
 /// Kullanıcı profili repository — users ve follows tabloları.
 class UserRepository {
   final SupabaseClient _db = SupabaseService.client;
@@ -106,6 +123,52 @@ class UserRepository {
       );
     } catch (e) {
       throw Exception('Takip edilen sayısı alınamadı: $e');
+    }
+  }
+
+  /// Son 7 gündeki check-in sayısına göre haftalık sıralama.
+  ///
+  /// Checkins tablosundan son 7 günün aktivitesi kullanılır;
+  /// `total_score` yerine haftalık etkinlik metriği gösterilir.
+  Future<List<WeeklyRankEntry>> getWeeklyLeaderboard({int limit = 50}) async {
+    try {
+      final since = DateTime.now().toUtc().subtract(const Duration(days: 7));
+      final response = await _db
+          .from('checkins')
+          .select('user_id, users!inner(id, username, avatar_url, rank)')
+          .gte('created_at', since.toIso8601String())
+          .eq('is_hidden', false)
+          .limit(500); // fazlasını çekip istemci tarafında say
+
+      final raw = (response as List).cast<Map<String, dynamic>>();
+
+      // Kullanıcı bazlı check-in sayısını topla
+      final counts = <String, int>{};
+      final userMeta = <String, Map<String, dynamic>>{};
+      for (final row in raw) {
+        final uid = row['user_id'] as String;
+        counts[uid] = (counts[uid] ?? 0) + 1;
+        userMeta[uid] ??= (row['users'] as Map<String, dynamic>);
+      }
+
+      // Sırala
+      final sorted = counts.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+
+      return sorted.take(limit).map((e) {
+        final meta = userMeta[e.key]!;
+        return WeeklyRankEntry(
+          userId: e.key,
+          username: (meta['username'] as String?) ?? 'Balıkçı',
+          avatarUrl: meta['avatar_url'] as String?,
+          rank: meta['rank'] as String? ?? 'bronz',
+          checkinCount: e.value,
+        );
+      }).toList();
+    } on PostgrestException catch (e) {
+      throw Exception('Haftalık sıralama alınamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Haftalık sıralama alınamadı: $e');
     }
   }
 

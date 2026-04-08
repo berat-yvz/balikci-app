@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/app/theme.dart';
-import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
@@ -14,9 +13,6 @@ class RankScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUserId = ref.watch(currentUserProvider)?.id;
-    final asyncUsers = ref.watch(leaderboardProvider);
-
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -25,68 +21,185 @@ class RankScreen extends ConsumerWidget {
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Genel'),
-              Tab(text: 'Bölge'),
               Tab(text: 'Haftalık'),
+              Tab(text: 'Bölge'),
             ],
           ),
         ),
-        body: asyncUsers.when(
-          data: (users) {
-            return TabBarView(
-              children: [
-                _LeaderboardTab(users: users, currentUserId: currentUserId),
-                _LeaderboardTab(users: users, currentUserId: currentUserId),
-                _LeaderboardTab(users: users, currentUserId: currentUserId),
-              ],
-            );
-          },
-          loading: () =>
-              const LoadingWidget(message: 'Sıralamalar yükleniyor...'),
-          error: (e, _) => AppErrorWidget(
-            message: e.toString(),
-            onRetry: () => ref.invalidate(leaderboardProvider),
-          ),
+        body: const TabBarView(
+          children: [
+            _AllTimeTab(),
+            _WeeklyTab(),
+            _RegionalTab(),
+          ],
         ),
       ),
     );
   }
 }
 
-class _LeaderboardTab extends ConsumerWidget {
-  final List<UserModel> users;
-  final String? currentUserId;
+// ── Genel sıralama (toplam puan) ─────────────────────────────────────────────
 
-  const _LeaderboardTab({required this.users, required this.currentUserId});
+class _AllTimeTab extends ConsumerWidget {
+  const _AllTimeTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(leaderboardProvider);
+    final currentUserId = ref.watch(currentUserProvider)?.id;
+    final asyncUsers = ref.watch(leaderboardProvider);
+
+    return asyncUsers.when(
+      data: (users) => _LeaderboardList(
+        currentUserId: currentUserId,
+        itemCount: users.length,
+        itemBuilder: (idx) {
+          final u = users[idx];
+          return _LeaderboardRow(
+            rank: idx + 1,
+            username: u.username,
+            avatarUrl: u.avatarUrl,
+            rankLabel: u.rank,
+            scoreLabel: '${u.totalScore} puan',
+            highlight: currentUserId == u.id,
+          );
+        },
+        onRefresh: () async => ref.invalidate(leaderboardProvider),
+      ),
+      loading: () => const LoadingWidget(message: 'Sıralamalar yükleniyor...'),
+      error: (e, _) => AppErrorWidget(
+        message: e.toString(),
+        onRetry: () => ref.invalidate(leaderboardProvider),
+      ),
+    );
+  }
+}
+
+// ── Haftalık sıralama (son 7 gün check-in sayısı) ────────────────────────────
+
+class _WeeklyTab extends ConsumerWidget {
+  const _WeeklyTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUserId = ref.watch(currentUserProvider)?.id;
+    final asyncWeekly = ref.watch(weeklyLeaderboardProvider);
+
+    return asyncWeekly.when(
+      data: (entries) {
+        if (entries.isEmpty) {
+          return const _EmptyState(
+            emoji: '📅',
+            message: 'Bu hafta henüz bildirim yapılmadı.',
+          );
+        }
+        return _LeaderboardList(
+          currentUserId: currentUserId,
+          itemCount: entries.length,
+          itemBuilder: (idx) {
+            final e = entries[idx];
+            return _LeaderboardRow(
+              rank: idx + 1,
+              username: e.username,
+              avatarUrl: e.avatarUrl,
+              rankLabel: e.rank,
+              scoreLabel: '${e.checkinCount} bildirim',
+              highlight: currentUserId == e.userId,
+            );
+          },
+          onRefresh: () async => ref.invalidate(weeklyLeaderboardProvider),
+          headerLabel: 'Son 7 günün en aktif balıkçıları',
+        );
       },
+      loading: () =>
+          const LoadingWidget(message: 'Haftalık sıralama yükleniyor...'),
+      error: (e, _) => AppErrorWidget(
+        message: e.toString(),
+        onRetry: () => ref.invalidate(weeklyLeaderboardProvider),
+      ),
+    );
+  }
+}
+
+// ── Bölge sekmesi ─────────────────────────────────────────────────────────────
+
+class _RegionalTab extends StatelessWidget {
+  const _RegionalTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _EmptyState(
+      emoji: '🗺️',
+      message: 'Bölge sıralaması yakında!\n'
+          'Konumunuza göre kişiselleştirilmiş\n'
+          'sıralama eklenecek.',
+    );
+  }
+}
+
+// ── Ortak liste scaffold ──────────────────────────────────────────────────────
+
+class _LeaderboardList extends StatelessWidget {
+  final String? currentUserId;
+  final int itemCount;
+  final Widget Function(int idx) itemBuilder;
+  final Future<void> Function() onRefresh;
+  final String? headerLabel;
+
+  const _LeaderboardList({
+    required this.currentUserId,
+    required this.itemCount,
+    required this.itemBuilder,
+    required this.onRefresh,
+    this.headerLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: onRefresh,
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
-        itemCount: users.length,
+        itemCount: itemCount + (headerLabel != null ? 1 : 0),
         separatorBuilder: (context, index) => const SizedBox(height: 10),
-        itemBuilder: (context, idx) {
-          final u = users[idx];
-          final rank = idx + 1;
-          final isCurrent = currentUserId != null && currentUserId == u.id;
-          return _LeaderboardRow(user: u, rank: rank, highlight: isCurrent);
+        itemBuilder: (context, index) {
+          if (headerLabel != null) {
+            if (index == 0) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  headerLabel!,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.muted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              );
+            }
+            return itemBuilder(index - 1);
+          }
+          return itemBuilder(index);
         },
       ),
     );
   }
 }
 
+// ── Tek satır ─────────────────────────────────────────────────────────────────
+
 class _LeaderboardRow extends StatelessWidget {
-  final UserModel user;
   final int rank;
+  final String username;
+  final String? avatarUrl;
+  final String rankLabel;
+  final String scoreLabel;
   final bool highlight;
 
   const _LeaderboardRow({
-    required this.user,
     required this.rank,
+    required this.username,
+    required this.avatarUrl,
+    required this.rankLabel,
+    required this.scoreLabel,
     required this.highlight,
   });
 
@@ -105,28 +218,88 @@ class _LeaderboardRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          RankBadge(rank: user.rank, size: RankBadgeSize.small),
+          // Sıralama numarası
+          SizedBox(
+            width: 36,
+            child: rank <= 3
+                ? Text(
+                    ['🥇', '🥈', '🥉'][rank - 1],
+                    style: const TextStyle(fontSize: 24),
+                    textAlign: TextAlign.center,
+                  )
+                : Text(
+                    '$rank.',
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.muted,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+          ),
+          const SizedBox(width: 8),
+          // Avatar
+          CircleAvatar(
+            radius: 20,
+            backgroundImage:
+                avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+            backgroundColor: AppColors.surface,
+            child: avatarUrl == null
+                ? const Icon(Icons.person, size: 20, color: AppColors.muted)
+                : null,
+          ),
           const SizedBox(width: 12),
+          // Bilgiler
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$rank. ${user.username}',
+                  username,
                   style: AppTextStyles.body.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 3),
                 Text(
-                  'Toplam puan: ${user.totalScore}',
+                  scoreLabel,
                   style: AppTextStyles.caption.copyWith(color: AppColors.muted),
                 ),
               ],
             ),
           ),
-          Text('${user.totalScore}', style: AppTextStyles.h3),
+          // Rütbe rozeti
+          RankBadge(rank: rankLabel, size: RankBadgeSize.small),
         ],
+      ),
+    );
+  }
+}
+
+// ── Boş durum ─────────────────────────────────────────────────────────────────
+
+class _EmptyState extends StatelessWidget {
+  final String emoji;
+  final String message;
+
+  const _EmptyState({required this.emoji, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 56)),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: AppTextStyles.body.copyWith(color: AppColors.muted),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
