@@ -1,10 +1,11 @@
-/// Saatlik hava tahmin verisi — Open-Meteo API'den gelen tek saat dilimi.
+/// Saatlik hava tahmin verisi — Open-Meteo forecast + marine API.
 class HourlyWeatherModel {
   final DateTime time;
   final double temperature; // °C
   final double windspeed; // km/h
   final double precipitation; // mm
   final int weatherCode; // Open-Meteo WMO kodu
+  final double? waveHeight; // metre (marine-api.open-meteo.com)
 
   const HourlyWeatherModel({
     required this.time,
@@ -12,6 +13,7 @@ class HourlyWeatherModel {
     required this.windspeed,
     required this.precipitation,
     required this.weatherCode,
+    this.waveHeight,
   });
 
   /// Open-Meteo WMO kodundan emoji döner.
@@ -31,6 +33,7 @@ class HourlyWeatherModel {
     required double windspeed,
     required double precipitation,
     required int weatherCode,
+    double? waveHeight,
   }) {
     return HourlyWeatherModel(
       time: DateTime.parse(timeStr),
@@ -38,6 +41,7 @@ class HourlyWeatherModel {
       windspeed: windspeed,
       precipitation: precipitation,
       weatherCode: weatherCode,
+      waveHeight: waveHeight,
     );
   }
 }

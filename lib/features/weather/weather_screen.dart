@@ -75,13 +75,6 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                 const SizedBox(height: 16),
                 _WeatherDetailGrid(weather: data.current!),
                 const SizedBox(height: 16),
-                _FishingTipsCard(weather: data.current!),
-                const SizedBox(height: 16),
-                _UpdateInfo(
-                  weather: data.current!,
-                  lastUpdated: data.lastUpdated,
-                ),
-                const SizedBox(height: 16),
               ],
 
               Text(
@@ -100,6 +93,14 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                       ),
                     )
                   : _HourlyWeatherChart(hours: _hoursFromNow(data.hourly)),
+
+              if (data.current != null) ...[
+                const SizedBox(height: 24),
+                _UpdateInfo(
+                  weather: data.current!,
+                  lastUpdated: data.lastUpdated,
+                ),
+              ],
             ],
           ),
         ),
@@ -210,6 +211,16 @@ class _HourlyWeatherChart extends StatelessWidget {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
+                              if (hours[i].waveHeight != null)
+                                Text(
+                                  '🌊 ${hours[i].waveHeight!.toStringAsFixed(1)} m',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Color(0xFF4DD9AC),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -484,6 +495,8 @@ class _WeatherHeroCard extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 14),
+          _FishingTips(weather: weather),
         ],
       ),
     );
@@ -596,9 +609,10 @@ class _DetailTile extends StatelessWidget {
   }
 }
 
-class _FishingTipsCard extends StatelessWidget {
+/// Anlık hava verisinden balıkçı tüyolarını anlık hava kartının içinde gösterir.
+class _FishingTips extends StatelessWidget {
   final WeatherModel weather;
-  const _FishingTipsCard({required this.weather});
+  const _FishingTips({required this.weather});
 
   @override
   Widget build(BuildContext context) {
@@ -613,44 +627,36 @@ class _FishingTipsCard extends StatelessWidget {
     if (temp < 10) tips.add('⚠️ Soğuk su, yavaş balıklar');
     if (tips.isEmpty) tips.add('Koşullar ortalama, denemeye değer');
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.muted.withValues(alpha: 0.15),
-          width: 0.5,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Balıkçı Tüyoları',
-            style: AppTextStyles.caption.copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppColors.muted,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(color: Colors.white12, height: 1),
+        const SizedBox(height: 10),
+        Text(
+          'Balıkçı Tüyoları',
+          style: AppTextStyles.caption.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.muted,
           ),
-          const SizedBox(height: 10),
-          ...tips.map(
-            (tip) => Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Text(
-                tip,
-                style: AppTextStyles.caption.copyWith(
-                  color: tip.startsWith('✓')
-                      ? AppColors.primary
-                      : tip.startsWith('⚠️')
-                      ? AppColors.accent
-                      : Colors.white70,
-                ),
+        ),
+        const SizedBox(height: 8),
+        ...tips.map(
+          (tip) => Padding(
+            padding: const EdgeInsets.only(bottom: 5),
+            child: Text(
+              tip,
+              style: AppTextStyles.body.copyWith(
+                fontSize: 14,
+                color: tip.startsWith('✓')
+                    ? AppColors.primary
+                    : tip.startsWith('⚠️')
+                    ? AppColors.accent
+                    : Colors.white70,
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

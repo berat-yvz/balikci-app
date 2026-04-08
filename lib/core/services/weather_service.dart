@@ -140,11 +140,13 @@ class WeatherService {
   static const double _istanbulLat = 41.0082;
   static const double _istanbulLng = 28.9784;
 
-  /// İstanbul için Open-Meteo'dan 24 saatlik tahmin çeker.
+  /// İstanbul için Open-Meteo forecast + marine API'den 24 saatlik tahmin çeker.
+  /// Dalga yükseklikleri marine-api.open-meteo.com'dan eklenir.
   /// Hata durumunda boş liste döner.
   static Future<List<HourlyWeatherModel>> fetchIstanbulHourlyForecast() async {
     try {
-      final uri = Uri.parse(
+      // ── 1. Forecast (sıcaklık, rüzgar, yağış, kod) ──────────────────────
+      final forecastUri = Uri.parse(
         'https://api.open-meteo.com/v1/forecast'
         '?latitude=$_istanbulLat'
         '&longitude=$_istanbulLng'
@@ -152,13 +154,45 @@ class WeatherService {
         '&timezone=Europe%2FIstanbul'
         '&forecast_days=1',
       );
+
+      // ── 2. Marine (dalga yüksekliği) ─────────────────────────────────────
+      final marineUri = Uri.parse(
+        'https://marine-api.open-meteo.com/v1/marine'
+        '?latitude=$_istanbulLat'
+        '&longitude=$_istanbulLng'
+        '&hourly=wave_height'
+        '&timezone=Europe%2FIstanbul'
+        '&forecast_days=1',
+      );
+
       final client = HttpClient();
-      final request = await client.getUrl(uri);
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
+
+      Future<String> fetch(Uri uri) async {
+        final req = await client.getUrl(uri);
+        final res = await req.close();
+        final body = await res.transform(utf8.decoder).join();
+        if (res.statusCode != 200) throw Exception('HTTP ${res.statusCode}');
+        return body;
+      }
+
+      final forecastBody = await fetch(forecastUri);
+
+      // Marine API opsiyonel — hata olsa da devam edilir.
+      List<double?>? waveHeights;
+      try {
+        final marineBody = await fetch(marineUri);
+        final marineData = jsonDecode(marineBody) as Map<String, dynamic>;
+        final marineHourly = marineData['hourly'] as Map<String, dynamic>;
+        waveHeights = (marineHourly['wave_height'] as List)
+            .map((v) => v == null ? null : (v as num).toDouble())
+            .toList();
+      } catch (_) {
+        // Marine verisi alınamazsa dalga gösterilmez; uygulama çalışmaya devam eder.
+      }
+
       client.close();
-      if (response.statusCode != 200) return [];
-      final data = jsonDecode(body) as Map<String, dynamic>;
+
+      final data = jsonDecode(forecastBody) as Map<String, dynamic>;
       final hourly = data['hourly'] as Map<String, dynamic>;
       final times = hourly['time'] as List;
       final temps = hourly['temperature_2m'] as List;
@@ -175,6 +209,9 @@ class WeatherService {
             windspeed: (winds[i] as num).toDouble(),
             precipitation: (precips[i] as num).toDouble(),
             weatherCode: (codes[i] as num).toInt(),
+            waveHeight: (waveHeights != null && i < waveHeights.length)
+                ? waveHeights[i]
+                : null,
           ),
         );
       }
