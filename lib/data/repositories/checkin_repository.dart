@@ -160,7 +160,9 @@ class CheckinRepository {
         );
         final total = trueVotes + falseVotes;
         final falseRatio = total == 0 ? 0.0 : (falseVotes / total);
-        final shouldHide = total >= 3 && falseRatio > 0.70;
+        final shouldHide =
+            total >= AppConstants.minVotesForHide &&
+            falseRatio >= AppConstants.voteThresholdPercent;
         if (!shouldHide) {
           withVotes.add(model);
         }
@@ -240,13 +242,11 @@ class CheckinRepository {
   }
 
   /// %70+ yanlış oy geldiğinde check-in'i gizle.
-  /// is_active = false yaparak haritadan ve listelerden kaldırır.
-  /// RLS: sadece service_role veya check-in sahibi update yapabilir.
-  /// MVP'de bu çağrıyı client-side score-calculator yerine yaparız.
+  /// is_hidden = true yaparak tüm is_hidden filtreli sorgulardan kaldırır.
   Future<void> hideCheckin(String checkinId) async {
     await _db
         .from('checkins')
-        .update({'is_active': false})
+        .update({'is_hidden': true})
         .eq('id', checkinId);
   }
 
@@ -257,7 +257,7 @@ class CheckinRepository {
     final falseCount = counts[false] ?? 0;
     final total = (counts[true] ?? 0) + falseCount;
 
-    if (total < 3) return false; // minimum 3 oy şartı
+    if (total < AppConstants.minVotesForHide) return false;
 
     final ratio = falseCount / total;
     if (ratio >= AppConstants.voteThresholdPercent) {

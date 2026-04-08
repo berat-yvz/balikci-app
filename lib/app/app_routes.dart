@@ -23,21 +23,15 @@ class AppRoutes {
   static const mapEditSpot = '/map/edit-spot';
   static const mapPickLocation = '/map/pick-location';
 
-  // Check-in (spotId parametresi ile birleştirilmeli: '/checkin/$spotId')
+  // Check-in
   static const checkin = '/checkin';
 
-  // Fish Log (legacy paths korundu)
-  static const logs = '/logs';
-  static const logsAdd = '/logs/add';
-  static const logsStats = '/logs/stats';
+  // Fish Log
   static const fishLogAdd = '/fish-log/add';
   static const fishLogStats = '/fish-log/stats';
-  static const log = '/log';
-  static const logAdd = '/log/add';
 
   // Rank
   static const rankLeaderboard = '/rank/leaderboard';
-  static const leaderboard = '/leaderboard';
 
   // Knots
   static const knots = '/knots';
@@ -49,5 +43,4 @@ class AppRoutes {
 
   // Profile
   static const settings = '/settings';
-  static const profileSettings = '/profile/settings';
 }

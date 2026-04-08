@@ -20,6 +20,7 @@ class AppConstants {
 
   // Oylama
   static const voteThresholdPercent = 0.70; // %70 yanlış → gizle
+  static const minVotesForHide = 3;         // en az 3 oy olmalı
 
   // Fotoğraf
   static const maxPhotoSizeBytes = 2 * 1024 * 1024; // 2 MB

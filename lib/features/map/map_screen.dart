@@ -88,6 +88,32 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _initializeCacheAndLoad() async {
     await _loadSpots();
     await _loadShops();
+    _startCheckinsRealtime();
+  }
+
+  /// `checkins` tablosunu gerçek zamanlı dinle.
+  /// INSERT / UPDATE / DELETE gelince haritadaki check-in sayaçları güncellenir.
+  void _startCheckinsRealtime() {
+    _checkinsRealtimeChannel?.unsubscribe();
+    _checkinsRealtimeChannel = SupabaseService.client
+        .channel('public:checkins')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'checkins',
+          callback: (_) {
+            if (mounted) unawaited(_refreshActiveCheckins());
+          },
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'checkins',
+          callback: (_) {
+            if (mounted) unawaited(_refreshActiveCheckins());
+          },
+        )
+        .subscribe();
   }
 
   Future<void> _loadShops() async {

@@ -192,31 +192,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             CheckinScreen(spotId: state.pathParameters['spotId']!),
       ),
 
-      // Fish Log (legacy paths)
-      GoRoute(
-        path: AppRoutes.logs,
-        builder: (context, state) => const LogListScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.logsAdd,
-        builder: (context, state) => const AddLogScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.logsStats,
-        builder: (context, state) => const StatsScreen(),
-      ),
-
-      // Fish Log (yeni path'ler)
+      // Fish Log
       GoRoute(
         path: AppRoutes.fishLogAdd,
-        builder: (context, state) => const AddLogScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.log,
-        builder: (ctx, s) => const LogListScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.logAdd,
         builder: (context, state) => const AddLogScreen(),
       ),
       GoRoute(
@@ -227,10 +205,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Rank
       GoRoute(
         path: AppRoutes.rankLeaderboard,
-        builder: (context, state) => const LeaderboardScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.leaderboard,
         builder: (context, state) => const LeaderboardScreen(),
       ),
 
@@ -264,10 +238,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '${AppRoutes.profile}/:userId',
         builder: (context, state) =>
             ProfileScreen(userId: state.pathParameters['userId']),
-      ),
-      GoRoute(
-        path: AppRoutes.profileSettings,
-        builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
         path: AppRoutes.settings,
