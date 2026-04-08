@@ -392,9 +392,13 @@ class _MapScreenState extends State<MapScreen> {
                 maxZoom: 18.0,
                 onPositionChanged: (pos, _) {
                   final z = pos.zoom;
-                  if ((z - _currentZoom).abs() >= 0.01 && mounted) {
-                    setState(() => _currentZoom = z);
-                  }
+                  // Marker boyutları yalnızca zoom 13 eşiğini geçince değişir.
+                  // Her küçük zoom değişiminde tüm widget ağacını yeniden
+                  // buildlemek yerine sadece eşik aşıldığında setState çağır.
+                  final crossedThreshold =
+                      (_currentZoom > 13) != (z > 13);
+                  _currentZoom = z;
+                  if (crossedThreshold && mounted) setState(() {});
                 },
                 onTap: (_, point) {
                   if (_searchResults.isNotEmpty) {
@@ -405,19 +409,28 @@ class _MapScreenState extends State<MapScreen> {
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                  urlTemplate:
+                      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
                   maxZoom: 19,
                   maxNativeZoom: 19,
                   tileSize: 256,
-                  keepBuffer: 2,
+                  // keepBuffer: görüntü alanının dışında bellekte tutulan
+                  // tile satır/sütun sayısı. Yüksek değer zoom/pan
+                  // sırasında boşlukları/bozulmaları önler.
+                  keepBuffer: 4,
+                  panBuffer: 2,
+                  evictErrorTileStrategy: EvictErrorTileStrategy.notVisibleRespectMargin,
                   userAgentPackageName: 'com.balikci.app',
                 ),
                 TileLayer(
-                  urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+                  urlTemplate:
+                      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
                   maxZoom: 19,
                   maxNativeZoom: 19,
                   tileSize: 256,
-                  keepBuffer: 2,
+                  keepBuffer: 4,
+                  panBuffer: 2,
+                  evictErrorTileStrategy: EvictErrorTileStrategy.notVisibleRespectMargin,
                   userAgentPackageName: 'com.balikci.app',
                 ),
                 if (_showShops) MarkerLayer(markers: _buildShopMarkers()),
@@ -923,14 +936,6 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),
             ),
-          const Positioned(
-            bottom: 90,
-            right: 8,
-            child: Text(
-              '© Esri © OpenStreetMap contributors',
-              style: TextStyle(fontSize: 9, color: Colors.black54),
-            ),
-          ),
         ],
       ),
     );
