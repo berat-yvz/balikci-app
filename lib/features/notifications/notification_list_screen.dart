@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/data/models/notification_model.dart';
 import 'package:balikci_app/shared/providers/notification_provider.dart';
@@ -67,11 +68,7 @@ class NotificationListScreen extends ConsumerWidget {
                         await repo.markAsRead(n.id);
                         ref.invalidate(myNotificationsProvider);
                       }
-
-                      final spotId = _extractSpotId(n.data);
-                      if (spotId != null) {
-                        router.push('/checkin/$spotId');
-                      }
+                      _navigateForNotification(router, n);
                     } catch (e) {
                       messenger.showSnackBar(
                         SnackBar(
@@ -88,21 +85,54 @@ class NotificationListScreen extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
-          child: Text(
-            'Bildirimler alınamadı: $e',
-            style: const TextStyle(color: AppColors.danger),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.cloud_off_outlined,
+                    color: AppColors.danger, size: 48),
+                const SizedBox(height: 16),
+                const Text(
+                  'Bildirimler yüklenemedi',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'İnternet bağlantınızı kontrol edin.',
+                  style: TextStyle(color: AppColors.muted),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () => ref.invalidate(myNotificationsProvider),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Tekrar Dene'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  String? _extractSpotId(Map<String, dynamic> data) {
-    final spotId1 = data['spotId'];
-    if (spotId1 is String && spotId1.isNotEmpty) return spotId1;
-    final spotId2 = data['spot_id'];
-    if (spotId2 is String && spotId2.isNotEmpty) return spotId2;
-    return null;
+  /// Bildirim türüne göre doğru sayfaya yönlendir.
+  /// `/checkin/:spotId` check-in OLUŞTURMA formudur — buraya yönlendirmek yanlış.
+  void _navigateForNotification(GoRouter router, NotificationModel n) {
+    final type = n.type.toLowerCase();
+    if (type.contains('rank')) {
+      router.go(AppRoutes.rank);
+    } else if (type.contains('follow')) {
+      router.go(AppRoutes.profile);
+    } else {
+      // checkin, vote ve diğerleri → harita
+      router.go(AppRoutes.map);
+    }
   }
 }
 

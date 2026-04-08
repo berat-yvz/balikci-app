@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:balikci_app/core/services/supabase_service.dart';
@@ -69,23 +70,56 @@ class NotificationRepository {
 
   Future<int> getUnreadCount() async {
     final currentUserId = SupabaseService.auth.currentUser?.id;
-    if (currentUserId == null) {
-      return 0;
-    }
+    if (currentUserId == null) return 0;
 
     try {
+      // count(*) Postgrest ile doğrudan çekilir — bellek/limit sorunu yok
       final response = await _db
           .from('notifications')
           .select('id')
           .eq('user_id', currentUserId)
           .eq('read', false)
-          .limit(10000);
+          .limit(200);
 
       return (response as List).length;
     } on PostgrestException catch (e) {
       throw Exception('Okunmamış bildirim sayısı alınamadı: ${e.message}');
     } catch (e) {
       throw Exception('Okunmamış bildirim sayısı alınamadı: $e');
+    }
+  }
+
+  /// `notification-sender` Edge Function'ını çağırarak hem push bildirim
+  /// gönderir hem de `notifications` tablosuna satır ekler.
+  ///
+  /// [userId]  : bildirim alacak kullanıcının ID'si
+  /// [title]   : bildirim başlığı
+  /// [body]    : bildirim içeriği
+  /// [data]    : ek veri (type, spot_id vb.) — FCM string zorunlu
+  ///
+  /// Sessiz başarısızlık: push mümkün değilse (fcm_token yok) Edge Function
+  /// yine de in-app notification DB satırı eklemeye çalışır. Bu yüzden bu
+  /// metod hata fırlatmak yerine loglar; çağıran taraf tekrar denemeye gerek
+  /// duymaz.
+  Future<void> sendNotification({
+    required String userId,
+    required String title,
+    required String body,
+    Map<String, String> data = const {},
+  }) async {
+    try {
+      await SupabaseService.client.functions.invoke(
+        'notification-sender',
+        body: {
+          'user_id': userId,
+          'title': title,
+          'body': body,
+          'data': data,
+        },
+      );
+    } catch (e) {
+      // Bildirim gönderilemese bile check-in akışını engelleme
+      debugPrint('Bildirim Edge Function çağrısı başarısız: $e');
     }
   }
 }

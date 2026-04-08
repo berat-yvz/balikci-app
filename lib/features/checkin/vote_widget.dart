@@ -4,6 +4,7 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:balikci_app/data/repositories/checkin_repository.dart';
+import 'package:balikci_app/data/repositories/notification_repository.dart';
 
 /// Birleşik oylama widget'ı.
 ///
@@ -106,6 +107,20 @@ class _VoteWidgetState extends State<VoteWidget> {
         if (wasHidden) {
           setState(() => _hidden = true);
           widget.onHidden?.call();
+        }
+
+        // Pozitif oy verilince check-in sahibini bilgilendir
+        final ownerId = widget.ownerUserId;
+        if (vote && ownerId != null && ownerId != uid) {
+          await NotificationRepository().sendNotification(
+            userId: ownerId,
+            title: '👍 Bildiriminiz Doğru Bulundu',
+            body: 'Bir balıkçı bildiriminizi doğru olarak değerlendirdi.',
+            data: {
+              'type': 'vote',
+              'spot_id': widget.checkin.spotId,
+            },
+          );
         }
       }
     } catch (_) {

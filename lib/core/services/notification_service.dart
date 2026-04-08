@@ -7,16 +7,64 @@ import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/router.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 
-/// Arka planda gelen mesajları işleyen global fonksiyon.
-/// Uygulama kapalıyken (terminated) veya arka plandayken (background) çalışır.
+// ──────────────────────────────────────────────────────────────────────────────
+// Yardımcı: mesaj türüne göre route belirle
+// ──────────────────────────────────────────────────────────────────────────────
+
+String _routeForType(String? type) => switch (type?.toLowerCase()) {
+  'checkin' => AppRoutes.map,
+  'vote' => AppRoutes.map,
+  'rank' => AppRoutes.rank,
+  'follow' => AppRoutes.profile,
+  'fish_log' => AppRoutes.fishLog,
+  _ => AppRoutes.home,
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Arka plan / terminated handler — top-level fonksiyon zorunlu
+// ──────────────────────────────────────────────────────────────────────────────
+
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  debugPrint('FCM Arka plan mesajı alındı: ${message.messageId}');
+  debugPrint('FCM arka plan: ${message.messageId}');
+
+  // Notification field varsa Android zaten gösterir.
+  // Data-only mesajlar için yerel bildirim oluştur.
+  if (message.notification == null && message.data.isNotEmpty) {
+    final title = message.data['title'] as String? ?? 'Balıkçı';
+    final body = message.data['body'] as String? ?? '';
+    if (body.isNotEmpty) {
+      final plugin = FlutterLocalNotificationsPlugin();
+      await plugin.initialize(
+        const InitializationSettings(
+          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+          iOS: DarwinInitializationSettings(),
+        ),
+      );
+      await plugin.show(
+        message.hashCode,
+        title,
+        body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'balikci_channel',
+            'Balıkçı Bildirimleri',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+        ),
+        payload: message.data['type'] as String?,
+      );
+    }
+  }
 }
 
-/// M-09 Push Bildirim Sistemi — MVP_PLAN.md referans.
-/// Firebase Cloud Messaging (FCM) ve yerel bildirimleri yöneten servis sınıfı.
+// ──────────────────────────────────────────────────────────────────────────────
+// M-09 Push Bildirim Servisi
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// Firebase Cloud Messaging + yerel bildirim yönetimi.
 class NotificationService {
   NotificationService._();
 
@@ -24,46 +72,40 @@ class NotificationService {
   static final _localNotifications = FlutterLocalNotificationsPlugin();
 
   static Future<void> initialize() async {
-    // Bildirim iznini uygulama açılışında sormuyoruz.
-    // İzin isteği sadece onboarding akışındaki butonla yapılacak.
-
-    // Arka plan dinleyici ayarla
+    // Arka plan handler (uygulama kapalı / background)
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // Yerel bildirim kanalı (Android)
+    // Android bildirim kanalı
     const androidChannel = AndroidNotificationChannel(
       'balikci_channel',
       'Balıkçı Bildirimleri',
       description: 'Check-in, hava ve puan bildirimleri',
       importance: Importance.high,
     );
-
     await _localNotifications
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >()
         ?.createNotificationChannel(androidChannel);
 
-    const initSettings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(),
-    );
+    // Yerel bildirim başlatma
     await _localNotifications.initialize(
-      initSettings,
-      // Uygulama açıkken gösterilen lokal bildirime tıklanınca yönlendir.
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(),
+      ),
       onDidReceiveNotificationResponse: (details) {
         _navigate(_routeForType(details.payload));
       },
     );
 
-    // Foreground mesaj dinleme
+    // Ön planda mesaj dinleme
     FirebaseMessaging.onMessage.listen(_onForegroundMessage);
 
-    // Uygulama arka plandayken bildirime tıklanınca yönlendir.
+    // Arka planda iken bildirime tıklanma
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
 
-    // Uygulama tamamen kapalıyken bildirime tıklanınca yönlendir.
-    // addPostFrameCallback ile router hazır olana kadar bekle.
+    // Uygulama kapalıyken bildirime tıklanma
     FirebaseMessaging.instance.getInitialMessage().then((message) {
       if (message != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -72,56 +114,37 @@ class NotificationService {
       }
     });
 
-    // Token alma ve Supabase'e kaydetme:
-    // - Kullanıcı izin vermediyse token olmayabilir, bu yüzden burada sadece izin durumu authorized/provisional ise senkronlarız.
-    // - İzin onboarding'de verildiğinde StepNotification tarafında tekrar sync tetiklenir.
+    // İzin zaten verilmişse token senkronla
     final settings = await _messaging.getNotificationSettings();
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
       await syncFcmToken();
     }
 
-    // Token yenilendiğinde tekrar kaydet
-    _messaging.onTokenRefresh.listen((newToken) {
-      _saveTokenToSupabase(newToken);
-    });
+    // Token yenileme
+    _messaging.onTokenRefresh.listen(_saveTokenToSupabase);
   }
 
   static Future<String?> getFcmToken() => _messaging.getToken();
 
-  /// FCM data['type'] değerine göre hedef route döner.
-  static String _routeForType(String? type) => switch (type) {
-    'checkin' => AppRoutes.map,
-    'fish_log' => AppRoutes.log,
-    'rank' => AppRoutes.rank,
-    'vote' => AppRoutes.map,
-    _ => AppRoutes.home,
-  };
-
-  /// appNavigatorKey üzerinden go_router ile yönlendir.
-  static void _navigate(String route) {
-    final context = appNavigatorKey.currentContext;
-    if (context == null) return;
-    GoRouter.of(context).go(route);
-  }
-
-  /// Bildirim mesajını işle ve uygun ekrana yönlendir.
-  static void _handleMessage(RemoteMessage message) {
-    final type = message.data['type'] as String?;
-    debugPrint('FCM yönlendirme: type=$type → ${_routeForType(type)}');
-    _navigate(_routeForType(type));
-  }
-
+  /// Uygulama ön plandayken gelen FCM mesajını işle.
+  /// Hem `notification` field'lı hem data-only mesajları destekler.
   static void _onForegroundMessage(RemoteMessage message) {
-    debugPrint('FCM Ön planda mesaj alındı. ID: ${message.messageId}');
-    final notification = message.notification;
-    if (notification == null) return;
+    debugPrint('FCM ön plan: ${message.messageId}');
 
-    // payload olarak type gönder; bildirime tıklanınca onDidReceiveNotificationResponse tetiklenir.
+    // notification field varsa onu kullan; yoksa data'dan çek
+    final title = message.notification?.title ??
+        message.data['title'] as String? ??
+        'Balıkçı';
+    final body = message.notification?.body ??
+        message.data['body'] as String?;
+
+    if (body == null || body.isEmpty) return;
+
     _localNotifications.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
+      message.hashCode,
+      title,
+      body,
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'balikci_channel',
@@ -134,12 +157,25 @@ class NotificationService {
     );
   }
 
-  /// FCM token'ını alır ve Supabase'e gönderir.
+  /// Bildirime tıklanınca uygun sayfaya yönlendir.
+  static void _handleMessage(RemoteMessage message) {
+    final type = message.data['type'] as String?;
+    final route = _routeForType(type);
+    debugPrint('FCM yönlendirme: type=$type → $route');
+    _navigate(route);
+  }
+
+  static void _navigate(String route) {
+    final context = appNavigatorKey.currentContext;
+    if (context == null) return;
+    GoRouter.of(context).go(route);
+  }
+
+  /// FCM token'ı alır ve Supabase'e yazar.
   static Future<void> syncFcmToken() async {
     try {
       final token = await getFcmToken();
       if (token != null) {
-        debugPrint('FCM Token: $token');
         await _saveTokenToSupabase(token);
       }
     } catch (e) {
@@ -147,22 +183,17 @@ class NotificationService {
     }
   }
 
-  /// Token'ı Supabase 'users' tablosundaki 'fcm_token' sütununa yazar.
-  /// İşlemin başarılı olması için oturum açılmış olmalıdır.
   static Future<void> _saveTokenToSupabase(String token) async {
     try {
       final user = SupabaseService.auth.currentUser;
-      if (user != null) {
-        await SupabaseService.client
-            .from('users')
-            .update({'fcm_token': token})
-            .eq('id', user.id);
-        debugPrint('FCM Token Supabase user tablosuna kaydedildi.');
-      } else {
-        debugPrint('Kullanıcı oturumu yok, token DB\'ye kaydedilmedi.');
-      }
+      if (user == null) return;
+      await SupabaseService.client
+          .from('users')
+          .update({'fcm_token': token})
+          .eq('id', user.id);
+      debugPrint('FCM Token kaydedildi.');
     } catch (e) {
-      debugPrint('FCM Supabase kayıt hatası: $e');
+      debugPrint('FCM Token Supabase kayıt hatası: $e');
     }
   }
 }
