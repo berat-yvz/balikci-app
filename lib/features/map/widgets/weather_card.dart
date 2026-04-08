@@ -60,20 +60,32 @@ class WeatherCard extends ConsumerWidget {
             ],
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  // Sol: sıcaklık
+                  // Sol: sıcaklık + konum göstergesi
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '${w.tempCelsius.toStringAsFixed(0)}°C',
-                          style: AppTextStyles.h3.copyWith(color: Colors.white),
+                        Row(
+                          children: [
+                            Text(
+                              '${w.tempCelsius.toStringAsFixed(0)}°C',
+                              style: AppTextStyles.h3.copyWith(color: Colors.white),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(
+                              data.gpsUsed ? Icons.gps_fixed : Icons.location_city,
+                              size: 12,
+                              color: data.gpsUsed ? AppColors.primary : AppColors.muted,
+                            ),
+                          ],
                         ),
                         Text(
-                          '${w.windKmh.toStringAsFixed(0)} km/s rüzgar',
+                          '💨 ${w.windKmh.toStringAsFixed(0)} km/s'
+                          '${w.waveHeight != null ? '  🌊 ${w.waveHeight!.toStringAsFixed(1)} m' : ''}',
                           style: AppTextStyles.caption.copyWith(
                             color: AppColors.muted,
                             fontSize: 11,
@@ -83,12 +95,12 @@ class WeatherCard extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Sağ: skor
+                  // Sağ: balıkçılık skoru
                   Column(
                     children: [
                       Text(scoreEmoji, style: const TextStyle(fontSize: 18)),
                       Text(
-                        '$score',
+                        '$score/100',
                         style: AppTextStyles.caption.copyWith(
                           fontSize: 11,
                           color: AppColors.muted,
@@ -99,8 +111,7 @@ class WeatherCard extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              // Orta: balıkçı özeti
+              const SizedBox(height: 6),
               Text(
                 summary,
                 style: AppTextStyles.caption.copyWith(
@@ -109,7 +120,6 @@ class WeatherCard extends ConsumerWidget {
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
               ),
             ],
           ),

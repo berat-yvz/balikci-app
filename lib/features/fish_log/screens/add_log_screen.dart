@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../data/repositories/fish_log_repository.dart';
 
@@ -81,6 +82,22 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
     }
   }
 
+  /// Mevcut hava durumunu snapshot olarak Map'e çevirir.
+  Map<String, dynamic>? _buildWeatherSnapshot() {
+    final weatherData = ref.read(istanbulWeatherProvider).valueOrNull;
+    final weather = weatherData?.current;
+    if (weather == null) return null;
+    return {
+      'temperature': weather.tempCelsius,
+      'windspeed': weather.windKmh,
+      'wave_height': weather.waveHeight,
+      'weather_code': weather.weatherCode,
+      'lat': weatherData!.lat,
+      'lng': weatherData.lng,
+      'recorded_at': DateTime.now().toIso8601String(),
+    };
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedFishType == null) {
@@ -104,6 +121,8 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
         photoUrl = await _uploadPhoto(_selectedImage!);
       }
 
+      final weatherSnapshot = _buildWeatherSnapshot();
+
       await FishLogRepository().createLog(
         userId: userId,
         species: _selectedFishType!,
@@ -117,6 +136,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
         notes: _notesController.text.isNotEmpty ? _notesController.text : null,
         isPrivate: _isPrivate,
         released: _isReleased,
+        weatherSnapshot: weatherSnapshot,
       );
 
       if (mounted) {
@@ -197,6 +217,10 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // ── Anlık hava durumu özeti ───────────────────
+            _WeatherBanner(),
+            const SizedBox(height: 16),
+
             // ── Fotoğraf seç ──────────────────────────────
             GestureDetector(
               onTap: _pickImage,
@@ -476,6 +500,74 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Kayıt formunun üstünde gösterilen küçük hava durumu özet kartı.
+class _WeatherBanner extends ConsumerWidget {
+  const _WeatherBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final weatherAsync = ref.watch(istanbulWeatherProvider);
+
+    return weatherAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (error, stack) => const SizedBox.shrink(),
+      data: (data) {
+        final w = data.current;
+        if (w == null) return const SizedBox.shrink();
+
+        final temp = w.tempCelsius.toStringAsFixed(1);
+        final wind = w.windKmh.toStringAsFixed(0);
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A2F47),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: Row(
+            children: [
+              const Text('☁️', style: TextStyle(fontSize: 22)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data.gpsUsed ? 'Konumunuzdaki Hava' : 'İstanbul Havası',
+                      style: const TextStyle(
+                        color: Color(0xFF8EA0B5),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '🌡 $temp°C  |  💨 $wind km/s',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Text(
+                'Otomatik kaydedilecek',
+                style: TextStyle(
+                  color: Color(0xFF8EA0B5),
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

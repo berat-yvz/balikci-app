@@ -31,6 +31,11 @@ class LogListScreen extends ConsumerWidget {
         centerTitle: true,
         actions: [
           IconButton(
+            icon: const Icon(Icons.bar_chart_rounded, size: 28, color: Colors.white),
+            tooltip: 'İstatistikler',
+            onPressed: () => context.push('/fish-log/stats'),
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh, size: 28, color: Colors.white),
             onPressed: () => ref.invalidate(fishLogsProvider),
           ),

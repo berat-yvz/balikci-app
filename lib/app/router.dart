@@ -36,7 +36,6 @@ import 'package:balikci_app/features/fish_log/stats_screen.dart';
 
 // Features — Rank
 import 'package:balikci_app/features/rank/rank_screen.dart';
-import 'package:balikci_app/features/rank/leaderboard_screen.dart';
 
 // Features — Knots
 import 'package:balikci_app/features/knots/knots_screen.dart';
@@ -200,12 +199,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.fishLogStats,
         builder: (context, state) => const StatsScreen(),
-      ),
-
-      // Rank
-      GoRoute(
-        path: AppRoutes.rankLeaderboard,
-        builder: (context, state) => const LeaderboardScreen(),
       ),
 
       // Knots

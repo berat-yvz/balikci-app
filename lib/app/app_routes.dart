@@ -30,9 +30,6 @@ class AppRoutes {
   static const fishLogAdd = '/fish-log/add';
   static const fishLogStats = '/fish-log/stats';
 
-  // Rank
-  static const rankLeaderboard = '/rank/leaderboard';
-
   // Knots
   static const knots = '/knots';
   static const knotsDetail = '/knots/detail';

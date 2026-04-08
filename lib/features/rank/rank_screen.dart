@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
@@ -38,33 +39,86 @@ class RankScreen extends ConsumerWidget {
   }
 }
 
-// ── Genel sıralama (toplam puan) ─────────────────────────────────────────────
+// ── Genel sıralama (toplam puan) — podium + liste ────────────────────────────
 
-class _AllTimeTab extends ConsumerWidget {
+class _AllTimeTab extends ConsumerStatefulWidget {
   const _AllTimeTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_AllTimeTab> createState() => _AllTimeTabState();
+}
+
+class _AllTimeTabState extends ConsumerState<_AllTimeTab>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentUserId = ref.watch(currentUserProvider)?.id;
     final asyncUsers = ref.watch(leaderboardProvider);
 
     return asyncUsers.when(
-      data: (users) => _LeaderboardList(
-        currentUserId: currentUserId,
-        itemCount: users.length,
-        itemBuilder: (idx) {
-          final u = users[idx];
-          return _LeaderboardRow(
-            rank: idx + 1,
-            username: u.username,
-            avatarUrl: u.avatarUrl,
-            rankLabel: u.rank,
-            scoreLabel: '${u.totalScore} puan',
-            highlight: currentUserId == u.id,
-          );
-        },
-        onRefresh: () async => ref.invalidate(leaderboardProvider),
-      ),
+      data: (users) {
+        if (!_controller.isCompleted) _controller.forward(from: 0);
+
+        final top3 = users.take(3).toList();
+        final rest = users.skip(3).toList();
+
+        return RefreshIndicator(
+          onRefresh: () async => ref.invalidate(leaderboardProvider),
+          child: CustomScrollView(
+            slivers: [
+              // Podium bölümü
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 260,
+                  child: _PodiumSection(
+                    top3: top3,
+                    currentUserId: currentUserId,
+                    animation: _controller,
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 6)),
+              // 4. ve sonrası liste
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                sliver: SliverList.separated(
+                  itemCount: rest.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 10),
+                  itemBuilder: (context, idx) {
+                    final u = rest[idx];
+                    return _LeaderboardRow(
+                      rank: idx + 4,
+                      username: u.username,
+                      avatarUrl: u.avatarUrl,
+                      rankLabel: u.rank,
+                      scoreLabel: '${u.totalScore} puan',
+                      highlight: currentUserId == u.id,
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
       loading: () => const LoadingWidget(message: 'Sıralamalar yükleniyor...'),
       error: (e, _) => AppErrorWidget(
         message: e.toString(),
@@ -72,6 +126,181 @@ class _AllTimeTab extends ConsumerWidget {
       ),
     );
   }
+}
+
+// ── Podium widget'ları ────────────────────────────────────────────────────────
+
+class _PodiumSection extends StatelessWidget {
+  final List<UserModel> top3;
+  final String? currentUserId;
+  final Animation<double> animation;
+
+  const _PodiumSection({
+    required this.top3,
+    required this.currentUserId,
+    required this.animation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final rank1 = top3.isNotEmpty ? top3[0] : null;
+    final rank2 = top3.length > 1 ? top3[1] : null;
+    final rank3 = top3.length > 2 ? top3[2] : null;
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Positioned.fill(child: CustomPaint(painter: _PodiumPainter())),
+        if (rank2 != null)
+          _PodiumPerson(
+            user: rank2,
+            rank: 2,
+            align: Alignment.centerLeft,
+            animation: animation,
+            highlight: currentUserId == rank2.id,
+          ),
+        if (rank1 != null)
+          _PodiumPerson(
+            user: rank1,
+            rank: 1,
+            align: Alignment.center,
+            animation: animation,
+            highlight: currentUserId == rank1.id,
+            isCenter: true,
+          ),
+        if (rank3 != null)
+          _PodiumPerson(
+            user: rank3,
+            rank: 3,
+            align: Alignment.centerRight,
+            animation: animation,
+            highlight: currentUserId == rank3.id,
+          ),
+      ],
+    );
+  }
+}
+
+class _PodiumPerson extends StatelessWidget {
+  final UserModel user;
+  final int rank;
+  final Alignment align;
+  final Animation<double> animation;
+  final bool highlight;
+  final bool isCenter;
+
+  const _PodiumPerson({
+    required this.user,
+    required this.rank,
+    required this.align,
+    required this.animation,
+    required this.highlight,
+    this.isCenter = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final size = isCenter ? 84.0 : 68.0;
+    final badgeSize = isCenter ? RankBadgeSize.medium : RankBadgeSize.small;
+    final medal = ['🥇', '🥈', '🥉'][rank - 1];
+
+    return Align(
+      alignment: align,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 34),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(medal, style: const TextStyle(fontSize: 26)),
+            const SizedBox(height: 4),
+            SizedBox(
+              height: size,
+              width: size,
+              child: AnimatedBuilder(
+                animation: animation,
+                builder: (context, child) => Transform.scale(
+                  scale: Curves.elasticOut.transform(animation.value),
+                  child: child,
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF12233A),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: highlight
+                          ? AppColors.primary.withValues(alpha: 0.7)
+                          : AppColors.muted.withValues(alpha: 0.2),
+                      width: highlight ? 2 : 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: user.avatarUrl != null
+                        ? ClipOval(
+                            child: Image.network(
+                              user.avatarUrl!,
+                              width: size,
+                              height: size,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stack) =>
+                                  RankBadge(rank: user.rank, size: badgeSize),
+                            ),
+                          )
+                        : RankBadge(rank: user.rank, size: badgeSize),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: 120,
+              child: Text(
+                user.username,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.body.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: isCenter ? 15 : 13,
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${user.totalScore} puan',
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.muted,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PodiumPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2 + 62);
+    canvas.drawOval(
+      Rect.fromCenter(center: center, width: 260, height: 64),
+      Paint()
+        ..color = AppColors.primaryLight
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: center, width: 230, height: 52),
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // ── Haftalık sıralama (son 7 gün check-in sayısı) ────────────────────────────
