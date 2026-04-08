@@ -9,7 +9,7 @@ import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/features/checkin/vote_widget.dart';
 
-/// Mera detay alt sheet (H3 read-only + H4 sahip düzenleme).
+/// Mera detay alt sheet — mera seçilince haritadan açılır.
 class SpotDetailSheet extends StatefulWidget {
   final SpotModel spot;
   const SpotDetailSheet({super.key, required this.spot});
@@ -29,67 +29,60 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
     _loadCheckins();
   }
 
+  Future<void> _loadCheckins() async {
+    setState(() => _loadingCheckins = true);
+    try {
+      final items = await _checkinRepo.getCheckinsForSpot(widget.spot.id);
+      if (!mounted) return;
+      setState(() => _checkins = items.take(5).toList());
+    } finally {
+      if (mounted) setState(() => _loadingCheckins = false);
+    }
+  }
+
   Future<void> _openDirections(BuildContext context) async {
     final label = Uri.encodeComponent(widget.spot.name);
     final geo = Uri.parse(
-      'geo:${widget.spot.lat},${widget.spot.lng}?q=${widget.spot.lat},${widget.spot.lng}($label)',
+      'geo:${widget.spot.lat},${widget.spot.lng}'
+      '?q=${widget.spot.lat},${widget.spot.lng}($label)',
     );
     final maps = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=${widget.spot.lat},${widget.spot.lng}',
+      'https://www.google.com/maps/search/?api=1'
+      '&query=${widget.spot.lat},${widget.spot.lng}',
     );
+    bool launched = false;
     try {
-      if (await launchUrl(geo, mode: LaunchMode.externalApplication)) {
-        return;
-      }
-    } catch (e) {
-      debugPrint('geo: URL açılamadı: $e');
-    }
+      launched = await launchUrl(geo, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+    if (launched) return;
     try {
-      if (await launchUrl(maps, mode: LaunchMode.externalApplication)) {
-        return;
-      }
-    } catch (e) {
-      debugPrint('Google Maps URL açılamadı: $e');
-    }
+      launched = await launchUrl(maps, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+    if (launched) return;
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Harita acilamadi'),
+        content: Text('Harita uygulaması açılamadı'),
         backgroundColor: AppColors.danger,
       ),
     );
   }
 
+  Future<void> _openCheckin(BuildContext context) async {
+    final result =
+        await GoRouter.of(context).push<bool>('/checkin/${widget.spot.id}');
+    if (!mounted) return;
+    if (result == true) await _loadCheckins();
+  }
+
   void _openEdit(BuildContext context) {
     final router = GoRouter.of(context);
-    final s = widget.spot;
+    final spot = widget.spot;
     Navigator.of(context).pop();
-    Future.microtask(() => router.push('/map/edit-spot', extra: s));
+    Future.microtask(() => router.push('/map/edit-spot', extra: spot));
   }
 
-  Future<void> _openCheckin(BuildContext context) async {
-    final router = GoRouter.of(context);
-    final s = widget.spot;
-    final result = await router.push<bool>('/checkin/${s.id}');
-    if (!mounted) return;
-    if (result == true) {
-      await _loadCheckins();
-    }
-  }
-
-  Future<void> _loadCheckins() async {
-    setState(() => _loadingCheckins = true);
-    try {
-      final items = await _checkinRepo.getCheckinsForSpot(widget.spot.id);
-      final limited = items.take(5).toList();
-      if (!mounted) return;
-      setState(() {
-        _checkins = limited;
-      });
-    } finally {
-      if (mounted) setState(() => _loadingCheckins = false);
-    }
-  }
+  // ── Yardımcı dönüşümler ──────────────────────────────────────────────────
 
   String _formatAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
@@ -109,298 +102,152 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
     return (a + b).toUpperCase();
   }
 
-  (String, Color) _crowdMeta(String? value) {
-    switch (value) {
-      case 'yoğun':
-        return ('Kalabalık: Yoğun', Colors.redAccent);
-      case 'normal':
-        return ('Kalabalık: Normal', Colors.orangeAccent);
-      case 'az':
-        return ('Kalabalık: Az', AppColors.success);
-      case 'boş':
-        return ('Kalabalık: Boş', Colors.lightBlueAccent);
-      default:
-        return ('Kalabalık: Bilinmiyor', Colors.grey);
-    }
-  }
+  /// Balık yoğunluğu → (emoji, etiket, renk)
+  (String, String, Color) _fishDisplay(String? value) => switch (value) {
+    'yoğun' => ('🐟🐟🐟', 'YOĞUN',  AppColors.success),
+    'normal' => ('🐟🐟',   'NORMAL', AppColors.teal),
+    'az'     => ('🐟',     'AZ',     AppColors.accent),
+    'yok'    => ('❌',     'YOK',    AppColors.danger),
+    _        => ('—',      'BİLGİ YOK', AppColors.muted),
+  };
 
-  (String, Color) _fishMeta(String? value) {
-    switch (value) {
-      case 'yoğun':
-        return ('Balık: Yoğun', AppColors.success);
-      case 'normal':
-        return ('Balık: Normal', AppColors.teal);
-      case 'az':
-        return ('Balık: Az', Colors.orangeAccent);
-      case 'yok':
-        return ('Balık: Yok', AppColors.danger);
-      default:
-        return ('Balık: Bilinmiyor', Colors.grey);
-    }
-  }
+  (String, Color) _crowdDisplay(String? value) => switch (value) {
+    'yoğun' => ('Çok kalabalık', Colors.redAccent),
+    'normal' => ('Normal kalabalık', Colors.orangeAccent),
+    'az'     => ('Sakin', AppColors.success),
+    'boş'    => ('Boş', Colors.lightBlueAccent),
+    _        => ('Bilinmiyor', Colors.grey),
+  };
 
-  Widget _chip(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.45)),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-
-  Widget _exifBadge(bool? exif) {
-    final (label, bgColor, borderColor) = switch (exif) {
-      true => (
-        '✓ doğrulandı',
-        AppColors.success.withValues(alpha: 0.15),
-        AppColors.success,
-      ),
-      false => (
-        '✗ eşleşmedi',
-        AppColors.danger.withValues(alpha: 0.15),
-        AppColors.danger,
-      ),
-      _ => (
-        '⏳ bekliyor',
-        AppColors.warning.withValues(alpha: 0.15),
-        AppColors.warning,
-      ),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: borderColor.withValues(alpha: 0.45)),
-      ),
-      child: Text(
-        'EXIF: $label',
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-
-  bool? _exifStatusForList(CheckinModel checkin) {
-    if (checkin.photoUrl == null) return null;
-    if (checkin.exifVerified) return true;
-    final age = DateTime.now().difference(checkin.createdAt);
-    if (age.inMinutes < 10) return null;
-    return false;
-  }
+  // ── Build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final uid = SupabaseService.auth.currentUser?.id;
     final isOwner = uid != null && uid == widget.spot.userId;
     final latest = _checkins.isNotEmpty ? _checkins.first : null;
-    final latestCrowd = latest == null ? null : _crowdMeta(latest.crowdLevel);
-    final latestFish = latest == null ? null : _fishMeta(latest.fishDensity);
 
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 24,
             spreadRadius: 2,
           ),
         ],
       ),
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
+          16, 12, 16,
           16 + MediaQuery.of(context).padding.bottom,
         ),
         child: ListView(
           shrinkWrap: true,
           children: [
+            // ── Tutamaç ────────────────────────────────
             Center(
               child: Container(
-                margin: const EdgeInsets.only(top: 8, bottom: 12),
+                margin: const EdgeInsets.only(bottom: 14),
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.4),
+                  color: Colors.white24,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            Text(widget.spot.name, style: AppTextStyles.h2),
-            const SizedBox(height: 8),
-            Text(
-              'Gizlilik: ${widget.spot.privacyLevel}',
-              style: AppTextStyles.body,
+
+            // ── Başlık + gizlilik ──────────────────────
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(widget.spot.name, style: AppTextStyles.h2),
+                ),
+                const SizedBox(width: 8),
+                _PrivacyBadge(level: widget.spot.privacyLevel),
+              ],
             ),
-            const SizedBox(height: 4),
-            if (widget.spot.type != null)
-              Text('Tur: ${widget.spot.type}', style: AppTextStyles.body),
-            const SizedBox(height: 4),
-            Text(
-              'Konum: ${widget.spot.lat.toStringAsFixed(5)}, ${widget.spot.lng.toStringAsFixed(5)}',
-              style: AppTextStyles.caption,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              widget.spot.description?.trim().isNotEmpty == true
-                  ? widget.spot.description!
-                  : 'Aciklama yok.',
-              style: AppTextStyles.body,
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _openCheckin(context),
-                icon: const Icon(Icons.check_circle_outline, size: 18),
-                label: const Text('Balık Var!'),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Son Durum Özeti',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (_loadingCheckins)
-              const Center(child: CircularProgressIndicator())
-            else if (latest == null)
-              const Text(
-                'Henüz bilgi yok',
-                style: TextStyle(color: Colors.grey),
-              )
-            else ...[
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _chip(latestCrowd!.$1, latestCrowd.$2),
-                  _chip(latestFish!.$1, latestFish.$2),
-                ],
-              ),
-              const SizedBox(height: 8),
+            if (widget.spot.type != null) ...[
+              const SizedBox(height: 4),
               Text(
-                'Son rapor ${_formatAgo(latest.createdAt)}',
-                style: const TextStyle(color: Colors.white70),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: VoteWidget(checkinId: latest.id),
+                widget.spot.type!,
+                style: AppTextStyles.caption.copyWith(color: AppColors.muted),
               ),
             ],
-            const SizedBox(height: 16),
-            Text(
-              'Son Bildirimler (${_checkins.length})',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
+            if (widget.spot.description?.trim().isNotEmpty == true) ...[
+              const SizedBox(height: 6),
+              Text(
+                widget.spot.description!,
+                style: AppTextStyles.body.copyWith(color: Colors.white70),
               ),
-            ),
-            const SizedBox(height: 8),
+            ],
+            const SizedBox(height: 18),
+
+            // ── Son Durum Kartı ────────────────────────
             if (_loadingCheckins)
-              const Center(child: CircularProgressIndicator())
-            else if (_checkins.isEmpty)
-              const Text(
-                'Henüz bildirim yok. İlk bildirimi sen yap! 🎣',
-                style: TextStyle(color: Colors.white70),
-              )
+              const _LoadingCard()
             else
-              ..._checkins.map((checkin) {
-                final userLabel = checkin.username ?? 'Kullanıcı';
-                final crowd = _crowdMeta(checkin.crowdLevel);
-                final fish = _fishMeta(checkin.fishDensity);
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  color: const Color(0xFF132236),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 16,
-                              backgroundColor: AppColors.primary.withValues(
-                                alpha: 0.25,
-                              ),
-                              child: Text(
-                                _initials(userLabel),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    userLabel,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  Text(
-                                    _formatAgo(checkin.createdAt),
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            _chip(crowd.$1, crowd.$2),
-                            _chip(fish.$1, fish.$2),
-                            if (checkin.photoUrl != null)
-                              _exifBadge(_exifStatusForList(checkin)),
-                            _CheckinStatusBadge(checkin: checkin),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        VoteWidget(
-                          checkinId: checkin.id,
-                        ),
-                      ],
-                    ),
+              _SonDurumCard(
+                checkin: latest,
+                fishDisplay: _fishDisplay(latest?.fishDensity),
+                crowdDisplay: _crowdDisplay(latest?.crowdLevel),
+                formatAgo: _formatAgo,
+              ),
+            const SizedBox(height: 12),
+
+            // ── Oy Widget (sadece son bildirim için) ───
+            if (!_loadingCheckins && latest != null) ...[
+              VoteWidget(
+                checkin: latest,
+                ownerUserId: latest.userId,
+                onHidden: () {
+                  setState(() => _checkins = _checkins
+                      .where((c) => c.id != latest.id)
+                      .toList());
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // ── Balık Var! CTA ─────────────────────────
+            _CheckinCTA(onTap: () => _openCheckin(context)),
+            const SizedBox(height: 20),
+
+            // ── Bildirim Geçmişi ──────────────────────
+            if (!_loadingCheckins) ...[
+              Text(
+                'Son Bildirimler (${_checkins.length})',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (_checkins.isEmpty)
+                const Text(
+                  'Henüz bildirim yok. İlk bildirimi sen yap! 🎣',
+                  style: TextStyle(color: Colors.white60, fontSize: 14),
+                )
+              else
+                ..._checkins.map(
+                  (c) => _HistoryCard(
+                    checkin: c,
+                    fishDisplay: _fishDisplay(c.fishDensity),
+                    crowdDisplay: _crowdDisplay(c.crowdLevel),
+                    initials: _initials(c.username),
+                    formatAgo: _formatAgo,
                   ),
-                );
-              }),
-            const SizedBox(height: 8),
+                ),
+            ],
+
+            const SizedBox(height: 12),
+
+            // ── Footer butonları ──────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -426,60 +273,368 @@ class _SpotDetailSheetState extends State<SpotDetailSheet> {
   }
 }
 
-class _CheckinStatusBadge extends StatelessWidget {
-  final CheckinModel checkin;
-  const _CheckinStatusBadge({required this.checkin});
+// ── Alt Widget'lar ────────────────────────────────────────────────────────────
+
+class _PrivacyBadge extends StatelessWidget {
+  final String privacyLevel;
+  const _PrivacyBadge({required this.level}) : privacyLevel = level;
+  // ignore: unused_field
+  final String level;
+
+  static (String, Color) _meta(String level) => switch (level) {
+    'public'  => ('🌍 Herkese Açık', AppColors.success),
+    'friends' => ('👥 Takipçiler',   AppColors.secondary),
+    'private' => ('🔒 Gizli',        AppColors.muted),
+    'vip'     => ('⭐ VIP',          AppColors.accent),
+    _         => (level,             AppColors.muted),
+  };
 
   @override
   Widget build(BuildContext context) {
-    if (!checkin.isActive) return const SizedBox.shrink();
-
-    if (checkin.isStale) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: AppColors.muted.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          'Eskiyor',
-          style: AppTextStyles.caption.copyWith(
-            fontSize: 10,
-            color: AppColors.muted,
-          ),
-        ),
-      );
-    }
-    if (checkin.exifVerified) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: AppColors.primaryLight,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-        ),
-        child: Text(
-          '✓ Doğrulandı',
-          style: AppTextStyles.caption.copyWith(
-            fontSize: 10,
-            color: AppColors.primary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
-    }
+    final (label, color) = _meta(privacyLevel);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.accent.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
-        'EXIF bekleniyor',
-        style: AppTextStyles.caption.copyWith(
-          fontSize: 10,
-          color: AppColors.accent,
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
         ),
+      ),
+    );
+  }
+}
+
+class _LoadingCard extends StatelessWidget {
+  const _LoadingCard();
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 90,
+      decoration: BoxDecoration(
+        color: const Color(0xFF132236),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
+class _SonDurumCard extends StatelessWidget {
+  final CheckinModel? checkin;
+  final (String, String, Color) fishDisplay;
+  final (String, Color) crowdDisplay;
+  final String Function(DateTime) formatAgo;
+
+  const _SonDurumCard({
+    required this.checkin,
+    required this.fishDisplay,
+    required this.crowdDisplay,
+    required this.formatAgo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final (fishEmoji, fishLabel, fishColor) = fishDisplay;
+    final (crowdLabel, crowdColor) = crowdDisplay;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF132236),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: checkin != null
+              ? fishColor.withValues(alpha: 0.35)
+              : Colors.white10,
+        ),
+      ),
+      child: checkin == null
+          ? const Row(
+              children: [
+                Text('🎣', style: TextStyle(fontSize: 28)),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Henüz bildirim yok.\nBu meradan ilk bildirimi sen yap!',
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Başlık satırı
+                Row(
+                  children: [
+                    const Text(
+                      'SON DURUM',
+                      style: TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      formatAgo(checkin!.createdAt),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
+                    ),
+                    if (checkin!.isStale) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.warning.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          '⏳ Eski olabilir',
+                          style: TextStyle(
+                            color: AppColors.warning,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Ana balık göstergesi
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      fishEmoji,
+                      style: const TextStyle(fontSize: 32),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'BALIK: $fishLabel',
+                          style: TextStyle(
+                            color: fishColor,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          crowdLabel,
+                          style: TextStyle(
+                            color: crowdColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (checkin!.exifVerified) ...[
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppColors.success.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: const Text(
+                          '✓ Doğrulandı',
+                          style: TextStyle(
+                            color: AppColors.success,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class _CheckinCTA extends StatelessWidget {
+  final VoidCallback onTap;
+  const _CheckinCTA({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton.icon(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          elevation: 0,
+        ),
+        icon: const Text('🎣', style: TextStyle(fontSize: 20)),
+        label: const Text(
+          'Balık Var! Bildir',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HistoryCard extends StatelessWidget {
+  final CheckinModel checkin;
+  final (String, String, Color) fishDisplay;
+  final (String, Color) crowdDisplay;
+  final String initials;
+  final String Function(DateTime) formatAgo;
+
+  const _HistoryCard({
+    required this.checkin,
+    required this.fishDisplay,
+    required this.crowdDisplay,
+    required this.initials,
+    required this.formatAgo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final (fishEmoji, fishLabel, fishColor) = fishDisplay;
+    final (crowdLabel, _) = crowdDisplay;
+    final userLabel = checkin.username ?? 'Anonim';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F1E30),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        children: [
+          // Avatar
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: AppColors.primary.withValues(alpha: 0.22),
+            child: Text(
+              initials,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // İçerik
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      userLabel,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      formatAgo(checkin.createdAt),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      '$fishEmoji $fishLabel',
+                      style: TextStyle(
+                        color: fishColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      crowdLabel,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Oy özeti
+          if (checkin.trueVotes + checkin.falseVotes > 0) ...[
+            const SizedBox(width: 8),
+            Column(
+              children: [
+                Text(
+                  '✓${checkin.trueVotes}',
+                  style: const TextStyle(
+                    color: AppColors.success,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  '✗${checkin.falseVotes}',
+                  style: const TextStyle(
+                    color: AppColors.danger,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }

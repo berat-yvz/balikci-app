@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
+
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:balikci_app/data/repositories/checkin_repository.dart';
 
-/// Oylama widget'ı — H6 sprint.
-/// Oy gönderir, %70+ yanlış eşiği aşılırsa check-in'i gizler
-/// ve [onHidden] callback'ini çağırır.
+/// Birleşik oylama widget'ı.
+///
+/// - [checkin]: oy sayılarını (trueVotes/falseVotes) içeren model.
+/// - [ownerUserId]: check-in sahibinin ID'si — kendi bildirimine oy veremez.
+/// - init'te DB'den kullanıcının mevcut oyunu çeker.
+/// - Oy verilince optimistik güncelleme yapar; hata olursa geri alır.
+/// - Aynı butona tekrar basmak oyu geri alır (toggle).
 class VoteWidget extends StatefulWidget {
-  final String checkinId;
-
-  /// Check-in gizlendiğinde parent widget'ı bilgilendir.
+  final CheckinModel checkin;
+  final String? ownerUserId;
   final VoidCallback? onHidden;
 
   const VoteWidget({
     super.key,
-    required this.checkinId,
+    required this.checkin,
+    this.ownerUserId,
     this.onHidden,
   });
 
@@ -24,50 +30,93 @@ class VoteWidget extends StatefulWidget {
 
 class _VoteWidgetState extends State<VoteWidget> {
   final _repo = CheckinRepository();
+
+  bool _loading = true;
   bool _voting = false;
-  bool? _myVote; // kullanıcının oyladığı değer (null = henüz oy yok)
+  bool? _myVote;
   bool _hidden = false;
+  late int _trueCount;
+  late int _falseCount;
 
-  Future<void> _vote(bool vote) async {
-    if (_voting || _myVote != null) return;
-    final voterId = SupabaseService.auth.currentUser?.id;
-    if (voterId == null) return;
+  @override
+  void initState() {
+    super.initState();
+    _trueCount = widget.checkin.trueVotes;
+    _falseCount = widget.checkin.falseVotes;
+    _loadMyVote();
+  }
 
-    setState(() => _voting = true);
+  Future<void> _loadMyVote() async {
+    final uid = SupabaseService.auth.currentUser?.id;
+    if (uid == null) {
+      if (mounted) setState(() => _loading = false);
+      return;
+    }
+    try {
+      final vote = await _repo.getUserVote(widget.checkin.id, uid);
+      if (mounted) {
+        setState(() {
+          _myVote = vote;
+          _loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _castOrToggle(bool vote) async {
+    if (_voting) return;
+    final uid = SupabaseService.auth.currentUser?.id;
+    if (uid == null) return;
+
+    // Mevcut durumu yedekle (hata rollback için)
+    final prevVote = _myVote;
+    final prevTrue = _trueCount;
+    final prevFalse = _falseCount;
+    final toggling = _myVote == vote; // aynı oya basıldı = geri al
+
+    // Optimistik güncelleme
+    setState(() {
+      _voting = true;
+      if (prevVote == true) _trueCount = (_trueCount - 1).clamp(0, 9999);
+      if (prevVote == false) _falseCount = (_falseCount - 1).clamp(0, 9999);
+      if (toggling) {
+        _myVote = null;
+      } else {
+        _myVote = vote;
+        if (vote) {
+          _trueCount++;
+        } else {
+          _falseCount++;
+        }
+      }
+    });
+
     try {
       await _repo.castVote(
-        checkinId: widget.checkinId,
-        voterId: voterId,
+        checkinId: widget.checkin.id,
+        voterId: uid,
         voteValue: vote,
       );
-      setState(() => _myVote = vote);
-
-      // Oy gönderildikten sonra eşik kontrolü yap
-      final wasHidden = await _repo.evaluateAndHide(widget.checkinId);
-
       if (!mounted) return;
-
-      if (wasHidden) {
-        setState(() => _hidden = true);
-        widget.onHidden?.call();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Bildirim yeterli yanlış oy aldı ve gizlendi.'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(vote ? '✓ Doğru oy verildi' : '✗ Yanlış oy verildi'),
-          ),
-        );
+      if (!toggling) {
+        final wasHidden = await _repo.evaluateAndHide(widget.checkin.id);
+        if (!mounted) return;
+        if (wasHidden) {
+          setState(() => _hidden = true);
+          widget.onHidden?.call();
+        }
       }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Oy gönderilemedi: $e')),
-      );
+    } catch (_) {
+      // Rollback
+      if (mounted) {
+        setState(() {
+          _trueCount = prevTrue;
+          _falseCount = prevFalse;
+          _myVote = prevVote;
+        });
+      }
     } finally {
       if (mounted) setState(() => _voting = false);
     }
@@ -75,77 +124,223 @@ class _VoteWidgetState extends State<VoteWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (_hidden) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            Icon(Icons.visibility_off, size: 16, color: AppColors.danger),
-            SizedBox(width: 6),
-            Text(
-              'Bu bildirim gizlendi.',
-              style: TextStyle(color: AppColors.danger, fontSize: 13),
-            ),
-          ],
+    if (_loading) {
+      return const SizedBox(
+        height: 28,
+        child: Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
         ),
       );
     }
 
-    final alreadyVoted = _myVote != null;
+    if (_hidden) return const _HiddenBanner();
+
+    final currentUid = SupabaseService.auth.currentUser?.id;
+    final isSelf = currentUid != null && currentUid == widget.ownerUserId;
+    final total = _trueCount + _falseCount;
+    final trueRatio = total > 0 ? _trueCount / total : 0.0;
+    final communityDoubt = trueRatio < 0.5 && total >= 3;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
-          'Bu raporu doğruluyor musun?',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            _VoteButton(
-              label: 'Doğru',
-              icon: Icons.check_circle_outline,
-              color: AppColors.primary,
-              selected: _myVote == true,
-              disabled: _voting || alreadyVoted,
-              onTap: () => _vote(true),
+        // ── Güven çubuğu (oy varsa) ──────────────────
+        if (total > 0) ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '✓ $_trueCount doğru',
+                style: const TextStyle(
+                  color: AppColors.success,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                '✗ $_falseCount yanlış',
+                style: const TextStyle(
+                  color: AppColors.danger,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          _TrustBar(trueRatio: trueRatio),
+          const SizedBox(height: 5),
+          Text(
+            communityDoubt
+                ? '⚠️ Topluluk bu raporu sorguluyor'
+                : '👍 Topluluk bu raporu doğruluyor',
+            style: TextStyle(
+              color: communityDoubt ? AppColors.warning : AppColors.muted,
+              fontSize: 12,
+              fontWeight:
+                  communityDoubt ? FontWeight.w700 : FontWeight.w400,
             ),
-            const SizedBox(width: 12),
-            _VoteButton(
-              label: 'Yanlış',
-              icon: Icons.cancel_outlined,
-              color: AppColors.danger,
-              selected: _myVote == false,
-              disabled: _voting || alreadyVoted,
-              onTap: () => _vote(false),
+          ),
+          const SizedBox(height: 14),
+        ] else ...[
+          const Text(
+            'Henüz oy kullanılmadı. İlk sen oyla!',
+            style: TextStyle(color: AppColors.muted, fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+        ],
+
+        // ── Oy butonları / sonuç ─────────────────────
+        if (isSelf)
+          const Text(
+            'Kendi bildirimine oy veremezsin.',
+            style: TextStyle(
+              color: AppColors.muted,
+              fontSize: 13,
+              fontStyle: FontStyle.italic,
             ),
-          ],
-        ),
-        if (alreadyVoted)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              'Oyunuz kaydedildi.',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          )
+        else if (_myVote == null) ...[
+          const Text(
+            'Bu bildirim doğru mu?',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
             ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _VoteBtn(
+                  label: '✓  DOĞRU',
+                  color: AppColors.success,
+                  selected: false,
+                  disabled: _voting,
+                  onTap: () => _castOrToggle(true),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _VoteBtn(
+                  label: '✗  YANLIŞ',
+                  color: AppColors.danger,
+                  selected: false,
+                  disabled: _voting,
+                  onTap: () => _castOrToggle(false),
+                ),
+              ),
+            ],
+          ),
+        ] else
+          Row(
+            children: [
+              Icon(
+                _myVote == true
+                    ? Icons.check_circle_rounded
+                    : Icons.cancel_rounded,
+                size: 20,
+                color:
+                    _myVote == true ? AppColors.success : AppColors.danger,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                _myVote == true ? 'Doğru oyladınız' : 'Yanlış oyladınız',
+                style: TextStyle(
+                  color:
+                      _myVote == true ? AppColors.success : AppColors.danger,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: _voting ? null : () => _castOrToggle(_myVote!),
+                child: const Text(
+                  'Geri al',
+                  style: TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 12,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ],
           ),
       ],
     );
   }
 }
 
-class _VoteButton extends StatelessWidget {
+// ── Yardımcı widget'lar ──────────────────────────────────────────────────────
+
+class _HiddenBanner extends StatelessWidget {
+  const _HiddenBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.danger.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.visibility_off, size: 16, color: AppColors.danger),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Yeterli yanlış oy geldi — bu bildirim gizlendi.',
+              style: TextStyle(color: AppColors.danger, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrustBar extends StatelessWidget {
+  final double trueRatio;
+  const _TrustBar({required this.trueRatio});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: Stack(
+        children: [
+          Container(
+            height: 10,
+            color: AppColors.danger.withValues(alpha: 0.25),
+          ),
+          FractionallySizedBox(
+            widthFactor: trueRatio.clamp(0.0, 1.0),
+            child: Container(height: 10, color: AppColors.success),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VoteBtn extends StatelessWidget {
   final String label;
-  final IconData icon;
   final Color color;
   final bool selected;
   final bool disabled;
   final VoidCallback onTap;
 
-  const _VoteButton({
+  const _VoteBtn({
     required this.label,
-    required this.icon,
     required this.color,
     required this.selected,
     required this.disabled,
@@ -157,30 +352,30 @@ class _VoteButton extends StatelessWidget {
     return GestureDetector(
       onTap: disabled ? null : onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        duration: const Duration(milliseconds: 140),
+        height: 52,
         decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.15) : Colors.transparent,
+          color: selected
+              ? color.withValues(alpha: 0.18)
+              : color.withValues(alpha: 0.07),
           border: Border.all(
-            color: selected ? color : Colors.grey.shade400,
-            width: selected ? 2 : 1,
+            color: disabled
+                ? AppColors.muted.withValues(alpha: 0.3)
+                : color.withValues(alpha: selected ? 1.0 : 0.65),
+            width: selected ? 2.0 : 1.5,
           ),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: disabled && !selected ? Colors.grey : color),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                color: disabled && !selected ? Colors.grey : color,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-              ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: disabled ? AppColors.muted : color,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.4,
             ),
-          ],
+          ),
         ),
       ),
     );
