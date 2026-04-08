@@ -21,9 +21,18 @@ class RankScreen extends ConsumerWidget {
           title: const Text('Sıralama'),
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Genel'),
-              Tab(text: 'Haftalık'),
-              Tab(text: 'Bölge'),
+              Tab(
+                icon: Icon(Icons.leaderboard_outlined, size: 20),
+                text: 'Genel',
+              ),
+              Tab(
+                icon: Icon(Icons.date_range_outlined, size: 20),
+                text: 'Haftalık',
+              ),
+              Tab(
+                icon: Icon(Icons.location_on_outlined, size: 20),
+                text: 'Bölge',
+              ),
             ],
           ),
         ),
@@ -74,7 +83,15 @@ class _AllTimeTabState extends ConsumerState<_AllTimeTab>
 
     return asyncUsers.when(
       data: (users) {
-        if (!_controller.isCompleted) _controller.forward(from: 0);
+        if (users.isEmpty) {
+          return const _EmptyState(
+            emoji: '🏆',
+            message: 'Henüz sıralama verisi yok.',
+          );
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && !_controller.isCompleted) _controller.forward(from: 0);
+        });
 
         final top3 = users.take(3).toList();
         final rest = users.skip(3).toList();
@@ -260,7 +277,7 @@ class _PodiumPerson extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: AppTextStyles.body.copyWith(
                   fontWeight: FontWeight.w800,
-                  fontSize: isCenter ? 15 : 13,
+                  fontSize: isCenter ? 16 : 14,
                 ),
               ),
             ),
@@ -270,7 +287,7 @@ class _PodiumPerson extends StatelessWidget {
               style: AppTextStyles.caption.copyWith(
                 color: AppColors.muted,
                 fontWeight: FontWeight.w600,
-                fontSize: 12,
+                fontSize: 13,
               ),
             ),
           ],
@@ -322,7 +339,6 @@ class _WeeklyTab extends ConsumerWidget {
           );
         }
         return _LeaderboardList(
-          currentUserId: currentUserId,
           itemCount: entries.length,
           itemBuilder: (idx) {
             final e = entries[idx];
@@ -368,14 +384,12 @@ class _RegionalTab extends StatelessWidget {
 // ── Ortak liste scaffold ──────────────────────────────────────────────────────
 
 class _LeaderboardList extends StatelessWidget {
-  final String? currentUserId;
   final int itemCount;
   final Widget Function(int idx) itemBuilder;
   final Future<void> Function() onRefresh;
   final String? headerLabel;
 
   const _LeaderboardList({
-    required this.currentUserId,
     required this.itemCount,
     required this.itemBuilder,
     required this.onRefresh,
@@ -435,7 +449,7 @@ class _LeaderboardRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
         color: highlight
             ? AppColors.primary.withValues(alpha: 0.10)
@@ -484,6 +498,8 @@ class _LeaderboardRow extends StatelessWidget {
               children: [
                 Text(
                   username,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.body.copyWith(
                     fontWeight: FontWeight.w800,
                   ),

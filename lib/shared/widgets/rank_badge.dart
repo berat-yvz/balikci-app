@@ -28,7 +28,8 @@ class _RankBadgeState extends State<RankBadge>
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1600),
       vsync: this,
-    )..repeat();
+    );
+    if (widget.rank == 'deniz_reisi') _controller.repeat();
   }
 
   @override
@@ -62,9 +63,6 @@ class _RankBadgeState extends State<RankBadge>
     switch (rank) {
       case 'acemi':
         return _BadgeConfig(
-          background: AppColors.rankAcemi.withValues(alpha: 0.15),
-          border: Colors.transparent,
-          color: AppColors.rankAcemi,
           child: _chip(
             emoji: '🪝',
             text: 'Acemi',
@@ -79,9 +77,6 @@ class _RankBadgeState extends State<RankBadge>
         );
       case 'olta_kurdu':
         return _BadgeConfig(
-          background: AppColors.rankOltaKurdu.withValues(alpha: 0.15),
-          border: Colors.transparent,
-          color: AppColors.rankOltaKurdu,
           child: _chip(
             emoji: '🎣',
             text: 'Olta Kurdu',
@@ -96,9 +91,6 @@ class _RankBadgeState extends State<RankBadge>
         );
       case 'usta':
         return _BadgeConfig(
-          background: AppColors.rankUsta.withValues(alpha: 0.10),
-          border: AppColors.rankUsta,
-          color: AppColors.rankUsta,
           child: _chip(
             emoji: '⚓',
             text: 'Usta',
@@ -114,9 +106,6 @@ class _RankBadgeState extends State<RankBadge>
       case 'deniz_reisi':
       default:
         return _BadgeConfig(
-          background: AppColors.rankDenizReisi.withValues(alpha: 0.18),
-          border: AppColors.rankDenizReisi,
-          color: AppColors.rankDenizReisi,
           child: _chip(
             emoji: '👑',
             text: 'Deniz Reisi',
@@ -203,8 +192,8 @@ class _DenizReisiShimmerBadge extends StatelessWidget {
                         Colors.transparent,
                       ],
                       stops: const [0.0, 0.5, 1.0],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
                     ),
                   ),
                 ),
@@ -218,15 +207,7 @@ class _DenizReisiShimmerBadge extends StatelessWidget {
 }
 
 class _BadgeConfig {
-  final Color background;
-  final Color border;
-  final Color color;
   final Widget child;
 
-  const _BadgeConfig({
-    required this.background,
-    required this.border,
-    required this.color,
-    required this.child,
-  });
+  const _BadgeConfig({required this.child});
 }
