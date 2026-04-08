@@ -268,51 +268,105 @@ class _CheckinScreenState extends State<CheckinScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Balık Bildirimi')),
+      appBar: AppBar(
+        title: const Text('Balık Bildirimi'),
+        bottom: spot == null
+            ? null
+            : PreferredSize(
+                preferredSize: const Size.fromHeight(24),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    '📍 ${spot.name}',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+      ),
       body: _loadingSpot
           ? const Center(child: CircularProgressIndicator())
           : spot == null
-          ? const Center(child: Text('Mera bulunamadi.'))
+          ? const Center(child: Text('Mera bulunamadı.'))
           : SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: ListView(
                   children: [
-                    Text(spot.name, style: AppTextStyles.h2),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Mera yakınında olduğunuz doğrulanacak.',
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.muted,
+                    // Konum bilgi satırı
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            color: AppColors.teal,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Mera yakınında olduğunuz otomatik kontrol edilecek.',
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.foam.withValues(alpha: 0.80),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
 
-                    _SegmentSelector(
-                      label: 'Balık yoğunluğu',
+                    // Balık yoğunluğu — 2×2 grid
+                    _GridSelector(
+                      label: 'Balık Yoğunluğu',
                       options: const ['yok', 'az', 'normal', 'yoğun'],
                       displayLabels: const [
-                        '❌ Yok',
-                        '🐟 Az',
-                        '🐟🐟 Normal',
-                        '🐟🐟🐟 Yoğun',
+                        '❌\nBalık Yok',
+                        '🐟\nAz Balık',
+                        '🐟🐟\nNormal',
+                        '🐟🐟🐟\nÇok Balık',
                       ],
                       value: _fishDensity,
                       onChanged: (v) => setState(() => _fishDensity = v),
                     ),
-                    _SegmentSelector(
-                      label: 'Kalabalık',
+                    const SizedBox(height: 4),
+
+                    // Kalabalık — 2×2 grid
+                    _GridSelector(
+                      label: 'Kalabalık Durumu',
                       options: const ['boş', 'az', 'normal', 'yoğun'],
                       displayLabels: const [
-                        '🏖️ Boş',
-                        '👤 Az',
-                        '👥 Normal',
-                        '👥👥 Yoğun',
+                        '🏖️\nBoş',
+                        '👤\nSakin',
+                        '👥\nNormal',
+                        '👥👥\nKalabalık',
                       ],
                       value: _crowdLevel,
                       onChanged: (v) => setState(() => _crowdLevel = v),
                     ),
+                    const SizedBox(height: 8),
 
+                    // Fotoğraf
+                    Text(
+                      'Fotoğraf Ekle (İsteğe Bağlı)',
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.muted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         Expanded(
@@ -344,20 +398,29 @@ class _CheckinScreenState extends State<CheckinScreen> {
                         ),
                       ),
                     if (_pickedPhoto != null) const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: canSubmit ? _submitCheckin : null,
-                      child: _submitting
-                          ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Konumu Doğrula ve Bildir'),
-                    ),
 
+                    SizedBox(
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: canSubmit ? _submitCheckin : null,
+                        child: _submitting
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Konumu Doğrula ve Bildir',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: () => context.pop(false),
@@ -371,16 +434,17 @@ class _CheckinScreenState extends State<CheckinScreen> {
   }
 }
 
-// ── Segment Selector ──────────────────────────────────────────────────────────
+// ── Grid Selector (2×2) ───────────────────────────────────────────────────────
+/// 4 seçeneği 2×2 grid olarak gösterir — 45+ kullanıcı için geniş dokunma alanı.
 
-class _SegmentSelector extends StatelessWidget {
+class _GridSelector extends StatelessWidget {
   final String label;
   final List<String> options;
   final List<String> displayLabels;
   final String value;
   final ValueChanged<String> onChanged;
 
-  const _SegmentSelector({
+  const _GridSelector({
     required this.label,
     required this.options,
     required this.displayLabels,
@@ -397,47 +461,89 @@ class _SegmentSelector extends StatelessWidget {
           label,
           style: AppTextStyles.body.copyWith(
             color: AppColors.muted,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Row(
-          children: List.generate(options.length, (i) {
-            final isSelected = options[i] == value;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => onChanged(options[i]),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  margin: EdgeInsets.only(right: i < options.length - 1 ? 5 : 0),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primaryLight : Colors.transparent,
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.muted.withValues(alpha: 0.4),
-                      width: isSelected ? 1.5 : 0.5,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    displayLabels[i],
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: isSelected ? AppColors.primary : AppColors.muted,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
+          children: [
+            _GridCell(
+              displayLabel: displayLabels[0],
+              isSelected: options[0] == value,
+              onTap: () => onChanged(options[0]),
+            ),
+            const SizedBox(width: 8),
+            _GridCell(
+              displayLabel: displayLabels[1],
+              isSelected: options[1] == value,
+              onTap: () => onChanged(options[1]),
+            ),
+            const SizedBox(width: 8),
+            _GridCell(
+              displayLabel: displayLabels[2],
+              isSelected: options[2] == value,
+              onTap: () => onChanged(options[2]),
+            ),
+            const SizedBox(width: 8),
+            _GridCell(
+              displayLabel: displayLabels[3],
+              isSelected: options[3] == value,
+              onTap: () => onChanged(options[3]),
+            ),
+          ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
       ],
+    );
+  }
+}
+
+class _GridCell extends StatelessWidget {
+  final String displayLabel;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _GridCell({
+    required this.displayLabel,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          height: 76,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: 0.20)
+                : Colors.white.withValues(alpha: 0.05),
+            border: Border.all(
+              color: isSelected
+                  ? AppColors.primary
+                  : AppColors.muted.withValues(alpha: 0.30),
+              width: isSelected ? 2.0 : 1.0,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Text(
+              displayLabel,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.4,
+                color: isSelected ? AppColors.primary : AppColors.muted,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -573,7 +679,7 @@ class _VerifiedBadge extends StatelessWidget {
         border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
       ),
       child: Text(
-        '⏳ EXIF bekleniyor',
+        '⏳ Doğrulama bekleniyor',
         style: AppTextStyles.caption.copyWith(
           color: AppColors.accent,
           fontWeight: FontWeight.w500,

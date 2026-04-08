@@ -20,6 +20,7 @@ import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
 import 'package:balikci_app/data/models/shop_model.dart';
 import 'package:balikci_app/features/map/widgets/spot_marker.dart';
+import 'package:balikci_app/features/map/widgets/vote_dialog.dart';
 import 'package:balikci_app/features/map/widgets/weather_card.dart';
 import 'package:balikci_app/data/repositories/shop_repository.dart';
 import 'package:balikci_app/shared/providers/connectivity_provider.dart';
@@ -834,6 +835,11 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                         const SizedBox(height: 10),
                         if (sheetSpot != null) ...[
+                          // Son durum özeti (en yeni bildirim varsa)
+                          if (mostRecent != null)
+                            _LatestCheckinBanner(checkin: mostRecent),
+                          if (mostRecent != null) const SizedBox(height: 10),
+
                           _WeatherMiniRow(
                             loading: _weatherLoading,
                             tempC: tempC,
@@ -871,15 +877,15 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                           ],
                           const SizedBox(height: 12),
-                          Text(
-                            sheetSpot.description?.trim().isNotEmpty == true
-                                ? sheetSpot.description!
-                                : 'Açıklama yok. Bu merayı bilen yazsın.',
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.foam.withValues(alpha: 0.78),
+                          if (sheetSpot.description?.trim().isNotEmpty == true)
+                            Text(
+                              sheetSpot.description!,
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.foam.withValues(alpha: 0.78),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 14),
+                          if (sheetSpot.description?.trim().isNotEmpty == true)
+                            const SizedBox(height: 12),
                           _RecentCheckinsRow(checkins: sheetCheckins),
                         ] else ...[
                           Text(
@@ -1371,6 +1377,8 @@ class _SheetSecondaryButton extends StatelessWidget {
   }
 }
 
+/// Son bildirimleri dikey kart listesi olarak gösterir.
+/// Her kart; zaman, balık yoğunluğu, kalabalık ve "Doğru mu?" butonunu içerir.
 class _RecentCheckinsRow extends StatelessWidget {
   final List<CheckinModel> checkins;
   const _RecentCheckinsRow({required this.checkins});
@@ -1378,10 +1386,24 @@ class _RecentCheckinsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (checkins.isEmpty) {
-      return Text(
-        'Son bildirim yok.',
-        style: AppTextStyles.caption.copyWith(
-          color: AppColors.foam.withValues(alpha: 0.70),
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.info_outline, color: AppColors.muted, size: 18),
+            const SizedBox(width: 10),
+            Text(
+              'Henüz bildirim yok. İlk bildiren sen ol!',
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.foam.withValues(alpha: 0.65),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -1391,74 +1413,278 @@ class _RecentCheckinsRow extends StatelessWidget {
       children: [
         Text(
           'Son Bildirimler',
-          style: AppTextStyles.h3.copyWith(color: AppColors.foam, fontSize: 14),
+          style: AppTextStyles.h3.copyWith(color: AppColors.foam, fontSize: 15),
         ),
         const SizedBox(height: 10),
-        SizedBox(
-          height: 44,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: checkins.length.clamp(0, 10),
-            separatorBuilder: (_, indexValue) => const SizedBox(width: 10),
-            itemBuilder: (context, i) {
-              final c = checkins[i];
-              final t = _formatAgo(c.createdAt);
-              final active = !c.isStale;
-              final bg = active
-                  ? AppColors.teal.withValues(alpha: 0.18)
-                  : AppColors.pinPrivate.withValues(alpha: 0.14);
-              final border = active
-                  ? AppColors.teal.withValues(alpha: 0.40)
-                  : Colors.white.withValues(alpha: 0.10);
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: border),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircleAvatar(
-                      radius: 12,
-                      backgroundColor: AppColors.foam.withValues(
-                        alpha: active ? 0.18 : 0.10,
-                      ),
-                      child: Text(
-                        '🎣',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.foam.withValues(alpha: 0.95),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      t,
-                      style: TextStyle(
-                        color: AppColors.foam.withValues(alpha: 0.88),
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+        ...checkins.take(5).map(
+          (c) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _CheckinCard(
+              checkin: c,
+              onVoteTap: () => VoteDialog.show(context, checkin: c),
+            ),
           ),
         ),
       ],
     );
   }
+}
+
+/// Tek check-in kartı — zaman, balık, kalabalık + "Doğru mu?" butonu.
+class _CheckinCard extends StatelessWidget {
+  final CheckinModel checkin;
+  final VoidCallback onVoteTap;
+
+  const _CheckinCard({required this.checkin, required this.onVoteTap});
+
+  String _fishLabel(String? d) => switch (d) {
+    'yoğun' => '🐟🐟🐟 Çok Balık',
+    'normal' => '🐟🐟 Normal',
+    'az' => '🐟 Az Balık',
+    'yok' => '❌ Balık Yok',
+    _ => '🐟 ?',
+  };
+
+  String _crowdLabel(String? c) => switch (c) {
+    'yoğun' => '👥👥 Kalabalık',
+    'normal' => '👥 Normal',
+    'az' => '👤 Sakin',
+    'boş' => '🏖️ Boş',
+    _ => '👥 ?',
+  };
 
   String _formatAgo(DateTime dt) {
-    final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inMinutes < 2) return 'şimdi';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} dk';
-    if (diff.inHours < 24) return '${diff.inHours} sa';
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 2) return 'az önce';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} dk önce';
+    if (diff.inHours < 24) return '${diff.inHours} sa önce';
     return '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final active = !checkin.isStale;
+    final total = checkin.trueVotes + checkin.falseVotes;
+    final trustPct = total == 0
+        ? 0.0
+        : (checkin.trueVotes / total).clamp(0.0, 1.0);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: active
+            ? AppColors.teal.withValues(alpha: 0.10)
+            : Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: active
+              ? AppColors.teal.withValues(alpha: 0.30)
+              : Colors.white.withValues(alpha: 0.08),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Sol: zaman + aktif nokta
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (active)
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: AppColors.success,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.success.withValues(alpha: 0.5),
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: AppColors.muted.withValues(alpha: 0.5),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              const SizedBox(height: 4),
+              Text(
+                _formatAgo(checkin.createdAt),
+                style: TextStyle(
+                  color: AppColors.foam.withValues(alpha: 0.75),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 12),
+
+          // Orta: balık + kalabalık
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _fishLabel(checkin.fishDensity),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _crowdLabel(checkin.crowdLevel),
+                  style: TextStyle(
+                    color: AppColors.foam.withValues(alpha: 0.70),
+                    fontSize: 13,
+                  ),
+                ),
+                if (total > 0) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.thumb_up_outlined,
+                        size: 12,
+                        color: AppColors.success.withValues(alpha: 0.80),
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        '%${(trustPct * 100).round()} güven ($total oy)',
+                        style: TextStyle(
+                          color: AppColors.foam.withValues(alpha: 0.55),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+
+          // Sağ: "Doğru mu?" butonu
+          SizedBox(
+            height: 44,
+            child: OutlinedButton(
+              onPressed: onVoteTap,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                foregroundColor: AppColors.foam,
+                side: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.20),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'Doğru\nmu?',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// En son check-in'i göze çarpan bir banner olarak gösterir.
+class _LatestCheckinBanner extends StatelessWidget {
+  final CheckinModel checkin;
+  const _LatestCheckinBanner({required this.checkin});
+
+  String _fishLabel(String? d) => switch (d) {
+    'yoğun' => '🐟🐟🐟 Çok Balık',
+    'normal' => '🐟🐟 Normal Balık',
+    'az' => '🐟 Az Balık',
+    'yok' => '❌ Balık Yok',
+    _ => '🐟 Bildirim Var',
+  };
+
+  String _formatAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 2) return 'az önce';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} dakika önce';
+    if (diff.inHours < 24) return '${diff.inHours} saat önce';
+    return '${dt.day}.${dt.month}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isStale = checkin.isStale;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: isStale
+            ? Colors.white.withValues(alpha: 0.04)
+            : AppColors.success.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isStale
+              ? Colors.white.withValues(alpha: 0.08)
+              : AppColors.success.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isStale ? Icons.history : Icons.circle,
+            size: 10,
+            color: isStale ? AppColors.muted : AppColors.success,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _fishLabel(checkin.fishDensity),
+              style: TextStyle(
+                color: isStale ? AppColors.muted : Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          Text(
+            _formatAgo(checkin.createdAt),
+            style: TextStyle(
+              color: AppColors.foam.withValues(alpha: 0.60),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (isStale) ...[
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                'ESKİ',
+                style: TextStyle(
+                  color: AppColors.warning,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
 
