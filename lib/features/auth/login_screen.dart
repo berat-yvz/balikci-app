@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
@@ -414,7 +415,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                             onboardingStateProvider,
                                           );
                                           context.go(
-                                            done ? AppRoutes.home : AppRoutes.onboarding,
+                                            done
+                                                ? AppRoutes.home
+                                                : AppRoutes.onboarding,
                                           );
                                         } else {
                                           ScaffoldMessenger.of(
@@ -430,7 +433,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                         }
                                       } finally {
                                         if (mounted) {
-                                          setState(() => _googleLoading = false);
+                                          setState(
+                                            () => _googleLoading = false,
+                                          );
                                         }
                                       }
                                     },
@@ -471,21 +476,12 @@ class _LogoLockup extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
+        SizedBox(
           width: 56,
           height: 56,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.3),
-              width: 1.2,
-            ),
-          ),
-          child: const Icon(
-            Icons.anchor_rounded,
-            color: AppColors.primary,
-            size: 30,
+          child: SvgPicture.asset(
+            'assets/images/logo.svg',
+            fit: BoxFit.contain,
           ),
         ),
         const SizedBox(width: 14),
@@ -544,13 +540,15 @@ class _FishAnimationState extends State<_FishAnimation>
       duration: const Duration(milliseconds: 2200),
     )..repeat(reverse: true);
 
-    _swimX = Tween<double>(begin: -6, end: 6).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _swimX = Tween<double>(
+      begin: -6,
+      end: 6,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
-    _wobble = Tween<double>(begin: -0.08, end: 0.08).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _wobble = Tween<double>(
+      begin: -0.08,
+      end: 0.08,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -568,10 +566,7 @@ class _FishAnimationState extends State<_FishAnimation>
           offset: Offset(_swimX.value, 0),
           child: Transform.rotate(
             angle: _wobble.value,
-            child: const Text(
-              '🐟',
-              style: TextStyle(fontSize: 28),
-            ),
+            child: const Text('🐟', style: TextStyle(fontSize: 28)),
           ),
         );
       },

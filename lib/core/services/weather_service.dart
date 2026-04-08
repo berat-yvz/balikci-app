@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/data/models/hourly_weather_model.dart';
 import 'package:balikci_app/data/local/database.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
 import 'package:drift/drift.dart' as drift;
@@ -134,13 +137,51 @@ class WeatherService {
     }
   }
 
-  /// Tüm cache kayıtlarını döner.
-  static Future<List<WeatherModel>> getAllCaches() async {
-    final response = await _db
-        .from('weather_cache')
-        .select()
-        .order('fetched_at');
-    return response.map<WeatherModel>(WeatherModel.fromJson).toList();
+  static const double _istanbulLat = 41.0082;
+  static const double _istanbulLng = 28.9784;
+
+  /// İstanbul için Open-Meteo'dan 24 saatlik tahmin çeker.
+  /// Hata durumunda boş liste döner.
+  static Future<List<HourlyWeatherModel>> fetchIstanbulHourlyForecast() async {
+    try {
+      final uri = Uri.parse(
+        'https://api.open-meteo.com/v1/forecast'
+        '?latitude=$_istanbulLat'
+        '&longitude=$_istanbulLng'
+        '&hourly=temperature_2m,windspeed_10m,precipitation,weathercode'
+        '&timezone=Europe%2FIstanbul'
+        '&forecast_days=1',
+      );
+      final client = HttpClient();
+      final request = await client.getUrl(uri);
+      final response = await request.close();
+      final body = await response.transform(utf8.decoder).join();
+      client.close();
+      if (response.statusCode != 200) return [];
+      final data = jsonDecode(body) as Map<String, dynamic>;
+      final hourly = data['hourly'] as Map<String, dynamic>;
+      final times = hourly['time'] as List;
+      final temps = hourly['temperature_2m'] as List;
+      final winds = hourly['windspeed_10m'] as List;
+      final precips = hourly['precipitation'] as List;
+      final codes = hourly['weathercode'] as List;
+
+      final result = <HourlyWeatherModel>[];
+      for (int i = 0; i < times.length; i++) {
+        result.add(
+          HourlyWeatherModel.fromOpenMeteo(
+            timeStr: times[i] as String,
+            temperature: (temps[i] as num).toDouble(),
+            windspeed: (winds[i] as num).toDouble(),
+            precipitation: (precips[i] as num).toDouble(),
+            weatherCode: (codes[i] as num).toInt(),
+          ),
+        );
+      }
+      return result;
+    } catch (_) {
+      return [];
+    }
   }
 
   static double _haversineKm(

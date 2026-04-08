@@ -1,160 +1,274 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/app/theme.dart';
-import 'package:balikci_app/core/constants/weather_regions.dart';
-import 'package:balikci_app/core/services/weather_service.dart';
 import 'package:balikci_app/core/utils/fishing_weather_utils.dart';
+import 'package:balikci_app/data/models/hourly_weather_model.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
+import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
 
 /// Detaylı hava durumu ekranı — H9 sprint.
-class WeatherScreen extends StatefulWidget {
+class WeatherScreen extends ConsumerStatefulWidget {
   const WeatherScreen({super.key});
 
   @override
-  State<WeatherScreen> createState() => _WeatherScreenState();
+  ConsumerState<WeatherScreen> createState() => _WeatherScreenState();
 }
 
-class _WeatherScreenState extends State<WeatherScreen> {
-  final List<WeatherModel> _allRegions = [];
-  WeatherModel? _selected;
-  String _selectedKey = 'istanbul';
-  bool _loading = true;
-
+class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    // Artık otomatik yükleme provider tarafından yapılıyor
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
-    try {
-      final all = await WeatherService.getAllCaches();
-      if (!mounted) return;
-      setState(() {
-        _allRegions
-          ..clear()
-          ..addAll(all);
-        _selected = all.isNotEmpty
-            ? all.firstWhere(
-                (w) => w.regionKey == _selectedKey,
-                orElse: () => all.first,
-              )
-            : null;
-        if (_selected != null) _selectedKey = _selected!.regionKey ?? '';
-      });
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+  Future<void> _onRefresh() async {
+    await ref.read(istanbulWeatherProvider.notifier).refresh();
   }
 
-  void _selectRegion(String key) {
-    final found = _allRegions.where((w) => w.regionKey == key);
-    if (found.isEmpty) return;
-    setState(() {
-      _selectedKey = key;
-      _selected = found.first;
-    });
+  List<HourlyWeatherModel> _hoursFromNow(List<HourlyWeatherModel> source) {
+    final now = DateTime.now();
+    final currentHour = DateTime(now.year, now.month, now.day, now.hour);
+    final filtered = source.where((h) => !h.time.isBefore(currentHour)).toList()
+      ..sort((a, b) => a.time.compareTo(b.time));
+
+    // Önümüzdeki 12 saat, okunabilirlik için yeterli.
+    if (filtered.length > 12) return filtered.take(12).toList();
+    return filtered;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Hava Durumu')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _allRegions.isEmpty
-              ? _EmptyWeather(onRetry: _load)
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    // ── Bölge seçici ───────────────────────
-                    SizedBox(
-                      height: 36,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: weatherRegions.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(width: 6),
-                        itemBuilder: (_, i) {
-                          final key =
-                              weatherRegions.keys.elementAt(i);
-                          final label = _regionLabel(key);
-                          final selected = key == _selectedKey;
-                          return GestureDetector(
-                            onTap: () => _selectRegion(key),
-                            child: AnimatedContainer(
-                              duration:
-                                  const Duration(milliseconds: 150),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: selected
-                                    ? AppColors.primary
-                                        .withValues(alpha: 0.25)
-                                    : Colors.transparent,
-                                border: Border.all(
-                                  color: selected
-                                      ? AppColors.primary
-                                      : AppColors.muted
-                                          .withValues(alpha: 0.3),
-                                  width: selected ? 1.5 : 0.5,
-                                ),
-                                borderRadius:
-                                    BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                label,
-                                style: AppTextStyles.caption.copyWith(
-                                  color: selected
-                                      ? AppColors.primary
-                                      : AppColors.muted,
-                                  fontWeight: selected
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+    final weatherAsync = ref.watch(istanbulWeatherProvider);
 
-                    if (_selected != null) ...[
-                      _WeatherHeroCard(weather: _selected!),
-                      const SizedBox(height: 16),
-                      _WeatherDetailGrid(weather: _selected!),
-                      const SizedBox(height: 16),
-                      _FishingTipsCard(weather: _selected!),
-                      const SizedBox(height: 16),
-                      _UpdateInfo(weather: _selected!),
-                    ],
-                  ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Hava Durumu'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _onRefresh,
+            tooltip: 'Hava durumunu güncelle',
+          ),
+        ],
+      ),
+      body: weatherAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => _EmptyWeather(onRetry: _onRefresh),
+        data: (data) => RefreshIndicator(
+          onRefresh: _onRefresh,
+          color: AppColors.primary,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // ── İstanbul saatlik tahmin ──────────────
+              Text(
+                'İstanbul',
+                style: AppTextStyles.h3.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
+              const SizedBox(height: 12),
+              data.hourly.isEmpty
+                  ? Text(
+                      'Hava verisi alınamadı',
+                      style: AppTextStyles.caption.copyWith(
+                        color: Colors.white70,
+                      ),
+                    )
+                  : _HourlyWeatherChart(hours: _hoursFromNow(data.hourly)),
+              const SizedBox(height: 24),
+
+              if (data.current != null) ...[
+                _WeatherHeroCard(weather: data.current!),
+                const SizedBox(height: 16),
+                _WeatherDetailGrid(weather: data.current!),
+                const SizedBox(height: 16),
+                _FishingTipsCard(weather: data.current!),
+                const SizedBox(height: 16),
+                _UpdateInfo(
+                  weather: data.current!,
+                  lastUpdated: data.lastUpdated,
+                ),
+                const SizedBox(height: 16),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
-
-  String _regionLabel(String key) => switch (key) {
-        'istanbul' => 'İstanbul',
-        'izmir' => 'İzmir',
-        'antalya' => 'Antalya',
-        'trabzon' => 'Trabzon',
-        'canakkale' => 'Çanakkale',
-        'bodrum' => 'Bodrum',
-        'fethiye' => 'Fethiye',
-        'sinop' => 'Sinop',
-        'samsun' => 'Samsun',
-        'mersin' => 'Mersin',
-        'mugla' => 'Muğla',
-        'balikesir' => 'Balıkesir',
-        _ => key,
-      };
 }
 
 // ── Alt widget'lar ──────────────────────────────────────────
+
+class _HourlyWeatherChart extends StatelessWidget {
+  final List<HourlyWeatherModel> hours;
+  const _HourlyWeatherChart({required this.hours});
+
+  @override
+  Widget build(BuildContext context) {
+    if (hours.isEmpty) {
+      return Text(
+        'Saatlik veri şu an için yok',
+        style: AppTextStyles.caption.copyWith(color: Colors.white70),
+      );
+    }
+
+    final minTemp = hours
+        .map((h) => h.temperature)
+        .reduce((a, b) => a < b ? a : b);
+    final maxTemp = hours
+        .map((h) => h.temperature)
+        .reduce((a, b) => a > b ? a : b);
+    final firstHour = hours.first;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A2F47),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              _legendChip(
+                '${firstHour.time.hour.toString().padLeft(2, '0')}:00 itibariyle',
+                const Color(0xFF2C9EFF),
+              ),
+              _legendChip(
+                'En düşük ${minTemp.round()}°C',
+                const Color(0xFF33D17A),
+              ),
+              _legendChip(
+                'En yüksek ${maxTemp.round()}°C',
+                const Color(0xFFFFA63D),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 220,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: hours.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                final hour = hours[index];
+                return _HourBar(
+                  hour: hour,
+                  minTemp: minTemp,
+                  maxTemp: maxTemp,
+                  isNow: index == 0,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _legendChip(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.65)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _HourBar extends StatelessWidget {
+  final HourlyWeatherModel hour;
+  final double minTemp;
+  final double maxTemp;
+  final bool isNow;
+
+  const _HourBar({
+    required this.hour,
+    required this.minTemp,
+    required this.maxTemp,
+    required this.isNow,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tempRange = (maxTemp - minTemp).abs() < 0.1 ? 1.0 : (maxTemp - minTemp);
+    final normalized = ((hour.temperature - minTemp) / tempRange).clamp(0.0, 1.0);
+    final barHeight = 36.0 + (normalized * 86.0);
+
+    return SizedBox(
+      width: 74,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text(hour.weatherEmoji, style: const TextStyle(fontSize: 24)),
+          const SizedBox(height: 2),
+          Text(
+            '${hour.temperature.round()}°',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            height: barHeight,
+            width: 28,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Color(0xFF2C9EFF), Color(0xFFFFA63D)],
+              ),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isNow ? Colors.white : Colors.white30,
+                width: isNow ? 2 : 1,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${hour.time.hour.toString().padLeft(2, '0')}:00',
+            style: TextStyle(
+              color: isNow ? Colors.white : Colors.white70,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${hour.windspeed.round()} km/sa',
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _WeatherHeroCard extends StatelessWidget {
   final WeatherModel weather;
@@ -213,10 +327,7 @@ class _WeatherHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 5,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
             decoration: BoxDecoration(
               color: _scoreColor(score).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
@@ -394,8 +505,8 @@ class _FishingTipsCard extends StatelessWidget {
                   color: tip.startsWith('✓')
                       ? AppColors.primary
                       : tip.startsWith('⚠️')
-                          ? AppColors.accent
-                          : Colors.white70,
+                      ? AppColors.accent
+                      : Colors.white70,
                 ),
               ),
             ),
@@ -408,22 +519,41 @@ class _FishingTipsCard extends StatelessWidget {
 
 class _UpdateInfo extends StatelessWidget {
   final WeatherModel weather;
-  const _UpdateInfo({required this.weather});
+  final DateTime lastUpdated;
+  const _UpdateInfo({required this.weather, required this.lastUpdated});
 
   @override
   Widget build(BuildContext context) {
-    final ago = DateTime.now().difference(weather.fetchedAt);
+    final ago = DateTime.now().difference(lastUpdated);
     final label = ago.inMinutes < 60
         ? '${ago.inMinutes} dakika önce güncellendi'
         : '${ago.inHours} saat önce güncellendi';
 
-    return Text(
-      '🕐 $label',
-      style: AppTextStyles.caption.copyWith(
-        color: AppColors.muted,
-        fontSize: 11,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.muted.withValues(alpha: 0.2),
+          width: 0.5,
+        ),
       ),
-      textAlign: TextAlign.center,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('🕐', style: TextStyle(fontSize: 14)),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.muted,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -452,10 +582,7 @@ class _EmptyWeather extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: onRetry,
-            child: const Text('Tekrar Dene'),
-          ),
+          ElevatedButton(onPressed: onRetry, child: const Text('Tekrar Dene')),
         ],
       ),
     );
