@@ -12,6 +12,7 @@ import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/core/services/score_service.dart';
 import 'package:balikci_app/data/repositories/checkin_repository.dart';
+import 'package:balikci_app/data/repositories/favorite_repository.dart';
 import 'package:balikci_app/data/repositories/notification_repository.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
 
@@ -157,6 +158,27 @@ class _CheckinScreenState extends State<CheckinScreen> {
           ),
         );
       }
+
+      // Mera favorileyen kullanıcılara bildirim gönder
+      // (mera sahibi ve check-in yapan kişi hariç)
+      unawaited(() async {
+        try {
+          final favRepo = FavoriteRepository();
+          final userIds = await favRepo.getUsersWhoFavorited(spot.id);
+          final notifRepo = NotificationRepository();
+          for (final favUserId in userIds) {
+            if (favUserId == uid || favUserId == spot.userId) continue;
+            await notifRepo.sendNotification(
+              userId: favUserId,
+              title: '🎣 Favori Meranızda Balık Var!',
+              body: '${spot.name} merasında balık bildirimi geldi.',
+              data: {'type': 'checkin', 'spot_id': spot.id},
+            );
+          }
+        } catch (_) {
+          // Bildirim gönderilemese de check-in akışını engelleme
+        }
+      }());
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

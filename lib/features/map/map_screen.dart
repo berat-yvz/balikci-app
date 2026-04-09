@@ -24,6 +24,7 @@ import 'package:balikci_app/features/map/widgets/vote_dialog.dart';
 import 'package:balikci_app/features/map/widgets/weather_card.dart';
 import 'package:balikci_app/data/repositories/shop_repository.dart';
 import 'package:balikci_app/shared/providers/connectivity_provider.dart';
+import 'package:balikci_app/shared/providers/favorite_provider.dart';
 import 'package:balikci_app/shared/providers/notification_provider.dart';
 
 /// Harita ekranı — H3 temel implementasyon.
@@ -1135,7 +1136,7 @@ class _LayerToggleButton extends StatelessWidget {
   }
 }
 
-class _SpotSheetHeader extends StatelessWidget {
+class _SpotSheetHeader extends ConsumerWidget {
   final SpotModel spot;
   final int activeCount;
   final bool hasMuhtar;
@@ -1147,7 +1148,10 @@ class _SpotSheetHeader extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isFavAsync = ref.watch(isFavoritedProvider(spot.id));
+    final isFav = isFavAsync.valueOrNull ?? false;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1198,6 +1202,31 @@ class _SpotSheetHeader extends StatelessWidget {
               ),
             ],
           ),
+        ),
+        // Favori butonu
+        IconButton(
+          tooltip: isFav ? 'Favoriden çıkar' : 'Favorile',
+          icon: Icon(
+            isFav ? Icons.bookmark : Icons.bookmark_border,
+            color: isFav ? AppColors.sand : AppColors.muted,
+          ),
+          onPressed: () async {
+            try {
+              await ref
+                  .read(favoriteRepositoryProvider)
+                  .toggleFavorite(spot.id);
+              ref.invalidate(isFavoritedProvider(spot.id));
+              ref.invalidate(favoriteSpotsProvider);
+            } catch (e) {
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Favori güncellenemedi: $e'),
+                  backgroundColor: AppColors.danger,
+                ),
+              );
+            }
+          },
         ),
       ],
     );

@@ -9,8 +9,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
+import 'package:balikci_app/shared/providers/favorite_provider.dart';
 import 'package:balikci_app/shared/providers/fish_log_provider.dart';
 import 'package:balikci_app/shared/providers/follow_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
@@ -332,6 +334,13 @@ class _ProfileContent extends ConsumerWidget {
               )
             else
               const SizedBox.shrink(),
+          ],
+          // Favori meralar sadece kendi profilinde görünür
+          if (isSelf) ...[
+            const SizedBox(height: 24),
+            const _SectionTitle(title: 'Favori Meralarım'),
+            const SizedBox(height: 10),
+            const _FavoriteSpotsSection(),
           ],
         ],
       ),
@@ -696,6 +705,118 @@ class _StatBox extends StatelessWidget {
               style: const TextStyle(color: Colors.white70, fontSize: 14),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Favori Meralar Bölümü ────────────────────────────────────────────────────
+
+class _FavoriteSpotsSection extends ConsumerWidget {
+  const _FavoriteSpotsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final spotsAsync = ref.watch(favoriteSpotsProvider);
+
+    return spotsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Text(
+        'Favoriler yüklenemedi: $e',
+        style: const TextStyle(color: AppColors.danger, fontSize: 14),
+      ),
+      data: (spots) {
+        if (spots.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF132236),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.bookmark_border, color: AppColors.muted),
+                const SizedBox(width: 12),
+                Text(
+                  'Henüz favori mera yok.',
+                  style: AppTextStyles.body.copyWith(color: AppColors.muted),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          children: spots
+              .map((spot) => _FavoriteSpotTile(spot: spot))
+              .toList(),
+        );
+      },
+    );
+  }
+}
+
+class _FavoriteSpotTile extends StatelessWidget {
+  final SpotModel spot;
+  const _FavoriteSpotTile({required this.spot});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => context.go(AppRoutes.map, extra: spot.id),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF132236),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.20),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.bookmark,
+                  color: AppColors.sand,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        spot.name,
+                        style: AppTextStyles.body.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (spot.type != null)
+                        Text(
+                          spot.type!,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.muted,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.muted,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
