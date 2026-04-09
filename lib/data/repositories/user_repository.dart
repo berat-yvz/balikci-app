@@ -161,7 +161,7 @@ class UserRepository {
           userId: e.key,
           username: (meta['username'] as String?) ?? 'Balıkçı',
           avatarUrl: meta['avatar_url'] as String?,
-          rank: meta['rank'] as String? ?? 'bronz',
+          rank: meta['rank'] as String? ?? 'acemi',
           checkinCount: e.value,
         );
       }).toList();

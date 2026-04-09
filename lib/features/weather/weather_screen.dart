@@ -56,72 +56,82 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       body: weatherAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => _EmptyWeather(onRetry: _onRefresh),
-        data: (data) => RefreshIndicator(
-          onRefresh: _onRefresh,
-          color: AppColors.primary,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Konum başlığı — GPS veya fallback göstergesi
-              Row(
-                children: [
-                  Icon(
-                    data.gpsUsed ? Icons.gps_fixed : Icons.location_city,
-                    color: data.gpsUsed
-                        ? AppColors.primary
-                        : AppColors.muted,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    data.gpsUsed ? 'Konumunuz' : 'İstanbul (varsayılan)',
-                    style: AppTextStyles.h3.copyWith(
-                      color: data.gpsUsed ? AppColors.primary : AppColors.muted,
-                      fontWeight: FontWeight.bold,
+        data: (data) {
+          final hoursFromNow = _hoursFromNow(data.hourly);
+          final currentHour =
+              hoursFromNow.isNotEmpty ? hoursFromNow.first : null;
+          return RefreshIndicator(
+            onRefresh: _onRefresh,
+            color: AppColors.primary,
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                // Konum başlığı — GPS veya fallback göstergesi
+                Row(
+                  children: [
+                    Icon(
+                      data.gpsUsed ? Icons.gps_fixed : Icons.location_city,
+                      color: data.gpsUsed
+                          ? AppColors.primary
+                          : AppColors.muted,
+                      size: 20,
                     ),
+                    const SizedBox(width: 6),
+                    Text(
+                      data.gpsUsed ? 'Konumunuz' : 'İstanbul (varsayılan)',
+                      style: AppTextStyles.h3.copyWith(
+                        color: data.gpsUsed
+                            ? AppColors.primary
+                            : AppColors.muted,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                if (data.current != null) ...[
+                  _WeatherHeroCard(weather: data.current!),
+                  const SizedBox(height: 16),
+                  _WeatherDetailGrid(
+                    weather: data.current!,
+                    currentHour: currentHour,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Ay fazı kartı
+                const _MoonPhaseCard(),
+                const SizedBox(height: 20),
+
+                Text(
+                  'Saatlik Tahmin',
+                  style: AppTextStyles.h3.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                data.hourly.isEmpty
+                    ? Text(
+                        'Saatlik hava verisi alınamadı',
+                        style: AppTextStyles.caption.copyWith(
+                          color: Colors.white70,
+                        ),
+                      )
+                    : _HourlyWeatherChart(hours: hoursFromNow),
+
+                if (data.current != null) ...[
+                  const SizedBox(height: 24),
+                  _UpdateInfo(
+                    weather: data.current!,
+                    lastUpdated: data.lastUpdated,
                   ),
                 ],
-              ),
-              const SizedBox(height: 16),
-
-              if (data.current != null) ...[
-                _WeatherHeroCard(weather: data.current!),
-                const SizedBox(height: 16),
-                _WeatherDetailGrid(weather: data.current!),
-                const SizedBox(height: 16),
               ],
-
-              // Ay fazı kartı
-              _MoonPhaseCard(),
-              const SizedBox(height: 20),
-
-              Text(
-                'Saatlik Tahmin',
-                style: AppTextStyles.h3.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 12),
-              data.hourly.isEmpty
-                  ? Text(
-                      'Saatlik hava verisi alınamadı',
-                      style: AppTextStyles.caption.copyWith(
-                        color: Colors.white70,
-                      ),
-                    )
-                  : _HourlyWeatherChart(hours: _hoursFromNow(data.hourly)),
-
-              if (data.current != null) ...[
-                const SizedBox(height: 24),
-                _UpdateInfo(
-                  weather: data.current!,
-                  lastUpdated: data.lastUpdated,
-                ),
-              ],
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -229,37 +239,6 @@ class _HourlyWeatherChart extends StatelessWidget {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              if (hours[i].waveHeight != null)
-                                Text(
-                                  '🌊 ${hours[i].waveHeight!.toStringAsFixed(1)} m',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Color(0xFF4DD9AC),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              if (hours[i].seaSurfaceTemperature != null)
-                                Text(
-                                  '🌡 ${hours[i].seaSurfaceTemperature!.toStringAsFixed(1)}°',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Color(0xFFFFB74D),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              if (hours[i].currentVelocity != null)
-                                Text(
-                                  '${hours[i].currentDirectionArrow ?? '→'} '
-                                  '${(hours[i].currentVelocity! * 100).round()} cm/s',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Color(0xFFCE93D8),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
                             ],
                           ),
                         ),
@@ -545,7 +524,12 @@ class _WeatherHeroCard extends StatelessWidget {
 
 class _WeatherDetailGrid extends StatelessWidget {
   final WeatherModel weather;
-  const _WeatherDetailGrid({required this.weather});
+  final HourlyWeatherModel? currentHour;
+
+  const _WeatherDetailGrid({
+    required this.weather,
+    this.currentHour,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -567,11 +551,12 @@ class _WeatherDetailGrid extends StatelessWidget {
           label: 'Sıcaklık',
           value: '${weather.tempCelsius.toStringAsFixed(1)}°C',
         ),
-        if (weather.waveHeight != null)
+        // Dalga yüksekliği — saatlik tahmin verisinden
+        if (currentHour?.waveHeight != null)
           _DetailTile(
             icon: '🌊',
             label: 'Dalga',
-            value: '${weather.waveHeight!.toStringAsFixed(1)} m',
+            value: '${currentHour!.waveHeight!.toStringAsFixed(1)} m',
           ),
         _DetailTile(
           icon: '💧',
@@ -594,6 +579,21 @@ class _WeatherDetailGrid extends StatelessWidget {
               ? '%${weather.cloudCover!.toStringAsFixed(0)}'
               : 'Veri yok',
         ),
+        // Deniz yüzey sıcaklığı — saatlik tahmin verisinden
+        if (currentHour?.seaSurfaceTemperature != null)
+          _DetailTile(
+            icon: '🌡',
+            label: 'Deniz Sıcaklığı',
+            value:
+                '${currentHour!.seaSurfaceTemperature!.toStringAsFixed(1)}°C',
+          ),
+        // Akıntı hızı ve yönü — saatlik tahmin verisinden
+        if (currentHour?.currentVelocity != null)
+          _DetailTile(
+            icon: currentHour!.currentDirectionArrow ?? '→',
+            label: 'Akıntı',
+            value: '${(currentHour!.currentVelocity! * 100).round()} cm/s',
+          ),
       ],
     );
   }
