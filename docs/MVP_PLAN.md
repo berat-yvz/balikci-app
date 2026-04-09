@@ -88,32 +88,27 @@ main_shell.dart             → /home (şu an içinde MapScreen)
 
 ## M-03 — Anlık Check-in & Doğrulama Sistemi
 
-### Check-in Akışı
+> **Durum:** ✅ Tamamlandı (fotoğraf/EXIF akışı kaldırıldı, UX sadeleştirildi)
+
+### Check-in Akışı (güncel)
 1. Kullanıcı konumu ± 500m yarıçap kontrolü (merada mı?)
 2. Balık yoğunluğu seçimi: `Yoğun / Normal / Az / Yok`
-3. Opsiyonel fotoğraf (EXIF doğrulama tetiklenir)
+3. Kalabalık seçimi: `Boş / Sakin / Normal / Kalabalık`
 4. Supabase Realtime ile haritadaki pin anlık güncellenir
+5. Mera sahibine "Meranızda Balık Var!" bildirimi
+6. Mera favorileyen kullanıcılara "Favori Meranızda Balık Var!" bildirimi
+
+> **Not:** Fotoğraf yükleme ve EXIF doğrulama check-in akışından kaldırıldı. `exif-verify` Edge Function yalnızca balık günlüğü için kullanılmaktadır.
 
 ### Oylama Sistemi
 - Diğer kullanıcılar: `Doğru ✓` / `Yanlış ✗`
 - %70+ doğru oy → güvenilir rapor → tam puan
-- %70+ yanlış oy → rapor gizlenir + kullanıcıya -20 puan
+- %70+ yanlış oy → rapor gizlenir + kullanıcıya -20 puan *(ileriye ertelendi)*
 
 ### Veri Yaşam Süresi
 - 2 saat sonra rapor "eski" işaretlenir
 - Haritada renk solar (canlı → soluk)
 - 6 saat sonra haritadan kalkar (DB'de kayıtlı kalır)
-
-### EXIF Doğrulama (Edge Function: `exif-verify`)
-```
-Fotoğraf yüklendi
-    ↓
-GPS koordinatı çıkar → mera konumu ± 1km ?
-    ↓
-Timestamp çıkar → şu an ± 30 dakika ?
-    ↓
-✓ Doğrulandı (2x puan) | ✗ Doğrulanmadı (1x puan, işaret eklenir)
-```
 
 ---
 
@@ -319,17 +314,26 @@ Water Knot, Nail Knot
 
 ## M-09 — Push Bildirim Sistemi
 
-### Bildirim Türleri
-| Tür | Tetikleyici | Örnek |
-|-----|------------|-------|
-| Yakın mera | 2km'de 3+ check-in | "Yakınında 5 kişi balık tutuyor 🎣" |
-| Favori mera | Yeni check-in | "Galata Köprüsü'nde hareket var!" |
-| Gölge puan | Takipçi av yaptı | "Senin sayende 3 kişi boş dönmedi 🏆" |
-| Hava uyarısı | Sabah 06:00 cron | "Bugün hava tam lüfer havası ✓" |
-| Sezon hatırlatma | Takvim | "Lüfer sezonu 7 gün sonra açılıyor!" |
-| Rütbe yükselme | Puan eşiği | "Tebrikler! Usta rütbesine ulaştın ⚓" |
+> **Durum:** 🔄 Kısmen tamamlandı
 
-### Kurallar
-- Kullanıcı başına günlük maksimum **5 push** (spam engeli)
-- Gece 23:00 – sabah 07:00 arası bildirim gönderilmez
-- Kullanıcı ayarlar ekranından her tür ayrı ayrı kapatılabilir
+### Bildirim Türleri
+| Tür | Tetikleyici | Durum | Örnek |
+|-----|------------|-------|-------|
+| Favori mera | Check-in → favorileyen kullanıcılar | ✅ | "Favori Meranızda Balık Var!" |
+| Mera sahibi | Check-in → spot owner | ✅ | "Meranızda Balık Var!" |
+| Bildirim deep-link | Tap → spot_id ile mera açılır | ✅ | — |
+| Yakın mera | 2km'de 3+ check-in | ⏳ | "Yakınında 5 kişi balık tutuyor 🎣" |
+| Gölge puan | Takipçi av yaptı | ⏳ | "Senin sayende 3 kişi boş dönmedi 🏆" |
+| Hava uyarısı | Sabah 06:00 cron | ⏳ | "Bugün hava tam lüfer havası ✓" |
+| Sezon hatırlatma | Takvim | ⏳ | "Lüfer sezonu 7 gün sonra açılıyor!" |
+| Rütbe yükselme | Puan eşiği | ⏳ | "Tebrikler! Usta rütbesine ulaştın ⚓" |
+
+### Uygulanan Teknik Detaylar
+- **JSON Payload:** `{"type":"checkin","spot_id":"..."}` — yerel bildirim ve FCM hem `type` hem `spot_id` taşır
+- **Deep-link:** `_navigateFromPayload` → `router.go(AppRoutes.map, extra: spotId)` → `MapScreen(initialSpotId)`
+- **Favori bildirimi:** `FavoriteRepository.getUsersWhoFavorited(spotId)` → loop → `NotificationRepository.sendNotification`
+
+### Kalan Kurallar
+- Kullanıcı başına günlük maksimum **5 push** (spam engeli) *(ileriye ertelendi)*
+- Gece 23:00 – sabah 07:00 arası bildirim gönderilmez *(ileriye ertelendi)*
+- Kullanıcı ayarlar ekranından her tür ayrı ayrı kapatılabilir *(UI hazır, backend henüz bağlı değil)*

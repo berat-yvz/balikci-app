@@ -2,7 +2,7 @@
 
 Bu dosya vekil asistan / geliştirici için **kodla uyumlu anlık özet**tir. Ayrıntılı mimari: [ARCHITECTURE.md](ARCHITECTURE.md). Sprint: [SPRINT.md](SPRINT.md). MVP maddeleri: [MVP_PLAN.md](MVP_PLAN.md).
 
-**Son güncelleme:** H1–H5 tamamlandı ✅; H6 (EXIF/Oylama) kısmen tamamlandı — Storage trigger, %70 yanlış oy gizleme ve rozet UI eksik. Sıradaki odak: H6 kalan → H7 Balık Günlüğü.
+**Son güncelleme:** H1–H9 tamamlandı ✅; H10 (Push Bildirim) kısmen tamamlandı — favori mera bildirimi ve bildirim deep-link çalışıyor. Sıradaki odak: H10 kalan görevler (konum bazlı, gece sessiz mod) → H11 Düğüm Rehberi.
 
 ---
 
@@ -10,74 +10,95 @@ Bu dosya vekil asistan / geliştirici için **kodla uyumlu anlık özet**tir. Ay
 
 | Öncelik | Modül | Durum | Not |
 |--------|--------|--------|-----|
-| 1 | M-01 Auth & Onboarding | ✅ | Tamamlandı; `public.users` tetikleyici + RLS production’da doğrulanacak |
-| 2 | M-02 Harita H3–H4 | ✅ | Harita temeli + mera CRUD tamamlandı; dükkan pinleri H15’e ertelendi |
-| 3 | M-02 H5 Check-in | ✅ | Check-in + Realtime + konum doğrulama tamamlandı |
-| 4 | M-02 **H6 EXIF/Oylama** | 🔄 | exif_helper + vote_widget tamam; **kalan:** Storage trigger, %70 yanlış gizleme, rozet UI |
-| 5 | M-03 H7 Balık Günlüğü | ⏳ | Sıradaki sprint |
-| 6 | M-03+ H8–H16 | ⏳ | MVP_PLAN sırası |
+| 1 | M-01 Auth & Onboarding | ✅ | Tamamlandı |
+| 2 | M-02 Harita H3–H4 | ✅ | Harita + mera CRUD + favorileme tamamlandı |
+| 3 | M-02 H5 Check-in | ✅ | Fotoğraf/EXIF kaldırıldı; sadece yoğunluk+kalabalık seçimi |
+| 4 | M-02 H6 EXIF/Oylama | ✅ | Oylama çalışıyor; check-in fotoğrafı kaldırıldı |
+| 5 | M-03 H7 Balık Günlüğü | ✅ | Tamamlandı |
+| 6 | M-04 H8 Puan & Rütbe | ✅ | Sıralama dikey liste + madalya UI tamamlandı |
+| 7 | M-04 H9 Hava Durumu | ✅ | 24s grafik, saat başı güncelleme, deniz metrikleri |
+| 8 | M-09 H10 Bildirim | 🔄 | Favori + spot deep-link çalışıyor; konum bazlı + sessiz mod kalmış |
+| 9 | M-07 H11–H16 | ⏳ | Düğüm rehberi, offline harita, Polish, Launch |
 
 ---
 
 ## Teknoloji
 
-- Flutter, Riverpod, go_router, Drift, Supabase (`supabase_flutter`), Firebase (FCM + `google-services.json`), `flutter_map` + OSM, `flutter_map_marker_cluster`, `flutter_map_tile_caching`, `geolocator`, `app_links` (OAuth dönüşü).
+- Flutter, Riverpod, go_router, Drift, Supabase (`supabase_flutter`), Firebase (FCM + `google-services.json`), `flutter_map` + OSM, `flutter_map_marker_cluster`, `flutter_map_tile_caching`, `geolocator`, `app_links` (OAuth dönüşü), `flutter_local_notifications`, Open-Meteo API (forecast + marine).
 
 ---
 
 ## Giriş ve yönlendirme
 
 - `lib/app/router.dart`: oturum yok → `/login`; onboarding bitmemiş → `/onboarding`; bitmiş → `/home`.
+- `/map` rotası `state.extra` (String `spotId`) kabul eder; bildirimden mera deep-link için kullanılır.
 - `lib/main.dart`: `.env`, Firebase, Supabase, Drift, `NotificationService` başarısızsa `StartupErrorApp`; OAuth için `AppLinks` + `getSessionFromUrl`; `onAuthStateChange` ile `AuthRepository.ensureUserProfile`.
 - Splash: `splash_screen.dart` — kısa gecikme sonra oturum + `SharedPreferences` onboarding bayrağı.
 
 ---
 
-## M-01 — Auth ve onboarding
+## M-01 — Auth ve onboarding (✅)
 
-- E-posta/şifre + Google OAuth (`AuthRepository`, `oauth_constants.dart` — `balikciapp://login-callback/`).
-- Onboarding tamamı: `preferences_provider` / `SharedPreferences` (`isOnboardingCompleted` benzeri bayrak).
-- **İzin adımları:**
-  - Bildirim izni **uygulama açılışında istenmez** (`NotificationService.initialize` içinde `requestPermission` yok).
-  - İzin, yalnızca onboarding’de ilgili butonla istenir.
-  - **Sayfa geçişi:** izin verildikten sonra **otomatik ilerleme yok**; kullanıcı alttaki **İleri** ile geçer (izin isteğe bağlı; **Atla** tüm onboarding’i atlar).
-- **Konum adımı** (`step_location.dart`): `AutomaticKeepAliveClientMixin` + `WidgetsBindingObserver`; OS izin durumu (`checkPermission`) ve `resumed` ile senkron; izin verilmişse buton kalıcı kapalı + “Konum izni verildi”. **Başarılı izin sonrası altta yeşil SnackBar gösterilmez** (red / kalıcı red için uyarılar durur).
-- **Bildirim adımı** (`step_notification.dart`): aynı mixin’ler; `getNotificationSettings` ile OS senkronu; izin verilmişse buton kapalı + “Bildirim izni verildi”. **Başarılı izin sonrası altta yeşil SnackBar gösterilmez**; reddedilirse **İleri** ile devam, geri dönülürse tekrar denenebilir.
-- **Android manifest:** `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `POST_NOTIFICATIONS` (13+), OAuth `intent-filter` (`balikciapp` / `login-callback`).
-- **iOS:** Konum usage string’leri + `CFBundleURLTypes` OAuth şeması (bkz. `ios/Runner/Info.plist`).
+- E-posta/şifre + Google OAuth.
+- Onboarding: konum izni, bildirim izni, hoş geldin adımı.
+- Bildirim izni **uygulama açılışında istenmez**; yalnızca onboarding butonu ile istenir.
+- Android manifest: `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `POST_NOTIFICATIONS`.
 
 Detay: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md).
 
 ---
 
-## M-02 — Harita & Check-in (H3–H5 tamamlandı, H6 devam ediyor)
+## M-02 — Harita, Mera & Check-in (✅)
 
-- `/home` → `MainShell` → doğrudan `MapScreen` (placeholder yok).
-- `SpotRepository`: Supabase `fishing_spots` listeleme/sayfalama, bbox sorgusu, CRUD + Drift `local_spots` upsert; `getCachedSpots()` offline fallback.
-- Drift: `AppDatabase` **schemaVersion 2** — `local_spots` alanları (`verified`, `muhtarId`, `cachedAt`); migrasyon `database.dart` içinde.
-- Harita: cluster, FMTC tile store, `SpotDetailSheet` salt okunur + **Yol tarifi** (`geo` / Google Maps).
-- **H4 (mera):** `add_spot_screen` (ekle + sahip için güncelle), `pick_spot_location_screen`, `/map/add-spot`, `/map/edit-spot`, `/map/pick-location`; detay sheet **Düzenle**; haritada FAB **Mera ekle**. **Dükkan (`shops`) pinleri** FAZ E H15’e ertelendi.
-- **Harita UI entegrasyonu:** `MapScreen` üzerinde hızlı aksiyonlar (**Konumum**, **Mera ekle**), sheet içinde **Check-in / Yol tarifi / Düzenle** butonları ve arama alanında **Bildirim** kısayolu.
-- `/map` rotası hâlâ tanımlı; ana giriş yolu `/home` → `MainShell` → `MapScreen`.
-
-### H5 — Check-in (tamamlandı)
-
-- `checkin_screen.dart`: konum doğrulama (± 500m), balık yoğunluğu + kalabalık seçimi (4 seviye).
-- `checkin_repository.dart`: Supabase insert + Realtime subscription.
-- Harita pin'i anlık güncelleniyor; 2 saat sonra opacity azalır.
-
-### H6 — EXIF & Oylama (devam ediyor)
-
-- `exif_helper.dart`: native_exif ile GPS + timestamp okuma (tamam).
-- `exif-verify` Edge Function yazıldı (tamam), deploy + storage trigger **kurulacak**.
-- `vote_widget.dart` + `checkin_repository` vote fonksiyonu (tamam).
-- **Kalan:** Storage trigger, %70+ yanlış oy → check-in gizleme mantığı, doğrulanmış check-in rozeti UI.
+- `/home` → `MainShell` → `MapScreen`.
+- `SpotRepository`: Supabase `fishing_spots` CRUD, Drift `local_spots` cache; `getCachedSpots()` offline fallback.
+- **Favori buton:** `_SpotSheetHeader` (`ConsumerWidget`) — `isFavoritedProvider` ile durum; `FavoriteRepository.toggleFavorite` çağrısı.
+- **Deep-link:** `MapScreen(initialSpotId)` — bildirim tap'ında mera otomatik seçilip bottom sheet açılır.
+- Harita: cluster, FMTC tile store, "Balık Var!" + "Yol tarifi" + "Düzenle (sahip)" sheet butonları.
+- **Check-in:** Konum doğrulama (±500m), balık yoğunluğu + kalabalık seçimi. Fotoğraf ve EXIF doğrulama **kaldırıldı**.
+- **Oylama:** `vote_widget.dart` — doğru/yanlış oy; `vote_dialog.dart`.
+- **Favorileme:** `spot_favorites` tablosu + `FavoriteRepository` + `favorite_provider.dart`. Profil sayfasında "Favori Meralarım" bölümü.
 
 ---
 
-## Sunucu tarafı (doğrulama bekleyen)
+## M-02 (devam) — Sıralama Sistemi (✅)
 
-- Production SQL: şema `supabase_schema.sql`; tetikleyici + `users`/`fishing_spots` RLS `supabase_fix_mera_insert.sql`; diğer tablolar `supabase_rls_app_tables.sql`.
+- `rank_screen.dart`: Genel / Haftalık / Bölge sekmeleri.
+- Tüm sekmeler dikey liste kullanır (podium kaldırıldı).
+- Top-3 için 🥇🥈🥉 madalya emoji ve altın/gümüş/bronz zemin rengi.
+- **Bug düzeltme:** varsayılan rank `'bronz'` → `'acemi'` düzeltildi.
+
+---
+
+## M-04 — Hava Durumu (✅)
+
+- **API:** Open-Meteo forecast (sıcaklık, rüzgar, yağış, cloudcover) + marine (dalga, SST, akıntı).
+- **24 saatlik grafik:** `_next24Hours` ile 24 saatlik veri; saat başında otomatik güncelleme (`_scheduleNextHourlyUpdate`). Manuel yenileme yok.
+- **`HourlyWeatherModel`:** `cloudCover` alanı eklendi; `weather_service.dart` `&hourly=...,cloudcover` ile çeker.
+- **Detay grid:** Dalga yüksekliği, deniz yüzey sıcaklığı, akıntı hızı, bulutluluk `_WeatherDetailGrid`'de `currentHour` verisiyle.
+- **`forecast_days=2`:** Gün sonunda görüntüleme için 2 günlük veri çekilir.
+
+---
+
+## M-09 — Push Bildirim Sistemi (🔄 kısmen)
+
+### Tamamlanan
+- FCM ön plan / arka plan / kapalı durum tap akışı.
+- **Payload JSON:** `{"type":"checkin","spot_id":"..."}` — `onDidReceiveNotificationResponse` ile decode.
+- **Spot deep-link:** Bildirim tap'ında `router.go(AppRoutes.map, extra: spotId)` ile mera açılır.
+- **Bildirim listesi:** `_navigateForNotification` `data['spot_id']`'yi okur.
+- **Favori mera bildirimi:** `FavoriteRepository.getUsersWhoFavorited` → spot sahibi + check-in yapan hariç favorileyen kullanıcılara "Favori Meranızda Balık Var!" bildirimi.
+
+### Kalan
+- Konum tabanlı bildirim (2km'de check-in → yakın kullanıcılara)
+- Gece 23:00–07:00 sessiz mod
+- Günlük 5 bildirim limiti kontrolü
+
+---
+
+## Supabase DB (üretimde çalışan tablolar)
+
+`users`, `fishing_spots`, `shops`, `checkins`, `checkin_votes`, `fish_logs`, `shadow_points`, `weather_cache`, `notifications`, `follows`, **`spot_favorites`** (migration: `20260409_spot_favorites.sql`).
 
 ---
 
@@ -91,5 +112,9 @@ Detay: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md).
 | Onboarding | `lib/features/auth/onboarding/*.dart` |
 | Harita | `lib/features/map/map_screen.dart` |
 | Spot veri | `lib/data/repositories/spot_repository.dart` |
+| Favori | `lib/data/repositories/favorite_repository.dart` |
+| Favori provider | `lib/shared/providers/favorite_provider.dart` |
 | Drift | `lib/data/local/database.dart`, `local_spot.dart` |
-| Bildirim | `lib/core/services/notification_service.dart` |
+| Bildirim servisi | `lib/core/services/notification_service.dart` |
+| Hava durumu | `lib/features/weather/weather_screen.dart` |
+| Sıralama | `lib/features/rank/rank_screen.dart` |

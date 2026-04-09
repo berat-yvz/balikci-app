@@ -12,8 +12,8 @@
 | Faz | Haftalar | Odak | Durum |
 |-----|---------|------|-------|
 | Faz A | H1–H2 | Kurulum & Auth | ✅ |
-| Faz B | H3–H6 | Harita & Check-in Çekirdeği | 🔄 (H6 kısmen) |
-| Faz C | H7–H10 | Günlük, Puan, Hava, Bildirim | ⏳ |
+| Faz B | H3–H6 | Harita & Check-in Çekirdeği | ✅ |
+| Faz C | H7–H10 | Günlük, Puan, Hava, Bildirim | 🔄 (H10 kısmen) |
 | Faz D | H11–H13 | Offline & Motivasyon UI | ⏳ |
 | Faz E | H14–H16 | Test, Polish & Launch | ⏳ |
 
@@ -69,21 +69,9 @@
 
 ## FAZ B — Harita & Check-in Çekirdeği (H3–H6)
 
-**Durum:** H3 ✅ H4 ✅ H5 ✅ tamamlandı; H6 kısmen tamamlandı (3 görev kaldı: Storage trigger, %70 yanlış oy gizleme, rozet UI). **Sıradaki odak:** H6 kalan görevler → H7 Balık Günlüğü. **Haritada dükkan (`shops`) pinleri** planın sonuna alındı (bkz. H15).
+**Durum:** ✅ H3–H6 tamamlandı. **Sıradaki odak:** H10 kalan bildirim görevleri → H11 Düğüm Rehberi. **Haritada dükkan (`shops`) pinleri** planın sonuna alındı (bkz. H15).
 
-### H3 — Harita Temeli
-**Hedef:** Harita açılıyor, meralar görünüyor
-
-**Kapsam sınırı (H3):**
-- Sadece read odaklı temel harita: listeleme, pin gösterimi, pin detayı (read-only).
-- Spot ekleme/düzenleme akışı H4 kapsamındadır.
-- RLS görünürlük kuralları backend kaynaklı kabul edilir; istemci `privacy_level` değerine göre pin rengi uygular.
-
-**Kabul kriteri (H3):**
-- Harita ekranı açılır ve OSM tile yüklenir.
-- Spot verisi repository üzerinden çekilir; local cache yazımı yapılır.
-- Pinler `privacy_level` bazlı renklendirilir, cluster aktif çalışır.
-- Pin tıklanınca `spot_detail_sheet` açılır.
+### H3 — Harita Temeli ✅
 
 #### Görevler
 - [x] `map_screen.dart` — FlutterMap widget entegrasyonu
@@ -92,7 +80,7 @@
 - [x] `spot_model.dart` ve Drift şeması oluşturuldu / genişletildi (`verified`, `muhtarId`, `cachedAt`)
 - [x] Mera pinleri haritada gösteriliyor (privacy_level'a göre renk)
 - [x] `flutter_map_marker_cluster` entegrasyonu
-- [x] `spot_detail_sheet.dart` — pin'e tıklayınca alt sheet açılıyor
+- [x] Bottom sheet inline `DraggableScrollableSheet` (spot_detail_sheet ayrı dosya değil)
 - [x] Harita tile cache: `flutter_map_tile_caching` bağlandı
 - [x] Mera verileri Drift'te cache'leniyor
 
@@ -100,25 +88,25 @@
 
 ---
 
-### H4 — Mera Yönetimi
-**Hedef:** Kullanıcı mera ekleyip düzenleyebiliyor
+### H4 — Mera Yönetimi ✅
 
 #### Görevler
-- [x] `add_spot_screen.dart` — mera ekleme formu (tur, aciklama, Supabase insert)
-- [x] Mera düzenleme: sahip `spot_detail_sheet` → **Düzenle** → `/map/edit-spot` (`updateSpot`)
+- [x] `add_spot_screen.dart` — mera ekleme formu (tur, açıklama, Supabase insert)
+- [x] Mera düzenleme: sahip sheet → **Düzenle** → `/map/edit-spot` (`updateSpot`)
 - [x] Gizlilik seçimi: public / friends / private / vip UI
-- [x] Konum seçimi: GPS (`LocationService`) veya `pick_spot_location_screen` ile haritada dokunma
+- [x] Konum seçimi: GPS (`LocationService`) veya `pick_spot_location_screen`
 - [x] Yol tarifi: `geo:` + Google Maps yedek (`url_launcher`)
-- [x] `spot_detail_sheet.dart` — "Yol tarifi" butonu; `map_screen` FAB — "Mera ekle" (`/map/add-spot`)
-- [x] `map_screen.dart` — harita hızlı aksiyonları: **Konumum** + **Mera ekle** (UI'da erişilebilir)
-- [x] `map_screen.dart` — sheet aksiyonları: **Check-in / Yol tarifi / Düzenle (sahip)** (UI'da erişilebilir)
+- [x] Sheet butonları: **Balık Var! / Yol Tarifi / Düzenle (sahip)**
+- [x] Harita FAB: **Konumum** + **Mera ekle**
+- [x] **Mera favorileme:** `FavoriteRepository` + `favorite_provider.dart`; sheet header'da bookmark butonu; profil "Favori Meralarım" bölümü
+- [x] **Bildirim deep-link:** `MapScreen(initialSpotId)` — bildirim tap'ında mera otomatik açılır
+- [x] **Favori mera bildirimi:** Check-in'de `getUsersWhoFavorited` → favorileyen kullanıcılara bildirim
 
-**Çıktı:** Mera eklenip/düzenlenip haritada görünüyor, yol tarifi çalışıyor ✓ (Dükkan katmanı → H15.)
+**Çıktı:** Mera CRUD, favorileme ve bildirim deep-link çalışıyor ✓ (Dükkan katmanı → H15.)
 
 ---
 
-### H5 — Check-in Sistemi
-**Hedef:** Anlık check-in çalışıyor, harita gerçek zamanlı güncelleniyor
+### H5 — Check-in Sistemi ✅
 
 #### Görevler
 - [x] `checkin_screen.dart` — check-in akış ekranı
@@ -128,8 +116,8 @@
 - [x] `checkin_repository.dart` yazıldı
 - [x] Supabase Realtime subscription: yeni check-in'leri dinle
 - [x] Harita pin'i anlık güncelleniyor (Realtime)
-- [x] Check-in veri yaşam süresi: 2 saat sonra (created_at bazlı) soluk/azaltılmış görünüm
-- [x] Eski check-in pin'leri haritada solar (opacity azalır)
+- [x] Check-in veri yaşam süresi: 2 saat sonra soluk/azaltılmış görünüm
+- [x] Fotoğraf yükleme ve EXIF doğrulama kaldırıldı (UX sadeleştirildi)
 
 **Çıktı:** Check-in yapılınca haritada anlık görünüyor ✓
 
@@ -138,22 +126,24 @@
 ### H6 — EXIF Doğrulama & Oylama
 **Hedef:** Güven sistemi aktif, sahte raporlar engelleniyor
 
-**Durum:** H6 tamamlandı — UI/UX iyileştirmeleriyle. Sıradaki: H7 (Balık Günlüğü).
+**Durum:** ✅ Tamamlandı — Check-in fotoğraf yükleme ve EXIF doğrulama akışı kaldırıldı; oylama çalışıyor.
 
 #### Görevler
-- [x] `exif_helper.dart` yazıldı (native_exif ile GPS + timestamp oku)
-- [x] Supabase Edge Function: `exif-verify` yazıldı (deploy + storage trigger kurulumunu ayrıca yap)
-- [ ] Storage trigger: fotoğraf yüklenince Edge Function tetikleniyor
+- [x] `exif_helper.dart` yazıldı (balık günlüğü için kullanılıyor)
+- [x] Supabase Edge Function: `exif-verify` yazıldı (balık günlüğü için; check-in akışından bağımsız)
+- [x] Storage trigger: balık günlüğü fotoğrafları için (check-in fotoğrafı kaldırıldı)
 - [x] `vote_widget.dart` — Doğru/Yanlış oy butonu
 - [x] `checkin_repository.dart`'a vote fonksiyonu eklendi
-- [ ] Oy sonucu: %70+ yanlış → check-in gizleniyor
-- [x] Doğrulanmış check-in rozeti UI'a eklendi
+- [ ] Oy sonucu: %70+ yanlış → check-in gizleniyor *(ileriye ertelendi)*
+- [x] Check-in ekranından fotoğraf yükleme + EXIF doğrulama kaldırıldı (UX sadeleştirildi)
 
-**Çıktı:** EXIF doğrulama ve oylama sistemi çalışıyor ✓
+**Çıktı:** Oylama sistemi çalışıyor; check-in akışı sadeleştirildi ✓
 
 ---
 
 ## FAZ C — Günlük, Puan, Hava, Bildirim (H7–H10)
+
+**Durum:** H7 ✅ H8 ✅ H9 ✅ tamamlandı; H10 🔄 kısmen tamamlandı (favori bildirim + deep-link çalışıyor; konum bazlı bildirim, sessiz mod, limit kalmış).
 
 ### H7 — Balık Günlüğü
 **Hedef:** Balık kaydı eklenip görüntülenebiliyor
@@ -174,59 +164,60 @@
 
 ---
 
-### H8 — Puan & Rütbe Sistemi
-**Hedef:** Puan kazanılıyor, rütbe ilerliyor
+### H8 — Puan & Rütbe Sistemi ✅
 
 #### Görevler
-- [ ] Edge Function: `score-calculator` yazıldı ve deploy edildi
-- [ ] DB trigger: checkin/vote/fish_log insert → score-calculator tetikle
-- [ ] Edge Function: `shadow-point-calculator` yazıldı ve deploy edildi
-- [ ] `rank_screen.dart` — rütbe ilerleme ekranı
-- [ ] Rütbe rozeti: profil + harita pin'de gösterim
-- [ ] VIP mera görünürlüğü: Usta+ rütbesine göre filtreleme
-- [ ] `leaderboard_screen.dart` — liderlik tablosu (bölge bazlı)
-- [ ] Mera Muhtarlığı: haftalık cron ile güncellenen muhtar rozeti
-- [ ] `profile_screen.dart` — puan, rütbe, istatistik
+- [x] Edge Function: `score-calculator` yazıldı ve deploy edildi
+- [x] DB trigger: checkin/vote/fish_log insert → score-calculator tetikle
+- [x] `rank_screen.dart` — Genel / Haftalık / Bölge sekmeleri; **dikey liste** (podium kaldırıldı)
+- [x] Top-3 için 🥇🥈🥉 madalya + altın/gümüş/bronz zemin rengi
+- [x] Rütbe rozeti: profil ekranında `RankBadge`
+- [x] `profile_screen.dart` — puan, rütbe, istatistik; "Favori Meralarım" bölümü (isSelf)
+- [x] **Bug düzeltme:** `user_repository.dart` varsayılan rank `'bronz'` → `'acemi'`
+- [ ] Edge Function: `shadow-point-calculator` yazıldı ve deploy edildi *(ileriye ertelendi)*
+- [ ] VIP mera görünürlüğü: Usta+ rütbesine göre filtreleme *(ileriye ertelendi)*
+- [ ] Mera Muhtarlığı: haftalık cron *(ileriye ertelendi)*
 
-**Çıktı:** Puan sistemi çalışıyor, rütbe ilerliyor ✓
+**Çıktı:** Sıralama ekranı çalışıyor, profil ekranı tamamlandı ✓
 
 ---
 
-### H9 — Hava Durumu
-**Hedef:** Balıkçı dilinde hava kartı çalışıyor
+### H9 — Hava Durumu ✅
 
 #### Görevler
 - [x] Edge Function: `weather-cache` yazıldı ve deploy edildi
-- [ ] Supabase cron job: her 4 saatte weather-cache tetikleniyor
-- [x] `weather_model.dart` yazıldı
-- [x] `weather_service.dart` — en yakın bölge verisini çek
+- [ ] Supabase cron job: her 4 saatte weather-cache tetikleniyor *(ileriye ertelendi)*
+- [x] `weather_model.dart` ve `hourly_weather_model.dart` (cloudCover dahil) yazıldı
+- [x] `weather_service.dart` — Open-Meteo forecast + marine API; `forecast_days=2`; `cloudcover` parametresi
 - [x] Balıkçı dili çevirisi: 30 kural tablosu yazıldı (`FishingWeatherUtils`)
-- [x] `weather_card_widget.dart` — ana ekranda hava kartı
-- [x] `weather_screen.dart` — detaylı hava ekranı (bölge seçici + balıkçı skoru)
+- [x] `weather_screen.dart` — 24 saatlik saatlik grafik (rüzgar hızı alt etiket)
+- [x] Saat başı otomatik güncelleme (`_scheduleNextHourlyUpdate`); manuel yenileme kaldırıldı
+- [x] Deniz metrikleri (dalga, SST, akıntı, bulutluluk) `_WeatherDetailGrid`'de `currentHour` ile
 - [x] Hava verisi Drift'te cache'leniyor (offline)
+- [x] `istanbul_weather_provider.dart` — saat başı kesin timer (30 dakika yerine)
 
-**Çıktı:** Hava kartı açılıyor, balıkçı dili yorumu gösteriliyor ✓
+**Çıktı:** 24 saatlik hava grafiği çalışıyor, saat başı otomatik güncelleniyor ✓
 
 ---
 
-### H10 — Push Bildirim Sistemi
-**Hedef:** Tüm bildirim türleri çalışıyor
+### H10 — Push Bildirim Sistemi 🔄
 
 #### Görevler
-- [ ] Edge Function: `notification-sender` yazıldı ve deploy edildi
-- [x] FCM token izin verildiğinde alınıp Supabase `users.fcm_token` alanına yazılıyor (izin onboarding bildirim adımındaki butonla istenir)
+- [x] Edge Function: `notification-sender` yazıldı ve deploy edildi
+- [x] FCM token izin verildiğinde alınıp `users.fcm_token`'a yazılıyor
+- [x] **Bildirim deep-link:** tap → `{"type":"checkin","spot_id":"..."}` JSON payload; `_navigateFromPayload` ile spot açılır
+- [x] **Favori mera bildirimi:** `FavoriteRepository.getUsersWhoFavorited` → favorileyen kullanıcılara bildirim
+- [x] `notification_list_screen.dart` — bildirim geçmişi + spot deep-link yönlendirme
+- [x] `notification_settings_screen.dart` — her tür açık/kapalı
 - [ ] Konum tabanlı bildirim: 2km'de check-in → yakın kullanıcılara gönder
-- [ ] Favori mera bildirimi: favorilenen meraya check-in → bildirim
 - [ ] Gölge puan bildirimi: shadow-point-calculator'dan tetikleniyor
 - [ ] Sabah 06:00 hava bildirimi: cron job
 - [ ] Sezon hatırlatma: balık takvimi tablosundan tetikleniyor
 - [ ] Rütbe yükselme bildirimi: score-calculator'dan tetikleniyor
 - [ ] Günlük 5 bildirim limiti kontrolü
 - [ ] Gece 23:00–07:00 sessiz mod
-- [ ] `notification_settings_screen.dart` — her tür açık/kapalı
-- [ ] `notification_list_screen.dart` — bildirim geçmişi
 
-**Çıktı:** Tüm bildirim türleri çalışıyor, limit ve sessiz mod aktif ✓
+**Çıktı (kısmi):** Favori mera bildirimi + bildirim deep-link çalışıyor ✓
 
 ---
 

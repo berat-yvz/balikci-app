@@ -136,8 +136,8 @@ CREATE TABLE checkins (
   spot_id UUID REFERENCES fishing_spots(id) ON DELETE CASCADE,
   crowd_level TEXT CHECK (crowd_level IN ('yoğun','normal','az','boş')),
   fish_density TEXT CHECK (fish_density IN ('yoğun','normal','az','yok')),
-  photo_url TEXT,
-  exif_verified BOOLEAN DEFAULT FALSE,
+  photo_url TEXT,        -- uygulama tarafında artık kullanılmıyor (DB'de saklanıyor)
+  exif_verified BOOLEAN DEFAULT FALSE, -- uygulama tarafında artık kullanılmıyor
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -233,6 +233,23 @@ CREATE TABLE follows (
 );
 ```
 
+### spot_favorites
+```sql
+-- Migration: supabase/migrations/20260409_spot_favorites.sql
+CREATE TABLE spot_favorites (
+  user_id    uuid NOT NULL REFERENCES users(id)         ON DELETE CASCADE,
+  spot_id    uuid NOT NULL REFERENCES fishing_spots(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, spot_id)
+);
+ALTER TABLE spot_favorites ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "own_favorites" ON spot_favorites
+  FOR ALL TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+CREATE INDEX IF NOT EXISTS idx_spot_favorites_spot_id ON spot_favorites (spot_id);
+```
+
 ---
 
 ## Row Level Security (RLS) Politikaları
@@ -321,39 +338,45 @@ CREATE POLICY "Follows visible to all"
 lib/
 ├── main.dart
 ├── app/
-│   ├── router.dart              ← go_router tüm route tanımları
+│   ├── router.dart              ← go_router; /map extra (spotId) deep-link desteği
+│   ├── app_routes.dart          ← route path sabitleri
 │   └── theme.dart               ← renkler, fontlar, tema sabitleri
 ├── core/
 │   ├── constants/
 │   │   ├── app_constants.dart   ← API URL, timeout, sayfa boyutu
-│   │   └── weather_regions.dart ← 12 bölge koordinat listesi
+│   │   └── weather_regions.dart ← bölge koordinat listesi
 │   ├── services/
-│   │   ├── supabase_service.dart   ← Supabase client singleton
-│   │   ├── location_service.dart   ← geolocator wrapper
-│   │   ├── notification_service.dart ← FCM + local notifications
-│   │   └── weather_service.dart    ← hava cache okuma
+│   │   ├── supabase_service.dart    ← Supabase client singleton
+│   │   ├── location_service.dart    ← geolocator wrapper
+│   │   ├── notification_service.dart← FCM + yerel bildirim; JSON payload (type+spot_id)
+│   │   ├── score_service.dart       ← puan verme helper
+│   │   └── weather_service.dart     ← Open-Meteo + marine API; 2 günlük veri
 │   └── utils/
-│       ├── exif_helper.dart        ← EXIF okuma yardımcısı
-│       ├── geo_utils.dart          ← mesafe hesaplama
-│       └── score_utils.dart        ← puan hesaplama yardımcıları
+│       ├── exif_helper.dart         ← EXIF okuma (balık günlüğü için)
+│       ├── geo_utils.dart           ← mesafe hesaplama
+│       └── score_utils.dart         ← puan hesaplama yardımcıları
 ├── data/
 │   ├── models/
 │   │   ├── user_model.dart
 │   │   ├── spot_model.dart
 │   │   ├── checkin_model.dart
 │   │   ├── fish_log_model.dart
+│   │   ├── hourly_weather_model.dart← Open-Meteo saatlik veri (cloudCover dahil)
+│   │   ├── notification_model.dart
 │   │   └── weather_model.dart
 │   ├── repositories/
 │   │   ├── auth_repository.dart
-│   │   ├── spot_repository.dart
 │   │   ├── checkin_repository.dart
+│   │   ├── favorite_repository.dart ← spot_favorites CRUD (isFavorited, toggle, getFavoriteSpots, getUsersWhoFavorited)
 │   │   ├── fish_log_repository.dart
+│   │   ├── notification_repository.dart
+│   │   ├── spot_repository.dart
 │   │   └── user_repository.dart
 │   └── local/
-│       ├── database.dart           ← Drift DB init ve yönetim
-│       ├── local_spot.dart         ← Drift şema: mera
-│       ├── local_fish_log.dart     ← Drift şema: günlük
-│       └── sync_queue.dart         ← offline sync kuyruğu
+│       ├── database.dart            ← Drift DB init (schemaVersion 2)
+│       ├── local_spot.dart          ← Drift şema: mera
+│       ├── local_fish_log.dart      ← Drift şema: günlük
+│       └── sync_queue.dart          ← offline sync kuyruğu
 ├── features/
 │   ├── auth/
 │   │   ├── login_screen.dart
@@ -364,45 +387,50 @@ lib/
 │   │       ├── step_notification.dart
 │   │       └── step_first_spot.dart
 │   ├── map/
-│   │   ├── map_screen.dart
-│   │   ├── spot_detail_sheet.dart
+│   │   ├── map_screen.dart          ← initialSpotId; _SpotSheetHeader favori butonu
 │   │   ├── add_spot_screen.dart
+│   │   ├── pick_spot_location_screen.dart
 │   │   └── widgets/
 │   │       ├── spot_marker.dart
+│   │       ├── vote_dialog.dart
 │   │       └── weather_card.dart
 │   ├── checkin/
-│   │   ├── checkin_screen.dart
-│   │   ├── vote_widget.dart
-│   │   └── checkin_list.dart
+│   │   ├── checkin_screen.dart      ← fotoğraf/EXIF kaldırıldı; favori kullanıcılara bildirim
+│   │   └── vote_widget.dart
 │   ├── fish_log/
-│   │   ├── log_list_screen.dart
-│   │   ├── add_log_screen.dart
+│   │   ├── screens/
+│   │   │   ├── log_list_screen.dart
+│   │   │   └── add_log_screen.dart
 │   │   └── stats_screen.dart
 │   ├── rank/
-│   │   ├── rank_screen.dart
-│   │   └── leaderboard_screen.dart
+│   │   └── rank_screen.dart         ← dikey liste; top-3 madalya UI
 │   ├── knots/
 │   │   ├── knots_screen.dart
-│   │   ├── knot_detail_screen.dart
-│   │   └── knot_filter_widget.dart
+│   │   └── knot_detail_screen.dart
 │   ├── weather/
-│   │   ├── weather_screen.dart
-│   │   └── weather_card_widget.dart
+│   │   ├── weather_screen.dart      ← 24s grafik, saat başı otomatik güncelleme, deniz metrikleri
+│   │   └── providers/
+│   │       └── istanbul_weather_provider.dart ← saat başı timer
 │   ├── notifications/
-│   │   ├── notification_list_screen.dart
+│   │   ├── notification_list_screen.dart ← spot deep-link yönlendirme
 │   │   └── notification_settings_screen.dart
 │   └── profile/
-│       ├── profile_screen.dart
+│       ├── profile_screen.dart      ← _FavoriteSpotsSection (kendi profili)
 │       └── settings_screen.dart
 └── shared/
     ├── widgets/
-    │   ├── app_button.dart
-    │   ├── loading_widget.dart
+    │   ├── rank_badge.dart
     │   ├── empty_state_widget.dart
-    │   └── error_widget.dart
+    │   └── ...
     └── providers/
         ├── auth_provider.dart
-        └── preferences_provider.dart
+        ├── connectivity_provider.dart
+        ├── favorite_provider.dart   ← isFavoritedProvider, favoriteSpotsProvider
+        ├── fish_log_provider.dart
+        ├── follow_provider.dart
+        ├── notification_provider.dart
+        ├── preferences_provider.dart
+        └── user_provider.dart
 ```
 
 ---
@@ -421,7 +449,8 @@ lib/
 
 ### exif-verify
 - **Tetikleyici:** Storage trigger (fotoğraf yüklenince)
-- **Görev:** GPS + timestamp doğrula, checkin/fish_log kaydını güncelle
+- **Görev:** GPS + timestamp doğrula, fish_log kaydını güncelle
+- **Not:** Check-in fotoğraf yükleme akışından kaldırıldı; yalnızca balık günlüğü için aktif
 - **Dosya:** `supabase/functions/exif-verify/index.ts`
 
 ### score-calculator
@@ -435,7 +464,7 @@ lib/
 - **Dosya:** `supabase/functions/shadow-point/index.ts`
 
 ### notification-sender
-- **Tetikleyici:** Çeşitli DB triggerlar
+- **Tetikleyici:** Uygulama tarafından çağrılır (check-in, favori check-in, oy)
 - **Görev:** FCM üzerinden push bildirim gönder, günlük 5 limit kontrolü
 - **Dosya:** `supabase/functions/notification-sender/index.ts`
 
@@ -455,14 +484,44 @@ Ayrıntılı akış: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md).
 
 ---
 
-## Harita ve mera (M-02 H3)
+## Harita ve mera (M-02 H3–H4)
 
 - **Ekran:** `features/map/map_screen.dart` — FlutterMap + OSM tile; `flutter_map_marker_cluster` ile yoğun pin desteği; `flutter_map_tile_caching` ile tile önbelleği.
 - **Veri:** `SpotRepository` Supabase `fishing_spots` okur, başarılı yanıtları Drift `local_spots` tablosuna yazar; ağ hatasında `getCachedSpots()` ile offline fallback.
-- **UI:** Pin rengi `privacy_level` (public / friends / private / vip); pin tıklanınca `SpotDetailSheet` (salt okunur).
-- **Giriş noktası:** Onboarding sonrası `/home` → `MainShell` → `MapScreen` (tek ekran shell).
-- **H4 (mera):** `add_spot_screen.dart` (ekle + düzenleme modu), `pick_spot_location_screen.dart`; rotalar: `/map/add-spot`, `/map/edit-spot`, `/map/pick-location`; `spot_detail_sheet` sahip için **Düzenle**; mera ekleme/güncelleme sonrası liste yenileme FAB üzerinden. **Haritada dükkan (`shops`) pin katmanı** plan sonu — [SPRINT.md](SPRINT.md) H15.
+- **UI:** Pin rengi `privacy_level` (public / friends / private / vip); pin tıklanınca `DraggableScrollableSheet` (inline); sahip için "Düzenle", herkes için "Balık Var!" + "Yol Tarifi".
+- **Favori butonu:** `_SpotSheetHeader` (`ConsumerWidget`) — `isFavoritedProvider` ile anlık durum, `bookmark`/`bookmark_border` ikonu; `FavoriteRepository.toggleFavorite` tap'ta çağrılır.
+- **Deep-link:** `/map` rotası `state.extra` (String `spotId`) kabul eder → `MapScreen(initialSpotId: spotId)`. `_initializeCacheAndLoad` tamamlanınca `_openInitialSpotIfNeeded` ilgili mera için `_selectSpot` çağırır.
+- **Giriş noktası:** Onboarding sonrası `/home` → `MainShell` → `MapScreen`; `/map` bildirimlerin doğrudan açtığı rota.
+- **H4 (mera):** `add_spot_screen.dart` (ekle + düzenleme modu), `pick_spot_location_screen.dart`; rotalar: `/map/add-spot`, `/map/edit-spot`, `/map/pick-location`. **Dükkan (`shops`) pin katmanı** → H15.
 - **Drift:** `AppDatabase` şema sürümü 2; `local_spots` için migrasyon `database.dart` (`verified`, `muhtarId`, `cachedAt`).
+
+## Bildirim Sistemi (M-09)
+
+- **FCM + Yerel bildirim:** `notification_service.dart` — ön plan, arka plan ve kapalı durum için 3 ayrı tap akışı.
+- **Payload:** Yerel bildirimler artık sadece `type` değil `{"type":"checkin","spot_id":"..."}` şeklinde JSON payload taşır; `_navigateFromPayload` ile decode edilir.
+- **Deep-link:** `checkin` / `vote` türündeki bildirimlere tıklanınca `router.go(AppRoutes.map, extra: spotId)` ile mera doğrudan açılır (hem FCM tap hem bildirim listesi tap'ı).
+- **Bildirim listesi:** `notification_list_screen.dart` — `_navigateForNotification` `notification.data['spot_id']`'yi okur; rank → `/rank`, follow → `/profile`, checkin/vote → `/map` + spotId.
+- **Favorileme bildirimi:** Check-in anında `FavoriteRepository.getUsersWhoFavorited(spot.id)` ile favorileyen kullanıcılar bulunur, "Favori Meranızda Balık Var!" bildirimi gönderilir (spot sahibi ve check-in yapan hariç).
+
+## Mera Favorileme
+
+- **DB:** `spot_favorites(user_id PK, spot_id PK, created_at)` — RLS: kendi kayıtları; `spot_id` üzerinde index.
+- **Repository:** `FavoriteRepository` — `isFavorited`, `toggleFavorite`, `getFavoriteSpots` (join), `getUsersWhoFavorited`.
+- **Provider:** `isFavoritedProvider(spotId)` (FutureProvider.autoDispose.family), `favoriteSpotsProvider` (FutureProvider.autoDispose).
+- **Profil:** `_FavoriteSpotsSection` — kendi profili (`isSelf == true`) için favori meralar kart listesi; tap'ta `/map?extra=spotId` ile mera açılır.
+
+## Hava Durumu (M-04 / H9)
+
+- **Kaynak:** Open-Meteo (forecast + marine API) — 2 günlük veri (`forecast_days=2`).
+- **Saatlik grafik:** Sonraki 24 saat gösterilir; saat başı otomatik güncellenir (kesin saat başı `Timer` ile hesaplanır). Manuel yenileme yok.
+- **Metrikler:** `HourlyWeatherModel` — sıcaklık, rüzgar hızı, dalga yüksekliği, deniz yüzey sıcaklığı, akıntı hızı, `cloudCover`. Bulutluluk Open-Meteo `cloudcover` parametresinden çekilir.
+- **Detay grid:** Dalga yüksekliği, deniz yüzey sıcaklığı, akıntı hızı ve bulutluluk `_WeatherDetailGrid`'de `currentHour` verisiyle gösterilir.
+
+## Sıralama (Rank)
+
+- **Genel tab:** Tüm kullanıcılar tek dikey listede; ilk 3 için madalya emoji (🥇🥈🥉) ve altın/gümüş/bronz zemin rengi.
+- **Haftalık / Bölge tab:** Aynı `_LeaderboardList` yapısı.
+- **Bug düzeltme:** `user_repository.dart`'ta varsayılan rank `'bronz'` → `'acemi'` düzeltildi.
 
 ---
 
