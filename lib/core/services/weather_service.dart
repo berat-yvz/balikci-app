@@ -155,6 +155,7 @@ class WeatherService {
         '?latitude=$lat'
         '&longitude=$lng'
         '&hourly=temperature_2m,windspeed_10m,precipitation,weathercode'
+        ',cloudcover'
         '&timezone=auto'
         '&forecast_days=1',
       );
@@ -213,6 +214,7 @@ class WeatherService {
       final winds = hourly['windspeed_10m'] as List;
       final precips = hourly['precipitation'] as List;
       final codes = hourly['weathercode'] as List;
+      final cloudCovers = hourly['cloudcover'] as List?;
 
       final result = <HourlyWeatherModel>[];
       for (int i = 0; i < times.length; i++) {
@@ -223,6 +225,11 @@ class WeatherService {
             windspeed: (winds[i] as num).toDouble(),
             precipitation: (precips[i] as num).toDouble(),
             weatherCode: (codes[i] as num).toInt(),
+            cloudCover: (cloudCovers != null && i < cloudCovers.length)
+                ? (cloudCovers[i] == null
+                    ? null
+                    : (cloudCovers[i] as num).toDouble())
+                : null,
             waveHeight: (waveHeights != null && i < waveHeights.length)
                 ? waveHeights[i]
                 : null,

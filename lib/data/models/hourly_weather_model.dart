@@ -5,6 +5,7 @@ class HourlyWeatherModel {
   final double windspeed;              // km/h
   final double precipitation;          // mm
   final int weatherCode;               // Open-Meteo WMO kodu
+  final double? cloudCover;            // % (0–100) — forecast API
   final double? waveHeight;            // m (marine-api)
   final double? seaSurfaceTemperature; // °C (marine-api)
   final double? currentVelocity;       // m/s (marine-api)
@@ -16,6 +17,7 @@ class HourlyWeatherModel {
     required this.windspeed,
     required this.precipitation,
     required this.weatherCode,
+    this.cloudCover,
     this.waveHeight,
     this.seaSurfaceTemperature,
     this.currentVelocity,
@@ -48,6 +50,7 @@ class HourlyWeatherModel {
     required double windspeed,
     required double precipitation,
     required int weatherCode,
+    double? cloudCover,
     double? waveHeight,
     double? seaSurfaceTemperature,
     double? currentVelocity,
@@ -59,6 +62,7 @@ class HourlyWeatherModel {
       windspeed: windspeed,
       precipitation: precipitation,
       weatherCode: weatherCode,
+      cloudCover: cloudCover,
       waveHeight: waveHeight,
       seaSurfaceTemperature: seaSurfaceTemperature,
       currentVelocity: currentVelocity,

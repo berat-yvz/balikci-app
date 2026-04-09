@@ -575,9 +575,11 @@ class _WeatherDetailGrid extends StatelessWidget {
         _DetailTile(
           icon: '☁️',
           label: 'Bulutluluk',
-          value: weather.cloudCover != null
-              ? '%${weather.cloudCover!.toStringAsFixed(0)}'
-              : 'Veri yok',
+          value: currentHour?.cloudCover != null
+              ? '%${currentHour!.cloudCover!.toStringAsFixed(0)}'
+              : weather.cloudCover != null
+                  ? '%${weather.cloudCover!.toStringAsFixed(0)}'
+                  : 'Veri yok',
         ),
         // Deniz yüzey sıcaklığı — saatlik tahmin verisinden
         if (currentHour?.seaSurfaceTemperature != null)
