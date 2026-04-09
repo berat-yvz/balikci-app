@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -15,7 +14,6 @@ import 'package:balikci_app/core/services/score_service.dart';
 import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/data/repositories/notification_repository.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
-import 'package:image_picker/image_picker.dart';
 
 /// Check-in ekranı — H5 sprint'i, H6 UI/UX iyileştirmeleri.
 class CheckinScreen extends StatefulWidget {
@@ -34,8 +32,6 @@ class _CheckinScreenState extends State<CheckinScreen> {
   CheckinModel? _createdCheckin;
   bool _loadingSpot = true;
   bool _submitting = false;
-
-  XFile? _pickedPhoto;
 
   // DB kısıtları: crowd_level IN ('yoğun','normal','az','boş')
   String _crowdLevel = 'normal';
@@ -75,22 +71,6 @@ class _CheckinScreenState extends State<CheckinScreen> {
             math.sin(dLng / 2);
     final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
     return r * c;
-  }
-
-  Future<void> _pickPhoto() async {
-    final picker = ImagePicker();
-    final photo = await picker.pickImage(source: ImageSource.gallery);
-    if (!mounted) return;
-    if (photo == null) return;
-    setState(() => _pickedPhoto = photo);
-  }
-
-  Future<void> _takePhoto() async {
-    final picker = ImagePicker();
-    final photo = await picker.pickImage(source: ImageSource.camera);
-    if (!mounted) return;
-    if (photo == null) return;
-    setState(() => _pickedPhoto = photo);
   }
 
   Future<void> _submitCheckin() async {
@@ -137,8 +117,6 @@ class _CheckinScreenState extends State<CheckinScreen> {
         'spot_id': widget.spotId,
         'crowd_level': _crowdLevel,
         'fish_density': _fishDensity,
-        'photo_url': null,
-        'exif_verified': false,
         'is_active': true,
       });
 
@@ -151,21 +129,6 @@ class _CheckinScreenState extends State<CheckinScreen> {
           ),
         );
         return;
-      }
-
-      if (_pickedPhoto != null) {
-        final parts = _pickedPhoto!.path.split('.');
-        final ext = parts.length > 1 ? parts.last.toLowerCase() : 'jpg';
-        final photoPath = 'checkins/${created.id}/photo.$ext';
-
-        await SupabaseService.storage
-            .from(AppConstants.photoBucket)
-            .upload(photoPath, File(_pickedPhoto!.path));
-
-        await _checkinRepo.updateCheckinPhotoUrl(
-          checkinId: created.id,
-          photoUrl: photoPath,
-        );
       }
 
       if (!mounted) return;
@@ -365,47 +328,6 @@ class _CheckinScreenState extends State<CheckinScreen> {
                     ),
                     const SizedBox(height: 8),
 
-                    // Fotoğraf
-                    Text(
-                      'Fotoğraf Ekle (İsteğe Bağlı)',
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.muted,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _submitting ? null : _pickPhoto,
-                            icon: const Icon(Icons.photo_library_outlined),
-                            label: const Text('Galeri'),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _submitting ? null : _takePhoto,
-                            icon: const Icon(Icons.photo_camera_outlined),
-                            label: const Text('Kamera'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    if (_pickedPhoto != null)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          File(_pickedPhoto!.path),
-                          height: 160,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    if (_pickedPhoto != null) const SizedBox(height: 20),
-
                     SizedBox(
                       height: 56,
                       child: ElevatedButton(
@@ -590,21 +512,6 @@ class _CheckinResultCard extends StatelessWidget {
             value: checkin.crowdLevel ?? '-',
             dotColor: AppColors.muted,
           ),
-          const Divider(height: 16, thickness: 0.5),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Doğrulanma',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF0F6E56),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              _VerifiedBadge(exifVerified: checkin.exifVerified),
-            ],
-          ),
         ],
       ),
     );
@@ -655,44 +562,4 @@ class _ResultRow extends StatelessWidget {
   }
 }
 
-class _VerifiedBadge extends StatelessWidget {
-  final bool exifVerified;
-  const _VerifiedBadge({required this.exifVerified});
-
-  @override
-  Widget build(BuildContext context) {
-    if (exifVerified) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: AppColors.primaryLight,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
-        ),
-        child: Text(
-          '✓ Doğrulandı',
-          style: AppTextStyles.caption.copyWith(
-            color: AppColors.primary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppColors.accent.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        '⏳ Doğrulama bekleniyor',
-        style: AppTextStyles.caption.copyWith(
-          color: AppColors.accent,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-}
 
