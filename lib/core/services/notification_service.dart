@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -54,7 +56,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
             priority: Priority.high,
           ),
         ),
-        payload: message.data['type'] as String?,
+        payload: jsonEncode({
+          'type': message.data['type'],
+          if (message.data.containsKey('spot_id'))
+            'spot_id': message.data['spot_id'],
+        }),
       );
     }
   }
@@ -95,7 +101,7 @@ class NotificationService {
         iOS: DarwinInitializationSettings(),
       ),
       onDidReceiveNotificationResponse: (details) {
-        _navigate(_routeForType(details.payload));
+        _navigateFromPayload(details.payload);
       },
     );
 
@@ -153,22 +159,50 @@ class NotificationService {
           priority: Priority.high,
         ),
       ),
-      payload: message.data['type'] as String?,
+      payload: jsonEncode({
+        'type': message.data['type'],
+        if (message.data.containsKey('spot_id'))
+          'spot_id': message.data['spot_id'],
+      }),
     );
   }
 
   /// Bildirime tıklanınca uygun sayfaya yönlendir.
+  /// checkin / vote türündeyse spot_id ile mera sayfası açılır.
   static void _handleMessage(RemoteMessage message) {
     final type = message.data['type'] as String?;
-    final route = _routeForType(type);
-    debugPrint('FCM yönlendirme: type=$type → $route');
-    _navigate(route);
+    final spotId = message.data['spot_id'] as String?;
+    debugPrint('FCM yönlendirme: type=$type, spotId=$spotId');
+    if (spotId != null && (type == 'checkin' || type == 'vote')) {
+      _navigate(AppRoutes.map, extra: spotId);
+    } else {
+      _navigate(_routeForType(type));
+    }
   }
 
-  static void _navigate(String route) {
+  /// JSON payload içindeki type ve spot_id'ye göre yönlendir.
+  /// Eski format (sadece tip string) da desteklenir.
+  static void _navigateFromPayload(String? payload) {
+    if (payload == null) return;
+    try {
+      final map = jsonDecode(payload) as Map<String, dynamic>;
+      final type = map['type'] as String?;
+      final spotId = map['spot_id'] as String?;
+      if (spotId != null && (type == 'checkin' || type == 'vote')) {
+        _navigate(AppRoutes.map, extra: spotId);
+      } else {
+        _navigate(_routeForType(type));
+      }
+    } catch (_) {
+      // Eski format: payload direkt type string
+      _navigate(_routeForType(payload));
+    }
+  }
+
+  static void _navigate(String route, {Object? extra}) {
     final context = appNavigatorKey.currentContext;
     if (context == null) return;
-    GoRouter.of(context).go(route);
+    GoRouter.of(context).go(route, extra: extra);
   }
 
   /// FCM token'ı alır ve Supabase'e yazar.

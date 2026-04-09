@@ -28,7 +28,10 @@ import 'package:balikci_app/shared/providers/notification_provider.dart';
 
 /// Harita ekranı — H3 temel implementasyon.
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  /// Bildirimden gelince doğrudan açılacak mera kimliği.
+  final String? initialSpotId;
+
+  const MapScreen({super.key, this.initialSpotId});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -89,6 +92,21 @@ class _MapScreenState extends State<MapScreen> {
     await _loadSpots();
     await _loadShops();
     _startCheckinsRealtime();
+    _openInitialSpotIfNeeded();
+  }
+
+  /// Bildirimden gelen initialSpotId varsa ilk frame'den sonra o mera seçilir.
+  void _openInitialSpotIfNeeded() {
+    final targetId = widget.initialSpotId;
+    if (targetId == null || _spots.isEmpty) return;
+    try {
+      final spot = _spots.firstWhere((s) => s.id == targetId);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _selectSpot(spot);
+      });
+    } catch (_) {
+      // Mera bulunamadıysa sessizce devam et
+    }
   }
 
   /// `checkins` tablosunu gerçek zamanlı dinle.

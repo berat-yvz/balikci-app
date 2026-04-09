@@ -158,8 +158,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
 
-      // Map (ana ekran)
-      GoRoute(path: AppRoutes.map, builder: (context, state) => const MapScreen()),
+      // Map (ana ekran) — extra olarak String spotId geçilebilir (bildirim deep-link)
+      GoRoute(
+        path: AppRoutes.map,
+        builder: (context, state) {
+          final spotId = state.extra is String ? state.extra as String : null;
+          return MapScreen(initialSpotId: spotId);
+        },
+      ),
       GoRoute(
         path: AppRoutes.mapAddSpot,
         builder: (context, state) => const AddSpotScreen(),

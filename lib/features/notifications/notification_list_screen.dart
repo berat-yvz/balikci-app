@@ -122,15 +122,18 @@ class NotificationListScreen extends ConsumerWidget {
   }
 
   /// Bildirim türüne göre doğru sayfaya yönlendir.
-  /// `/checkin/:spotId` check-in OLUŞTURMA formudur — buraya yönlendirmek yanlış.
+  /// checkin / vote bildirimleri için data_json içindeki spot_id ile
+  /// doğrudan ilgili meraya yönlendirilir.
   void _navigateForNotification(GoRouter router, NotificationModel n) {
     final type = n.type.toLowerCase();
     if (type.contains('rank')) {
       router.go(AppRoutes.rank);
     } else if (type.contains('follow')) {
       router.go(AppRoutes.profile);
+    } else if (type.contains('checkin') || type.contains('vote')) {
+      final spotId = n.data['spot_id'] as String?;
+      router.go(AppRoutes.map, extra: spotId);
     } else {
-      // checkin, vote ve diğerleri → harita
       router.go(AppRoutes.map);
     }
   }
