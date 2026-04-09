@@ -157,7 +157,7 @@ class WeatherService {
         '&hourly=temperature_2m,windspeed_10m,precipitation,weathercode'
         ',cloudcover'
         '&timezone=auto'
-        '&forecast_days=1',
+        '&forecast_days=2',
       );
 
       final marineUri = Uri.parse(
@@ -167,7 +167,7 @@ class WeatherService {
         '&hourly=wave_height,sea_surface_temperature'
         ',ocean_current_velocity,ocean_current_direction'
         '&timezone=auto'
-        '&forecast_days=1',
+        '&forecast_days=2',
       );
 
       final client = HttpClient();

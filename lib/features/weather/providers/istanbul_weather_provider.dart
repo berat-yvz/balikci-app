@@ -66,14 +66,22 @@ class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
   @override
   Future<IstanbulWeatherData> build() async {
     final data = await _fetchAllData();
-
-    // 30 dakikada bir otomatik güncelleme
-    _updateTimer = Timer.periodic(const Duration(minutes: 30), (_) {
-      _autoRefresh();
-    });
-
+    _scheduleNextHourlyUpdate();
     ref.onDispose(() => _updateTimer?.cancel());
     return data;
+  }
+
+  /// Bir sonraki tam saat başına kadar bekler, sonra günceller ve
+  /// tekrar planlar. Böylece veri her saat başında (00, 01, 02…)
+  /// otomatik yenilenir.
+  void _scheduleNextHourlyUpdate() {
+    _updateTimer?.cancel();
+    final now = DateTime.now();
+    final nextHour = DateTime(now.year, now.month, now.day, now.hour + 1);
+    _updateTimer = Timer(nextHour.difference(now), () {
+      _autoRefresh();
+      _scheduleNextHourlyUpdate();
+    });
   }
 
   Future<IstanbulWeatherData> _fetchAllData() async {
@@ -89,7 +97,8 @@ class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
     final lng = pos?.longitude ?? _fallbackLng;
 
     final hourly = await WeatherService.fetchHourlyForecast(lat: lat, lng: lng);
-    final current = await WeatherService.getWeatherForLocation(lat: lat, lng: lng);
+    final current =
+        await WeatherService.getWeatherForLocation(lat: lat, lng: lng);
 
     return IstanbulWeatherData(
       hourly: hourly,
@@ -106,10 +115,5 @@ class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
       final newData = await _fetchAllData();
       state = AsyncData(newData);
     } catch (_) {}
-  }
-
-  Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(_fetchAllData);
   }
 }

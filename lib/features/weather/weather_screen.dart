@@ -9,127 +9,99 @@ import 'package:balikci_app/data/models/weather_model.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
 
 /// Detaylı hava durumu ekranı — H9 sprint.
-class WeatherScreen extends ConsumerStatefulWidget {
+/// Veri her saat başında otomatik güncellenir; manuel yenileme yoktur.
+class WeatherScreen extends ConsumerWidget {
   const WeatherScreen({super.key});
 
-  @override
-  ConsumerState<WeatherScreen> createState() => _WeatherScreenState();
-}
-
-class _WeatherScreenState extends ConsumerState<WeatherScreen> {
-  @override
-  void initState() {
-    super.initState();
-    // Artık otomatik yükleme provider tarafından yapılıyor
-  }
-
-  Future<void> _onRefresh() async {
-    await ref.read(istanbulWeatherProvider.notifier).refresh();
-  }
-
-  List<HourlyWeatherModel> _hoursFromNow(List<HourlyWeatherModel> source) {
+  static List<HourlyWeatherModel> _next24Hours(
+    List<HourlyWeatherModel> source,
+  ) {
     final now = DateTime.now();
     final currentHour = DateTime(now.year, now.month, now.day, now.hour);
-    final filtered = source.where((h) => !h.time.isBefore(currentHour)).toList()
+    final filtered = source
+        .where((h) => !h.time.isBefore(currentHour))
+        .toList()
       ..sort((a, b) => a.time.compareTo(b.time));
-
-    // Önümüzdeki 12 saat, okunabilirlik için yeterli.
-    if (filtered.length > 12) return filtered.take(12).toList();
-    return filtered;
+    return filtered.length > 24 ? filtered.take(24).toList() : filtered;
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final weatherAsync = ref.watch(istanbulWeatherProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hava Durumu'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _onRefresh,
-            tooltip: 'Hava durumunu güncelle',
-          ),
-        ],
       ),
       body: weatherAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => _EmptyWeather(onRetry: _onRefresh),
+        error: (error, stack) => const _EmptyWeather(),
         data: (data) {
-          final hoursFromNow = _hoursFromNow(data.hourly);
+          final hoursFromNow = _next24Hours(data.hourly);
           final currentHour =
               hoursFromNow.isNotEmpty ? hoursFromNow.first : null;
-          return RefreshIndicator(
-            onRefresh: _onRefresh,
-            color: AppColors.primary,
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // Konum başlığı — GPS veya fallback göstergesi
-                Row(
-                  children: [
-                    Icon(
-                      data.gpsUsed ? Icons.gps_fixed : Icons.location_city,
-                      color: data.gpsUsed
-                          ? AppColors.primary
-                          : AppColors.muted,
-                      size: 20,
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // Konum başlığı — GPS veya fallback göstergesi
+              Row(
+                children: [
+                  Icon(
+                    data.gpsUsed ? Icons.gps_fixed : Icons.location_city,
+                    color: data.gpsUsed ? AppColors.primary : AppColors.muted,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    data.gpsUsed ? 'Konumunuz' : 'İstanbul (varsayılan)',
+                    style: AppTextStyles.h3.copyWith(
+                      color: data.gpsUsed ? AppColors.primary : AppColors.muted,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      data.gpsUsed ? 'Konumunuz' : 'İstanbul (varsayılan)',
-                      style: AppTextStyles.h3.copyWith(
-                        color: data.gpsUsed
-                            ? AppColors.primary
-                            : AppColors.muted,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              if (data.current != null) ...[
+                _WeatherHeroCard(weather: data.current!),
+                const SizedBox(height: 16),
+                _WeatherDetailGrid(
+                  weather: data.current!,
+                  currentHour: currentHour,
                 ),
                 const SizedBox(height: 16),
-
-                if (data.current != null) ...[
-                  _WeatherHeroCard(weather: data.current!),
-                  const SizedBox(height: 16),
-                  _WeatherDetailGrid(
-                    weather: data.current!,
-                    currentHour: currentHour,
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // Ay fazı kartı
-                const _MoonPhaseCard(),
-                const SizedBox(height: 20),
-
-                Text(
-                  'Saatlik Tahmin',
-                  style: AppTextStyles.h3.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                data.hourly.isEmpty
-                    ? Text(
-                        'Saatlik hava verisi alınamadı',
-                        style: AppTextStyles.caption.copyWith(
-                          color: Colors.white70,
-                        ),
-                      )
-                    : _HourlyWeatherChart(hours: hoursFromNow),
-
-                if (data.current != null) ...[
-                  const SizedBox(height: 24),
-                  _UpdateInfo(
-                    weather: data.current!,
-                    lastUpdated: data.lastUpdated,
-                  ),
-                ],
               ],
-            ),
+
+              // Ay fazı kartı
+              const _MoonPhaseCard(),
+              const SizedBox(height: 20),
+
+              Text(
+                'Saatlik Tahmin',
+                style: AppTextStyles.h3.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              data.hourly.isEmpty
+                  ? Text(
+                      'Saatlik hava verisi alınamadı',
+                      style: AppTextStyles.caption.copyWith(
+                        color: Colors.white70,
+                      ),
+                    )
+                  : _HourlyWeatherChart(hours: hoursFromNow),
+
+              if (data.current != null) ...[
+                const SizedBox(height: 24),
+                _UpdateInfo(
+                  weather: data.current!,
+                  lastUpdated: data.lastUpdated,
+                ),
+              ],
+            ],
           );
         },
       ),
@@ -830,30 +802,32 @@ class _MoonPhaseCard extends StatelessWidget {
 }
 
 class _EmptyWeather extends StatelessWidget {
-  final VoidCallback onRetry;
-  const _EmptyWeather({required this.onRetry});
+  const _EmptyWeather();
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('🌐', style: TextStyle(fontSize: 48)),
-          const SizedBox(height: 12),
-          Text(
-            'Hava verisi bulunamadı',
-            style: AppTextStyles.h3.copyWith(color: Colors.white),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Hava durumu yüklenemedi.\nLütfen internet bağlantınızı kontrol edin.',
-            style: AppTextStyles.body.copyWith(color: AppColors.muted),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(onPressed: onRetry, child: const Text('Tekrar Dene')),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🌐', style: TextStyle(fontSize: 48)),
+            const SizedBox(height: 12),
+            Text(
+              'Hava verisi bulunamadı',
+              style: AppTextStyles.h3.copyWith(color: Colors.white),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Hava durumu yüklenemedi.\n'
+              'Lütfen internet bağlantınızı kontrol edin.\n'
+              'Veri saat başında otomatik güncellenir.',
+              style: AppTextStyles.body.copyWith(color: AppColors.muted),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
