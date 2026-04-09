@@ -39,7 +39,6 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-
   final SpotRepository _repository = SpotRepository();
   final CheckinRepository _checkinRepository = CheckinRepository();
   final ShopRepository _shopRepository = ShopRepository();
@@ -70,7 +69,6 @@ class _MapScreenState extends State<MapScreen> {
   bool _weatherLoading = false;
 
   double _currentZoom = 10;
-
 
   @override
   void initState() {
@@ -146,7 +144,6 @@ class _MapScreenState extends State<MapScreen> {
       // Dükkan katmanı opsiyonel olduğu için hatayı sessiz geçiyoruz.
     }
   }
-
 
   Future<void> _loadSpots() async {
     setState(() {
@@ -346,8 +343,9 @@ class _MapScreenState extends State<MapScreen> {
     int? ageMinutes;
     if (checkins != null && checkins.isNotEmpty) {
       // Liste createdAt desc sıralıdır; ilk eleman en yeni check-in.
-      ageMinutes =
-          DateTime.now().difference(checkins.first.createdAt).inMinutes;
+      ageMinutes = DateTime.now()
+          .difference(checkins.first.createdAt)
+          .inMinutes;
     }
 
     return SpotMarker(
@@ -434,14 +432,13 @@ class _MapScreenState extends State<MapScreen> {
                 initialCenter: const LatLng(41.0082, 28.9784),
                 initialZoom: 11.0,
                 minZoom: 5.0,
-                maxZoom: 18.0,
+                maxZoom: 19.0,
                 onPositionChanged: (pos, _) {
                   final z = pos.zoom;
                   // Marker boyutları yalnızca zoom 13 eşiğini geçince değişir.
                   // Her küçük zoom değişiminde tüm widget ağacını yeniden
                   // buildlemek yerine sadece eşik aşıldığında setState çağır.
-                  final crossedThreshold =
-                      (_currentZoom > 13) != (z > 13);
+                  final crossedThreshold = (_currentZoom > 13) != (z > 13);
                   _currentZoom = z;
                   if (crossedThreshold && mounted) setState(() {});
                 },
@@ -464,7 +461,8 @@ class _MapScreenState extends State<MapScreen> {
                   // sırasında boşlukları/bozulmaları önler.
                   keepBuffer: 4,
                   panBuffer: 2,
-                  evictErrorTileStrategy: EvictErrorTileStrategy.notVisibleRespectMargin,
+                  evictErrorTileStrategy:
+                      EvictErrorTileStrategy.notVisibleRespectMargin,
                   userAgentPackageName: 'com.balikci.app',
                 ),
                 TileLayer(
@@ -475,7 +473,8 @@ class _MapScreenState extends State<MapScreen> {
                   tileSize: 256,
                   keepBuffer: 4,
                   panBuffer: 2,
-                  evictErrorTileStrategy: EvictErrorTileStrategy.notVisibleRespectMargin,
+                  evictErrorTileStrategy:
+                      EvictErrorTileStrategy.notVisibleRespectMargin,
                   userAgentPackageName: 'com.balikci.app',
                 ),
                 if (_showShops) MarkerLayer(markers: _buildShopMarkers()),
@@ -493,12 +492,22 @@ class _MapScreenState extends State<MapScreen> {
                             color: const Color(0xFF0F6E56),
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 2.5),
-                            boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 6, offset: Offset(0, 2))],
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black45,
+                                blurRadius: 6,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
                           ),
                           child: Center(
                             child: Text(
                               markers.length.toString(),
-                              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         );
@@ -526,181 +535,168 @@ class _MapScreenState extends State<MapScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                      TextField(
-                        controller: _searchController,
-                        focusNode: _searchFocusNode,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          hintText: 'Mera, tür veya bölge ara...',
-                          hintStyle: const TextStyle(
-                              color: Colors.white70, fontSize: 16),
-                          prefixIcon: const Icon(Icons.search,
-                              color: Colors.white70, size: 26),
-                          suffixIcon: _searchController.text.isNotEmpty
-                              ? IconButton(
-                                  tooltip: 'Temizle',
-                                  icon: const Icon(Icons.close,
-                                      size: 18, color: Colors.white),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    _onSearchChanged('');
-                                    _searchFocusNode.unfocus();
-                                    setState(() {});
-                                  },
-                                )
-                              : null,
-                          filled: true,
-                          fillColor: const Color(0xFF1A2E44),
-                          border: const OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(14)),
-                            borderSide: BorderSide.none,
+                TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Mera, tür veya bölge ara...',
+                    hintStyle: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Colors.white70,
+                      size: 26,
+                    ),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            tooltip: 'Temizle',
+                            icon: const Icon(
+                              Icons.close,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              _onSearchChanged('');
+                              _searchFocusNode.unfocus();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: const Color(0xFF1A2E44),
+                    border: const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(14)),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                  ),
+                  onChanged: _onSearchChanged,
+                  onTap: () => _onSearchChanged(_searchController.text),
+                ),
+                const SizedBox(height: 8),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  height: _searchResults.isEmpty
+                      ? 0
+                      : 56.0 * (_searchResults.length.clamp(1, 6)) + 16,
+                  child: _searchResults.isEmpty
+                      ? const SizedBox.shrink()
+                      : Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.9),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.4),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 14),
-                        ),
-                        onChanged: _onSearchChanged,
-                        onTap: () => _onSearchChanged(_searchController.text),
-                      ),
-                      const SizedBox(height: 8),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        curve: Curves.easeOut,
-                        height: _searchResults.isEmpty
-                            ? 0
-                            : 56.0 * (_searchResults.length.clamp(1, 6)) + 16,
-                        child: _searchResults.isEmpty
-                            ? const SizedBox.shrink()
-                            : Container(
-                                margin: const EdgeInsets.only(top: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.9),
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.4,
-                                      ),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ],
-                                ),
-                                child: _searchResults.isEmpty
-                                    ? const Center(
-                                        child: Text(
-                                          'Sonuç bulunamadı',
-                                          style: TextStyle(
-                                            color: Colors.white54,
-                                          ),
-                                        ),
-                                      )
-                                    : ListView.separated(
+                          child: _searchResults.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'Sonuç bulunamadı',
+                                    style: TextStyle(color: Colors.white54),
+                                  ),
+                                )
+                              : ListView.separated(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                    horizontal: 8,
+                                  ),
+                                  itemCount: _searchResults.length.clamp(0, 6),
+                                  separatorBuilder: (_, _) =>
+                                      const SizedBox(height: 4),
+                                  itemBuilder: (context, idx) {
+                                    final spot = _searchResults[idx];
+                                    return InkWell(
+                                      borderRadius: BorderRadius.circular(12),
+                                      onTap: () {
+                                        _searchController.text = spot.name;
+                                        _searchFocusNode.unfocus();
+                                        _selectSpot(spot);
+                                        setState(() {
+                                          _searchResults = const [];
+                                        });
+                                      },
+                                      child: Padding(
                                         padding: const EdgeInsets.symmetric(
                                           vertical: 8,
-                                          horizontal: 8,
+                                          horizontal: 10,
                                         ),
-                                        itemCount: _searchResults.length.clamp(
-                                          0,
-                                          6,
-                                        ),
-                                        separatorBuilder: (_, _) =>
-                                            const SizedBox(height: 4),
-                                        itemBuilder: (context, idx) {
-                                          final spot = _searchResults[idx];
-                                          return InkWell(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
+                                        child: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.location_on,
+                                              color: AppColors.teal,
+                                              size: 18,
                                             ),
-                                            onTap: () {
-                                              _searchController.text =
-                                                  spot.name;
-                                              _searchFocusNode.unfocus();
-                                              _selectSpot(spot);
-                                              setState(() {
-                                                _searchResults = const [];
-                                              });
-                                            },
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 8,
-                                                    horizontal: 10,
-                                                  ),
-                                              child: Row(
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
-                                                  const Icon(
-                                                    Icons.location_on,
-                                                    color: AppColors.teal,
-                                                    size: 18,
-                                                  ),
-                                                  const SizedBox(width: 10),
-                                                  Expanded(
-                                                    child: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Text(
-                                                          spot.name,
-                                                          style:
-                                                              const TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                              ),
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                        ),
-                                                        if (spot.type != null)
-                                                          const SizedBox(
-                                                            height: 2,
-                                                          ),
-                                                        if (spot.type != null)
-                                                          Container(
-                                                            padding:
-                                                                const EdgeInsets.symmetric(
-                                                                  horizontal: 8,
-                                                                  vertical: 3,
-                                                                ),
-                                                            decoration:
-                                                                BoxDecoration(
-                                                                  color: Colors
-                                                                      .white12,
-                                                                  borderRadius:
-                                                                      BorderRadius.circular(
-                                                                        999,
-                                                                      ),
-                                                                ),
-                                                            child: Text(
-                                                              spot.type!,
-                                                              style:
-                                                                  const TextStyle(
-                                                                    color: Colors
-                                                                        .white70,
-                                                                    fontSize:
-                                                                        13,
-                                                                  ),
-                                                            ),
-                                                          ),
-                                                      ],
+                                                  Text(
+                                                    spot.name,
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.w600,
                                                     ),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   ),
-                                                  const SizedBox(width: 8),
-                                                  _PrivacyChip(
-                                                    level: spot.privacyLevel,
-                                                  ),
+                                                  if (spot.type != null)
+                                                    const SizedBox(height: 2),
+                                                  if (spot.type != null)
+                                                    Container(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 3,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white12,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              999,
+                                                            ),
+                                                      ),
+                                                      child: Text(
+                                                        spot.type!,
+                                                        style: const TextStyle(
+                                                          color: Colors.white70,
+                                                          fontSize: 13,
+                                                        ),
+                                                      ),
+                                                    ),
                                                 ],
                                               ),
                                             ),
-                                          );
-                                        },
+                                            const SizedBox(width: 8),
+                                            _PrivacyChip(
+                                              level: spot.privacyLevel,
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                              ),
-                      ),
+                                    );
+                                  },
+                                ),
+                        ),
+                ),
               ],
             ),
           ),
@@ -1494,15 +1490,17 @@ class _RecentCheckinsRow extends StatelessWidget {
           style: AppTextStyles.h3.copyWith(color: AppColors.foam, fontSize: 15),
         ),
         const SizedBox(height: 10),
-        ...checkins.take(5).map(
-          (c) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _CheckinCard(
-              checkin: c,
-              onVoteTap: () => VoteDialog.show(context, checkin: c),
+        ...checkins
+            .take(5)
+            .map(
+              (c) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _CheckinCard(
+                  checkin: c,
+                  onVoteTap: () => VoteDialog.show(context, checkin: c),
+                ),
+              ),
             ),
-          ),
-        ),
       ],
     );
   }
@@ -1659,9 +1657,7 @@ class _CheckinCard extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 foregroundColor: AppColors.foam,
-                side: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.20),
-                ),
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.20)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
