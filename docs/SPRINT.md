@@ -315,13 +315,13 @@
 
 #### Görevler
 - [ ] Google Play Console hesabı açıldı (25$ tek seferlik)
-- [ ] App icon oluşturuldu (1024x1024 PNG)
-- [ ] Splash screen tasarlandı
-- [ ] Play Store açıklama metni yazıldı (Türkçe)
+- [x] App icon oluşturuldu — `assets/icon/app_icon.png`, `flutter_launcher_icons` ile tüm boyutlar üretildi
+- [x] Splash screen — `#0A2A2F` renk tabanlı, `#132236` adaptive icon background
+- [x] Play Store açıklama metni yazıldı (Türkçe) — `docs/play_store_listing.md`
 - [ ] En az 5 ekran görüntüsü hazırlandı
 - [ ] Gizlilik politikası sayfası yayında (web URL)
-- [ ] `flutter build appbundle --release` başarılı
-- [ ] İmzalama: keystore oluşturuldu, güvenli saklandı
+- [x] `flutter build appbundle --release` başarılı — 49.4MB AAB (`build/app/outputs/bundle/release/app-release.aab`)
+- [x] İmzalama: `android/app/build.gradle.kts` signing config + `key.properties.template` hazır (keystore oluşturmak kullanıcıya kalıyor)
 - [ ] Play Store'a APK yüklendi
 - [ ] İç test (5 kişi) tamamlandı
 - [ ] Beta kanalına alındı
