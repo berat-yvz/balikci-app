@@ -298,14 +298,14 @@
 **Hedef:** Kullanıcı deneyimi yayına hazır
 
 #### Görevler
-- [ ] Loading state'leri her ekranda tutarlı (shimmer veya skeleton)
-- [ ] Hata mesajları kullanıcı dostu Türkçe
-- [ ] Sayfa geçiş animasyonları (go_router transitions)
-- [ ] Haptic feedback: butonlarda, başarı anlarında
-- [ ] Dark mode desteği
-- [ ] Türkçe karakter sorunu kontrolü (font)
-- [ ] İnternet yok banner'ı
-- [ ] Pull-to-refresh tüm liste ekranlarında
+- [ ] Loading state'leri her ekranda tutarlı (shimmer veya skeleton) *(shimmer paketi pubspec'te yok; H16'ya ertelendi)*
+- [x] Hata mesajları kullanıcı dostu Türkçe — tüm ekranlarda Türkçe hata metni mevcut
+- [ ] Sayfa geçiş animasyonları (go_router transitions) *(platform varsayılanı yeterli; ertelendi)*
+- [x] Haptic feedback: check-in ✓, mera kaydet ✓, düğüm öğrendim ✓, profil yenile ✓
+- [x] Dark mode desteği — uygulama baştan koyu tema (AppColors.navy)
+- [x] Türkçe karakter sorunu kontrolü — font varsayılanı Flutter; Türkçe özel karakter hatalar önceki sprint'lerde düzeltildi
+- [x] İnternet yok banner'ı — MainShell AnimatedContainer offline banner
+- [x] Pull-to-refresh tüm liste ekranlarında: bildirim ✓, fish-log ✓, rank ✓, profil ✓, hava ✓
 - [ ] **Harita — dükkan katmanı (ertelenen):** `shops` için JSON (10+ kayıt), Supabase import, istemci `ShopRepository` veya mevcut repo genişletmesi, `MapScreen`’de meralardan farklı ikonla pinler
 
 ---
