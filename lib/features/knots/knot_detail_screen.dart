@@ -142,12 +142,16 @@ class _KnotDetailScreenState extends State<KnotDetailScreen> {
             );
           }),
           const SizedBox(height: 8),
-          ElevatedButton(
-            onPressed: _toggleLearned,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _learned ? AppColors.success : AppColors.primary,
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _toggleLearned,
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    _learned ? AppColors.success : AppColors.primary,
+              ),
+              child: Text(_learned ? '✓ Öğrendim' : 'Öğrendim Olarak İşaretle'),
             ),
-            child: Text(_learned ? 'Öğrendim ✓' : 'Öğrendim ✓'),
           ),
         ],
       ),

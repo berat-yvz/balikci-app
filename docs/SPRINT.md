@@ -14,7 +14,7 @@
 | Faz A | H1–H2 | Kurulum & Auth | ✅ |
 | Faz B | H3–H6 | Harita & Check-in Çekirdeği | ✅ |
 | Faz C | H7–H10 | Günlük, Puan, Hava, Bildirim | 🔄 (H10 kısmen) |
-| Faz D | H11–H13 | Offline & Motivasyon UI | ⏳ |
+| Faz D | H11–H13 | Offline & Motivasyon UI | 🔄 (H11 ✅) |
 | Faz E | H14–H16 | Test, Polish & Launch | ⏳ |
 
 ---
@@ -223,17 +223,18 @@
 
 ## FAZ D — Offline & Motivasyon UI (H11–H13)
 
-### H11 — Düğüm & Takım Rehberi
+### H11 — Düğüm & Takım Rehberi ✅
 **Hedef:** Rehber tamamen offline çalışıyor
 
 #### Görevler
-- [ ] 30 düğüm için `knots_data.json` hazırlandı
-- [ ] Lottie animasyon dosyaları oluşturuldu/temin edildi
-- [ ] JSON assets olarak projeye eklendi
-- [ ] `knots_screen.dart` — liste + filtreler
-- [ ] `knot_detail_screen.dart` — adım adım animasyonlu gösterim
-- [ ] `knot_filter_widget.dart` — tür + zorluk filtresi
-- [ ] Takım önerileri: `tackle_data.json` hazırlandı
+- [x] 30 düğüm için `knots_data.json` hazırlandı
+- [ ] Lottie animasyon dosyaları oluşturuldu/temin edildi *(ileriye ertelendi — JSON adım gösterimi yeterli)*
+- [x] JSON assets olarak projeye eklendi (`assets/knots/`, `assets/tackle/`)
+- [x] `knots_screen.dart` — iki sekme: Düğümler (grid + filtre) + Takımlar (expandable liste)
+- [x] `knot_detail_screen.dart` — adım adım gösterim + "Öğrendim" toggle (SharedPreferences)
+- [x] `knot_filter_widget.dart` — tür + zorluk filtresi
+- [x] Takım önerileri: `tackle_data.json` hazırlandı (8 senaryo: lüfer, çipura, levrek, istavrit, sazan, palamut, kalamar, surf)
+- [x] `tackle_model.dart` yazıldı (`TackleModel`, `TackleItem`)
 - [ ] Tamamen offline test edildi (uçak modu)
 
 **Çıktı:** Rehber uçak modunda çalışıyor ✓

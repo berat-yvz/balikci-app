@@ -39,6 +39,8 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
+  static const double _kSheetMaxSize = 0.85;
+
   final SpotRepository _repository = SpotRepository();
   final CheckinRepository _checkinRepository = CheckinRepository();
   final ShopRepository _shopRepository = ShopRepository();
@@ -161,7 +163,7 @@ class _MapScreenState extends State<MapScreen> {
       final cached = await _repository.getCachedSpots();
       setState(() {
         _spots = cached;
-        _error = cached.isEmpty ? 'Meralar yuklenemedi.' : null;
+        _error = cached.isEmpty ? 'Meralar yüklenemedi.' : null;
       });
       await _refreshActiveCheckins();
     } finally {
@@ -221,7 +223,7 @@ class _MapScreenState extends State<MapScreen> {
     if (pos == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Konum alinamadi. Izin veya GPS acik mi kontrol edin.'),
+          content: Text('Konum alınamadı. İzin veya GPS açık mı kontrol edin.'),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -255,7 +257,7 @@ class _MapScreenState extends State<MapScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Harita acilamadi'),
+        content: Text('Harita açılamadı'),
         backgroundColor: AppColors.danger,
       ),
     );
@@ -269,7 +271,21 @@ class _MapScreenState extends State<MapScreen> {
       if (_sheetSpot?.id == spot.id) {
         await _loadWeatherForSpot(spot);
       }
+      if (!mounted) return;
       setState(() {});
+      // Check-in sonrası içerik taşmasından kaynaklanan kaydırma önceliğini
+      // ortadan kaldırmak için sheet'i tam boyuta aç.  Böylece grab handle,
+      // favori butonu ve diğer aksiyonlar ekran dışına çıkmaz.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_sheetController.isAttached) return;
+        if (_sheetSpot?.id == spot.id) {
+          _sheetController.animateTo(
+            _kSheetMaxSize,
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOut,
+          );
+        }
+      });
     }
   }
 
@@ -402,15 +418,6 @@ class _MapScreenState extends State<MapScreen> {
         : (_activeCheckinsBySpotId[sheetSpot.id] ?? const <CheckinModel>[]);
     final activeCount = sheetCheckins.where((c) => !c.isStale).length;
     final mostRecent = sheetCheckins.isNotEmpty ? sheetCheckins.first : null;
-
-    final fishDensityLabel = mostRecent?.fishDensity ?? 'yoğun';
-    final fishDensityTitle = switch (fishDensityLabel) {
-      'yoğun' => 'Balık Yoğun',
-      'normal' => 'Balık Normal',
-      'az' => 'Balık Az',
-      'yok' => 'Balık Yok',
-      _ => 'Balık Yoğun',
-    };
 
     final uid = SupabaseService.auth.currentUser?.id;
     final isOwner = sheetSpot != null && uid != null && uid == sheetSpot.userId;
@@ -860,7 +867,6 @@ class _MapScreenState extends State<MapScreen> {
                     clipBehavior: Clip.antiAlias,
                     child: ListView(
                       controller: scrollController,
-                      shrinkWrap: true,
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                       children: [
                         Center(
@@ -876,7 +882,7 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                         if (sheetSpot == null)
                           Text(
-                            'Mera seç',
+                            'Mera Seç',
                             style: AppTextStyles.h2.copyWith(
                               color: AppColors.foam,
                             ),
@@ -943,13 +949,13 @@ class _MapScreenState extends State<MapScreen> {
                           _RecentCheckinsRow(checkins: sheetCheckins),
                         ] else ...[
                           Text(
-                            'Haritada bir meraya dokun. Hızlı bilgi burada.',
+                            'Haritada bir meraya dokun — anlık balık durumu, hava ve yol tarifi burada görünür.',
                             style: AppTextStyles.body.copyWith(
                               color: AppColors.foam.withValues(alpha: 0.78),
                             ),
                           ),
                           const SizedBox(height: 10),
-                          _EmptySheetHints(fishDensityTitle: fishDensityTitle),
+                          const _EmptySheetHints(),
                         ],
                       ],
                     ),
@@ -1763,8 +1769,7 @@ class _LatestCheckinBanner extends StatelessWidget {
 }
 
 class _EmptySheetHints extends StatelessWidget {
-  final String fishDensityTitle;
-  const _EmptySheetHints({required this.fishDensityTitle});
+  const _EmptySheetHints();
 
   @override
   Widget build(BuildContext context) {
@@ -1775,17 +1780,17 @@ class _EmptySheetHints extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
-      child: Row(
+      child: const Row(
         children: [
-          const Icon(Icons.info_outline, color: Color(0xFFB8C7DA), size: 18),
-          const SizedBox(width: 10),
+          Icon(Icons.touch_app_outlined, color: Color(0xFFB8C7DA), size: 18),
+          SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Seçilen merada: $fishDensityTitle. Aktif bildirim ve hava burada görünür.',
+              'Pin\'e dokununca: balık durumu, kalabalık, hava ve "Balık Var!" butonu çıkar.',
               style: TextStyle(
-                color: AppColors.foam.withValues(alpha: 0.78),
+                color: Color(0xFFB8C7DA),
                 fontSize: 12,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),

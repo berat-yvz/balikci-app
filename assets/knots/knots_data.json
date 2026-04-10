@@ -1,1 +1,421 @@
-[{"id":"palomar","title":"Palomar Düğümü","category":"kanca","difficulty":1,"use_cases":["Tüm kanca tipleri","Monofilament","Örgü ip"],"steps":["İpi ikiye katla, 15 cm uzunluğunda bir ilmek oluştur.","Bu ilmeği kanca deliğinden geçir.","Kancayı ilmeğin içinden geçir.","Her iki ucu ıslatarak sıkıştır."]},{"id":"improved_clinch","title":"Geliştirilmiş Clinch","category":"kanca","difficulty":1,"use_cases":["Monofilament misina","Flüorokarbon"],"steps":["İpi kanca deliğinden geçir, 15 cm serbest bırak.","Serbest ucu ana ip üzerinde 5-6 kez sar.","Serbest ucu kanca deliği yanındaki ilk ilmekten geri geçir.","Oluşan büyük ilmekten de geçir.","Islat ve her iki uçtan çekerek sıkıştır."]},{"id":"uni","title":"Uni Düğümü","category":"kanca","difficulty":2,"use_cases":["Kanca bağlama","Makara bağlantısı"],"steps":["İpi kanca deliğinden geçir, 20 cm serbest bırak.","Serbest ucu ana ipe paralel tut, ilmek oluştur.","Serbest ucu ilmeğin içinden 6 kez sar.","Islat ve ana ipten çekerek sıkıştır."]},{"id":"double_uni","title":"Çift Uni Düğümü","category":"birlestirme","difficulty":2,"use_cases":["İki misina birleştirme","Farklı kalınlıklar"],"steps":["İki ipi 15 cm çakışacak şekilde paralel tut.","İlk ipten Uni düğümü yap (4-5 sarım).","İkinci ipten aynı şekilde Uni düğümü yap.","Her iki düğümü birbirine doğru çekerek kilitle."]},{"id":"fg","title":"FG Düğümü","category":"lider","difficulty":5,"use_cases":["PE ip + Lider bağlantısı","Jigging","Surf casting"],"steps":["Lideri gerer tut, PE ipi liderin üzerinden çapraz geçir.","PE ipi lider üzerinde alternatif çapraz sarımlarla 20 kez sar.","5 adet half hitch ile kilitle.","2 adet ters half hitch ekle.","Fazla ipi kes, ucunu hafif eritebilirsin."]},{"id":"blood","title":"Kan Düğümü","category":"birlestirme","difficulty":3,"use_cases":["Aynı kalınlıkta misina birleştirme","Misina uzatma"],"steps":["İki ipi çapraz olarak üst üste koy.","Birinci ipi ikincisi üzerinden 5 kez sar.","İkinci ipi birincisi üzerinden 5 kez sar.","Her iki serbest ucu ortadaki boşluktan geçir.","Islat ve her iki ana ipten çekerek sıkıştır."]},{"id":"rapala","title":"Rapala Düğümü","category":"kanca","difficulty":2,"use_cases":["Maket balık","Serbest hareket gerektiren takımlar"],"steps":["İpin ucunda küçük bir ilmek oluştur.","İpi kanca/maket deliğinden geçir.","İpi ana ip gövdesi üzerinde 3 kez sar.","Serbest ucu baştaki ilmekten geri geçir.","Oluşan büyük ilmekten de geçir.","Islat ve sıkıştır."]},{"id":"surgeons","title":"Cerrah Düğümü","category":"birlestirme","difficulty":1,"use_cases":["Hızlı birleştirme","Farklı kalınlıkta misina"],"steps":["İki ipi paralel olarak üst üste tut.","Her ikisini birlikte tek ilmek yap ve geçir.","Aynı ilmekten bir kez daha geçir.","Islat ve dört uçtan çekerek sıkıştır."]},{"id":"snell","title":"Snell Düğümü","category":"kanca","difficulty":3,"use_cases":["Kanca sap bağlama","Sazan","Dip oltası"],"steps":["İpi kanca deliğinden geçir, kanca sapına paralel tut.","Serbest uçla kanca sapı ve ana ipi birlikte 7-8 kez sar.","Serbest ucu kanca deliğinden geri geçir.","Islat ve ana ipten çekerek sıkıştır."]},{"id":"loop_to_loop","title":"İlmek-İlmek Bağlantısı","category":"birlestirme","difficulty":1,"use_cases":["Lider hızlı değişimi","Takım bağlantısı"],"steps":["Her iki ipin ucunda ayrı birer ilmek hazırla.","Birinci ilmeği ikinci ilmeğin içinden geçir.","İkinci ipin gövdesini birinci ilmekten geçir.","Her iki ipten çekerek kilitle."]}]
+[
+  {
+    "id": "palomar",
+    "title": "Palomar Düğümü",
+    "category": "kanca",
+    "difficulty": 1,
+    "use_cases": ["Tüm kanca tipleri", "Monofilament", "Örgü ip"],
+    "steps": [
+      "İpi ikiye katla, 15 cm uzunluğunda bir ilmek oluştur.",
+      "Bu ilmeği kanca deliğinden geçir.",
+      "Kancayı ilmeğin içinden geçir.",
+      "Her iki ucu ıslatarak sıkıştır."
+    ]
+  },
+  {
+    "id": "improved_clinch",
+    "title": "Geliştirilmiş Clinch",
+    "category": "kanca",
+    "difficulty": 1,
+    "use_cases": ["Monofilament misina", "Flüorokarbon"],
+    "steps": [
+      "İpi kanca deliğinden geçir, 15 cm serbest bırak.",
+      "Serbest ucu ana ip üzerinde 5-6 kez sar.",
+      "Serbest ucu kanca deliği yanındaki ilk ilmekten geri geçir.",
+      "Oluşan büyük ilmekten de geçir.",
+      "Islat ve her iki uçtan çekerek sıkıştır."
+    ]
+  },
+  {
+    "id": "uni",
+    "title": "Uni Düğümü",
+    "category": "kanca",
+    "difficulty": 2,
+    "use_cases": ["Kanca bağlama", "Makara bağlantısı"],
+    "steps": [
+      "İpi kanca deliğinden geçir, 20 cm serbest bırak.",
+      "Serbest ucu ana ipe paralel tut, ilmek oluştur.",
+      "Serbest ucu ilmeğin içinden 6 kez sar.",
+      "Islat ve ana ipten çekerek sıkıştır."
+    ]
+  },
+  {
+    "id": "double_uni",
+    "title": "Çift Uni Düğümü",
+    "category": "birlestirme",
+    "difficulty": 2,
+    "use_cases": ["İki misina birleştirme", "Farklı kalınlıklar"],
+    "steps": [
+      "İki ipi 15 cm çakışacak şekilde paralel tut.",
+      "İlk ipten Uni düğümü yap (4-5 sarım).",
+      "İkinci ipten aynı şekilde Uni düğümü yap.",
+      "Her iki düğümü birbirine doğru çekerek kilitle."
+    ]
+  },
+  {
+    "id": "fg",
+    "title": "FG Düğümü",
+    "category": "lider",
+    "difficulty": 5,
+    "use_cases": ["PE ip + Lider bağlantısı", "Jigging", "Surf casting"],
+    "steps": [
+      "Lideri gerer tut, PE ipi liderin üzerinden çapraz geçir.",
+      "PE ipi lider üzerinde alternatif çapraz sarımlarla 20 kez sar.",
+      "5 adet half hitch ile kilitle.",
+      "2 adet ters half hitch ekle.",
+      "Fazla ipi kes, ucunu hafif eritebilirsin."
+    ]
+  },
+  {
+    "id": "blood",
+    "title": "Kan Düğümü",
+    "category": "birlestirme",
+    "difficulty": 3,
+    "use_cases": ["Aynı kalınlıkta misina birleştirme", "Misina uzatma"],
+    "steps": [
+      "İki ipi çapraz olarak üst üste koy.",
+      "Birinci ipi ikincisi üzerinden 5 kez sar.",
+      "İkinci ipi birincisi üzerinden 5 kez sar.",
+      "Her iki serbest ucu ortadaki boşluktan geçir.",
+      "Islat ve her iki ana ipten çekerek sıkıştır."
+    ]
+  },
+  {
+    "id": "rapala",
+    "title": "Rapala Düğümü",
+    "category": "kanca",
+    "difficulty": 2,
+    "use_cases": ["Maket balık", "Serbest hareket gerektiren takımlar"],
+    "steps": [
+      "İpin ucunda küçük bir ilmek oluştur.",
+      "İpi kanca/maket deliğinden geçir.",
+      "İpi ana ip gövdesi üzerinde 3 kez sar.",
+      "Serbest ucu baştaki ilmekten geri geçir.",
+      "Oluşan büyük ilmekten de geçir.",
+      "Islat ve sıkıştır."
+    ]
+  },
+  {
+    "id": "surgeons",
+    "title": "Cerrah Düğümü",
+    "category": "birlestirme",
+    "difficulty": 1,
+    "use_cases": ["Hızlı birleştirme", "Farklı kalınlıkta misina"],
+    "steps": [
+      "İki ipi paralel olarak üst üste tut.",
+      "Her ikisini birlikte tek ilmek yap ve geçir.",
+      "Aynı ilmekten bir kez daha geçir.",
+      "Islat ve dört uçtan çekerek sıkıştır."
+    ]
+  },
+  {
+    "id": "snell",
+    "title": "Snell Düğümü",
+    "category": "kanca",
+    "difficulty": 3,
+    "use_cases": ["Kanca sap bağlama", "Sazan", "Dip oltası"],
+    "steps": [
+      "İpi kanca deliğinden geçir, kanca sapına paralel tut.",
+      "Serbest uçla kanca sapı ve ana ipi birlikte 7-8 kez sar.",
+      "Serbest ucu kanca deliğinden geri geçir.",
+      "Islat ve ana ipten çekerek sıkıştır."
+    ]
+  },
+  {
+    "id": "loop_to_loop",
+    "title": "İlmek-İlmek Bağlantısı",
+    "category": "birlestirme",
+    "difficulty": 1,
+    "use_cases": ["Lider hızlı değişimi", "Takım bağlantısı"],
+    "steps": [
+      "Her iki ipin ucunda ayrı birer ilmek hazırla.",
+      "Birinci ilmeği ikinci ilmeğin içinden geçir.",
+      "İkinci ipin gövdesini birinci ilmekten geçir.",
+      "Her iki ipten çekerek kilitle."
+    ]
+  },
+  {
+    "id": "perfection_loop",
+    "title": "Perfection Loop",
+    "category": "lider",
+    "difficulty": 2,
+    "use_cases": ["Lider ucunda sabit ilmek", "Streamer iğne bağlama"],
+    "steps": [
+      "İpin ucuyla arkadan öne bir ilmek (A) oluştur.",
+      "A ilmeğinin önünde daha küçük bir ilmek (B) oluştur.",
+      "B ilmeğini A ilmeği ile ip arasındaki boşluğa yerleştir.",
+      "B ilmeğini A ilmeğinin içinden öne doğru çek.",
+      "Yavaşça her iki uçtan sıkıştır."
+    ]
+  },
+  {
+    "id": "alberto",
+    "title": "Alberto Düğümü",
+    "category": "lider",
+    "difficulty": 4,
+    "use_cases": ["PE ip + Flüorokarbon lider", "Deniz balıkçılığı"],
+    "steps": [
+      "Lideri kıvrık tut, PE ipiyle lider üzerinde 7 kez sar.",
+      "Aynı PE ipiyle geri yönde 7 kez daha sar.",
+      "PE ipinin serbest ucunu liderin ilmeğinden geçir.",
+      "3 half hitch ile sonlandır.",
+      "Islat ve her iki uçtan yavaşça çekerek sıkıştır."
+    ]
+  },
+  {
+    "id": "droska",
+    "title": "Droşka Düğümü",
+    "category": "kanca",
+    "difficulty": 2,
+    "use_cases": ["Üç kollu takım", "Paternoster rig"],
+    "steps": [
+      "Ana ipe çapraz bir ilmek oluştur.",
+      "İlmeği 4-5 kez sar.",
+      "Sarımı sıkıştırmadan ipucu ilmeğin içinden geçir.",
+      "Islat ve yavaşça ana ipten çekerek sıkıştır.",
+      "İlmek serbest kalmalı, kol buradan çıkar."
+    ]
+  },
+  {
+    "id": "bimini_twist",
+    "title": "Bimini Twist",
+    "category": "lider",
+    "difficulty": 5,
+    "use_cases": ["Büyük av balıkçılığı", "Kılavuz hattı", "Jigging ana hattı"],
+    "steps": [
+      "İpin ucundan 1-1.5 m döndürerek 20 büküm oluştur.",
+      "İlmeği ayak bileğine geç, her iki elle büküm sıkıştır.",
+      "Serbest ucu bükümlerin üzerinden aşağı doğru sarmaya başla.",
+      "Büküm sonuna ulaşınca 3 half hitch yap.",
+      "Islatarak her iki ipten çekerek kilitle."
+    ]
+  },
+  {
+    "id": "spider_hitch",
+    "title": "Spider Hitch",
+    "category": "lider",
+    "difficulty": 3,
+    "use_cases": ["Çift hat ilmeği", "Jigging hızlı ilmek"],
+    "steps": [
+      "İpin ucundan 30 cm katlayarak çift hat oluştur.",
+      "Başparmak ve işaret parmağı arasına çapraz tut.",
+      "Çift hattı parmak etrafında 5 kez sar.",
+      "Büyük ilmeği parmaktan geçir.",
+      "Her iki taraftan çekerek sıkıştır."
+    ]
+  },
+  {
+    "id": "non_slip_mono",
+    "title": "Non-Slip Mono Düğümü",
+    "category": "kanca",
+    "difficulty": 2,
+    "use_cases": ["Maket balık", "Jig bağlama", "Serbest hareket"],
+    "steps": [
+      "İpin ucunda gevşek bir overhand düğümü bağla.",
+      "Ucu kanca deliğinden geçir.",
+      "Ucu baştaki düğümden geri geçir.",
+      "Ana ip üzerinde 4-6 kez sar.",
+      "Ucu düğüme geri sok ve sıkıştır."
+    ]
+  },
+  {
+    "id": "trilene",
+    "title": "Trilene Düğümü",
+    "category": "kanca",
+    "difficulty": 2,
+    "use_cases": ["Monofilament", "Flüorokarbon kanca bağlama"],
+    "steps": [
+      "İpi kanca deliğinden iki kez geçir.",
+      "Serbest ucu ana ip üzerinde 5-6 kez sar.",
+      "Serbest ucu kanca deliğindeki çift ilmekten geçir.",
+      "Islat ve sıkıştır."
+    ]
+  },
+  {
+    "id": "half_blood",
+    "title": "Half Blood Düğümü",
+    "category": "kanca",
+    "difficulty": 1,
+    "use_cases": ["Temel kanca bağlama", "Sazan", "Levrek"],
+    "steps": [
+      "İpi kanca deliğinden geçir, 10-12 cm serbest bırak.",
+      "Serbest ucu ana ip etrafında 5 kez sar.",
+      "Serbest ucu kanca deliği ile sarımlar arasındaki boşluktan geçir.",
+      "Islat ve sıkıştır."
+    ]
+  },
+  {
+    "id": "water_knot",
+    "title": "Su Düğümü",
+    "category": "birlestirme",
+    "difficulty": 2,
+    "use_cases": ["Misina birleştirme", "Şerit malzeme bağlama"],
+    "steps": [
+      "İki ipin uçlarını karşılıklı paralel getir.",
+      "Her iki ipten birlikte overhand düğümü yap.",
+      "Serbest uçları aynı ilmekten geri geçir.",
+      "Islat ve her iki ana ipten çekerek sıkıştır."
+    ]
+  },
+  {
+    "id": "nail_knot",
+    "title": "Nail (Çivi) Düğümü",
+    "category": "lider",
+    "difficulty": 3,
+    "use_cases": ["Ana hat + Lider bağlantısı", "Olta kasnağı bağlantısı"],
+    "steps": [
+      "İnce bir çubuğu ana ip ve lider arasında paralel tut.",
+      "Lider ucuyla her iki ip ve çubuk etrafında 6-7 kez sar.",
+      "Sarım bitiminde serbest ucu sarımların altından geçir.",
+      "Çubuğu çıkar ve sıkıştır.",
+      "Islat, fazla uçları kes."
+    ]
+  },
+  {
+    "id": "berkley_braid",
+    "title": "Berkley Braid Düğümü",
+    "category": "kanca",
+    "difficulty": 2,
+    "use_cases": ["Örgü ip + kanca", "Jig ve kaşık bağlama"],
+    "steps": [
+      "İpi kanca deliğinden çift katlı geçir.",
+      "Her iki kolu birlikte kanca sapı etrafında 8 kez sar.",
+      "Çift hattı kanca deliğindeki ilmekten geçir.",
+      "Islat ve sıkıştır."
+    ]
+  },
+  {
+    "id": "davy",
+    "title": "Davy Düğümü",
+    "category": "kanca",
+    "difficulty": 1,
+    "use_cases": ["Hızlı kanca değişimi", "Küçük kancalar"],
+    "steps": [
+      "İpi kanca deliğinden geçir.",
+      "Ucu ana ip çevresinde döndürerek küçük bir ilmek oluştur.",
+      "Ucu bu ilmekten geçir.",
+      "Islat ve ana ipten çekerek sıkıştır."
+    ]
+  },
+  {
+    "id": "eugene_bend",
+    "title": "Eugene Bend",
+    "category": "kanca",
+    "difficulty": 2,
+    "use_cases": ["Kanca ve halka bağlama", "Monofilament"],
+    "steps": [
+      "İpi kanca deliğinden geçir, paralel çift hat oluştur.",
+      "Her iki hattı birlikte 3 kez sar.",
+      "Serbest ucu çift hattın arasından geçir.",
+      "Islat ve her iki taraftan sıkıştır."
+    ]
+  },
+  {
+    "id": "orvis",
+    "title": "Orvis Düğümü",
+    "category": "kanca",
+    "difficulty": 2,
+    "use_cases": ["Sinek oltası kanca bağlama", "Küçük kancalar"],
+    "steps": [
+      "İpi kanca deliğinden geçir.",
+      "Ucu ile üstten bir ilmek yap.",
+      "Aynı ucu bu ilmeğin etrafından ve altından iki kez geçir.",
+      "Islat ve ana ipten sıkıştır."
+    ]
+  },
+  {
+    "id": "turle",
+    "title": "Turle Düğümü",
+    "category": "kanca",
+    "difficulty": 2,
+    "use_cases": ["Sinek oltası kanca bağlama", "Gömme iğneli kancalar"],
+    "steps": [
+      "İpi kanca deliğinden geçir, kancayı serbest bırak.",
+      "İpin ucuyla iki ilmek oluştur.",
+      "Kancayı iki ilmekten geçir.",
+      "İlmekleri kanca sapına taşıyarak sıkıştır.",
+      "Islat ve çek."
+    ]
+  },
+  {
+    "id": "homer_rhode",
+    "title": "Homer Rhode Loop",
+    "category": "kanca",
+    "difficulty": 3,
+    "use_cases": ["Serbest maket bağlama", "Lüfer ve çipura maketleri"],
+    "steps": [
+      "İpin ucuyla overhand düğümü yap, gevşek bırak.",
+      "Ucu kanca deliğinden geçir.",
+      "Ucu overhand düğümünün içinden geri geçir.",
+      "Ana ip üzerinde 3-4 kez sar.",
+      "Ucu son sarımdan geçir, ıslatarak sıkıştır."
+    ]
+  },
+  {
+    "id": "san_diego_jam",
+    "title": "San Diego Jam Düğümü",
+    "category": "kanca",
+    "difficulty": 2,
+    "use_cases": ["Ağır jigging", "Trolling kanca bağlama"],
+    "steps": [
+      "İpi kanca deliğinden geçir, 20 cm serbest bırak.",
+      "Serbest ucu ana ip çevresinde 6-7 kez sar.",
+      "Serbest ucu kanca ile sarımlar arasındaki boşluktan geçir.",
+      "Tekrar ucu en son sarımın altından geçir.",
+      "Islat ve sıkıştır."
+    ]
+  },
+  {
+    "id": "pr_bobbin",
+    "title": "PR Bobbin Düğümü",
+    "category": "lider",
+    "difficulty": 5,
+    "use_cases": ["PE ip + Lider (jigging)", "Büyük av balıkçılığı"],
+    "steps": [
+      "Lideri sabit tut, PE ipi bobbin yardımıyla sarmaya başla.",
+      "Lider üzerine PE ipiyle sıkı 25-30 sarım yap.",
+      "PE ipini geri yönde 5 half hitch ile kilitle.",
+      "Son olarak 1 çift half hitch ekle.",
+      "Islat ve fazla uçları kes."
+    ]
+  },
+  {
+    "id": "figure_8",
+    "title": "8 Düğümü (Figure 8)",
+    "category": "birlestirme",
+    "difficulty": 1,
+    "use_cases": ["Kaçış önleme düğümü", "İlmek sonlandırma"],
+    "steps": [
+      "İpin ucuyla 8 rakamı şeklinde bir ilmek oluştur.",
+      "Ucu ilmeğin içinden geçir.",
+      "Islat ve her iki taraftan çekerek sıkıştır."
+    ]
+  },
+  {
+    "id": "bomber",
+    "title": "Bomber Düğümü",
+    "category": "lider",
+    "difficulty": 3,
+    "use_cases": ["Surf casting lider bağlama", "Ağır takımlar"],
+    "steps": [
+      "Lider ile ana ipi paralel tut.",
+      "Lider ucunu ana ip etrafında 5 kez sar.",
+      "Ana ipi lider etrafında 5 kez sar.",
+      "Her iki serbest ucu ortadaki boşluktan geçir.",
+      "Islat ve yavaşça sıkıştır."
+    ]
+  },
+  {
+    "id": "loop_knot",
+    "title": "Basit İlmek Düğümü",
+    "category": "birlestirme",
+    "difficulty": 1,
+    "use_cases": ["Hızlı takım bağlama", "Serbest ilmek gerektiren durumlar"],
+    "steps": [
+      "İpin ucundan 15 cm döndür, çift hat oluştur.",
+      "Çift hattı ilmek yaparak ana ip etrafında dolaştır.",
+      "Çift hattın ucunu ilmekten geçir.",
+      "Islat ve sıkıştır."
+    ]
+  }
+]

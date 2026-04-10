@@ -1,0 +1,242 @@
+[
+  {
+    "id": "lufer_kiyidan",
+    "title": "Lüfer — Kıyıdan Olta",
+    "target_species": ["Lüfer"],
+    "season": "Ekim–Aralık",
+    "technique": "Yüzey Olta",
+    "difficulty": 1,
+    "items": [
+      {
+        "name": "Misina",
+        "detail": "0.25–0.30 mm monofilament veya PE 1.0–1.5",
+        "tip": "Akıntılı sularda PE tercih et, görünürlük düşük"
+      },
+      {
+        "name": "Kanca",
+        "detail": "No. 4–8 çelik kanca",
+        "tip": "Lüfer sivri dişli olduğu için güçlü çelik kanca şart"
+      },
+      {
+        "name": "Yem",
+        "detail": "Hamsi veya sardalya (taze)",
+        "tip": "Küçük ve parlak yem lüferi daha iyi çeker"
+      },
+      {
+        "name": "Kaşık",
+        "detail": "6–10 cm gümüş metal kaşık",
+        "tip": "Güneşli havalarda parıltı etkisi çok yüksek"
+      }
+    ]
+  },
+  {
+    "id": "cipura_kayalik",
+    "title": "Çipura — Kayalıktan Dip Olta",
+    "target_species": ["Çipura", "Karagöz"],
+    "season": "Yıl boyu (en iyi: Mayıs–Eylül)",
+    "technique": "Dip Olta",
+    "difficulty": 2,
+    "items": [
+      {
+        "name": "Misina",
+        "detail": "0.28–0.35 mm flüorokarbon lider",
+        "tip": "Flüorokarbon suda görünmez, çipura çekingen olduğu için önemli"
+      },
+      {
+        "name": "Kanca",
+        "detail": "No. 6–10 ince tel kanca",
+        "tip": "İnce telli kancalar daha doğal yem hareketi sağlar"
+      },
+      {
+        "name": "Yem",
+        "detail": "Karides, kalamar parçası veya deniz solucanı",
+        "tip": "Taze karides en başarılı yem; deniz solucanı kayalıklar için ideal"
+      },
+      {
+        "name": "Ağırlık",
+        "detail": "10–30 g kurşun, akıntıya göre ayarla",
+        "tip": "Dip temizse daha hafif, akıntılı dibde daha ağır ağırlık kullan"
+      }
+    ]
+  },
+  {
+    "id": "levrek_gece",
+    "title": "Levrek — Gece Avı",
+    "target_species": ["Levrek"],
+    "season": "Nisan–Kasım (en iyi: Haziran–Eylül)",
+    "technique": "Maket Balık / Plugging",
+    "difficulty": 3,
+    "items": [
+      {
+        "name": "Maket Balık",
+        "detail": "7–14 cm yüzücü (floating) maket, gümüş veya turuncu",
+        "tip": "Gece aydınlatmalı iskele yakınlarında gümüş renk çok etkili"
+      },
+      {
+        "name": "Misina",
+        "detail": "PE 1.0–2.0 + 30–40 cm flüorokarbon lider",
+        "tip": "Lider misina levreğin görüş mesafesini azaltır"
+      },
+      {
+        "name": "Kanca",
+        "detail": "Maket balık treble kancası, No. 4–6",
+        "tip": "Keskin treble kanca levreğin ani hücumunu kaçırmaz"
+      },
+      {
+        "name": "Aksesuar",
+        "detail": "Kafa lambası (kırmızı lens tercihen)",
+        "tip": "Kırmızı ışık balıkları ürkmez, gece avcıları için ideal"
+      }
+    ]
+  },
+  {
+    "id": "istavrit_sabah",
+    "title": "İstavrit — Sabah Avı",
+    "target_species": ["İstavrit", "Kolyoz"],
+    "season": "Yıl boyu (pik: Ekim–Şubat)",
+    "technique": "Çoklu Kanca (Paternoster)",
+    "difficulty": 1,
+    "items": [
+      {
+        "name": "Takım",
+        "detail": "3–5 kollu paternoster veya istavrit takımı",
+        "tip": "Hazır istavrit takımları en pratik seçenek; mağazadan alabilirsin"
+      },
+      {
+        "name": "Misina",
+        "detail": "0.20–0.25 mm monofilament",
+        "tip": "İstavrit küçük ağızlı; kalın misina asılsız durduğunda yutar"
+      },
+      {
+        "name": "Yem",
+        "detail": "Ekmek kırıntısı, parlak şeritler veya küçük kaşık",
+        "tip": "Sabah ışığında küçük kaşık büyük sürüyü çeker"
+      },
+      {
+        "name": "Ağırlık",
+        "detail": "20–40 g dip ağırlığı",
+        "tip": "Derin noktada daha ağır kullan, sürü dipte ise direkt dipleye"
+      }
+    ]
+  },
+  {
+    "id": "sazan_tatlisudan",
+    "title": "Sazan — Tatlısu Avı",
+    "target_species": ["Sazan", "Aynalı Sazan"],
+    "season": "Mart–Kasım",
+    "technique": "Dip Olta (Bolt Rig)",
+    "difficulty": 2,
+    "items": [
+      {
+        "name": "Olta Takımı",
+        "detail": "Bolt rig veya helicopter rig",
+        "tip": "Sazan kuvvetli çekişi için heavy duty takım şart"
+      },
+      {
+        "name": "Kanca",
+        "detail": "No. 4–8 karpçılık kancası, geniş aralıklı",
+        "tip": "Boilies için wide gape kanca en iyi sonucu verir"
+      },
+      {
+        "name": "Yem",
+        "detail": "Boilies (mısır aromalı), tatlı mısır, hamur",
+        "tip": "Önceden 2–3 gün sürüyü besle, aynı noktaya at"
+      },
+      {
+        "name": "Makara",
+        "detail": "Baitrunner özellikli makara",
+        "tip": "Sazan yemi alıp kaçarken misina serbest bırakılabilmeli"
+      }
+    ]
+  },
+  {
+    "id": "palamut_trolling",
+    "title": "Palamut — Trolling (Tekne)",
+    "target_species": ["Palamut", "Lüfer", "Orkinos"],
+    "season": "Eylül–Kasım",
+    "technique": "Trolling",
+    "difficulty": 3,
+    "items": [
+      {
+        "name": "Kaşık",
+        "detail": "14–20 cm ağır metal kaşık veya jig",
+        "tip": "Karanlık havalarda fosforlu kaşık çok etkili"
+      },
+      {
+        "name": "Misina",
+        "detail": "PE 3.0–5.0, 50–80 cm flüorokarbon lider",
+        "tip": "Trolling hızında ani darbeler için PE ip şart"
+      },
+      {
+        "name": "Tekne Hızı",
+        "detail": "4–7 knot",
+        "tip": "Palamut 5–6 knot'ta en iyi reaksiyon verir"
+      },
+      {
+        "name": "Kemer",
+        "detail": "Trolling kemer/gimbal",
+        "tip": "Büyük palamut ve lüfer için destekli kemer yorulmayı önler"
+      }
+    ]
+  },
+  {
+    "id": "kalamar_akşam",
+    "title": "Kalamar — Akşam / Gece Avı",
+    "target_species": ["Kalamar", "Ahtapot"],
+    "season": "Ağustos–Kasım",
+    "technique": "Egi / Zıpkın",
+    "difficulty": 2,
+    "items": [
+      {
+        "name": "Egi",
+        "detail": "2.5–3.5 boy egi; turuncu, pembe veya mor renk",
+        "tip": "Işıklı iskele altında turuncu egi sabah saatlerinde kalamarı çıldırtır"
+      },
+      {
+        "name": "Misina",
+        "detail": "PE 0.6–1.0 + 20–30 cm flüorokarbon lider",
+        "tip": "İnce PE ip egi'nin daha derin ve hızlı batan hareketini sağlar"
+      },
+      {
+        "name": "Teknik",
+        "detail": "Egiye yavaş çekiş + dip serbest bırakma",
+        "tip": "Kalamar dibe inerken atağa geçer; misina gergin tutulmalı"
+      },
+      {
+        "name": "Kova / Torba",
+        "detail": "Sızdırmaz kova veya soğutucu çanta",
+        "tip": "Taze kalamar çabuk bozulur; buzlu suda sakla"
+      }
+    ]
+  },
+  {
+    "id": "kirlangiç_kumsaldan",
+    "title": "Kırlangıç — Kumsal Avı",
+    "target_species": ["Kırlangıç", "Tekir", "Dil Balığı"],
+    "season": "Mayıs–Eylül",
+    "technique": "Surf Casting",
+    "difficulty": 2,
+    "items": [
+      {
+        "name": "Kamış",
+        "detail": "3.6–4.5 m surf casting kamışı",
+        "tip": "Uzun kamış dalgayı geçmek için gerekli; güvenliğini kontrol et"
+      },
+      {
+        "name": "Yem",
+        "detail": "Deniz solucanı (ragworm), kalamar şeridi",
+        "tip": "Kumsal altında yaşayan türler için deniz solucanı birinci tercih"
+      },
+      {
+        "name": "Ağırlık",
+        "detail": "60–100 g bombardıman kurşunu (tırnaklı)",
+        "tip": "Tırnaklı kurşun kumda sabit durur, akıntıya direnir"
+      },
+      {
+        "name": "Takım",
+        "detail": "2 kollu paternoster veya running ledger",
+        "tip": "Kumsal avında iki farklı yemin denenmesi zaman kazandırır"
+      }
+    ]
+  }
+]

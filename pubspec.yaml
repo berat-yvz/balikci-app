@@ -75,6 +75,7 @@ flutter:
   assets:
     - .env
     - assets/knots/
+    - assets/tackle/
     - assets/images/
     - assets/images/logo.png
     - assets/images/logo.svg
