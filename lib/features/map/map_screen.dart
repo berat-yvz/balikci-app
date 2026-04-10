@@ -364,12 +364,26 @@ class _MapScreenState extends State<MapScreen> {
         .map(
           (shop) => Marker(
             point: LatLng(shop.lat, shop.lng),
-            width: 44,
-            height: 44,
-            child: Icon(Icons.storefront, color: Colors.orange, size: 32),
+            width: 48,
+            height: 48,
+            child: GestureDetector(
+              onTap: () => _showShopSheet(shop),
+              child: _ShopPin(shop: shop),
+            ),
           ),
         )
         .toList();
+  }
+
+  void _showShopSheet(ShopModel shop) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _ShopDetailSheet(shop: shop),
+    );
   }
 
   Widget _buildSpotMarker(SpotModel spot) {
@@ -1817,6 +1831,186 @@ class _EmptySheetHints extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Dükkan Pin — harita üzerinde belirgin turuncu ikon
+// ──────────────────────────────────────────────────────────────────────────────
+
+class _ShopPin extends StatelessWidget {
+  final ShopModel shop;
+  const _ShopPin({required this.shop});
+
+  static const _typeIcons = <String, IconData>{
+    'balikci_dukkani': Icons.set_meal,
+    'olta_malzemesi': Icons.sports_sharp,
+    'tekne_kiralama': Icons.directions_boat,
+    'balikci_barina': Icons.anchor,
+    'nalbur': Icons.hardware,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = _typeIcons[shop.type] ?? Icons.storefront;
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF57C00), // turuncu — meralardan farklı
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.25),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: Colors.white, size: 20),
+          if (shop.verified)
+            const Icon(Icons.verified, color: Colors.white, size: 10),
+        ],
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Dükkan Detay Sheet
+// ──────────────────────────────────────────────────────────────────────────────
+
+class _ShopDetailSheet extends StatelessWidget {
+  final ShopModel shop;
+  const _ShopDetailSheet({required this.shop});
+
+  static const _typeLabels = <String, String>{
+    'balikci_dukkani': 'Balıkçı Dükkanı',
+    'olta_malzemesi': 'Olta & Takım',
+    'tekne_kiralama': 'Tekne Kiralama',
+    'balikci_barina': 'Balıkçı Barınağı',
+    'nalbur': 'Nalbur',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final typeLabel = _typeLabels[shop.type] ?? shop.type;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: AppColors.muted.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // Başlık + tür etiketi
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF57C00).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.storefront, color: Color(0xFFF57C00), size: 28),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      shop.name,
+                      style: AppTextStyles.h3,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          typeLabel,
+                          style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+                        ),
+                        if (shop.verified) ...[
+                          const SizedBox(width: 6),
+                          const Icon(Icons.verified, color: Color(0xFF4CB2FF), size: 14),
+                          const SizedBox(width: 2),
+                          Text(
+                            'Doğrulandı',
+                            style: AppTextStyles.caption.copyWith(color: const Color(0xFF4CB2FF)),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Telefon
+          if (shop.phone != null)
+            _InfoRow(
+              icon: Icons.phone_outlined,
+              text: shop.phone!,
+            ),
+
+          // Çalışma saatleri
+          if (shop.hours != null)
+            _InfoRow(
+              icon: Icons.schedule_outlined,
+              text: shop.hours!,
+            ),
+
+          if (shop.phone == null && shop.hours == null)
+            Text(
+              'İletişim bilgisi henüz eklenmedi.',
+              style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _InfoRow({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.muted),
+          const SizedBox(width: 10),
+          Text(text, style: AppTextStyles.body.copyWith(color: Colors.white)),
         ],
       ),
     );

@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 
 void main() {
-  final _baseJson = {
+  final baseJson = {
     'id': 'spot-1',
     'user_id': 'user-1',
     'name': 'Bebek Koyu',
@@ -18,7 +18,7 @@ void main() {
 
   group('SpotModel.fromJson', () {
     test('tam veriyle parse edilir', () {
-      final spot = SpotModel.fromJson(_baseJson);
+      final spot = SpotModel.fromJson(baseJson);
       expect(spot.id, 'spot-1');
       expect(spot.userId, 'user-1');
       expect(spot.name, 'Bebek Koyu');
@@ -49,7 +49,7 @@ void main() {
     });
 
     test('lat/lng integer olarak gelse de double\'a çevrilir', () {
-      final json = Map<String, dynamic>.from(_baseJson);
+      final json = Map<String, dynamic>.from(baseJson);
       json['lat'] = 41;
       json['lng'] = 29;
       final spot = SpotModel.fromJson(json);
@@ -58,7 +58,7 @@ void main() {
     });
 
     test('createdAt doğru parse edilir', () {
-      final spot = SpotModel.fromJson(_baseJson);
+      final spot = SpotModel.fromJson(baseJson);
       expect(spot.createdAt.year, 2025);
       expect(spot.createdAt.month, 1);
       expect(spot.createdAt.day, 15);
@@ -67,7 +67,7 @@ void main() {
 
   group('SpotModel.toJson', () {
     test('toJson → fromJson round-trip', () {
-      final original = SpotModel.fromJson(_baseJson);
+      final original = SpotModel.fromJson(baseJson);
       final json = original.toJson();
       final restored = SpotModel.fromJson(json);
       expect(restored.id, original.id);
@@ -79,7 +79,7 @@ void main() {
     });
 
     test('toJson doğru key isimleri kullanır', () {
-      final spot = SpotModel.fromJson(_baseJson);
+      final spot = SpotModel.fromJson(baseJson);
       final json = spot.toJson();
       expect(json.containsKey('user_id'), isTrue);
       expect(json.containsKey('privacy_level'), isTrue);
@@ -89,7 +89,7 @@ void main() {
 
   group('SpotModel.copyWith', () {
     test('copyWith sadece belirtilen alanı değiştirir', () {
-      final original = SpotModel.fromJson(_baseJson);
+      final original = SpotModel.fromJson(baseJson);
       final updated = original.copyWith(name: 'Yeni Ad');
       expect(updated.name, 'Yeni Ad');
       expect(updated.id, original.id);
@@ -98,7 +98,7 @@ void main() {
     });
 
     test('copyWith privacyLevel değiştirilebilir', () {
-      final original = SpotModel.fromJson(_baseJson);
+      final original = SpotModel.fromJson(baseJson);
       final updated = original.copyWith(privacyLevel: 'vip');
       expect(updated.privacyLevel, 'vip');
       expect(updated.name, original.name);

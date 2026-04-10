@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 
 void main() {
-  Map<String, dynamic> _baseJson({
+  Map<String, dynamic> baseJson({
     String? username,
     String email = 'balikci@test.com',
     String rank = 'acemi',
@@ -25,7 +25,7 @@ void main() {
   group('UserModel.fromJson', () {
     test('tam veriyle parse edilir', () {
       final user = UserModel.fromJson(
-        _baseJson(username: 'BalikciAhmet', totalScore: 1500),
+        baseJson(username: 'BalikciAhmet', totalScore: 1500),
       );
       expect(user.id, 'user-1');
       expect(user.email, 'balikci@test.com');
@@ -35,14 +35,14 @@ void main() {
     });
 
     test('varsayılan rank acemi', () {
-      final json = _baseJson();
+      final json = baseJson();
       json.remove('rank');
       final user = UserModel.fromJson(json);
       expect(user.rank, 'acemi');
     });
 
     test('varsayılan totalScore sıfır', () {
-      final json = _baseJson();
+      final json = baseJson();
       json.remove('total_score');
       final user = UserModel.fromJson(json);
       expect(user.totalScore, 0);
@@ -52,28 +52,28 @@ void main() {
   group('UserModel username çözümleme', () {
     test('geçerli username korunur', () {
       final user = UserModel.fromJson(
-        _baseJson(username: 'BalikciAhmet'),
+        baseJson(username: 'BalikciAhmet'),
       );
       expect(user.username, 'BalikciAhmet');
     });
 
     test('user_xxxxxxxx formatı → e-posta ön eki kullanılır', () {
       final user = UserModel.fromJson(
-        _baseJson(username: 'user_abc123def', email: 'balikci@test.com'),
+        baseJson(username: 'user_abc123def', email: 'balikci@test.com'),
       );
       expect(user.username, 'balikci');
     });
 
     test('username null → e-posta ön eki kullanılır', () {
       final user = UserModel.fromJson(
-        _baseJson(username: null, email: 'mehmet.usta@test.com'),
+        baseJson(username: null, email: 'mehmet.usta@test.com'),
       );
       expect(user.username, 'mehmet.usta');
     });
 
     test('username boş → e-posta ön eki kullanılır', () {
       final user = UserModel.fromJson(
-        _baseJson(username: '', email: 'deniz@test.com'),
+        baseJson(username: '', email: 'deniz@test.com'),
       );
       expect(user.username, 'deniz');
     });
@@ -81,7 +81,7 @@ void main() {
     test('kısa user_ formatı (altı karakterden az) → korunur', () {
       // user_xyz formatı regex: user_[0-9a-f]{6,} → 5 karakter hex geçmez
       final user = UserModel.fromJson(
-        _baseJson(username: 'user_xyz', email: 'test@test.com'),
+        baseJson(username: 'user_xyz', email: 'test@test.com'),
       );
       // 'user_xyz' hex değil (x,y,z hex değil) → regex eşleşmez → username korunur
       expect(user.username, 'user_xyz');
@@ -91,7 +91,7 @@ void main() {
   group('UserModel.toJson', () {
     test('round-trip: fromJson → toJson → fromJson', () {
       final original = UserModel.fromJson(
-        _baseJson(username: 'BalikciTest', rank: 'usta', totalScore: 2500),
+        baseJson(username: 'BalikciTest', rank: 'usta', totalScore: 2500),
       );
       final json = original.toJson();
       final restored = UserModel.fromJson(json);
@@ -102,7 +102,7 @@ void main() {
     });
 
     test('toJson doğru key isimleri kullanır', () {
-      final user = UserModel.fromJson(_baseJson(username: 'Test'));
+      final user = UserModel.fromJson(baseJson(username: 'Test'));
       final json = user.toJson();
       expect(json.containsKey('avatar_url'), isTrue);
       expect(json.containsKey('total_score'), isTrue);
@@ -114,7 +114,7 @@ void main() {
   group('UserModel rütbe değerleri', () {
     for (final rank in ['acemi', 'olta_kurdu', 'usta', 'deniz_reisi']) {
       test('$rank geçerli rütbe olarak parse edilir', () {
-        final user = UserModel.fromJson(_baseJson(rank: rank));
+        final user = UserModel.fromJson(baseJson(rank: rank));
         expect(user.rank, rank);
       });
     }

@@ -2,9 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:balikci_app/data/models/checkin_model.dart';
 
 void main() {
-  final _now = DateTime.now();
+  final now = DateTime.now();
 
-  Map<String, dynamic> _baseJson({
+  Map<String, dynamic> baseJson({
     bool isHidden = false,
     int trueVotes = 0,
     int falseVotes = 0,
@@ -23,7 +23,7 @@ void main() {
       'is_hidden': isHidden,
       'true_votes': trueVotes,
       'false_votes': falseVotes,
-      'created_at': (createdAt ?? _now).toIso8601String(),
+      'created_at': (createdAt ?? now).toIso8601String(),
       'expires_at': expiresAt?.toIso8601String(),
       'users': users,
     };
@@ -31,7 +31,7 @@ void main() {
 
   group('CheckinModel.fromJson', () {
     test('tam veriyle parse edilir', () {
-      final model = CheckinModel.fromJson(_baseJson());
+      final model = CheckinModel.fromJson(baseJson());
       expect(model.id, 'checkin-1');
       expect(model.userId, 'user-1');
       expect(model.spotId, 'spot-1');
@@ -47,7 +47,7 @@ void main() {
         'id': 'c-2',
         'user_id': 'u-2',
         'spot_id': 's-2',
-        'created_at': _now.toIso8601String(),
+        'created_at': now.toIso8601String(),
       };
       final model = CheckinModel.fromJson(json);
       expect(model.exifVerified, isFalse);
@@ -60,9 +60,9 @@ void main() {
   group('CheckinModel.isActive', () {
     test('gizlenmiş → aktif değil', () {
       final model = CheckinModel.fromJson(
-        _baseJson(
+        baseJson(
           isHidden: true,
-          expiresAt: _now.add(const Duration(hours: 1)),
+          expiresAt: now.add(const Duration(hours: 1)),
         ),
       );
       expect(model.isActive, isFalse);
@@ -70,19 +70,19 @@ void main() {
 
     test('süresi dolmamış, gizlenmemiş → aktif', () {
       final model = CheckinModel.fromJson(
-        _baseJson(expiresAt: _now.add(const Duration(hours: 1))),
+        baseJson(expiresAt: now.add(const Duration(hours: 1))),
       );
       expect(model.isActive, isTrue);
     });
 
     test('expires_at null → aktif değil', () {
-      final model = CheckinModel.fromJson(_baseJson());
+      final model = CheckinModel.fromJson(baseJson());
       expect(model.isActive, isFalse);
     });
 
     test('süresi geçmiş → aktif değil', () {
       final model = CheckinModel.fromJson(
-        _baseJson(expiresAt: _now.subtract(const Duration(hours: 1))),
+        baseJson(expiresAt: now.subtract(const Duration(hours: 1))),
       );
       expect(model.isActive, isFalse);
     });
@@ -91,21 +91,21 @@ void main() {
   group('CheckinModel.isStale', () {
     test('1 saat önce oluşturulmuş → stale değil', () {
       final model = CheckinModel.fromJson(
-        _baseJson(createdAt: _now.subtract(const Duration(hours: 1))),
+        baseJson(createdAt: now.subtract(const Duration(hours: 1))),
       );
       expect(model.isStale, isFalse);
     });
 
     test('3 saat önce oluşturulmuş → stale', () {
       final model = CheckinModel.fromJson(
-        _baseJson(createdAt: _now.subtract(const Duration(hours: 3))),
+        baseJson(createdAt: now.subtract(const Duration(hours: 3))),
       );
       expect(model.isStale, isTrue);
     });
 
     test('tam 2 saat → stale (sınır dahil)', () {
       final model = CheckinModel.fromJson(
-        _baseJson(createdAt: _now.subtract(const Duration(hours: 2))),
+        baseJson(createdAt: now.subtract(const Duration(hours: 2))),
       );
       expect(model.isStale, isTrue);
     });
@@ -114,14 +114,14 @@ void main() {
   group('CheckinModel.isExpired', () {
     test('5 saat önce → süresi dolmamış', () {
       final model = CheckinModel.fromJson(
-        _baseJson(createdAt: _now.subtract(const Duration(hours: 5))),
+        baseJson(createdAt: now.subtract(const Duration(hours: 5))),
       );
       expect(model.isExpired, isFalse);
     });
 
     test('7 saat önce → süresi dolmuş', () {
       final model = CheckinModel.fromJson(
-        _baseJson(createdAt: _now.subtract(const Duration(hours: 7))),
+        baseJson(createdAt: now.subtract(const Duration(hours: 7))),
       );
       expect(model.isExpired, isTrue);
     });
@@ -130,25 +130,25 @@ void main() {
   group('CheckinModel username parse', () {
     test('users Map formatında → username parse edilir', () {
       final model = CheckinModel.fromJson(
-        _baseJson(users: {'username': 'ahmet_balikci', 'id': 'u-1'}),
+        baseJson(users: {'username': 'ahmet_balikci', 'id': 'u-1'}),
       );
       expect(model.username, 'ahmet_balikci');
     });
 
     test('users List formatında → ilk elemanın username alınır', () {
       final model = CheckinModel.fromJson(
-        _baseJson(users: [{'username': 'mehmet_usta', 'id': 'u-2'}]),
+        baseJson(users: [{'username': 'mehmet_usta', 'id': 'u-2'}]),
       );
       expect(model.username, 'mehmet_usta');
     });
 
     test('users null → username null', () {
-      final model = CheckinModel.fromJson(_baseJson(users: null));
+      final model = CheckinModel.fromJson(baseJson(users: null));
       expect(model.username, isNull);
     });
 
     test('users boş liste → username null', () {
-      final model = CheckinModel.fromJson(_baseJson(users: []));
+      final model = CheckinModel.fromJson(baseJson(users: []));
       expect(model.username, isNull);
     });
   });
