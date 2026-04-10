@@ -1,0 +1,155 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:balikci_app/data/models/checkin_model.dart';
+
+void main() {
+  final _now = DateTime.now();
+
+  Map<String, dynamic> _baseJson({
+    bool isHidden = false,
+    int trueVotes = 0,
+    int falseVotes = 0,
+    DateTime? createdAt,
+    DateTime? expiresAt,
+    dynamic users,
+  }) {
+    return {
+      'id': 'checkin-1',
+      'user_id': 'user-1',
+      'spot_id': 'spot-1',
+      'crowd_level': 'normal',
+      'fish_density': 'yoğun',
+      'photo_url': null,
+      'exif_verified': false,
+      'is_hidden': isHidden,
+      'true_votes': trueVotes,
+      'false_votes': falseVotes,
+      'created_at': (createdAt ?? _now).toIso8601String(),
+      'expires_at': expiresAt?.toIso8601String(),
+      'users': users,
+    };
+  }
+
+  group('CheckinModel.fromJson', () {
+    test('tam veriyle parse edilir', () {
+      final model = CheckinModel.fromJson(_baseJson());
+      expect(model.id, 'checkin-1');
+      expect(model.userId, 'user-1');
+      expect(model.spotId, 'spot-1');
+      expect(model.crowdLevel, 'normal');
+      expect(model.fishDensity, 'yoğun');
+      expect(model.isHidden, isFalse);
+      expect(model.trueVotes, 0);
+      expect(model.falseVotes, 0);
+    });
+
+    test('eksik alanlar için varsayılanlar', () {
+      final json = {
+        'id': 'c-2',
+        'user_id': 'u-2',
+        'spot_id': 's-2',
+        'created_at': _now.toIso8601String(),
+      };
+      final model = CheckinModel.fromJson(json);
+      expect(model.exifVerified, isFalse);
+      expect(model.isHidden, isFalse);
+      expect(model.trueVotes, 0);
+      expect(model.falseVotes, 0);
+    });
+  });
+
+  group('CheckinModel.isActive', () {
+    test('gizlenmiş → aktif değil', () {
+      final model = CheckinModel.fromJson(
+        _baseJson(
+          isHidden: true,
+          expiresAt: _now.add(const Duration(hours: 1)),
+        ),
+      );
+      expect(model.isActive, isFalse);
+    });
+
+    test('süresi dolmamış, gizlenmemiş → aktif', () {
+      final model = CheckinModel.fromJson(
+        _baseJson(expiresAt: _now.add(const Duration(hours: 1))),
+      );
+      expect(model.isActive, isTrue);
+    });
+
+    test('expires_at null → aktif değil', () {
+      final model = CheckinModel.fromJson(_baseJson());
+      expect(model.isActive, isFalse);
+    });
+
+    test('süresi geçmiş → aktif değil', () {
+      final model = CheckinModel.fromJson(
+        _baseJson(expiresAt: _now.subtract(const Duration(hours: 1))),
+      );
+      expect(model.isActive, isFalse);
+    });
+  });
+
+  group('CheckinModel.isStale', () {
+    test('1 saat önce oluşturulmuş → stale değil', () {
+      final model = CheckinModel.fromJson(
+        _baseJson(createdAt: _now.subtract(const Duration(hours: 1))),
+      );
+      expect(model.isStale, isFalse);
+    });
+
+    test('3 saat önce oluşturulmuş → stale', () {
+      final model = CheckinModel.fromJson(
+        _baseJson(createdAt: _now.subtract(const Duration(hours: 3))),
+      );
+      expect(model.isStale, isTrue);
+    });
+
+    test('tam 2 saat → stale (sınır dahil)', () {
+      final model = CheckinModel.fromJson(
+        _baseJson(createdAt: _now.subtract(const Duration(hours: 2))),
+      );
+      expect(model.isStale, isTrue);
+    });
+  });
+
+  group('CheckinModel.isExpired', () {
+    test('5 saat önce → süresi dolmamış', () {
+      final model = CheckinModel.fromJson(
+        _baseJson(createdAt: _now.subtract(const Duration(hours: 5))),
+      );
+      expect(model.isExpired, isFalse);
+    });
+
+    test('7 saat önce → süresi dolmuş', () {
+      final model = CheckinModel.fromJson(
+        _baseJson(createdAt: _now.subtract(const Duration(hours: 7))),
+      );
+      expect(model.isExpired, isTrue);
+    });
+  });
+
+  group('CheckinModel username parse', () {
+    test('users Map formatında → username parse edilir', () {
+      final model = CheckinModel.fromJson(
+        _baseJson(users: {'username': 'ahmet_balikci', 'id': 'u-1'}),
+      );
+      expect(model.username, 'ahmet_balikci');
+    });
+
+    test('users List formatında → ilk elemanın username alınır', () {
+      final model = CheckinModel.fromJson(
+        _baseJson(users: [{'username': 'mehmet_usta', 'id': 'u-2'}]),
+      );
+      expect(model.username, 'mehmet_usta');
+    });
+
+    test('users null → username null', () {
+      final model = CheckinModel.fromJson(_baseJson(users: null));
+      expect(model.username, isNull);
+    });
+
+    test('users boş liste → username null', () {
+      final model = CheckinModel.fromJson(_baseJson(users: []));
+      expect(model.username, isNull);
+    });
+  });
+}
