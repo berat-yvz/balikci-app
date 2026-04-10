@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -165,6 +166,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
       }
 
       if (!mounted) return;
+      unawaited(HapticFeedback.mediumImpact());
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_isEdit ? 'Mera güncellendi' : 'Mera eklendi'),

@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:balikci_app/app/theme.dart';
@@ -40,7 +43,9 @@ class _KnotDetailScreenState extends State<KnotDetailScreen> {
     }
     await prefs.setStringList('learned_knots', learned.toList());
     if (!mounted) return;
-    setState(() => _learned = !_learned);
+    final nowLearned = !_learned;
+    if (nowLearned) unawaited(HapticFeedback.mediumImpact());
+    setState(() => _learned = nowLearned);
   }
 
   @override

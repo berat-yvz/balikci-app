@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -169,7 +170,14 @@ class _ProfileContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final initials = _initials(user.username);
 
-    return SingleChildScrollView(
+    return RefreshIndicator(
+      onRefresh: () async {
+        HapticFeedback.lightImpact();
+        ref.invalidate(currentUserProfileProvider);
+        ref.invalidate(favoriteSpotsProvider);
+      },
+      child: SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,6 +352,7 @@ class _ProfileContent extends ConsumerWidget {
           ],
         ],
       ),
+    ),
     );
   }
 

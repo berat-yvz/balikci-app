@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/theme.dart';
@@ -159,6 +160,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
       }
 
       if (!mounted) return;
+      unawaited(HapticFeedback.heavyImpact());
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Bildirim gönderildi ✓'),

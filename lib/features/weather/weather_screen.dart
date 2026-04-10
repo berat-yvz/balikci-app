@@ -40,7 +40,9 @@ class WeatherScreen extends ConsumerWidget {
           final hoursFromNow = _next24Hours(data.hourly);
           final currentHour =
               hoursFromNow.isNotEmpty ? hoursFromNow.first : null;
-          return ListView(
+          return RefreshIndicator(
+            onRefresh: () async => ref.invalidate(istanbulWeatherProvider),
+            child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
               // Konum başlığı — GPS veya fallback göstergesi
@@ -102,6 +104,7 @@ class WeatherScreen extends ConsumerWidget {
                 ),
               ],
             ],
+          ),
           );
         },
       ),
