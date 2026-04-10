@@ -75,6 +75,14 @@ function stringifyData(raw: Record<string, unknown>): Record<string, string> {
   return result
 }
 
+// ── Gece sessiz modu: 23:00–07:00 İstanbul saati (UTC+3) ───────────────────
+
+function isSilentHours(): boolean {
+  const nowUtc = new Date()
+  const istHour = (nowUtc.getUTCHours() + 3) % 24
+  return istHour >= 23 || istHour < 7
+}
+
 // ── Ana handler ──────────────────────────────────────────────────────────────
 
 serve(async (req) => {
@@ -84,7 +92,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    const { user_id, title, body, data } = await req.json()
+    const { user_id, title, body, data, force = false } = await req.json()
 
     if (!user_id || !title || !body) {
       return new Response(
@@ -107,6 +115,24 @@ serve(async (req) => {
       )
     }
 
+    // ── Günlük 5 bildirim limiti ────────────────────────────────────────────
+    if (!force) {
+      const todayStart = new Date()
+      todayStart.setUTCHours(0, 0, 0, 0)
+      const { count } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user_id)
+        .gte('created_at', todayStart.toISOString())
+
+      if ((count ?? 0) >= 5) {
+        return new Response(
+          JSON.stringify({ success: false, reason: 'daily_limit_reached' }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+    }
+
     // FCM token yoksa sadece in-app kayıt yap
     if (!user.fcm_token) {
       await supabase.from('notifications').insert({
@@ -118,6 +144,21 @@ serve(async (req) => {
       })
       return new Response(
         JSON.stringify({ success: true, push: false, reason: 'no_fcm_token' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      )
+    }
+
+    // ── Gece sessiz mod: 23:00–07:00 İstanbul saatinde push gönderilmez ───────
+    if (!force && isSilentHours()) {
+      await supabase.from('notifications').insert({
+        user_id,
+        type: (data as Record<string, unknown>)?.type ?? 'general',
+        title,
+        body,
+        data_json: data ?? {},
+      })
+      return new Response(
+        JSON.stringify({ success: true, push: false, reason: 'silent_hours' }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       )
     }

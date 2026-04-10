@@ -13,7 +13,7 @@
 |-----|---------|------|-------|
 | Faz A | H1–H2 | Kurulum & Auth | ✅ |
 | Faz B | H3–H6 | Harita & Check-in Çekirdeği | ✅ |
-| Faz C | H7–H10 | Günlük, Puan, Hava, Bildirim | 🔄 (H10 kısmen) |
+| Faz C | H7–H10 | Günlük, Puan, Hava, Bildirim | 🔄 (H10 kısmen ✓) |
 | Faz D | H11–H13 | Offline & Motivasyon UI | ✅ (H11 ✅, H12 🔄, H13 ✅) |
 | Faz E | H14–H16 | Test, Polish & Launch | ⏳ |
 
@@ -209,15 +209,15 @@
 - [x] **Favori mera bildirimi:** `FavoriteRepository.getUsersWhoFavorited` → favorileyen kullanıcılara bildirim
 - [x] `notification_list_screen.dart` — bildirim geçmişi + spot deep-link yönlendirme
 - [x] `notification_settings_screen.dart` — her tür açık/kapalı
-- [ ] Konum tabanlı bildirim: 2km'de check-in → yakın kullanıcılara gönder
-- [ ] Gölge puan bildirimi: shadow-point-calculator'dan tetikleniyor
-- [ ] Sabah 06:00 hava bildirimi: cron job
-- [ ] Sezon hatırlatma: balık takvimi tablosundan tetikleniyor
-- [ ] Rütbe yükselme bildirimi: score-calculator'dan tetikleniyor
-- [ ] Günlük 5 bildirim limiti kontrolü
-- [ ] Gece 23:00–07:00 sessiz mod
+- [x] Konum tabanlı bildirim: `nearby-checkin-notifier` Edge Function; check-in sonrası 2km yarıçapındaki aktif kullanıcılara bildirim; favorileyen kullanıcılar duplicate önleme ile hariç tutuldu
+- [ ] Gölge puan bildirimi: shadow-point-calculator'dan tetikleniyor *(ileriye ertelendi)*
+- [x] Sabah 06:00 hava bildirimi: `morning-weather-push` Edge Function + `cron_morning_weather_push.sql` cron job (03:00 UTC = 06:00 İstanbul)
+- [ ] Sezon hatırlatma: balık takvimi tablosundan tetikleniyor *(ileriye ertelendi)*
+- [ ] Rütbe yükselme bildirimi: score-calculator'dan tetikleniyor *(ileriye ertelendi)*
+- [x] Günlük 5 bildirim limiti kontrolü: `notification-sender`'da günlük 5 limit + `force` parametresi (sabah bildirimi sayılmaz)
+- [x] Gece 23:00–07:00 sessiz mod: `notification-sender`'da `isSilentHours()` kontrolü, push atlanır in-app kayıt yapılır
 
-**Çıktı (kısmi):** Favori mera bildirimi + bildirim deep-link çalışıyor ✓
+**Çıktı:** Konum tabanlı bildirim + sabah hava push + günlük limit + sessiz mod ✓
 
 ---
 

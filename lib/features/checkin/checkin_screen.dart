@@ -205,6 +205,24 @@ class _CheckinScreenState extends State<CheckinScreen> {
           // Bildirim gönderilemese de check-in akışını engelleme
         }
       }());
+
+      // 2km yarıçapındaki yakın kullanıcılara konum tabanlı bildirim
+      unawaited(() async {
+        try {
+          await SupabaseService.client.functions.invoke(
+            'nearby-checkin-notifier',
+            body: {
+              'user_id': uid,
+              'spot_id': spot.id,
+              'lat': spot.lat,
+              'lng': spot.lng,
+              'spot_name': spot.name,
+            },
+          );
+        } catch (_) {
+          // Edge function çağrısı başarısız olsa da akışı engelleme
+        }
+      }());
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
