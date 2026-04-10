@@ -16,7 +16,7 @@ function haversineMeters(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
-serve(async (req) => {
+serve(async (req) => {  
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
