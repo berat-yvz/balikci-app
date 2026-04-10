@@ -14,7 +14,7 @@
 | Faz A | H1–H2 | Kurulum & Auth | ✅ |
 | Faz B | H3–H6 | Harita & Check-in Çekirdeği | ✅ |
 | Faz C | H7–H10 | Günlük, Puan, Hava, Bildirim | 🔄 (H10 kısmen) |
-| Faz D | H11–H13 | Offline & Motivasyon UI | 🔄 (H11 ✅) |
+| Faz D | H11–H13 | Offline & Motivasyon UI | ✅ (H11 ✅, H12 🔄, H13 ✅) |
 | Faz E | H14–H16 | Test, Polish & Launch | ⏳ |
 
 ---
@@ -241,38 +241,38 @@
 
 ---
 
-### H12 — Offline Harita İndirme
+### H12 — Offline Harita İndirme 🔄
 **Hedef:** Seçilen bölge haritası offline çalışıyor
 
 #### Görevler
-- [ ] `flutter_map_tile_caching` download manager entegrasyonu
-- [ ] Haritada alan seçim arayüzü (dikdörtgen çizim)
-- [ ] Tahmini boyut hesaplama ve kullanıcıya gösterim
-- [ ] İndirme yöneticisi: ilerleme çubuğu, durdur, devam, sil
-- [ ] Depolama uyarısı UI
-- [ ] Offline check-in kuyruğa ekleniyor
-- [ ] Bağlantı gelince otomatik sync tetikleniyor
-- [ ] Ağ durumu izleme (ör. `connectivity_plus` + Riverpod provider; şimdilik yok)
-- [ ] Offline modda UI göstergesi (banner)
+- [ ] `flutter_map_tile_caching` download manager entegrasyonu *(ileriye ertelendi — paket pubspec'te yok; H15'e alındı)*
+- [ ] Haritada alan seçim arayüzü (dikdörtgen çizim) *(ileriye ertelendi)*
+- [ ] Tahmini boyut hesaplama ve kullanıcıya gösterim *(ileriye ertelendi)*
+- [ ] İndirme yöneticisi: ilerleme çubuğu, durdur, devam, sil *(ileriye ertelendi)*
+- [ ] Depolama uyarısı UI *(ileriye ertelendi)*
+- [x] Offline check-in kuyruğa ekleniyor (`SyncService.instance.enqueue`)
+- [x] Bağlantı gelince otomatik sync tetikleniyor (`connectivity_plus` stream + 30 sn yedek poll)
+- [x] Ağ durumu izleme: `connectivity_plus` + `connectivityProvider` (StreamProvider) + `isOnlineProvider`
+- [x] Offline modda UI göstergesi: `MainShell`'de AnimatedContainer banner
 
-**Çıktı:** Seçilen bölge offline çalışıyor, check-in sync oluyor ✓
+**Çıktı (kısmi):** Offline check-in → kuyruğa → online olunca otomatik sync ✓
 
 ---
 
-### H13 — Motivasyon UI Tamamlama
+### H13 — Motivasyon UI Tamamlama ✅
 **Hedef:** Tüm motivasyon akışı görsel olarak bağlandı
 
 #### Görevler
-- [ ] VIP mera pin'leri altın renk, kilitli ikon (Usta öncesi)
-- [ ] Rütbe ilerleme çubuğu: profil ekranında görsel
-- [ ] Muhtar rozeti: spot_detail_sheet'te gösterim
-- [ ] Gizlilik uyarısı: mera eklerken puan farkı açıklaması
-- [ ] "Gölge puan kazandın" animasyonu (Lottie)
-- [ ] Sürdürülebilirlik badge: profil + günlük listesinde
-- [ ] Boş ekran tasarımları: mera yok, günlük yok, bildirim yok
-- [ ] Rütbe yükselme kutlama animasyonu
+- [x] VIP mera pin'leri altın renk, kilitli ikon (Usta öncesi) — `spot_marker.dart` `isLocked` parametresi; `map_screen.dart` `_fetchCurrentUserRank` ile rütbeye göre belirleniyor
+- [x] Rütbe ilerleme çubuğu: profil ekranında görsel — `_RankProgress` widget (profile_screen.dart)
+- [x] Muhtar rozeti: spot_detail_sheet'te gösterim — `_SpotSheetHeader` `hasMuhtar` parametresi
+- [x] Gizlilik uyarısı: mera eklerken puan farkı açıklaması — `_PrivacyInfoBanner` (add_spot_screen.dart)
+- [ ] "Gölge puan kazandın" animasyonu (Lottie) *(ertelendi — Lottie pubspec'te yok; H15'e alındı)*
+- [x] Sürdürülebilirlik badge: profil + günlük listesinde — `♻️ Bırakıldı` rozeti (log_list_screen.dart); sürdürülebilirlik skoru (profile_screen.dart)
+- [x] Boş ekran tasarımları: mera yok → `_EmptySheetHints`; günlük yok → emoji+CTA; bildirim yok → `_NotificationEmptyState` özel çizim
+- [ ] Rütbe yükselme kutlama animasyonu *(ertelendi — Lottie pubspec'te yok; H15'e alındı)*
 
-**Çıktı:** Tüm motivasyon döngüsü görsel olarak eksiksiz ✓
+**Çıktı:** Motivasyon döngüsü görsel olarak bağlandı; animasyon görevleri H15'e alındı ✓
 
 ---
 

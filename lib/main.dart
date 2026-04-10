@@ -51,11 +51,11 @@ Future<void> main() async {
     SharedPreferences.getInstance().then((p) => prefs = p),
   ]);
 
-  // AppDatabase: senkron singleton — binding init sonrası güvenli
+  // AppDatabase + SyncService: binding init sonrası güvenli
   if (startupErrors.isEmpty) {
     try {
       final _ = AppDatabase.instance;
-      SyncService(AppDatabase.instance).startListening();
+      SyncService.instance.startListening();
     } catch (e) {
       startupErrors.add('Yerel veritabanı başlatılamadı.\n$e');
     }

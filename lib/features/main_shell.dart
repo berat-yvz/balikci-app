@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:balikci_app/app/app_routes.dart';
 
-class MainShell extends StatefulWidget {
+import 'package:balikci_app/app/app_routes.dart';
+import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/shared/providers/connectivity_provider.dart';
+
+class MainShell extends ConsumerStatefulWidget {
   final Widget child;
 
   const MainShell({super.key, required this.child});
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends ConsumerState<MainShell> {
   int _currentIndex = 2; // harita varsayılan
 
   // 0=Günlük, 1=Sıralama, 2=Harita, 3=Hava, 4=Profil
@@ -45,6 +49,8 @@ class _MainShellState extends State<MainShell> {
     final path = GoRouterState.of(context).uri.path;
     _currentIndex = _indexFromPath(path);
 
+    final isOnline = ref.watch(isOnlineProvider);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -53,7 +59,43 @@ class _MainShellState extends State<MainShell> {
         }
       },
       child: Scaffold(
-        body: widget.child,
+        body: Column(
+          children: [
+            // Offline banner — bağlantı yoksa göster
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              height: isOnline ? 0 : 36,
+              color: AppColors.warning,
+              child: isOnline
+                  ? const SizedBox.shrink()
+                  : const SafeArea(
+                      bottom: false,
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.wifi_off_rounded,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Çevrimdışısın — bazı özellikler sınırlı çalışır',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+            ),
+            Expanded(child: widget.child),
+          ],
+        ),
         bottomNavigationBar: BottomAppBar(
           color: const Color(0xFF0D1B2E),
           elevation: 8,

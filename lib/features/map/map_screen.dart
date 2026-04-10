@@ -23,6 +23,7 @@ import 'package:balikci_app/features/map/widgets/spot_marker.dart';
 import 'package:balikci_app/features/map/widgets/vote_dialog.dart';
 import 'package:balikci_app/features/map/widgets/weather_card.dart';
 import 'package:balikci_app/data/repositories/shop_repository.dart';
+import 'package:balikci_app/data/repositories/user_repository.dart';
 import 'package:balikci_app/shared/providers/connectivity_provider.dart';
 import 'package:balikci_app/shared/providers/favorite_provider.dart';
 import 'package:balikci_app/shared/providers/notification_provider.dart';
@@ -72,10 +73,18 @@ class _MapScreenState extends State<MapScreen> {
 
   double _currentZoom = 10;
 
+  /// Geçerli kullanıcının rütbesi — VIP pin kilidi için kullanılır.
+  /// 'acemi' | 'olta_kurdu' | 'usta' | 'deniz_reisi'
+  String _currentUserRank = 'acemi';
+
+  bool get _isUstaOrAbove =>
+      _currentUserRank == 'usta' || _currentUserRank == 'deniz_reisi';
+
   @override
   void initState() {
     super.initState();
     _initializeCacheAndLoad();
+    _fetchCurrentUserRank();
   }
 
   @override
@@ -94,6 +103,19 @@ class _MapScreenState extends State<MapScreen> {
     await _loadShops();
     _startCheckinsRealtime();
     _openInitialSpotIfNeeded();
+  }
+
+  Future<void> _fetchCurrentUserRank() async {
+    final uid = SupabaseService.auth.currentUser?.id;
+    if (uid == null) return;
+    try {
+      final profile = await UserRepository().getProfile(uid);
+      if (mounted && profile != null) {
+        setState(() => _currentUserRank = profile.rank);
+      }
+    } catch (_) {
+      // Rütbe alınamazsa 'acemi' varsayılanı kalır — VIP pinler kilitli görünür.
+    }
   }
 
   /// Bildirimden gelen initialSpotId varsa ilk frame'den sonra o mera seçilir.
@@ -370,6 +392,7 @@ class _MapScreenState extends State<MapScreen> {
       checkinAgeMinutes: ageMinutes,
       zoom: _currentZoom,
       spotName: spot.name,
+      isLocked: spot.privacyLevel == 'vip' && !_isUstaOrAbove,
     );
   }
 

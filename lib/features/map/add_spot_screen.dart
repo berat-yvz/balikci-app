@@ -255,6 +255,8 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 8),
+            _PrivacyInfoBanner(privacy: _privacy),
             const SizedBox(height: 16),
             const Text('Konum', style: AppTextStyles.h3),
             const SizedBox(height: 8),
@@ -306,6 +308,71 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Gizlilik puan uyarısı (H13)
+// ---------------------------------------------------------------------------
+
+class _PrivacyInfoBanner extends StatelessWidget {
+  final String privacy;
+  const _PrivacyInfoBanner({required this.privacy});
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, text, color) = switch (privacy) {
+      'public' => (
+          Icons.emoji_events_outlined,
+          'Public meranı herkesle paylaşıyorsun — +50 puan kazanırsın. 🎣',
+          AppColors.success,
+        ),
+      'friends' => (
+          Icons.people_outline,
+          'Sadece takipçilerin görebilir — puan kazanmazsın ama gizliliğin korunur.',
+          AppColors.secondary,
+        ),
+      'private' => (
+          Icons.lock_outline,
+          'Sadece sen görürsün — puan yok. Özel noktalarını saklamak için ideal.',
+          AppColors.muted,
+        ),
+      'vip' => (
+          Icons.star_outline,
+          'Usta+ rütbesindekiler görebilir — puan yok. VIP takımın için harika.',
+          AppColors.accent,
+        ),
+      _ => (Icons.info_outline, '', Colors.white54),
+    };
+
+    if (text.isEmpty) return const SizedBox.shrink();
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.30)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: color,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

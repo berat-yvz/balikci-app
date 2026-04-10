@@ -48,12 +48,15 @@ Color _tintColor(Color base, int? ageMinutes) {
 /// [checkinAgeMinutes] : en son check-in'den bu yana geçen süre (dakika).
 ///   null → hiç check-in yok.
 /// [spotName]          : zoom > 13'te marker'ın altında etiket olarak gösterilir.
+/// [isLocked]          : true → VIP mera, kullanıcı usta rütbesinin altında.
+///   Kilit ikonu gösterilir; tıklanabilir ama check-in yapılamaz.
 class SpotMarker extends StatefulWidget {
   final String privacyLevel;
   final int activeCheckinCount;
   final int? checkinAgeMinutes;
   final double zoom;
   final String spotName;
+  final bool isLocked;
 
   const SpotMarker({
     super.key,
@@ -62,6 +65,7 @@ class SpotMarker extends StatefulWidget {
     this.checkinAgeMinutes,
     this.zoom = 10,
     this.spotName = '',
+    this.isLocked = false,
   });
 
   @override
@@ -160,16 +164,18 @@ class _SpotMarkerState extends State<SpotMarker>
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 10),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text('🐟', style: TextStyle(fontSize: 22)),
-                          if (isVip) ...[
-                            const SizedBox(width: 2),
-                            const Text('⭐', style: TextStyle(fontSize: 13)),
-                          ],
-                        ],
-                      ),
+                      child: widget.isLocked
+                          ? const Text('🔒', style: TextStyle(fontSize: 20))
+                          : Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text('🐟', style: TextStyle(fontSize: 22)),
+                                if (isVip) ...[
+                                  const SizedBox(width: 2),
+                                  const Text('⭐', style: TextStyle(fontSize: 13)),
+                                ],
+                              ],
+                            ),
                     ),
                   ),
                 ),

@@ -8,6 +8,7 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/app_constants.dart';
 import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/core/services/sync_service.dart';
 import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/core/services/score_service.dart';
@@ -15,6 +16,7 @@ import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/data/repositories/favorite_repository.dart';
 import 'package:balikci_app/data/repositories/notification_repository.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// Check-in ekranı — H5 sprint'i, H6 UI/UX iyileştirmeleri.
 class CheckinScreen extends StatefulWidget {
@@ -87,7 +89,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
       if (pos == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Konum alınamadı. Izin veya GPS kontrol edin.'),
+            content: Text('Konum alınamadı. İzin veya GPS açık mı kontrol edin.'),
             backgroundColor: AppColors.danger,
           ),
         );
@@ -105,7 +107,8 @@ class _CheckinScreenState extends State<CheckinScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              "Konum mera'dan fazla uzak (yaklasik ${distMeters.toStringAsFixed(0)}m).",
+              "Meradan çok uzaksın (yaklaşık ${distMeters.toStringAsFixed(0)} m). "
+              "Mera'ya ${AppConstants.checkinRadiusMeters} m yaklaşman gerekiyor.",
             ),
             backgroundColor: AppColors.danger,
           ),
@@ -113,13 +116,36 @@ class _CheckinScreenState extends State<CheckinScreen> {
         return;
       }
 
-      final created = await _checkinRepo.addCheckin({
+      final payload = {
         'user_id': uid,
         'spot_id': widget.spotId,
         'crowd_level': _crowdLevel,
         'fish_density': _fishDensity,
         'is_active': true,
-      });
+      };
+
+      // Ağ bağlantısını kontrol et
+      final connResult = await Connectivity().checkConnectivity();
+      final isOnline = connResult.any((r) => r != ConnectivityResult.none);
+
+      if (!isOnline) {
+        // Offline → kuyruğa ekle
+        await SyncService.instance.enqueue('insert', 'checkins', payload);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              '📡 Çevrimdışısın — bildirim kuyruğa alındı, bağlantı gelince gönderilecek.',
+            ),
+            backgroundColor: AppColors.warning,
+            duration: Duration(seconds: 4),
+          ),
+        );
+        context.pop(true);
+        return;
+      }
+
+      final created = await _checkinRepo.addCheckin(payload);
 
       if (created == null) {
         if (!mounted) return;

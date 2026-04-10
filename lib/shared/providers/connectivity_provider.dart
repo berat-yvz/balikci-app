@@ -1,11 +1,18 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// cleaned: placeholder korunarak minimum stabil stream davranışı belgelendi
+/// Gerçek ağ bağlantısı durumu — H12 connectivity_plus ile implemente edildi.
+///
+/// `true` → en az bir bağlantı türü aktif (wifi, mobile, ethernet)
+/// `false` → çevrimdışı (none)
+final connectivityProvider = StreamProvider<bool>((ref) {
+  return Connectivity()
+      .onConnectivityChanged
+      .map((results) => results.any((r) => r != ConnectivityResult.none));
+});
 
-/// Ağ bağlantısı durumu provider.
-/// H12 sprint'te connectivity_plus ile gerçek implementation yapılacak.
-/// Şimdilik placeholder olarak online kabul edilir.
-final connectivityProvider = StreamProvider<bool>((ref) async* {
-  // TODO: H12 — connectivity_plus paketi ile gerçek bağlantı izleme
-  yield true; // varsayılan: online
+/// Anlık bağlantı durumu — widget'larda `ref.watch` ile kullan.
+/// `true` → online, `false` → offline
+final isOnlineProvider = Provider<bool>((ref) {
+  return ref.watch(connectivityProvider).asData?.value ?? true;
 });
