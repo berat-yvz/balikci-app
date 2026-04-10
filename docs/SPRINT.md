@@ -306,7 +306,7 @@
 - [x] Türkçe karakter sorunu kontrolü — font varsayılanı Flutter; Türkçe özel karakter hatalar önceki sprint'lerde düzeltildi
 - [x] İnternet yok banner'ı — MainShell AnimatedContainer offline banner
 - [x] Pull-to-refresh tüm liste ekranlarında: bildirim ✓, fish-log ✓, rank ✓, profil ✓, hava ✓
-- [ ] **Harita — dükkan katmanı (ertelenen):** `shops` için JSON (10+ kayıt), Supabase import, istemci `ShopRepository` veya mevcut repo genişletmesi, `MapScreen`’de meralardan farklı ikonla pinler
+- [x] **Harita — dükkan katmanı:** `seed_shops.sql` (15 kayıt), `ShopModel` + `ShopRepository`, `MapScreen`’de turuncu `_ShopPin` + `_ShopDetailSheet` modal
 
 ---
 

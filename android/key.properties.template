@@ -1,0 +1,4 @@
+storePassword=<keystore-sifresi>
+keyPassword=<key-sifresi>
+keyAlias=balikci
+storeFile=<keystore-dosya-yolu>/balikci-release.jks
