@@ -196,6 +196,19 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _selectSpot(SpotModel spot) {
+    // VIP mera: Usta veya üzeri rütbe gerektirir.
+    if (spot.privacyLevel == 'vip' && !_isUstaOrAbove) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            '🔒 Bu VIP mera Usta rütbesi ve üzeri için erişilebilir.',
+          ),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _sheetSpot = spot;
       _searchResults = const [];

@@ -175,7 +175,7 @@
 - [x] `profile_screen.dart` — puan, rütbe, istatistik; "Favori Meralarım" bölümü (isSelf)
 - [x] **Bug düzeltme:** `user_repository.dart` varsayılan rank `'bronz'` → `'acemi'`
 - [ ] Edge Function: `shadow-point-calculator` yazıldı ve deploy edildi *(ileriye ertelendi)*
-- [ ] VIP mera görünürlüğü: Usta+ rütbesine göre filtreleme *(ileriye ertelendi)*
+- [x] VIP mera görünürlüğü: Usta+ rütbesine göre erişim engeli — `_selectSpot` içinde rütbe kontrolü + SnackBar uyarısı
 - [ ] Mera Muhtarlığı: haftalık cron *(ileriye ertelendi)*
 
 **Çıktı:** Sıralama ekranı çalışıyor, profil ekranı tamamlandı ✓
