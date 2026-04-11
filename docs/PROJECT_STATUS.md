@@ -2,7 +2,7 @@
 
 Bu dosya vekil asistan / geliştirici için **kodla uyumlu anlık özet**tir. Ayrıntılı mimari: [ARCHITECTURE.md](ARCHITECTURE.md). Sprint: [SPRINT.md](SPRINT.md). MVP maddeleri: [MVP_PLAN.md](MVP_PLAN.md).
 
-**Son güncelleme:** H1–H9 tamamlandı ✅; H10 (Push Bildirim) kısmen tamamlandı — favori mera bildirimi ve bildirim deep-link çalışıyor. Sıradaki odak: H10 kalan görevler (konum bazlı, gece sessiz mod) → H11 Düğüm Rehberi.
+**Son güncelleme:** H1–H15 tamamlandı ✅; H16 (Launch) ilerliyor — AAB build hazır, Play Store hesabı ve beta kanalı kullanıcıya kalıyor. 325 otomatik test, tümü yeşil.
 
 ---
 
@@ -17,8 +17,9 @@ Bu dosya vekil asistan / geliştirici için **kodla uyumlu anlık özet**tir. Ay
 | 5 | M-03 H7 Balık Günlüğü | ✅ | Tamamlandı |
 | 6 | M-04 H8 Puan & Rütbe | ✅ | Sıralama dikey liste + madalya UI tamamlandı |
 | 7 | M-04 H9 Hava Durumu | ✅ | 24s grafik, saat başı güncelleme, deniz metrikleri |
-| 8 | M-09 H10 Bildirim | 🔄 | Favori + spot deep-link çalışıyor; konum bazlı + sessiz mod kalmış |
-| 9 | M-07 H11–H16 | ⏳ | Düğüm rehberi, offline harita, Polish, Launch |
+| 8 | M-09 H10 Bildirim | ✅ | Konum bazlı, sessiz mod, günlük limit, sabah hava push — tamamlandı |
+| 9 | M-07 H11–H15 | ✅ | Düğüm, sıralama, offline sync, Polish — tamamlandı |
+| 10 | H16 Launch | 🔄 | AAB ready; Play Store hesabı + beta kanalı kullanıcıya kalıyor |
 
 ---
 
@@ -80,19 +81,17 @@ Detay: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md).
 
 ---
 
-## M-09 — Push Bildirim Sistemi (🔄 kısmen)
+## M-09 — Push Bildirim Sistemi (✅)
 
-### Tamamlanan
 - FCM ön plan / arka plan / kapalı durum tap akışı.
 - **Payload JSON:** `{"type":"checkin","spot_id":"..."}` — `onDidReceiveNotificationResponse` ile decode.
 - **Spot deep-link:** Bildirim tap'ında `router.go(AppRoutes.map, extra: spotId)` ile mera açılır.
 - **Bildirim listesi:** `_navigateForNotification` `data['spot_id']`'yi okur.
-- **Favori mera bildirimi:** `FavoriteRepository.getUsersWhoFavorited` → spot sahibi + check-in yapan hariç favorileyen kullanıcılara "Favori Meranızda Balık Var!" bildirimi.
-
-### Kalan
-- Konum tabanlı bildirim (2km'de check-in → yakın kullanıcılara)
-- Gece 23:00–07:00 sessiz mod
-- Günlük 5 bildirim limiti kontrolü
+- **Favori mera bildirimi:** `FavoriteRepository.getUsersWhoFavorited` → favorileyen kullanıcılara bildirim.
+- **Konum tabanlı bildirim:** `nearby-checkin-notifier` Edge Function — check-in sonrası 2km içindeki aktif kullanıcılara bildirim.
+- **Sessiz mod:** `notification-sender`'da 23:00–07:00 push atlanır, in-app kayıt yapılır.
+- **Günlük limit:** Günlük 5 bildirim limiti + `force` parametresi (sabah bildirimi sayılmaz).
+- **Sabah hava push:** `morning-weather-push` Edge Function + `cron_morning_weather_push.sql` (03:00 UTC).
 
 ---
 
