@@ -50,6 +50,7 @@ import 'package:balikci_app/features/notifications/notification_list_screen.dart
 import 'package:balikci_app/features/notifications/notification_settings_screen.dart';
 
 // Features — Profile
+import 'package:balikci_app/features/profile/follow_list_screen.dart';
 import 'package:balikci_app/features/profile/profile_screen.dart';
 import 'package:balikci_app/features/profile/settings_screen.dart';
 
@@ -294,7 +295,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
-      // Profile
+      // Profile — önce spesifik rotalar (go_router eşleşme sırası)
+      GoRoute(
+        path: '${AppRoutes.profile}/:userId/followers',
+        pageBuilder: (context, state) => _fadeSlidePage(
+          state: state,
+          child: FollowListScreen(
+            userId: state.pathParameters['userId']!,
+            mode: FollowListMode.followers,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '${AppRoutes.profile}/:userId/following',
+        pageBuilder: (context, state) => _fadeSlidePage(
+          state: state,
+          child: FollowListScreen(
+            userId: state.pathParameters['userId']!,
+            mode: FollowListMode.following,
+          ),
+        ),
+      ),
       GoRoute(
         path: '${AppRoutes.profile}/:userId',
         pageBuilder: (context, state) => _fadeSlidePage(

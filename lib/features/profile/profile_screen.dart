@@ -640,14 +640,34 @@ class _FollowStatsRow extends ConsumerWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _FollowStat(label: 'Takipçi', count: follower),
+            InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => context.push(
+                '${AppRoutes.profile}/$userId/followers',
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: _FollowStat(label: 'Takipçi', count: follower),
+              ),
+            ),
             Container(
               width: 1,
               height: 32,
-              margin: const EdgeInsets.symmetric(horizontal: 20),
+              margin: const EdgeInsets.symmetric(horizontal: 12),
               color: Colors.white12,
             ),
-            _FollowStat(label: 'Takip', count: following),
+            InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => context.push(
+                '${AppRoutes.profile}/$userId/following',
+              ),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: _FollowStat(label: 'Takip', count: following),
+              ),
+            ),
           ],
         );
       },

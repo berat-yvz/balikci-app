@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:balikci_app/core/constants/region_leaderboard_regions.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/data/repositories/user_repository.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
@@ -47,3 +48,26 @@ final weeklyLeaderboardProvider =
   final repo = ref.read(userRepositoryProvider);
   return repo.getWeeklyLeaderboard();
 });
+
+/// Seçilen kıyı bölgesinde mera kaydı olan kullanıcılar (toplam puan).
+final regionalLeaderboardProvider =
+    FutureProvider.autoDispose.family<List<UserModel>, String>((
+      ref,
+      regionKey,
+    ) async {
+      CoastalLeaderboardRegion? box;
+      for (final r in kCoastalLeaderboardRegions) {
+        if (r.key == regionKey) {
+          box = r;
+          break;
+        }
+      }
+      if (box == null) return const [];
+      final repo = ref.read(userRepositoryProvider);
+      return repo.getLeaderboardInCoastalBox(
+        minLat: box.minLat,
+        maxLat: box.maxLat,
+        minLng: box.minLng,
+        maxLng: box.maxLng,
+      );
+    });

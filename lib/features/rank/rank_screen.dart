@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/constants/region_leaderboard_regions.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
@@ -116,17 +117,85 @@ class _WeeklyTab extends ConsumerWidget {
   }
 }
 
-// ── Bölge sekmesi ─────────────────────────────────────────────────────────────
+// ── Bölge sekmesi — kutuda mera kaydı olan kullanıcılar (toplam puan) ─────────
 
-class _RegionalTab extends StatelessWidget {
+class _RegionalTab extends ConsumerStatefulWidget {
   const _RegionalTab();
 
   @override
+  ConsumerState<_RegionalTab> createState() => _RegionalTabState();
+}
+
+class _RegionalTabState extends ConsumerState<_RegionalTab> {
+  late String _regionKey = kCoastalLeaderboardRegions.first.key;
+
+  @override
   Widget build(BuildContext context) {
-    return const _EmptyState(
-      emoji: '🗺️',
-      message: 'Bölge sıralaması yakında!\n'
-          'Konumunuza göre kişiselleştirilmiş sıralama eklenecek.',
+    final currentUserId = ref.watch(currentUserProvider)?.id;
+    final asyncUsers = ref.watch(regionalLeaderboardProvider(_regionKey));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Kıyı bölgesi',
+                style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+              ),
+              const SizedBox(height: 6),
+              DropdownButton<String>(
+                isExpanded: true,
+                value: _regionKey,
+                items: [
+                  for (final r in kCoastalLeaderboardRegions)
+                    DropdownMenuItem(value: r.key, child: Text(r.label)),
+                ],
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _regionKey = v);
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: asyncUsers.when(
+            data: (users) {
+              if (users.isEmpty) {
+                return const _EmptyState(
+                  emoji: '🗺️',
+                  message:
+                      'Bu bölgede henüz mera kaydı yok.\nİlk merayı sen ekle!',
+                );
+              }
+              return _LeaderboardView(
+                users: users,
+                currentUserId: currentUserId,
+                scoreLabel: (u) => '${u.totalScore} puan',
+                onRefresh: () async =>
+                    ref.invalidate(regionalLeaderboardProvider(_regionKey)),
+                headerLabel:
+                    'Bölgede mera ekleyen balıkçılar — toplam puana göre',
+              );
+            },
+            loading: () => const SkeletonList(
+              itemCount: 8,
+              hasLeadingCircle: true,
+              hasTrailing: true,
+            ),
+            error: (e, _) => AppErrorWidget(
+              message: e.toString(),
+              onRetry: () =>
+                  ref.invalidate(regionalLeaderboardProvider(_regionKey)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

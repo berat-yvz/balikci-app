@@ -48,6 +48,8 @@ class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
 
   List<SpotModel> _spots = const [];
+  /// Uzak `getSpots` + `getSpotsInBounds` birleşimi (kimlik bazlı).
+  final Map<String, SpotModel> _spotMap = {};
   List<ShopModel> _shops = const [];
   Map<String, List<CheckinModel>> _activeCheckinsBySpotId = const {};
   bool _isLoading = true;
@@ -58,6 +60,7 @@ class _MapScreenState extends State<MapScreen> {
 
   bool _checkingCheckins = false;
   Timer? _checkinPollTimer;
+  Timer? _boundsDebounce;
   RealtimeChannel? _checkinsRealtimeChannel;
 
   SpotModel? _sheetSpot;
@@ -92,6 +95,7 @@ class _MapScreenState extends State<MapScreen> {
     unawaited(_checkinsRealtimeChannel?.unsubscribe());
     _checkinsRealtimeChannel = null;
     _checkinPollTimer?.cancel();
+    _boundsDebounce?.cancel();
     _sheetController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
@@ -177,14 +181,20 @@ class _MapScreenState extends State<MapScreen> {
     try {
       final spots = await _repository.getSpots(limit: 500);
       setState(() {
-        _spots = spots;
+        _spotMap
+          ..clear()
+          ..addEntries(spots.map((s) => MapEntry(s.id, s)));
+        _spots = _spotMap.values.toList();
       });
       await _refreshActiveCheckins();
     } catch (e) {
       // Remote hata verirse local cache ile fallback.
       final cached = await _repository.getCachedSpots();
       setState(() {
-        _spots = cached;
+        _spotMap
+          ..clear()
+          ..addEntries(cached.map((s) => MapEntry(s.id, s)));
+        _spots = _spotMap.values.toList();
         _error = cached.isEmpty ? 'Meralar yüklenemedi.' : null;
       });
       await _refreshActiveCheckins();
@@ -473,6 +483,53 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  void _scheduleBoundsSpotsFetch() {
+    _boundsDebounce?.cancel();
+    _boundsDebounce = Timer(const Duration(milliseconds: 520), () async {
+      if (!mounted) return;
+      try {
+        final cam = _mapController.camera;
+        if (cam.zoom < 10.5) return;
+        await _mergeSpotsFromVisibleBounds(cam.visibleBounds);
+      } catch (_) {
+        // Harita henüz hazır değil
+      }
+    });
+  }
+
+  Future<void> _mergeSpotsFromVisibleBounds(LatLngBounds bounds) async {
+    final latSpan = (bounds.north - bounds.south).abs();
+    final lngSpan = (bounds.east - bounds.west).abs();
+    final padLat = latSpan * 0.12;
+    final padLng = lngSpan * 0.12;
+    final minLat = bounds.south - padLat;
+    final maxLat = bounds.north + padLat;
+    final minLng = bounds.west - padLng;
+    final maxLng = bounds.east + padLng;
+    try {
+      final chunk = await _repository.getSpotsInBounds(
+        minLat: minLat,
+        maxLat: maxLat,
+        minLng: minLng,
+        maxLng: maxLng,
+        limit: 450,
+      );
+      if (!mounted) return;
+      if (chunk.isEmpty) return;
+      for (final s in chunk) {
+        _spotMap[s.id] = s;
+      }
+      setState(() => _spots = _spotMap.values.toList());
+      await _refreshActiveCheckins();
+      final openId = _sheetSpot?.id;
+      if (openId != null) {
+        unawaited(_applyDetailedCheckinsForSpot(openId));
+      }
+    } catch (_) {
+      // Sessiz — ilk yükleme zaten tam liste veya cache
+    }
+  }
+
   Future<void> _confirmAndDeleteSpot(SpotModel spot) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -504,7 +561,8 @@ class _MapScreenState extends State<MapScreen> {
         listen: false,
       ).invalidate(favoriteSpotsProvider);
       setState(() {
-        _spots = _spots.where((s) => s.id != spot.id).toList();
+        _spotMap.remove(spot.id);
+        _spots = _spotMap.values.toList();
         final copy = Map<String, List<CheckinModel>>.from(
           _activeCheckinsBySpotId,
         )..remove(spot.id);
@@ -570,14 +628,15 @@ class _MapScreenState extends State<MapScreen> {
                 initialZoom: 11.0,
                 minZoom: 5.0,
                 maxZoom: 19.0,
-                onPositionChanged: (pos, _) {
-                  final z = pos.zoom;
+                onPositionChanged: (camera, _) {
+                  final z = camera.zoom;
                   // Marker boyutları yalnızca zoom 13 eşiğini geçince değişir.
                   // Her küçük zoom değişiminde tüm widget ağacını yeniden
                   // buildlemek yerine sadece eşik aşıldığında setState çağır.
                   final crossedThreshold = (_currentZoom > 13) != (z > 13);
                   _currentZoom = z;
                   if (crossedThreshold && mounted) setState(() {});
+                  if (z >= 10.5) _scheduleBoundsSpotsFetch();
                 },
                 onTap: (_, point) {
                   _searchFocusNode.unfocus();

@@ -1,3 +1,5 @@
+import 'dart:math' show min;
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:balikci_app/core/services/supabase_service.dart';
@@ -81,9 +83,8 @@ class UserRepository {
           .limit(limit);
       final users = response.map<UserModel>(UserModel.fromJson).toList();
 
-      // Şimdilik bölge filtresi olmadığı için backend tarafında filtre yok.
-      // Gelecekte kullanıcıya ait bölge bilgisi eklendiğinde burada
-      // regionFilter ile daraltılabilir.
+      // regionFilter: kullanıcı `region` sütunu eklenene kadar
+      // [getLeaderboardInCoastalBox] ile kıyı kutusu kullanılır.
       return users;
     } on PostgrestException catch (e) {
       throw Exception(
@@ -91,6 +92,75 @@ class UserRepository {
       );
     } catch (e) {
       throw Exception('Liderlik tablosu alınamadı: $e');
+    }
+  }
+
+  /// Birden fazla kullanıcı profilini tek seferde döner (sıra [ids] ile uyumlu).
+  Future<List<UserModel>> getProfilesByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    final unique = <String>[];
+    final seen = <String>{};
+    for (final id in ids) {
+      if (seen.add(id)) unique.add(id);
+    }
+    try {
+      const chunkSize = 100;
+      final out = <UserModel>[];
+      for (var i = 0; i < unique.length; i += chunkSize) {
+        final end = min(i + chunkSize, unique.length);
+        final part = unique.sublist(i, end);
+        final response = await _db
+            .from('users')
+            .select(
+              'id, email, username, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
+            )
+            .inFilter('id', part);
+        for (final row in response as List) {
+          out.add(UserModel.fromJson(row as Map<String, dynamic>));
+        }
+      }
+      final byId = {for (final u in out) u.id: u};
+      return unique.map((id) => byId[id]).whereType<UserModel>().toList();
+    } on PostgrestException catch (e) {
+      throw Exception('Profiller alınamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Profiller alınamadı: $e');
+    }
+  }
+
+  /// Bu coğrafi kutuda en az bir mera kaydı olan kullanıcılar, puana göre sıralanır.
+  Future<List<UserModel>> getLeaderboardInCoastalBox({
+    required double minLat,
+    required double maxLat,
+    required double minLng,
+    required double maxLng,
+    int limit = 50,
+  }) async {
+    try {
+      final response = await _db
+          .from('fishing_spots')
+          .select('user_id')
+          .gte('lat', minLat)
+          .lte('lat', maxLat)
+          .gte('lng', minLng)
+          .lte('lng', maxLng)
+          .limit(4000);
+      final ids = <String>{};
+      for (final row in response as List) {
+        final uid = row['user_id'] as String?;
+        if (uid != null && uid.isNotEmpty) ids.add(uid);
+      }
+      if (ids.isEmpty) return [];
+      var users = await getProfilesByIds(ids.toList());
+      users.sort((a, b) => b.totalScore.compareTo(a.totalScore));
+      if (users.length > limit) {
+        users = users.take(limit).toList();
+      }
+      return users;
+    } on PostgrestException catch (e) {
+      throw Exception('Bölgesel sıralama alınamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Bölgesel sıralama alınamadı: $e');
     }
   }
 
