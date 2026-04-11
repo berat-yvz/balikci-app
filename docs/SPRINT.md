@@ -286,7 +286,12 @@
 - [x] StatsScreen hesaplama unit testleri (17 test): toplam av, salınan balık, sürdürülebilirlik %, tür sıralaması
 - [x] ResetPasswordScreen form validasyon widget testleri (7 test): boş alan, min uzunluk, şifre eşleşmesi, toggle görünürlük
 - [x] Release build doğrulandı: `flutter build appbundle --release` → 49.5MB ✓
-- [x] 171 otomatik test, tümü yeşil
+- [x] EmptyStateWidget widget testleri (11 test): named constructorlar, buton callback, emoji
+- [x] RankBadge widget testleri (9 test): tüm rütbeler, boyutlar, animasyon
+- [x] SkeletonListTile/SkeletonList widget testleri (9 test): animasyon, dispose, parametre aktarımı
+- [x] AppButton widget testleri (8 test): primary/outlined, loading state, tıklanabilirlik
+- [x] Düğüm filtreleme ve clamp unit testleri (10 test)
+- [x] 225 otomatik test, tümü yeşil
 - [ ] Tüm kullanıcı akışları uçtan uca test edildi *(manuel — cihaz gerektirir)*
 - [ ] Offline → online geçiş senaryoları test edildi *(manuel)*
 - [ ] Düşük ağ hızında test (throttling) *(manuel)*
