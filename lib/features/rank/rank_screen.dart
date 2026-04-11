@@ -5,7 +5,7 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
-import 'package:balikci_app/shared/widgets/loading_widget.dart';
+import 'package:balikci_app/shared/widgets/skeleton_widget.dart';
 import 'package:balikci_app/shared/widgets/error_widget.dart';
 
 /// ADIM 7: Sıralama ekranı — podiyum widget, sticky kendi satırı.
@@ -65,7 +65,11 @@ class _AllTimeTab extends ConsumerWidget {
           headerLabel: 'Toplam puana göre sıralama',
         );
       },
-      loading: () => const LoadingWidget(message: 'Sıralamalar yükleniyor...'),
+      loading: () => const SkeletonList(
+        itemCount: 8,
+        hasLeadingCircle: true,
+        hasTrailing: true,
+      ),
       error: (e, _) => AppErrorWidget(
         message: e.toString(),
         onRetry: () => ref.invalidate(leaderboardProvider),
@@ -99,8 +103,11 @@ class _WeeklyTab extends ConsumerWidget {
           onRefresh: () async => ref.invalidate(weeklyLeaderboardProvider),
         );
       },
-      loading: () =>
-          const LoadingWidget(message: 'Haftalık sıralama yükleniyor...'),
+      loading: () => const SkeletonList(
+        itemCount: 8,
+        hasLeadingCircle: true,
+        hasTrailing: true,
+      ),
       error: (e, _) => AppErrorWidget(
         message: e.toString(),
         onRetry: () => ref.invalidate(weeklyLeaderboardProvider),

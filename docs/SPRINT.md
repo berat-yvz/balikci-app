@@ -134,7 +134,7 @@
 - [x] Storage trigger: balık günlüğü fotoğrafları için (check-in fotoğrafı kaldırıldı)
 - [x] `vote_widget.dart` — Doğru/Yanlış oy butonu
 - [x] `checkin_repository.dart`'a vote fonksiyonu eklendi
-- [ ] Oy sonucu: %70+ yanlış → check-in gizleniyor *(ileriye ertelendi)*
+- [x] Oy sonucu: %70+ yanlış → check-in gizleniyor — `CheckinModel.isSuppressedByVotes` (min 3 oy eşiği)
 - [x] Check-in ekranından fotoğraf yükleme + EXIF doğrulama kaldırıldı (UX sadeleştirildi)
 
 **Çıktı:** Oylama sistemi çalışıyor; check-in akışı sadeleştirildi ✓
