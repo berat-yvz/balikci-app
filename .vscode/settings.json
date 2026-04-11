@@ -1,3 +1,11 @@
 {
-    "cmake.sourceDirectory": "D:/Software/Github_Repo/balikci-app/linux"
+    "cmake.configureOnOpen": false,
+"deno.enable": false,
+    "java.jdt.ls.java.home": "D:\\Apps\\Android_Studio\\jbr",
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.import.exclusions": [
+        "**/android/**",
+        "**/build/**"
+    ],
+    "java.format.settings.url": ".vscode/java-formatter.xml"
 }

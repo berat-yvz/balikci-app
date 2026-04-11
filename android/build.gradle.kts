@@ -22,8 +22,13 @@ val newBuildDir: Directory =
 rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-    project.layout.buildDirectory.value(newSubprojectBuildDir)
+    // Only redirect build dir for local subprojects (e.g. :app).
+    // Plugins sourced from pub cache may live on a different drive (C:) on Windows,
+    // and Java cannot relativize paths across drive roots — so we skip those.
+    if (project.projectDir.canonicalPath.startsWith(rootDir.canonicalPath)) {
+        val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+        project.layout.buildDirectory.value(newSubprojectBuildDir)
+    }
 }
 subprojects {
     project.evaluationDependsOn(":app")
