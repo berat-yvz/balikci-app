@@ -350,16 +350,6 @@ class _ProfileContent extends ConsumerWidget {
     );
   }
 
-  String _rankLabel(String rank) {
-    return switch (rank) {
-      'acemi' => 'Acemi',
-      'olta_kurdu' => 'Olta Kurdu',
-      'usta' => 'Usta',
-      'deniz_reisi' => 'Deniz Reisi',
-      _ => rank,
-    };
-  }
-
   String _initials(String username) {
     final parts = username.trim().split(RegExp(r'\s+'));
     final a = parts.isNotEmpty ? parts.first[0] : 'U';

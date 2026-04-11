@@ -439,17 +439,42 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
+  /// Mera pin'i — teardrop ucunun [LatLng] ile çakışması için sabit kutu + piksel anchor.
+  /// Zoom'a göre width/height değiştirmek merkez hizasında kayma yaratıyordu.
+  static const double _spotMarkerW = 100;
+  static const double _spotMarkerH = 130;
+  static const double _spotPinSize = 56;
+  static const double _spotPinTop = 36;
+  static const double _spotPinTipY =
+      _spotPinTop + _spotPinSize * 0.92; // spot_marker teardrop ile uyumlu
+  static const double _spotPinLeft = (_spotMarkerW - _spotPinSize) / 2;
+
   List<Marker> _buildMarkers() {
+    final tipAlignment = Marker.computePixelAlignment(
+      width: _spotMarkerW,
+      height: _spotMarkerH,
+      left: _spotMarkerW / 2,
+      top: _spotPinTipY,
+    );
     return _spots
         .map(
           (spot) => Marker(
             point: LatLng(spot.lat, spot.lng),
-            // Zoom > 13'te isim etiketi için ekstra yükseklik
-            width: _currentZoom > 13 ? 72 : 52,
-            height: _currentZoom > 13 ? 80 : 52,
+            width: _spotMarkerW,
+            height: _spotMarkerH,
+            alignment: tipAlignment,
             child: GestureDetector(
               onTap: () => _selectSpot(spot),
-              child: _buildSpotMarker(spot),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    left: _spotPinLeft,
+                    top: _spotPinTop,
+                    child: _buildSpotMarker(spot),
+                  ),
+                ],
+              ),
             ),
           ),
         )
