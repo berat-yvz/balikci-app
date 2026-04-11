@@ -46,7 +46,6 @@ class _CheckinScreenState extends State<CheckinScreen>
   String _fishDensity = 'normal';
   // DB kısıtları: crowd_level IN ('yoğun','normal','az','boş')
   String _crowdLevel = 'normal';
-  final _noteController = TextEditingController();
 
   // Başarı animasyonu
   late AnimationController _successAnimController;
@@ -79,7 +78,6 @@ class _CheckinScreenState extends State<CheckinScreen>
   @override
   void dispose() {
     _successAnimController.dispose();
-    _noteController.dispose();
     super.dispose();
   }
 
@@ -343,7 +341,6 @@ class _CheckinScreenState extends State<CheckinScreen>
                       )
                     : _Page2(
                         crowdLevel: _crowdLevel,
-                        noteController: _noteController,
                         submitting: _submitting,
                         onCrowdChanged: (v) =>
                             setState(() => _crowdLevel = v),
@@ -589,7 +586,6 @@ class _Page1 extends StatelessWidget {
 
 class _Page2 extends StatelessWidget {
   final String crowdLevel;
-  final TextEditingController noteController;
   final bool submitting;
   final void Function(String) onCrowdChanged;
   final VoidCallback onBack;
@@ -597,7 +593,6 @@ class _Page2 extends StatelessWidget {
 
   const _Page2({
     required this.crowdLevel,
-    required this.noteController,
     required this.submitting,
     required this.onCrowdChanged,
     required this.onBack,
@@ -692,47 +687,6 @@ class _Page2 extends StatelessWidget {
                     ),
                   );
                 }).toList(),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Not (isteğe bağlı)',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: noteController,
-                style: const TextStyle(color: Colors.white, fontSize: 16),
-                textInputAction: TextInputAction.done,
-                decoration: InputDecoration(
-                  hintText: 'Nasıl bir yer? Ne gördün?',
-                  hintStyle: TextStyle(
-                    color: Colors.white38,
-                    fontSize: 16,
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFF132236),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF24415F), width: 1.5),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF24415F), width: 1.5),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: AppColors.primary, width: 2),
-                  ),
-                ),
               ),
             ],
           ),

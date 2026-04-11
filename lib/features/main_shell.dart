@@ -6,8 +6,8 @@ import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/shared/providers/connectivity_provider.dart';
 
-/// Ana shell — 4 sekme + merkez Check-in FAB.
-/// Sekme sırası: Harita(0) | Hava(1) | [FAB] | Günlük(2) | Profil(3)
+/// Ana shell — 4 düz sekme.
+/// Sekme sırası: Hava(0) | Harita(1) | Günlük(2) | Profil(3)
 class MainShell extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -18,23 +18,23 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
-  int _currentIndex = 0; // harita varsayılan
+  int _currentIndex = 1; // harita varsayılan
 
-  // 0=Harita, 1=Hava, 2=Günlük, 3=Profil
+  // 0=Hava, 1=Harita, 2=Günlük, 3=Profil
   int _indexFromPath(String path) {
-    if (path.startsWith(AppRoutes.weather)) return 1;
+    if (path.startsWith(AppRoutes.weather)) return 0;
     if (path.startsWith(AppRoutes.fishLog)) return 2;
     if (path.startsWith(AppRoutes.profile)) return 3;
-    return 0; // harita (home)
+    return 1; // harita (home)
   }
 
   void _onTabTapped(int index) {
     setState(() => _currentIndex = index);
     switch (index) {
       case 0:
-        context.go(AppRoutes.home);
-      case 1:
         context.go(AppRoutes.weather);
+      case 1:
+        context.go(AppRoutes.home);
       case 2:
         context.go(AppRoutes.fishLog);
       case 3:
@@ -60,7 +60,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         resizeToAvoidBottomInset: true,
         body: Column(
           children: [
-            // Offline banner — sarı, sayfanın üstünde
+            // Offline banner
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               height: isOnline ? 0 : 40,
@@ -95,100 +95,99 @@ class _MainShellState extends ConsumerState<MainShell> {
             Expanded(child: widget.child),
           ],
         ),
-        // ADIM 2: Merkez Check-in FAB
-        floatingActionButton: SizedBox(
-          width: 72,
-          height: 72,
-          child: FloatingActionButton(
-            onPressed: () => context.go(AppRoutes.home),
-            backgroundColor: AppColors.secondary,
-            foregroundColor: Colors.white,
-            elevation: 6,
-            shape: const CircleBorder(),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.phishing, size: 28, color: Colors.white),
-                Text(
-                  'Check-in',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    height: 1.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: BottomAppBar(
           color: const Color(0xFF0D1B2E),
           elevation: 8,
-          notchMargin: 8,
-          shape: const CircularNotchedRectangle(),
           padding: EdgeInsets.zero,
           child: SizedBox(
             height: 64,
             child: SafeArea(
               top: false,
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // Sol 2 sekme
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _NavItem(
-                          icon: Icons.map_outlined,
-                          activeIcon: Icons.map,
-                          label: 'Harita',
-                          index: 0,
-                          currentIndex: _currentIndex,
-                          onTap: () => _onTabTapped(0),
-                        ),
-                        _NavItem(
-                          icon: Icons.cloud_outlined,
-                          activeIcon: Icons.cloud,
-                          label: 'Hava',
-                          index: 1,
-                          currentIndex: _currentIndex,
-                          onTap: () => _onTabTapped(1),
-                        ),
-                      ],
-                    ),
+                  _NavItem(
+                    icon: Icons.cloud_outlined,
+                    activeIcon: Icons.cloud,
+                    label: 'Hava',
+                    index: 0,
+                    currentIndex: _currentIndex,
+                    onTap: () => _onTabTapped(0),
                   ),
-                  // FAB için boşluk
-                  const SizedBox(width: 80),
-                  // Sağ 2 sekme
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _NavItem(
-                          icon: Icons.menu_book_outlined,
-                          activeIcon: Icons.menu_book,
-                          label: 'Günlük',
-                          index: 2,
-                          currentIndex: _currentIndex,
-                          onTap: () => _onTabTapped(2),
-                        ),
-                        _NavItem(
-                          icon: Icons.person_outline,
-                          activeIcon: Icons.person,
-                          label: 'Profil',
-                          index: 3,
-                          currentIndex: _currentIndex,
-                          onTap: () => _onTabTapped(3),
-                        ),
-                      ],
-                    ),
+                  _MapNavItem(
+                    isActive: _currentIndex == 1,
+                    onTap: () => _onTabTapped(1),
+                  ),
+                  _NavItem(
+                    icon: Icons.menu_book_outlined,
+                    activeIcon: Icons.menu_book,
+                    label: 'Günlük',
+                    index: 2,
+                    currentIndex: _currentIndex,
+                    onTap: () => _onTabTapped(2),
+                  ),
+                  _NavItem(
+                    icon: Icons.person_outline,
+                    activeIcon: Icons.person,
+                    label: 'Profil',
+                    index: 3,
+                    currentIndex: _currentIndex,
+                    onTap: () => _onTabTapped(3),
                   ),
                 ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Merkez Harita butonu — diğer nav öğeleriyle aynı yükseklikte,
+/// hafifçe daha belirgin (büyük ikon + renk vurgu).
+class _MapNavItem extends StatelessWidget {
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _MapNavItem({required this.isActive, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 80,
+        height: 64,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 46,
+              height: 34,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? AppColors.primary.withValues(alpha: 0.18)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                isActive ? Icons.map : Icons.map_outlined,
+                color: isActive ? AppColors.primary : Colors.white54,
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Harita',
+              style: TextStyle(
+                fontSize: 11,
+                color: isActive ? AppColors.primary : Colors.white54,
+                fontWeight: isActive ? FontWeight.w800 : FontWeight.normal,
+              ),
+            ),
+          ],
         ),
       ),
     );

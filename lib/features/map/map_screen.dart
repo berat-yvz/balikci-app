@@ -460,7 +460,9 @@ class _MapScreenState extends State<MapScreen> {
     const sheetMaxSize = 0.85;
 
     final screenHeight = MediaQuery.of(context).size.height;
-    final mapFabBottom = (sheetMinSize * screenHeight) + 72;
+    final mapFabBottom = _sheetSpot != null
+        ? (sheetMinSize * screenHeight) + 72
+        : MediaQuery.of(context).padding.bottom + 24;
 
     final sheetSpot = _sheetSpot;
     final sheetCheckins = sheetSpot == null
@@ -500,10 +502,11 @@ class _MapScreenState extends State<MapScreen> {
                   if (crossedThreshold && mounted) setState(() {});
                 },
                 onTap: (_, point) {
-                  if (_searchResults.isNotEmpty) {
-                    _searchFocusNode.unfocus();
-                    setState(() => _searchResults = const []);
-                  }
+                  _searchFocusNode.unfocus();
+                  setState(() {
+                    _searchResults = const [];
+                    _sheetSpot = null;
+                  });
                 },
               ),
               children: [
@@ -587,7 +590,7 @@ class _MapScreenState extends State<MapScreen> {
           // Üst: Arama (floating)
           Positioned(
             left: 16,
-            right: 72,
+            right: 68,
             top: MediaQuery.of(context).padding.top + 8,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -762,24 +765,10 @@ class _MapScreenState extends State<MapScreen> {
           Positioned(
             right: 16,
             bottom: mapFabBottom,
-            child: Column(
-              children: [
-                _MapActionButton(
-                  icon: Icons.my_location,
-                  tooltip: 'Konumum',
-                  onPressed: _goToMyLocation,
-                ),
-                const SizedBox(height: 12),
-                _MapActionButton(
-                  icon: Icons.add_location_alt_outlined,
-                  tooltip: 'Mera ekle',
-                  onPressed: () async {
-                    final ok = await context.push<bool>('/map/add-spot');
-                    if (!mounted) return;
-                    if (ok == true) unawaited(_loadSpots());
-                  },
-                ),
-              ],
+            child: _MapActionButton(
+              icon: Icons.my_location,
+              tooltip: 'Konumum',
+              onPressed: _goToMyLocation,
             ),
           ),
 
@@ -794,13 +783,15 @@ class _MapScreenState extends State<MapScreen> {
                 if (!mounted) return;
                 if (ok == true) unawaited(_loadSpots());
               },
-              backgroundColor: AppColors.secondary,
-              foregroundColor: Colors.white,
-              elevation: 4,
-              icon: const Icon(Icons.add_location_alt, size: 22),
+              backgroundColor: Colors.black.withValues(alpha: 0.60),
+              foregroundColor: Colors.white70,
+              elevation: 2,
+              extendedPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+              icon: const Icon(Icons.add_location_alt, size: 18),
               label: const Text(
-                '+ Nokta Ekle',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                'Nokta Ekle',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -818,80 +809,85 @@ class _MapScreenState extends State<MapScreen> {
                     final onlineAsync = ref.watch(connectivityProvider);
                     final online = onlineAsync.asData?.value ?? true;
 
-                    Widget badgeFor(int count) {
-                      final showBadge = count > 0;
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Icon(
-                            online
-                                ? Icons.cloud_done_outlined
-                                : Icons.cloud_off_outlined,
-                            color: online
-                                ? AppColors.foam.withValues(alpha: 0.75)
-                                : AppColors.warning.withValues(alpha: 0.85),
-                          ),
-                          Positioned(
-                            right: -6,
-                            top: -6,
-                            child: Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: online
-                                    ? AppColors.success
-                                    : AppColors.warning,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppColors.navy,
-                                  width: 2,
-                                ),
-                              ),
+                    Widget buildButton(int count) {
+                      return Tooltip(
+                        message: 'Bildirimler',
+                        child: GestureDetector(
+                          onTap: () => context.push(AppRoutes.notifications),
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.65),
+                              shape: BoxShape.circle,
                             ),
-                          ),
-                          if (showBadge)
-                            Positioned(
-                              right: -8,
-                              bottom: -10,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.sand,
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  count > 99 ? '99+' : '$count',
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.navy,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Center(
+                                  child: Icon(
+                                    Icons.notifications_rounded,
+                                    color: count > 0
+                                        ? AppColors.sand
+                                        : Colors.white,
+                                    size: 26,
                                   ),
                                 ),
-                              ),
+                                // Çevrimiçi/çevrimdışı nokta
+                                Positioned(
+                                  right: 9,
+                                  top: 9,
+                                  child: Container(
+                                    width: 9,
+                                    height: 9,
+                                    decoration: BoxDecoration(
+                                      color: online
+                                          ? AppColors.success
+                                          : AppColors.warning,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.black,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // Okunmamış sayı rozeti
+                                if (count > 0)
+                                  Positioned(
+                                    right: 5,
+                                    bottom: 5,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 5,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.danger,
+                                        borderRadius:
+                                            BorderRadius.circular(999),
+                                      ),
+                                      child: Text(
+                                        count > 99 ? '99+' : '$count',
+                                        style: const TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
-                        ],
+                          ),
+                        ),
                       );
                     }
 
                     return unreadAsync.when(
-                      data: (count) => IconButton(
-                        tooltip: 'Bildirimler',
-                        onPressed: () => context.push(AppRoutes.notifications),
-                        icon: badgeFor(count),
-                      ),
-                      loading: () => IconButton(
-                        tooltip: 'Bildirimler',
-                        onPressed: () => context.push(AppRoutes.notifications),
-                        icon: badgeFor(0),
-                      ),
-                      error: (_, _) => IconButton(
-                        tooltip: 'Bildirimler',
-                        onPressed: () => context.push(AppRoutes.notifications),
-                        icon: badgeFor(0),
-                      ),
+                      data: (count) => buildButton(count),
+                      loading: () => buildButton(0),
+                      error: (_, _) => buildButton(0),
                     );
                   },
                 ),
@@ -908,70 +904,60 @@ class _MapScreenState extends State<MapScreen> {
 
           if (_isLoading) const Center(child: CircularProgressIndicator()),
 
-          // Alt: Draggable sheet
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: DraggableScrollableSheet(
-              controller: _sheetController,
-              initialChildSize: sheetInitialSize,
-              minChildSize: sheetMinSize,
-              maxChildSize: sheetMaxSize,
-              snap: true,
-              snapSizes: const [sheetInitialSize, 0.32, sheetMaxSize],
-              builder: (context, scrollController) {
-                final bottomPad = MediaQuery.of(context).padding.bottom;
-                return Padding(
-                  padding: EdgeInsets.only(bottom: bottomPad),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(20),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          spreadRadius: 2,
+          // Alt: Draggable sheet — yalnızca mera seçilince görünür
+          if (sheetSpot != null)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: DraggableScrollableSheet(
+                controller: _sheetController,
+                initialChildSize: sheetInitialSize,
+                minChildSize: sheetMinSize,
+                maxChildSize: sheetMaxSize,
+                snap: true,
+                snapSizes: const [sheetInitialSize, 0.32, sheetMaxSize],
+                builder: (context, scrollController) {
+                  final bottomPad = MediaQuery.of(context).padding.bottom;
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: bottomPad),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(20),
                         ),
-                      ],
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: ListView(
-                      controller: scrollController,
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                      children: [
-                        Center(
-                          child: Container(
-                            margin: const EdgeInsets.only(top: 8, bottom: 12),
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: Colors.grey.withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            blurRadius: 20,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        children: [
+                          Center(
+                            child: Container(
+                              margin: const EdgeInsets.only(top: 8, bottom: 12),
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.withValues(alpha: 0.4),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
                             ),
                           ),
-                        ),
-                        if (sheetSpot == null)
-                          Text(
-                            'Mera Seç',
-                            style: AppTextStyles.h2.copyWith(
-                              color: AppColors.foam,
-                            ),
-                          )
-                        else
                           _SpotSheetHeader(
                             spot: sheetSpot,
                             activeCount: activeCount,
                             hasMuhtar: sheetSpot.muhtarId != null,
                           ),
-                        const SizedBox(height: 10),
-                        if (sheetSpot != null) ...[
-                          // Son durum özeti (en yeni bildirim varsa)
+                          const SizedBox(height: 10),
                           if (mostRecent != null)
                             _LatestCheckinBanner(checkin: mostRecent),
                           if (mostRecent != null) const SizedBox(height: 10),
-
                           _WeatherMiniRow(
                             loading: _weatherLoading,
                             tempC: tempC,
@@ -1019,23 +1005,13 @@ class _MapScreenState extends State<MapScreen> {
                           if (sheetSpot.description?.trim().isNotEmpty == true)
                             const SizedBox(height: 12),
                           _RecentCheckinsRow(checkins: sheetCheckins),
-                        ] else ...[
-                          Text(
-                            'Haritada bir meraya dokun — anlık balık durumu, hava ve yol tarifi burada görünür.',
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.foam.withValues(alpha: 0.78),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          const _EmptySheetHints(),
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
 
           if (_error != null && !_isLoading)
             Positioned(
@@ -1834,38 +1810,6 @@ class _LatestCheckinBanner extends StatelessWidget {
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptySheetHints extends StatelessWidget {
-  const _EmptySheetHints();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.touch_app_outlined, color: Color(0xFFB8C7DA), size: 18),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Pin\'e dokununca: balık durumu, kalabalık, hava ve "Balık Var!" butonu çıkar.',
-              style: TextStyle(
-                color: Color(0xFFB8C7DA),
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
         ],
       ),
     );
