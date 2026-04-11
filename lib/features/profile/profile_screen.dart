@@ -1,16 +1,16 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/storage_buckets.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/core/utils/avatar_image_prepare.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
@@ -89,20 +89,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final picked = await _imagePicker.pickImage(source: ImageSource.gallery);
       if (picked == null) return;
 
-      final file = File(picked.path);
-      final fileSize = await file.length();
-      if (fileSize > 2 * 1024 * 1024) {
-        throw Exception(
-          'Fotoğraf çok büyük. Lütfen 2MB altında bir fotoğraf seç.',
-        );
-      }
-
-      final ext = picked.path.split('.').last.toLowerCase();
+      final bytes = await prepareAvatarUploadBytes(picked);
       final storagePath =
-          'avatars/${user.id}/${DateTime.now().millisecondsSinceEpoch}.$ext';
+          'avatars/${user.id}/${DateTime.now().millisecondsSinceEpoch}.jpg';
 
       final bucket = avatarStorageBucket();
-      await SupabaseService.storage.from(bucket).upload(storagePath, file);
+      await SupabaseService.storage.from(bucket).uploadBinary(
+            storagePath,
+            bytes,
+            fileOptions: const FileOptions(contentType: 'image/jpeg'),
+          );
 
       final repo = ref.read(userRepositoryProvider);
       await repo.updateProfile(userId: user.id, avatarUrl: storagePath);
