@@ -7,7 +7,7 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/shared/providers/connectivity_provider.dart';
 
 /// Ana shell — 5 sekme, harita ortada vurgulu.
-/// Sıra: Hava(0) | Sıralama(1) | Harita(2) | Günlük(3) | Profil(4)
+/// Sıra: Hava(0) | Sıralama(1) | Harita(2) | Sosyal(3) | Profil(4)
 class MainShell extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -24,7 +24,8 @@ class _MainShellState extends ConsumerState<MainShell> {
     if (path.startsWith(AppRoutes.weather)) return 0;
     if (path.startsWith(AppRoutes.rank)) return 1;
     if (path == AppRoutes.home) return 2;
-    if (path.startsWith(AppRoutes.fishLog)) return 3;
+    if (path.startsWith(AppRoutes.social)) return 3;
+    if (path.startsWith(AppRoutes.fishLog)) return 4;
     if (path.startsWith(AppRoutes.profile) ||
         path.startsWith(AppRoutes.settings) ||
         path.startsWith(AppRoutes.notifications)) {
@@ -43,7 +44,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       case 2:
         context.go(AppRoutes.home);
       case 3:
-        context.go(AppRoutes.fishLog);
+        context.go(AppRoutes.social);
       case 4:
         context.go(AppRoutes.profile);
     }
@@ -111,8 +112,8 @@ class _MainShellState extends ConsumerState<MainShell> {
           color: const Color(0xFF0D1B2E),
           elevation: 12,
           shadowColor: Colors.black54,
-          padding: const EdgeInsets.only(top: 10, bottom: 4),
-          height: 78,
+          padding: const EdgeInsets.only(top: 8, bottom: 6),
+          height: 92,
           child: SafeArea(
             top: false,
             child: Row(
@@ -144,7 +145,7 @@ class _MainShellState extends ConsumerState<MainShell> {
                   ),
                 ),
                 Transform.translate(
-                  offset: const Offset(0, -18),
+                  offset: const Offset(0, -20),
                   child: _MapNavItem(
                     isActive: _currentIndex == 2,
                     onTap: () => _onTabTapped(2),
@@ -155,9 +156,9 @@ class _MainShellState extends ConsumerState<MainShell> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _NavItem(
-                        icon: Icons.menu_book_outlined,
-                        activeIcon: Icons.menu_book,
-                        label: 'Günlük',
+                        icon: Icons.groups_outlined,
+                        activeIcon: Icons.groups,
+                        label: 'Sosyal',
                         index: 3,
                         currentIndex: _currentIndex,
                         onTap: () => _onTabTapped(3),
@@ -199,13 +200,13 @@ class _MapNavItem extends StatelessWidget {
         onTap: onTap,
         customBorder: const CircleBorder(),
         child: SizedBox(
-          width: 88,
+          width: 100,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 58,
-                height: 58,
+                width: 68,
+                height: 68,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isActive
@@ -215,14 +216,14 @@ class _MapNavItem extends StatelessWidget {
                     color: isActive
                         ? AppColors.primaryLight.withValues(alpha: 0.5)
                         : Colors.white24,
-                    width: 2,
+                    width: 2.5,
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.primary.withValues(
                         alpha: isActive ? 0.45 : 0.2,
                       ),
-                      blurRadius: isActive ? 14 : 8,
+                      blurRadius: isActive ? 16 : 10,
                       offset: const Offset(0, 4),
                     ),
                   ],
@@ -230,14 +231,14 @@ class _MapNavItem extends StatelessWidget {
                 child: Icon(
                   Icons.map_rounded,
                   color: isActive ? Colors.white : Colors.white70,
-                  size: 30,
+                  size: 34,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               Text(
                 'Harita',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: isActive ? AppColors.primary : Colors.white60,
                 ),
@@ -272,14 +273,14 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = currentIndex == index;
-    final iconSize = compact ? 22.0 : 26.0;
-    final fontSize = compact ? 10.0 : 11.0;
+    final iconSize = compact ? 28.0 : 30.0;
+    final fontSize = compact ? 12.5 : 13.0;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: compact ? 56 : 64,
-        height: 56,
+        width: compact ? 68 : 72,
+        height: 64,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -288,7 +289,7 @@ class _NavItem extends StatelessWidget {
               color: isActive ? AppColors.primary : Colors.white54,
               size: iconSize,
             ),
-            SizedBox(height: compact ? 2 : 3),
+            SizedBox(height: compact ? 3 : 4),
             Text(
               label,
               maxLines: 1,
@@ -296,7 +297,7 @@ class _NavItem extends StatelessWidget {
               style: TextStyle(
                 fontSize: fontSize,
                 color: isActive ? AppColors.primary : Colors.white54,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
               ),
             ),
           ],

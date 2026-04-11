@@ -13,6 +13,7 @@ class AppRoutes {
   // Shell (BottomNav)
   static const home = '/home';
   static const fishLog = '/fish-log';
+  static const social = '/social';
   static const rank = '/rank';
   static const weather = '/weather';
   static const profile = '/profile';

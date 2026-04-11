@@ -235,6 +235,35 @@ class UserRepository {
     }
   }
 
+  /// Kullanıcı adına göre arama (büyük/küçük harf duyarsız). En az 2 karakter.
+  Future<List<UserModel>> searchUsersByUsername({
+    required String query,
+    int limit = 25,
+  }) async {
+    final raw = query.trim();
+    if (raw.length < 2) return [];
+    final escaped = raw.replaceAll(RegExp(r'[%_]'), '');
+    if (escaped.length < 2) return [];
+    try {
+      final pattern = '%$escaped%';
+      final response = await _db
+          .from('users')
+          .select(
+            'id, email, username, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
+          )
+          .ilike('username', pattern)
+          .order('total_score', ascending: false)
+          .limit(limit);
+      return (response as List)
+          .map((row) => UserModel.fromJson(row as Map<String, dynamic>))
+          .toList();
+    } on PostgrestException catch (e) {
+      throw Exception('Arama yapılırken bir hata oluştu: ${e.message}');
+    } catch (e) {
+      throw Exception('Arama yapılamadı: $e');
+    }
+  }
+
   /// Mevcut kullanımları korumak için FCM token güncelleme yardımcı metodu.
   Future<void> updateFcmToken(String userId, String token) async {
     try {

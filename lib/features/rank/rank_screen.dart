@@ -9,9 +9,14 @@ import 'package:balikci_app/shared/widgets/rank_badge.dart';
 import 'package:balikci_app/shared/widgets/skeleton_widget.dart';
 import 'package:balikci_app/shared/widgets/error_widget.dart';
 
-/// ADIM 7: Sıralama ekranı — podiyum widget, sticky kendi satırı.
+/// Sıralama ekranı — tek sütun liste, okunaklı tipografi (45+ hedef kitle).
 class RankScreen extends ConsumerWidget {
   const RankScreen({super.key});
+
+  static const _tabTextStyle = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,13 +26,29 @@ class RankScreen extends ConsumerWidget {
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
           title: const Text('Sıralama'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.leaderboard_outlined, size: 20), text: 'Genel'),
-              Tab(icon: Icon(Icons.date_range_outlined, size: 20), text: 'Haftalık'),
+          bottom: TabBar(
+            labelStyle: _tabTextStyle,
+            unselectedLabelStyle:
+                _tabTextStyle.copyWith(fontWeight: FontWeight.w500),
+            labelColor: AppColors.foam,
+            unselectedLabelColor: AppColors.muted,
+            indicatorWeight: 3,
+            tabs: const [
               Tab(
-                  icon: Icon(Icons.location_on_outlined, size: 20),
-                  text: 'Bölge'),
+                height: 52,
+                icon: Icon(Icons.leaderboard_outlined, size: 22),
+                text: 'Genel',
+              ),
+              Tab(
+                height: 52,
+                icon: Icon(Icons.date_range_outlined, size: 22),
+                text: 'Haftalık',
+              ),
+              Tab(
+                height: 52,
+                icon: Icon(Icons.location_on_outlined, size: 22),
+                text: 'Bölge',
+              ),
             ],
           ),
         ),
@@ -144,15 +165,29 @@ class _RegionalTabState extends ConsumerState<_RegionalTab> {
             children: [
               Text(
                 'Kıyı bölgesi',
-                style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.muted,
+                  fontSize: 15,
+                ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               DropdownButton<String>(
                 isExpanded: true,
+                style: AppTextStyles.body.copyWith(
+                  color: Colors.white,
+                  fontSize: 17,
+                ),
+                dropdownColor: const Color(0xFF152A45),
                 value: _regionKey,
                 items: [
                   for (final r in kCoastalLeaderboardRegions)
-                    DropdownMenuItem(value: r.key, child: Text(r.label)),
+                    DropdownMenuItem(
+                      value: r.key,
+                      child: Text(
+                        r.label,
+                        style: const TextStyle(fontSize: 17),
+                      ),
+                    ),
                 ],
                 onChanged: (v) {
                   if (v == null) return;
@@ -200,7 +235,7 @@ class _RegionalTabState extends ConsumerState<_RegionalTab> {
   }
 }
 
-// ── ADIM 7: Podiyum + liste birleşik görünüm ──────────────────────────────────
+// ── Tek sütun liderlik listesi ───────────────────────────────────────────────
 
 class _LeaderboardView extends StatelessWidget {
   final List<dynamic> users;
@@ -219,13 +254,9 @@ class _LeaderboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Kendi sırasını bul
     final selfIndex =
         currentUserId != null ? users.indexWhere((u) => u.id == currentUserId) : -1;
     final selfUser = selfIndex >= 0 ? users[selfIndex] : null;
-
-    final top3 = users.take(3).toList();
-    final rest = users.skip(3).toList();
 
     return Column(
       children: [
@@ -234,63 +265,55 @@ class _LeaderboardView extends StatelessWidget {
             onRefresh: onRefresh,
             child: CustomScrollView(
               slivers: [
-                // Podiyum widget (ilk 3)
-                if (top3.length >= 2)
-                  SliverToBoxAdapter(
-                    child: _PodiumWidget(top3: top3, scoreLabel: scoreLabel),
-                  ),
-
-                // Header label
                 if (headerLabel != null)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
                       child: Text(
                         headerLabel!,
-                        style: AppTextStyles.caption
-                            .copyWith(color: AppColors.muted),
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.muted,
+                          fontSize: 16,
+                          height: 1.35,
+                        ),
                       ),
                     ),
                   ),
-
-                // 4. sıradan itibaren liste
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final u = rest[index];
-                      final rank = index + 4;
-                      final isHighlight =
-                          currentUserId != null && u.id == currentUserId;
-                      return Padding(
-                        padding:
-                            const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        child: _LeaderboardRow(
-                          rank: rank,
-                          username: u.username,
-                          avatarUrl: u.avatarUrl,
-                          rankLabel: u.rank,
-                          scoreText: scoreLabel(u),
-                          highlight: isHighlight,
-                        ),
-                      );
-                    },
-                    childCount: rest.length,
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final u = users[index];
+                        final rank = index + 1;
+                        final isHighlight =
+                            currentUserId != null && u.id == currentUserId;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _LeaderboardRow(
+                            rank: rank,
+                            username: u.username,
+                            avatarUrl: u.avatarUrl,
+                            rankLabel: u.rank,
+                            scoreText: scoreLabel(u),
+                            highlight: isHighlight,
+                          ),
+                        );
+                      },
+                      childCount: users.length,
+                    ),
                   ),
                 ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
             ),
           ),
         ),
-
-        // ADIM 7: Sticky kendi satırı (turuncu aksan)
         if (selfUser != null && selfIndex >= 3)
           _StickyOwnRow(
             rank: selfIndex + 1,
             username: selfUser.username,
             avatarUrl: selfUser.avatarUrl,
-            rankLabel: selfUser.rank,
             scoreText: scoreLabel(selfUser),
           ),
       ],
@@ -298,7 +321,7 @@ class _LeaderboardView extends StatelessWidget {
   }
 }
 
-// Haftalık için ayrı view (WeeklyRankEntry tipini kullanır)
+// Haftalık — aynı tek sütun düzeni
 class _WeeklyLeaderboardView extends StatelessWidget {
   final List<WeeklyRankEntry> entries;
   final String? currentUserId;
@@ -317,9 +340,6 @@ class _WeeklyLeaderboardView extends StatelessWidget {
         : -1;
     final selfEntry = selfIndex >= 0 ? entries[selfIndex] : null;
 
-    final top3 = entries.take(3).toList();
-    final rest = entries.skip(3).toList();
-
     return Column(
       children: [
         Expanded(
@@ -327,43 +347,45 @@ class _WeeklyLeaderboardView extends StatelessWidget {
             onRefresh: onRefresh,
             child: CustomScrollView(
               slivers: [
-                if (top3.length >= 2)
-                  SliverToBoxAdapter(
-                    child: _WeeklyPodiumWidget(top3: top3),
-                  ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
                     child: Text(
                       'Son 7 günün en aktif balıkçıları',
-                      style:
-                          AppTextStyles.caption.copyWith(color: AppColors.muted),
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.muted,
+                        fontSize: 16,
+                        height: 1.35,
+                      ),
                     ),
                   ),
                 ),
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final e = rest[index];
-                      final rank = index + 4;
-                      final isHighlight =
-                          currentUserId != null && e.userId == currentUserId;
-                      return Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        child: _LeaderboardRow(
-                          rank: rank,
-                          username: e.username,
-                          avatarUrl: e.avatarUrl,
-                          rankLabel: e.rank,
-                          scoreText: '${e.checkinCount} bildirim',
-                          highlight: isHighlight,
-                        ),
-                      );
-                    },
-                    childCount: rest.length,
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final e = entries[index];
+                        final rank = index + 1;
+                        final isHighlight =
+                            currentUserId != null && e.userId == currentUserId;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _LeaderboardRow(
+                            rank: rank,
+                            username: e.username,
+                            avatarUrl: e.avatarUrl,
+                            rankLabel: e.rank,
+                            scoreText: '${e.checkinCount} bildirim',
+                            highlight: isHighlight,
+                          ),
+                        );
+                      },
+                      childCount: entries.length,
+                    ),
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
             ),
           ),
@@ -373,133 +395,12 @@ class _WeeklyLeaderboardView extends StatelessWidget {
             rank: selfIndex + 1,
             username: selfEntry.username,
             avatarUrl: selfEntry.avatarUrl,
-            rankLabel: selfEntry.rank,
             scoreText: '${selfEntry.checkinCount} bildirim',
           ),
       ],
     );
   }
 }
-
-// ── ADIM 7: Podiyum widget (1-2-3) ───────────────────────────────────────────
-
-class _PodiumWidget extends StatelessWidget {
-  final List<dynamic> top3;
-  final String Function(dynamic u) scoreLabel;
-
-  const _PodiumWidget({required this.top3, required this.scoreLabel});
-
-  @override
-  Widget build(BuildContext context) {
-    final heights = [80.0, 100.0, 60.0]; // 2. yer, 1. yer, 3. yer
-    final order = [1, 0, 2]; // görüntüleme sırası: 2., 1., 3.
-    final medals = ['🥇', '🥈', '🥉'];
-    final podiumColors = [
-      const Color(0xFFFFD700),
-      const Color(0xFFB0BEC5),
-      const Color(0xFFCD7F32),
-    ];
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-      child: Column(
-        children: [
-          // Podiyum sütunları
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: order.map((realIdx) {
-              if (realIdx >= top3.length) return const Expanded(child: SizedBox());
-              final u = top3[realIdx];
-              final color = podiumColors[realIdx];
-              return Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Madalya + avatar
-                    Text(medals[realIdx], style: const TextStyle(fontSize: 24)),
-                    const SizedBox(height: 4),
-                    CircleAvatar(
-                      radius: realIdx == 0 ? 28 : 22,
-                      backgroundImage: u.avatarUrl != null
-                          ? NetworkImage(u.avatarUrl!)
-                          : null,
-                      backgroundColor: AppColors.surface,
-                      child: u.avatarUrl == null
-                          ? Icon(Icons.person,
-                              size: realIdx == 0 ? 28 : 22,
-                              color: AppColors.muted)
-                          : null,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      u.username,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: realIdx == 0 ? 14 : 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      scoreLabel(u),
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    // Podiyum sütun yüksekliği
-                    Container(
-                      height: heights[realIdx],
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.15),
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(8),
-                        ),
-                        border: Border.all(
-                            color: color.withValues(alpha: 0.4), width: 1),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${realIdx + 1}.',
-                          style: TextStyle(
-                            color: color,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WeeklyPodiumWidget extends StatelessWidget {
-  final List<WeeklyRankEntry> top3;
-  const _WeeklyPodiumWidget({required this.top3});
-
-  @override
-  Widget build(BuildContext context) {
-    return _PodiumWidget(
-      top3: top3,
-      scoreLabel: (e) => '${(e as WeeklyRankEntry).checkinCount} bildirim',
-    );
-  }
-}
-
-// ── ADIM 7: Tek satır — 60dp yükseklik ───────────────────────────────────────
 
 class _LeaderboardRow extends StatelessWidget {
   final int rank;
@@ -518,151 +419,213 @@ class _LeaderboardRow extends StatelessWidget {
     required this.highlight,
   });
 
+  /// İlk üç sıra — yan yana podiyum yerine sol şerit + hafif arka plan.
+  static const _topColors = [
+    Color(0xFFD4A574),
+    Color(0xFF9EB0BF),
+    Color(0xFFC17A4A),
+  ];
+
   @override
   Widget build(BuildContext context) {
+    final topAccent = rank <= 3 ? _topColors[rank - 1] : null;
+    final baseFill = highlight
+        ? AppColors.secondary.withValues(alpha: 0.14)
+        : (topAccent != null
+            ? Color.lerp(const Color(0xFF12233A), topAccent, 0.12)!
+            : const Color(0xFF12233A));
+
     return Container(
-      height: 60, // ADIM 7: her satır 60dp
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      constraints: const BoxConstraints(minHeight: 76),
       decoration: BoxDecoration(
-        color: highlight
-            ? AppColors.secondary.withValues(alpha: 0.12)
-            : const Color(0xFF12233A),
-        borderRadius: BorderRadius.circular(14),
-        border: highlight
-            ? Border.all(color: AppColors.secondary.withValues(alpha: 0.4))
-            : null,
+        color: baseFill,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: highlight
+              ? AppColors.secondary.withValues(alpha: 0.55)
+              : Colors.white.withValues(alpha: 0.06),
+          width: highlight ? 1.5 : 1,
+        ),
       ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 32,
-            child: Text(
-              '$rank.',
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.muted,
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (topAccent != null)
+              Container(width: 5, color: topAccent.withValues(alpha: 0.95)),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 40,
+                      child: Text(
+                        '$rank',
+                        style: TextStyle(
+                          color: topAccent ?? AppColors.muted,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                          height: 1.1,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    CircleAvatar(
+                      radius: 26,
+                      backgroundImage:
+                          avatarUrl != null && avatarUrl!.isNotEmpty
+                              ? NetworkImage(avatarUrl!)
+                              : null,
+                      backgroundColor: AppColors.surface,
+                      child: avatarUrl == null || avatarUrl!.isEmpty
+                          ? Icon(
+                              Icons.person_rounded,
+                              size: 28,
+                              color: AppColors.muted,
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            username,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            scoreText,
+                            style: TextStyle(
+                              color: AppColors.foam.withValues(alpha: 0.82),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: RankBadge(
+                          rank: rankLabel,
+                          size: RankBadgeSize.medium,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              textAlign: TextAlign.center,
             ),
-          ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            radius: 20,
-            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-            backgroundColor: AppColors.surface,
-            child: avatarUrl == null
-                ? const Icon(Icons.person, size: 20, color: AppColors.muted)
-                : null,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  username,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  scoreText,
-                  style: AppTextStyles.caption.copyWith(color: AppColors.muted),
-                ),
-              ],
-            ),
-          ),
-          RankBadge(rank: rankLabel, size: RankBadgeSize.small),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-// ── ADIM 7: Sticky kendi satırı (turuncu aksan) ───────────────────────────────
-
 class _StickyOwnRow extends StatelessWidget {
   final int rank;
   final String username;
   final String? avatarUrl;
-  final String rankLabel;
   final String scoreText;
 
   const _StickyOwnRow({
     required this.rank,
     required this.username,
     required this.avatarUrl,
-    required this.rankLabel,
     required this.scoreText,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.secondary.withValues(alpha: 0.15),
-        border: Border(
-          top: BorderSide(color: AppColors.secondary.withValues(alpha: 0.4)),
+    return Material(
+      elevation: 8,
+      color: AppColors.secondary.withValues(alpha: 0.18),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: AppColors.secondary.withValues(alpha: 0.55),
+              width: 1.5,
+            ),
+          ),
         ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.secondary.withValues(alpha: 0.20),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '$rank. sıradasın',
-                style: const TextStyle(
-                  color: AppColors.secondary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        child: SafeArea(
+          top: false,
+          child: Row(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '$rank. sıra',
+                  style: const TextStyle(
+                    color: AppColors.secondary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            CircleAvatar(
-              radius: 18,
-              backgroundImage:
-                  avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-              backgroundColor: AppColors.surface,
-              child: avatarUrl == null
-                  ? const Icon(Icons.person, size: 18, color: AppColors.muted)
-                  : null,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                username,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
+              const SizedBox(width: 14),
+              CircleAvatar(
+                radius: 22,
+                backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
+                    ? NetworkImage(avatarUrl!)
+                    : null,
+                backgroundColor: AppColors.surface,
+                child: avatarUrl == null || avatarUrl!.isEmpty
+                    ? const Icon(Icons.person_rounded,
+                        size: 22, color: AppColors.muted)
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      username,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      scoreText,
+                      style: TextStyle(
+                        color: AppColors.foam.withValues(alpha: 0.9),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            Text(
-              scoreText,
-              style: const TextStyle(
-                color: AppColors.secondary,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -681,15 +644,19 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 56)),
-            const SizedBox(height: 16),
+            Text(emoji, style: const TextStyle(fontSize: 64)),
+            const SizedBox(height: 20),
             Text(
               message,
-              style: AppTextStyles.body.copyWith(color: AppColors.muted),
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.muted,
+                fontSize: 17,
+                height: 1.45,
+              ),
               textAlign: TextAlign.center,
             ),
           ],

@@ -34,6 +34,16 @@ final leaderboardProvider = FutureProvider.autoDispose<List<UserModel>>((
   return repo.getLeaderboard();
 });
 
+/// Kullanıcı adı araması (en az 2 karakter; kısa sorguda boş liste).
+final userSearchByUsernameProvider =
+    FutureProvider.autoDispose.family<List<UserModel>, String>((
+  ref,
+  query,
+) async {
+  final repo = ref.read(userRepositoryProvider);
+  return repo.searchUsersByUsername(query: query);
+});
+
 /// Belirli bir kullanıcının profilini dönen provider.
 final userProfileProvider = FutureProvider.autoDispose
     .family<UserModel?, String>((ref, userId) async {

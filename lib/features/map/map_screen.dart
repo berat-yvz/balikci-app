@@ -173,6 +173,43 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  void _toggleShopsLayer() {
+    final next = !_showShops;
+    setState(() => _showShops = next);
+    if (next) {
+      unawaited(_refreshShopsWithUserFeedback());
+    }
+  }
+
+  Future<void> _refreshShopsWithUserFeedback() async {
+    try {
+      final shops = await _shopRepository.getShops();
+      if (!mounted) return;
+      setState(() => _shops = shops);
+      if (!mounted || !_showShops) return;
+      if (_shops.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Haritada gösterilecek dükkan kaydı yok. Kayıtlı dükkan olunca turuncu işaretler görünür.',
+            ),
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Dükkan listesi yüklenemedi. İnternet bağlantını kontrol edip tekrar dene.',
+          ),
+          duration: Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+
   Future<void> _loadSpots() async {
     setState(() {
       _isLoading = true;
@@ -674,7 +711,6 @@ class _MapScreenState extends State<MapScreen> {
                       EvictErrorTileStrategy.notVisibleRespectMargin,
                   userAgentPackageName: 'com.balikci.app',
                 ),
-                if (_showShops) MarkerLayer(markers: _buildShopMarkers()),
                 if (_showSpots)
                   MarkerClusterLayerWidget(
                     options: MarkerClusterLayerOptions(
@@ -711,6 +747,8 @@ class _MapScreenState extends State<MapScreen> {
                       },
                     ),
                   ),
+                // Mera kümesinin üstünde çiz — aksi halde işaretler görünmeyebilir.
+                if (_showShops) MarkerLayer(markers: _buildShopMarkers()),
               ],
             ),
           ),
@@ -720,14 +758,14 @@ class _MapScreenState extends State<MapScreen> {
           Positioned(
             top: MediaQuery.of(context).padding.top + 8 + 48 + 8,
             left: 12,
-            right: 80,
+            right: 92,
             child: const WeatherCard(),
           ),
 
           // Üst: Arama (floating)
           Positioned(
             left: 16,
-            right: 68,
+            right: 88,
             top: MediaQuery.of(context).padding.top + 8,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1033,7 +1071,7 @@ class _MapScreenState extends State<MapScreen> {
                   showSpots: _showSpots,
                   showShops: _showShops,
                   onToggleSpots: () => setState(() => _showSpots = !_showSpots),
-                  onToggleShops: () => setState(() => _showShops = !_showShops),
+                  onToggleShops: _toggleShopsLayer,
                 ),
               ],
             ),
@@ -1295,15 +1333,15 @@ class _LayerToggleButton extends StatelessWidget {
 
     return Material(
       color: bg,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         onTap: onPressed,
         child: Container(
-          width: 56,
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          width: 68,
+          padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: active
                   ? AppColors.foam.withValues(alpha: 0.25)
@@ -1312,13 +1350,13 @@ class _LayerToggleButton extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(icon, color: fg, size: 22),
+              Icon(icon, color: fg, size: 26),
               const SizedBox(height: 6),
               Text(
                 label,
                 style: TextStyle(
                   color: fg,
-                  fontSize: 13,
+                  fontSize: 15,
                   fontWeight: FontWeight.w800,
                 ),
               ),

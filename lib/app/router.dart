@@ -37,6 +37,9 @@ import 'package:balikci_app/features/fish_log/stats_screen.dart';
 // Features — Rank
 import 'package:balikci_app/features/rank/rank_screen.dart';
 
+// Features — Social
+import 'package:balikci_app/features/social/social_screen.dart';
+
 // Features — Knots
 import 'package:balikci_app/features/knots/knots_screen.dart';
 import 'package:balikci_app/features/knots/knot_detail_screen.dart';
@@ -206,6 +209,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRoutes.weather,
             builder: (context, state) => const WeatherScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.social,
+            builder: (context, state) => const SocialScreen(),
           ),
           GoRoute(
             path: AppRoutes.profile,
