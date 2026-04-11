@@ -90,7 +90,7 @@ class _NotificationSettingsScreenState
               iconColor: AppColors.teal,
               title: 'Hangi bildirimleri alırsın?',
               subtitle:
-                  '• Merana yeni bildirim gelince\n• Birisi bildirini doğru bulunca\n• Rütben yükselince\n• Birisi seni takip edince',
+                  '• Merana yeni bildirim gelince\n• Birisi bildirini doğru bulunca\n• Rütben yükselince\n• Birisi seni takip edince\n• Yaklaşan balık sezonu hatırlatmaları (sunucu takvimi)',
             ),
           ] else ...[
             _InfoRow(

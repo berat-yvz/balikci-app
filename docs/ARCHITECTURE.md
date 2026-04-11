@@ -222,6 +222,30 @@ CREATE TABLE notifications (
 );
 ```
 
+### fish_season_calendar & fish_season_push_log
+Yıllık sezon açılış hatırlatmaları (H10). Takvim satırları yönetilebilir; `season-reminder-push` Edge Function günlük cron ile `notify_days_before` gün kala push atar. Kullanıcı başına sezon yılında tek bildirim `fish_season_push_log` ile garanti edilir.
+
+```sql
+-- Migration: supabase/migrations/20260414_fish_season_calendar.sql
+CREATE TABLE fish_season_calendar (
+  id uuid PRIMARY KEY,
+  species_name text NOT NULL,
+  start_month smallint NOT NULL,
+  start_day smallint NOT NULL,
+  notify_days_before smallint NOT NULL DEFAULT 7,
+  is_active boolean NOT NULL DEFAULT true,
+  ...
+);
+CREATE TABLE fish_season_push_log (
+  user_id uuid REFERENCES users(id),
+  calendar_id uuid REFERENCES fish_season_calendar(id),
+  season_year smallint NOT NULL,
+  UNIQUE (user_id, calendar_id, season_year)
+);
+```
+
+`notification_settings.season_reminder` (varsa) false ise kullanıcı bu push’ları almaz.
+
 ### follows
 ```sql
 CREATE TABLE follows (

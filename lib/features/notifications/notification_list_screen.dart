@@ -145,6 +145,8 @@ class NotificationListScreen extends ConsumerWidget {
       } else {
         router.go(AppRoutes.profile);
       }
+    } else if (type.contains('season')) {
+      router.go(AppRoutes.weather);
     } else if (type.contains('checkin') || type.contains('vote')) {
       final spotId = n.data['spot_id'] as String?;
       router.go(AppRoutes.home, extra: spotId);
@@ -166,6 +168,7 @@ class _NotificationTile extends StatelessWidget {
     if (t.contains('vote')) return '👍';
     if (t.contains('rank')) return '🏆';
     if (t.contains('follow')) return '👤';
+    if (t.contains('season')) return '📅';
     return '🔔';
   }
 

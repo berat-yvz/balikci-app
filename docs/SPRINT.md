@@ -212,7 +212,7 @@
 - [x] Konum tabanlı bildirim: `nearby-checkin-notifier` Edge Function; check-in sonrası 2km yarıçapındaki aktif kullanıcılara bildirim; favorileyen kullanıcılar duplicate önleme ile hariç tutuldu
 - [ ] Gölge puan bildirimi: shadow-point-calculator'dan tetikleniyor *(ileriye ertelendi)*
 - [x] Sabah 06:00 hava bildirimi: `morning-weather-push` Edge Function + `cron_morning_weather_push.sql` cron job (03:00 UTC = 06:00 İstanbul)
-- [ ] Sezon hatırlatma: balık takvimi tablosundan tetikleniyor *(ileriye ertelendi)*
+- [x] Sezon hatırlatma: `fish_season_calendar` + `fish_season_push_log` migration; `season-reminder-push` Edge Function; `supabase/cron_season_reminder_push.sql` (URL’yi proje ref ile güncelle); `notification_settings.season_reminder` sütunu
 - [x] Rütbe yükselme bildirimi: `score-calculator` puana göre eşik geçilince `notification-sender` (`type: rank_up`, `force: true`)
 - [x] Günlük 5 bildirim limiti kontrolü: `notification-sender`'da günlük 5 limit + `force` parametresi (sabah bildirimi sayılmaz)
 - [x] Gece 23:00–07:00 sessiz mod: `notification-sender`'da `isSilentHours()` kontrolü, push atlanır in-app kayıt yapılır

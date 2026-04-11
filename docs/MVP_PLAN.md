@@ -325,7 +325,7 @@ Water Knot, Nail Knot
 | Yakın mera | 2km'de 3+ check-in | ⏳ | "Yakınında 5 kişi balık tutuyor 🎣" |
 | Gölge puan | Takipçi av yaptı | ⏳ | "Senin sayende 3 kişi boş dönmedi 🏆" |
 | Hava uyarısı | Sabah 06:00 cron | ⏳ | "Bugün hava tam lüfer havası ✓" |
-| Sezon hatırlatma | Takvim | ⏳ | "Lüfer sezonu 7 gün sonra açılıyor!" |
+| Sezon hatırlatma | Takvim | ✅ | `fish_season_calendar` + günlük cron + `season-reminder-push` |
 | Rütbe yükselme | Puan eşiği | ⏳ | "Tebrikler! Usta rütbesine ulaştın ⚓" |
 
 ### Uygulanan Teknik Detaylar
