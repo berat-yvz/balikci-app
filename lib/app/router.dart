@@ -57,6 +57,31 @@ import 'package:balikci_app/features/profile/settings_screen.dart';
 /// NotificationService bu key üzerinden GoRouter.of(context).go() çağırır.
 final appNavigatorKey = GlobalKey<NavigatorState>();
 
+/// Push geçişleri için fade + yukarı kayma animasyonu.
+CustomTransitionPage<T> _fadeSlidePage<T>({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<T>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 250),
+    reverseTransitionDuration: const Duration(milliseconds: 200),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.04),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authRepo = ref.watch(authRepositoryProvider);
   final isOnboardingCompleted = ref.watch(onboardingStateProvider);
@@ -118,18 +143,25 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // Auth
-      GoRoute(path: AppRoutes.login, builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: AppRoutes.login,
+        pageBuilder: (context, state) =>
+            _fadeSlidePage(state: state, child: const LoginScreen()),
+      ),
       GoRoute(
         path: AppRoutes.register,
-        builder: (context, state) => const RegisterScreen(),
+        pageBuilder: (context, state) =>
+            _fadeSlidePage(state: state, child: const RegisterScreen()),
       ),
       GoRoute(
         path: AppRoutes.resetCallback,
-        builder: (context, state) => const ResetPasswordScreen(),
+        pageBuilder: (context, state) =>
+            _fadeSlidePage(state: state, child: const ResetPasswordScreen()),
       ),
       GoRoute(
         path: AppRoutes.onboarding,
-        builder: (context, state) => const OnboardingScreen(),
+        pageBuilder: (context, state) =>
+            _fadeSlidePage(state: state, child: const OnboardingScreen()),
       ),
 
       ShellRoute(
@@ -161,31 +193,46 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Map (ana ekran) — extra olarak String spotId geçilebilir (bildirim deep-link)
       GoRoute(
         path: AppRoutes.map,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final spotId = state.extra is String ? state.extra as String : null;
-          return MapScreen(initialSpotId: spotId);
+          return _fadeSlidePage(
+            state: state,
+            child: MapScreen(initialSpotId: spotId),
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.mapAddSpot,
-        builder: (context, state) => const AddSpotScreen(),
+        pageBuilder: (context, state) =>
+            _fadeSlidePage(state: state, child: const AddSpotScreen()),
       ),
       GoRoute(
         path: AppRoutes.mapEditSpot,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final extra = state.extra;
           if (extra is! SpotModel) {
-            return const Scaffold(body: Center(child: Text('Gecersiz mera')));
+            return _fadeSlidePage(
+              state: state,
+              child: const Scaffold(
+                body: Center(child: Text('Gecersiz mera')),
+              ),
+            );
           }
-          return AddSpotScreen(spotToEdit: extra);
+          return _fadeSlidePage(
+            state: state,
+            child: AddSpotScreen(spotToEdit: extra),
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.mapPickLocation,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final extra = state.extra;
-          return PickSpotLocationScreen(
-            initial: extra is LatLng ? extra : null,
+          return _fadeSlidePage(
+            state: state,
+            child: PickSpotLocationScreen(
+              initial: extra is LatLng ? extra : null,
+            ),
           );
         },
       ),
@@ -193,54 +240,72 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Check-in
       GoRoute(
         path: '${AppRoutes.checkin}/:spotId',
-        builder: (_, state) =>
-            CheckinScreen(spotId: state.pathParameters['spotId']!),
+        pageBuilder: (_, state) => _fadeSlidePage(
+          state: state,
+          child: CheckinScreen(spotId: state.pathParameters['spotId']!),
+        ),
       ),
 
       // Fish Log
       GoRoute(
         path: AppRoutes.fishLogAdd,
-        builder: (context, state) => const AddLogScreen(),
+        pageBuilder: (context, state) =>
+            _fadeSlidePage(state: state, child: const AddLogScreen()),
       ),
       GoRoute(
         path: AppRoutes.fishLogStats,
-        builder: (context, state) => const StatsScreen(),
+        pageBuilder: (context, state) =>
+            _fadeSlidePage(state: state, child: const StatsScreen()),
       ),
 
       // Knots
-      GoRoute(path: AppRoutes.knots, builder: (context, state) => const KnotsScreen()),
+      GoRoute(
+        path: AppRoutes.knots,
+        pageBuilder: (context, state) =>
+            _fadeSlidePage(state: state, child: const KnotsScreen()),
+      ),
       GoRoute(
         path: AppRoutes.knotsDetail,
-        builder: (_, state) {
+        pageBuilder: (_, state) {
           final extra = state.extra;
           if (extra is! KnotModel) {
-            return const Scaffold(
-              body: Center(child: Text('Geçersiz düğüm detayı')),
+            return _fadeSlidePage(
+              state: state,
+              child: const Scaffold(
+                body: Center(child: Text('Geçersiz düğüm detayı')),
+              ),
             );
           }
-          return KnotDetailScreen(knot: extra);
+          return _fadeSlidePage(state: state, child: KnotDetailScreen(knot: extra));
         },
       ),
 
       // Notifications
       GoRoute(
         path: AppRoutes.notifications,
-        builder: (context, state) => const NotificationListScreen(),
+        pageBuilder: (context, state) =>
+            _fadeSlidePage(state: state, child: const NotificationListScreen()),
       ),
       GoRoute(
         path: AppRoutes.notificationsSettings,
-        builder: (context, state) => const NotificationSettingsScreen(),
+        pageBuilder: (context, state) => _fadeSlidePage(
+          state: state,
+          child: const NotificationSettingsScreen(),
+        ),
       ),
 
       // Profile
       GoRoute(
         path: '${AppRoutes.profile}/:userId',
-        builder: (context, state) =>
-            ProfileScreen(userId: state.pathParameters['userId']),
+        pageBuilder: (context, state) => _fadeSlidePage(
+          state: state,
+          child: ProfileScreen(userId: state.pathParameters['userId']),
+        ),
       ),
       GoRoute(
         path: AppRoutes.settings,
-        builder: (context, state) => const SettingsScreen(),
+        pageBuilder: (context, state) =>
+            _fadeSlidePage(state: state, child: const SettingsScreen()),
       ),
     ],
     errorBuilder: (_, state) =>

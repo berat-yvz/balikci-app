@@ -278,19 +278,24 @@
 
 ## FAZ E — Test, Polish & Launch (H14–H16)
 
-### H14 — Kapsamlı Test
+### H14 — Kapsamlı Test 🔄
 **Hedef:** Kararlı, hatasız uygulama
 
 #### Görevler
-- [ ] Tüm kullanıcı akışları uçtan uca test edildi
-- [ ] Offline → online geçiş senaryoları test edildi
-- [ ] Düşük ağ hızında test (throttling)
-- [ ] Farklı ekran boyutları test edildi
-- [ ] Edge case'ler: mera 500m dışında check-in, EXIF yok, oy eşitliği
-- [ ] Bellek sızıntısı kontrolü (Riverpod dispose)
-- [ ] Harita performansı: 500+ mera cluster testi
-- [ ] Supabase RLS politikaları test edildi
-- [ ] Firebase bildirim tüm senaryolarda test edildi
+- [x] KnotDetailScreen widget testleri (13 test): başlık, kategori, adımlar, zorluk yıldızları, Öğrendim toggle, SharedPreferences persistence
+- [x] StatsScreen hesaplama unit testleri (17 test): toplam av, salınan balık, sürdürülebilirlik %, tür sıralaması
+- [x] ResetPasswordScreen form validasyon widget testleri (7 test): boş alan, min uzunluk, şifre eşleşmesi, toggle görünürlük
+- [x] Release build doğrulandı: `flutter build appbundle --release` → 49.5MB ✓
+- [x] 171 otomatik test, tümü yeşil
+- [ ] Tüm kullanıcı akışları uçtan uca test edildi *(manuel — cihaz gerektirir)*
+- [ ] Offline → online geçiş senaryoları test edildi *(manuel)*
+- [ ] Düşük ağ hızında test (throttling) *(manuel)*
+- [ ] Farklı ekran boyutları test edildi *(manuel)*
+- [ ] Edge case'ler: mera 500m dışında check-in, EXIF yok, oy eşitliği *(manuel)*
+- [ ] Bellek sızıntısı kontrolü (Riverpod dispose) *(manuel)*
+- [ ] Harita performansı: 500+ mera cluster testi *(manuel)*
+- [ ] Supabase RLS politikaları test edildi *(manuel — Supabase dashboard)*
+- [ ] Firebase bildirim tüm senaryolarda test edildi *(manuel — cihaz gerektirir)*
 
 ---
 
