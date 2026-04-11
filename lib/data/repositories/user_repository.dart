@@ -67,24 +67,80 @@ class UserRepository {
     }
   }
 
+  UserModel _userFromPublicRow(Map<String, dynamic> json) {
+    final m = Map<String, dynamic>.from(json);
+    m.putIfAbsent('email', () => '');
+    m.putIfAbsent('fcm_token', () => null);
+    return UserModel.fromJson(m);
+  }
+
   /// Toplam puana göre liderlik tablosu.
-  /// Bölgeye göre liste için [getLeaderboardInCoastalBox] kullanılır.
+  ///
+  /// Önce `leaderboard_users` RPC (RLS baypas, güvenli kolonlar); yoksa doğrudan `users` sorgusu.
   Future<List<UserModel>> getLeaderboard({int limit = 50}) async {
+    try {
+      final dynamic raw = await _db.rpc(
+        'leaderboard_users',
+        params: {'limit_count': limit},
+      );
+      if (raw == null) return [];
+      if (raw is List) {
+        if (raw.isEmpty) return [];
+        return raw
+            .map((row) => _userFromPublicRow(row as Map<String, dynamic>))
+            .toList();
+      }
+    } on PostgrestException catch (_) {
+      // RPC yoksa veya şema henüz uygulanmadıysa tablo sorgusuna düş.
+    }
+
     try {
       final response = await _db
           .from('users')
-          .select('id, email, username, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at')
+          .select(
+            'id, email, username, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
+          )
           .order('total_score', ascending: false)
           .limit(limit);
-      final users = response.map<UserModel>(UserModel.fromJson).toList();
-
-      return users;
+      return response.map<UserModel>(UserModel.fromJson).toList();
     } on PostgrestException catch (e) {
       throw Exception(
         'Liderlik tablosu alınırken bir hata oluştu: ${e.message}',
       );
     } catch (e) {
       throw Exception('Liderlik tablosu alınamadı: $e');
+    }
+  }
+
+  /// Sosyal keşif: uygulamaya kayıtlı tüm balıkçılar (makul üst sınır).
+  Future<List<UserModel>> getAllRegisteredAnglers({int limit = 2000}) async {
+    try {
+      final dynamic raw = await _db.rpc(
+        'all_registered_anglers',
+        params: {'limit_count': limit},
+      );
+      if (raw == null) return [];
+      if (raw is List) {
+        if (raw.isEmpty) return [];
+        return raw
+            .map((row) => _userFromPublicRow(row as Map<String, dynamic>))
+            .toList();
+      }
+    } on PostgrestException catch (_) {}
+
+    try {
+      final response = await _db
+          .from('users')
+          .select(
+            'id, email, username, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
+          )
+          .order('username', ascending: true)
+          .limit(limit);
+      return response.map<UserModel>(UserModel.fromJson).toList();
+    } on PostgrestException catch (e) {
+      throw Exception('Balıkçı listesi alınırken bir hata oluştu: ${e.message}');
+    } catch (e) {
+      throw Exception('Balıkçı listesi alınamadı: $e');
     }
   }
 
@@ -194,6 +250,33 @@ class UserRepository {
   /// Checkins tablosundan son 7 günün aktivitesi kullanılır;
   /// `total_score` yerine haftalık etkinlik metriği gösterilir.
   Future<List<WeeklyRankEntry>> getWeeklyLeaderboard({int limit = 50}) async {
+    try {
+      final dynamic raw = await _db.rpc(
+        'weekly_leaderboard',
+        params: {'limit_count': limit},
+      );
+      if (raw == null) return [];
+      if (raw is List) {
+        if (raw.isEmpty) return [];
+        return raw
+            .map((row) {
+              final m = row as Map<String, dynamic>;
+              final rawName = m['username'];
+              final name = rawName is String && rawName.trim().isNotEmpty
+                  ? rawName.trim()
+                  : 'Balıkçı';
+              return WeeklyRankEntry(
+                userId: m['user_id'] as String,
+                username: name,
+                avatarUrl: m['avatar_url'] as String?,
+                rank: m['rank'] as String? ?? 'acemi',
+                checkinCount: (m['checkin_count'] as num).toInt(),
+              );
+            })
+            .toList();
+      }
+    } on PostgrestException catch (_) {}
+
     try {
       final since = DateTime.now().toUtc().subtract(const Duration(days: 7));
       final response = await _db

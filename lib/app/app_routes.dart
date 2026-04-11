@@ -14,6 +14,8 @@ class AppRoutes {
   static const home = '/home';
   static const fishLog = '/fish-log';
   static const social = '/social';
+  static const socialFriends = '/social/friends';
+  static const socialRequests = '/social/requests';
   static const rank = '/rank';
   static const weather = '/weather';
   static const profile = '/profile';

@@ -64,6 +64,33 @@ class FollowRepository {
     }
   }
 
+  /// [otherUserId] şu anki kullanıcıyı takip ediyor mu?
+  Future<bool> isFollowedBy(String otherUserId) async {
+    final currentUserId = SupabaseService.auth.currentUser?.id;
+    if (currentUserId == null) return false;
+
+    try {
+      final response = await _db
+          .from('follows')
+          .select('id')
+          .eq('follower_id', otherUserId)
+          .eq('following_id', currentUserId)
+          .limit(1);
+      return (response as List).isNotEmpty;
+    } on PostgrestException catch (e) {
+      throw Exception('Takip durumu alınırken bir hata oluştu: ${e.message}');
+    } catch (e) {
+      throw Exception('Takip durumu alınamadı: $e');
+    }
+  }
+
+  /// Karşılıklı takip (arkadaş).
+  Future<bool> areMutualFriends(String otherUserId) async {
+    final a = await isFollowing(otherUserId);
+    if (!a) return false;
+    return isFollowedBy(otherUserId);
+  }
+
   Future<List<String>> getFollowerIds(String userId) async {
     try {
       final response = await _db
@@ -80,6 +107,14 @@ class FollowRepository {
     } catch (e) {
       throw Exception('Takipçi listesi alınamadı: $e');
     }
+  }
+
+  /// Karşılıklı takip edilen kullanıcı kimlikleri (arkadaşlar).
+  Future<List<String>> getMutualFriendIds(String userId) async {
+    final followers = (await getFollowerIds(userId)).toSet();
+    if (followers.isEmpty) return [];
+    final following = await getFollowingIds(userId);
+    return following.where(followers.contains).toList();
   }
 
   Future<List<String>> getFollowingIds(String userId) async {

@@ -10,9 +10,10 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/storage_buckets.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
+import 'package:balikci_app/shared/providers/friend_request_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
 
-/// Takip ve keşif — alt sekmeden erişilir; günlük yalnızca profilden açılır.
+/// Topluluk — arkadaşlık istekleri ve keşif.
 class SocialScreen extends ConsumerStatefulWidget {
   const SocialScreen({super.key});
 
@@ -52,7 +53,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen> {
   Widget build(BuildContext context) {
     final current = ref.watch(currentUserProvider);
     final searchAsync = ref.watch(userSearchByUsernameProvider(_searchQuery));
-    final discoverAsync = ref.watch(leaderboardProvider);
+    final discoverAsync = ref.watch(allRegisteredAnglersProvider);
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -68,20 +69,16 @@ class _SocialScreenState extends ConsumerState<SocialScreen> {
                     Expanded(
                       child: _ShortcutCard(
                         icon: Icons.people_outline,
-                        label: 'Takip ettiklerim',
-                        onTap: () => context.push(
-                          '${AppRoutes.profile}/${current.id}/following',
-                        ),
+                        label: 'Arkadaşlarım',
+                        onTap: () => context.push(AppRoutes.socialFriends),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _ShortcutCard(
-                        icon: Icons.group_outlined,
-                        label: 'Takipçilerim',
-                        onTap: () => context.push(
-                          '${AppRoutes.profile}/${current.id}/followers',
-                        ),
+                        icon: Icons.mail_outline,
+                        label: 'İstekler',
+                        onTap: () => context.push(AppRoutes.socialRequests),
                       ),
                     ),
                   ],
@@ -159,11 +156,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen> {
                       separatorBuilder: (_, _) => const Divider(height: 1),
                       itemBuilder: (context, i) {
                         final u = users[i];
-                        return _UserTile(
-                          user: u,
-                          onTap: () =>
-                              context.push('${AppRoutes.profile}/${u.id}'),
-                        );
+                        return _DiscoverUserTile(user: u);
                       },
                     ),
                   ],
@@ -191,7 +184,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen> {
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
                 child: Text(
-                  'Öne çıkan balıkçılar — profil açıp takip edebilirsin',
+                  'Kayıtlı balıkçılar — profil açıp arkadaşlık isteği gönderebilirsin',
                   style: TextStyle(
                     color: AppColors.muted,
                     fontWeight: FontWeight.w600,
@@ -222,14 +215,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen> {
                 return SliverList.separated(
                   itemCount: list.length,
                   separatorBuilder: (_, _) => const Divider(height: 1),
-                  itemBuilder: (context, i) {
-                    final u = list[i];
-                    return _UserTile(
-                      user: u,
-                      onTap: () =>
-                          context.push('${AppRoutes.profile}/${u.id}'),
-                    );
-                  },
+                  itemBuilder: (context, i) => _DiscoverUserTile(user: list[i]),
                 );
               },
               loading: () => const SliverToBoxAdapter(
@@ -302,15 +288,16 @@ class _ShortcutCard extends StatelessWidget {
   }
 }
 
-class _UserTile extends StatelessWidget {
+class _DiscoverUserTile extends ConsumerWidget {
   final UserModel user;
-  final VoidCallback onTap;
 
-  const _UserTile({required this.user, required this.onTap});
+  const _DiscoverUserTile({required this.user});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final avatar = user.avatarUrl;
+    final edgeAsync = ref.watch(socialEdgeProvider(user.id));
+
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: AppColors.primaryLight,
@@ -340,8 +327,99 @@ class _UserTile extends StatelessWidget {
         '${user.totalScore} puan',
         style: TextStyle(color: AppColors.muted, fontSize: 13),
       ),
-      trailing: const Icon(Icons.chevron_right, color: Colors.white38),
-      onTap: onTap,
+      trailing: edgeAsync.when(
+        data: (edge) {
+          switch (edge.kind) {
+            case SocialEdgeKind.self:
+              return const SizedBox.shrink();
+            case SocialEdgeKind.mutualFriend:
+              return Text(
+                'Arkadaş',
+                style: TextStyle(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                ),
+              );
+            case SocialEdgeKind.outgoingPending:
+              return TextButton(
+                onPressed: () async {
+                  try {
+                    await ref
+                        .read(friendRequestRepositoryProvider)
+                        .cancelOutgoing(user.id);
+                    ref.invalidate(socialEdgeProvider(user.id));
+                  } catch (_) {}
+                },
+                child: const Text('İptal', style: TextStyle(fontSize: 12)),
+              );
+            case SocialEdgeKind.incomingPending:
+              return FilledButton(
+                style: FilledButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                ),
+                onPressed: edge.incomingRequestId == null
+                    ? null
+                    : () async {
+                        try {
+                          await ref
+                              .read(friendRequestRepositoryProvider)
+                              .acceptRequest(edge.incomingRequestId!);
+                          ref.invalidate(socialEdgeProvider(user.id));
+                          ref.invalidate(mutualFriendsProvider);
+                          ref.invalidate(incomingRequestsWithProfilesProvider);
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('$e')),
+                            );
+                          }
+                        }
+                      },
+                child: const Text('Kabul', style: TextStyle(fontSize: 12)),
+              );
+            case SocialEdgeKind.stranger:
+              return FilledButton.tonal(
+                style: FilledButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                ),
+                onPressed: () async {
+                  try {
+                    await ref
+                        .read(friendRequestRepositoryProvider)
+                        .sendRequest(user.id);
+                    ref.invalidate(socialEdgeProvider(user.id));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('İstek gönderildi')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('$e'),
+                          backgroundColor: AppColors.danger,
+                        ),
+                      );
+                    }
+                  }
+                },
+                child:
+                    const Text('İstek', style: TextStyle(fontSize: 12)),
+              );
+          }
+        },
+        loading: () => const SizedBox(
+          width: 28,
+          height: 28,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+        error: (Object? _, StackTrace? _) => const SizedBox.shrink(),
+      ),
+      onTap: () => context.push('${AppRoutes.profile}/${user.id}'),
     );
   }
 }

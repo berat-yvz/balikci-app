@@ -34,6 +34,13 @@ final leaderboardProvider = FutureProvider.autoDispose<List<UserModel>>((
   return repo.getLeaderboard();
 });
 
+/// Toplulukta tüm kayıtlı balıkçılar (sıra limiti yok, alfabetik).
+final allRegisteredAnglersProvider =
+    FutureProvider.autoDispose<List<UserModel>>((ref) async {
+  final repo = ref.read(userRepositoryProvider);
+  return repo.getAllRegisteredAnglers();
+});
+
 /// Kullanıcı adı araması (en az 2 karakter; kısa sorguda boş liste).
 final userSearchByUsernameProvider =
     FutureProvider.autoDispose.family<List<UserModel>, String>((

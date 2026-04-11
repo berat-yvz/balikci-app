@@ -38,6 +38,8 @@ import 'package:balikci_app/features/fish_log/stats_screen.dart';
 import 'package:balikci_app/features/rank/rank_screen.dart';
 
 // Features — Social
+import 'package:balikci_app/features/social/friend_requests_screen.dart';
+import 'package:balikci_app/features/social/friends_list_screen.dart';
 import 'package:balikci_app/features/social/social_screen.dart';
 
 // Features — Knots
@@ -213,6 +215,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRoutes.social,
             builder: (context, state) => const SocialScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.socialFriends,
+            pageBuilder: (context, state) => _fadeSlidePage(
+              state: state,
+              child: const FriendsListScreen(),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.socialRequests,
+            pageBuilder: (context, state) => _fadeSlidePage(
+              state: state,
+              child: const FriendRequestsScreen(),
+            ),
           ),
           GoRoute(
             path: AppRoutes.profile,

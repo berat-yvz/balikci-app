@@ -16,7 +16,7 @@ import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/favorite_provider.dart';
 import 'package:balikci_app/shared/providers/fish_log_provider.dart';
-import 'package:balikci_app/shared/providers/follow_provider.dart';
+import 'package:balikci_app/shared/providers/friend_request_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
 
@@ -39,7 +39,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final viewedUserId = widget.userId ?? currentUser?.id;
 
     final isSelf = widget.userId == null && currentUser != null;
-    final isViewingOther = widget.userId != null && viewedUserId != null;
 
     if (viewedUserId == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -48,10 +47,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final profileAsync = isSelf
         ? ref.watch(currentUserProfileProvider)
         : ref.watch(userProfileProvider(viewedUserId));
-
-    final isFollowingAsync = isViewingOther
-        ? ref.watch(isFollowingProvider(viewedUserId))
-        : null;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -73,12 +68,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           return _ProfileContent(
             user: user,
             isSelf: isSelf,
-            isFollowingAsync: isFollowingAsync,
             isUploadingAvatar: _uploadingAvatar,
             onPickAvatar: isSelf ? () => _pickAndUploadAvatar(user) : null,
-            onFollowToggle: isViewingOther
-                ? (willFollow) => _toggleFollow(viewedUserId, willFollow)
-                : null,
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -90,15 +81,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _toggleFollow(String targetUserId, bool willFollow) async {
-    final notifier = ref.read(followNotifierProvider.notifier);
-    if (willFollow) {
-      await notifier.follow(targetUserId);
-    } else {
-      await notifier.unfollow(targetUserId);
-    }
   }
 
   Future<void> _pickAndUploadAvatar(UserModel user) async {
@@ -159,18 +141,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 class _ProfileContent extends ConsumerWidget {
   final UserModel user;
   final bool isSelf;
-  final AsyncValue<bool>? isFollowingAsync;
   final bool isUploadingAvatar;
   final VoidCallback? onPickAvatar;
-  final Future<void> Function(bool willFollow)? onFollowToggle;
 
   const _ProfileContent({
     required this.user,
     required this.isSelf,
-    required this.isFollowingAsync,
     required this.isUploadingAvatar,
     required this.onPickAvatar,
-    required this.onFollowToggle,
   });
 
   @override
@@ -303,38 +281,21 @@ class _ProfileContent extends ConsumerWidget {
               ),
             ] else ...[
               const SizedBox(height: 16),
-              if (isFollowingAsync != null)
-                isFollowingAsync!.when(
-                  data: (following) {
-                    final willFollow = !following;
-                    return SizedBox(
+              ref.watch(socialEdgeProvider(user.id)).when(
+                    data: (edge) => _FriendshipActionBar(user: user, edge: edge),
+                    loading: () => const SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: onFollowToggle == null
-                            ? null
-                            : () => onFollowToggle!(willFollow),
-                        icon: Icon(
-                          following ? Icons.person_remove : Icons.person_add,
-                        ),
-                        label: Text(following ? 'Takipten çık' : 'Takip et'),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    error: (e, _) => SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        'Durum yüklenemedi: $e',
+                        style: const TextStyle(color: AppColors.danger),
+                        textAlign: TextAlign.center,
                       ),
-                    );
-                  },
-                  loading: () => const SizedBox(
-                    width: double.infinity,
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (e, _) => SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.person_add_outlined),
-                      label: const Text('Takip et'),
                     ),
                   ),
-                )
-              else
-                const SizedBox.shrink(),
             ],
 
             if (isSelf) ...[
@@ -605,6 +566,135 @@ class _RankProgress extends StatelessWidget {
         return 'Deniz Reisi';
       default:
         return rank;
+    }
+  }
+}
+
+// ── Arkadaşlık eylemleri (başka kullanıcı profili) ────────────────────────────
+
+class _FriendshipActionBar extends ConsumerWidget {
+  final UserModel user;
+  final SocialEdge edge;
+
+  const _FriendshipActionBar({required this.user, required this.edge});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    switch (edge.kind) {
+      case SocialEdgeKind.self:
+        return const SizedBox.shrink();
+      case SocialEdgeKind.mutualFriend:
+        return SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: null,
+            icon: const Icon(Icons.handshake_outlined),
+            label: const Text('Arkadaşsın'),
+          ),
+        );
+      case SocialEdgeKind.outgoingPending:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FilledButton.icon(
+              onPressed: null,
+              icon: const Icon(Icons.schedule),
+              label: const Text('İstek gönderildi'),
+            ),
+            TextButton(
+              onPressed: () async {
+                await ref
+                    .read(friendRequestRepositoryProvider)
+                    .cancelOutgoing(user.id);
+                ref.invalidate(socialEdgeProvider(user.id));
+              },
+              child: const Text('İsteği geri al'),
+            ),
+          ],
+        );
+      case SocialEdgeKind.incomingPending:
+        final id = edge.incomingRequestId;
+        return Row(
+          children: [
+            Expanded(
+              child: FilledButton(
+                onPressed: id == null
+                    ? null
+                    : () async {
+                        try {
+                          await ref
+                              .read(friendRequestRepositoryProvider)
+                              .acceptRequest(id);
+                          ref.invalidate(socialEdgeProvider(user.id));
+                          ref.invalidate(mutualFriendsProvider);
+                          ref.invalidate(incomingRequestsWithProfilesProvider);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Arkadaşlık kabul edildi'),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('$e')),
+                            );
+                          }
+                        }
+                      },
+                child: const Text('Kabul et'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: id == null
+                    ? null
+                    : () async {
+                        await ref
+                            .read(friendRequestRepositoryProvider)
+                            .rejectRequest(id);
+                        ref.invalidate(socialEdgeProvider(user.id));
+                        ref.invalidate(incomingRequestsWithProfilesProvider);
+                      },
+                child: const Text('Reddet'),
+              ),
+            ),
+          ],
+        );
+      case SocialEdgeKind.stranger:
+        return SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: () async {
+              try {
+                await ref
+                    .read(friendRequestRepositoryProvider)
+                    .sendRequest(user.id);
+                ref.invalidate(socialEdgeProvider(user.id));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Arkadaşlık isteği gönderildi'),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('$e'),
+                      backgroundColor: AppColors.danger,
+                    ),
+                  );
+                }
+              }
+            },
+            icon: const Icon(Icons.person_add_outlined),
+            label: const Text('Arkadaşlık isteği gönder'),
+          ),
+        );
     }
   }
 }
