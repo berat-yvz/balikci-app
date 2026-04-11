@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/router.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/core/utils/notification_routing.dart';
 import 'package:balikci_app/data/repositories/user_repository.dart';
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -19,10 +20,23 @@ String _routeForType(String? type) => switch (type?.toLowerCase()) {
   'vote' => AppRoutes.home,
   'rank' => AppRoutes.rank,
   'rank_up' => AppRoutes.rank,
+  // Takip: hedef kullanıcı id yoksa kendi profil sekmesi (geriye dönük)
   'follow' => AppRoutes.profile,
   'fish_log' => AppRoutes.fishLog,
   _ => AppRoutes.home,
 };
+
+Map<String, dynamic> _navigationPayloadFromData(Map<String, dynamic> data) {
+  final String? type = data['type']?.toString();
+  final m = <String, dynamic>{'type': ?type};
+  final spot = data['spot_id']?.toString();
+  if (spot != null && spot.isNotEmpty) m['spot_id'] = spot;
+  for (final k in ['follower_id', 'from_user_id']) {
+    final v = data[k]?.toString();
+    if (v != null && v.isNotEmpty) m[k] = v;
+  }
+  return m;
+}
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Arka plan / terminated handler — top-level fonksiyon zorunlu
@@ -58,11 +72,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
             priority: Priority.high,
           ),
         ),
-        payload: jsonEncode({
-          'type': message.data['type'],
-          if (message.data.containsKey('spot_id'))
-            'spot_id': message.data['spot_id'],
-        }),
+        payload: jsonEncode(_navigationPayloadFromData(message.data)),
       );
     }
   }
@@ -161,11 +171,7 @@ class NotificationService {
           priority: Priority.high,
         ),
       ),
-      payload: jsonEncode({
-        'type': message.data['type'],
-        if (message.data.containsKey('spot_id'))
-          'spot_id': message.data['spot_id'],
-      }),
+      payload: jsonEncode(_navigationPayloadFromData(message.data)),
     );
   }
 
@@ -177,9 +183,14 @@ class NotificationService {
     debugPrint('FCM yönlendirme: type=$type, spotId=$spotId');
     if (spotId != null && (type == 'checkin' || type == 'vote')) {
       _navigate(AppRoutes.home, extra: spotId);
-    } else {
-      _navigate(_routeForType(type));
+      return;
     }
+    final profileId = profileUserIdFromNotificationData(message.data);
+    if (notificationTypeOpensFollowProfile(type) && profileId != null) {
+      _navigate('${AppRoutes.profile}/$profileId');
+      return;
+    }
+    _navigate(_routeForType(type));
   }
 
   /// JSON payload içindeki type ve spot_id'ye göre yönlendir.
@@ -192,9 +203,14 @@ class NotificationService {
       final spotId = map['spot_id'] as String?;
       if (spotId != null && (type == 'checkin' || type == 'vote')) {
         _navigate(AppRoutes.home, extra: spotId);
-      } else {
-        _navigate(_routeForType(type));
+        return;
       }
+      final profileId = profileUserIdFromNotificationData(map);
+      if (notificationTypeOpensFollowProfile(type) && profileId != null) {
+        _navigate('${AppRoutes.profile}/$profileId');
+        return;
+      }
+      _navigate(_routeForType(type));
     } catch (_) {
       // Eski format: payload direkt type string
       _navigate(_routeForType(payload));

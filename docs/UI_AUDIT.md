@@ -106,6 +106,7 @@
 
 ## 7. KALAN BİLİNEN SORUNLAR
 
+- ✅ **Takip / arkadaşlık bildirimi yönlendirmesi:** `data_json.follower_id` (veya `from_user_id`) varsa `/profile/:userId`; FCM yerel payload’a da taşınıyor (`notification_service.dart`, `follow_request` / `follow` türleri profilde gönderiliyor).
 - **`FishLogRepository.updateLog()`** — Edit UI yok. Düşük öncelik.
 - **`FollowRepository.getFollowerIds()/getFollowingIds()`** — UI'da gerekmiyor, sadece backend bildirimleri için var.
 - **"Rozetlerim" sistemi** — Tam rozet sistemi (backend + UI) ileride eklenecek.

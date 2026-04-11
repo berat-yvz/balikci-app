@@ -13,6 +13,7 @@ import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/avatar_image_prepare.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/models/user_model.dart';
+import 'package:balikci_app/data/repositories/notification_repository.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/favorite_provider.dart';
 import 'package:balikci_app/shared/providers/fish_log_provider.dart';
@@ -621,6 +622,19 @@ class _FriendshipActionBar extends ConsumerWidget {
                           await ref
                               .read(friendRequestRepositoryProvider)
                               .acceptRequest(id);
+                          final me = ref.read(currentUserProvider)?.id;
+                          if (me != null) {
+                            await NotificationRepository().sendNotification(
+                              userId: user.id,
+                              title: '🤝 Arkadaşlık kabul edildi',
+                              body:
+                                  'Bir balıkçı arkadaşlık isteğini kabul etti.',
+                              data: {
+                                'type': 'follow',
+                                'follower_id': me,
+                              },
+                            );
+                          }
                           ref.invalidate(socialEdgeProvider(user.id));
                           ref.invalidate(mutualFriendsProvider);
                           ref.invalidate(incomingRequestsWithProfilesProvider);
@@ -668,6 +682,18 @@ class _FriendshipActionBar extends ConsumerWidget {
                 await ref
                     .read(friendRequestRepositoryProvider)
                     .sendRequest(user.id);
+                final me = ref.read(currentUserProvider)?.id;
+                if (me != null) {
+                  await NotificationRepository().sendNotification(
+                    userId: user.id,
+                    title: '👤 Arkadaşlık isteği',
+                    body: 'Bir balıkçı seninle arkadaş olmak istiyor.',
+                    data: {
+                      'type': 'follow_request',
+                      'follower_id': me,
+                    },
+                  );
+                }
                 ref.invalidate(socialEdgeProvider(user.id));
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(

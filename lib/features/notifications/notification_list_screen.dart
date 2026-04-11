@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/utils/notification_routing.dart';
 import 'package:balikci_app/data/models/notification_model.dart';
 import 'package:balikci_app/shared/providers/notification_provider.dart';
 
@@ -137,8 +138,13 @@ class NotificationListScreen extends ConsumerWidget {
     final type = n.type.toLowerCase();
     if (type.contains('rank')) {
       router.go(AppRoutes.rank);
-    } else if (type.contains('follow')) {
-      router.go(AppRoutes.profile);
+    } else if (notificationTypeOpensFollowProfile(n.type)) {
+      final profileId = profileUserIdFromNotificationData(n.data);
+      if (profileId != null) {
+        router.go('${AppRoutes.profile}/$profileId');
+      } else {
+        router.go(AppRoutes.profile);
+      }
     } else if (type.contains('checkin') || type.contains('vote')) {
       final spotId = n.data['spot_id'] as String?;
       router.go(AppRoutes.home, extra: spotId);
