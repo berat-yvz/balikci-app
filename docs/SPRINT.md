@@ -303,7 +303,7 @@
 **Hedef:** Kullanıcı deneyimi yayına hazır
 
 #### Görevler
-- [ ] Loading state'leri her ekranda tutarlı (shimmer veya skeleton) *(shimmer paketi pubspec'te yok; H16'ya ertelendi)*
+- [x] Loading state'leri tutarlı: `SkeletonList` widget eklendi; rank ve fish-log ekranlarında skeleton loading kullanıldı (shimmer paketi gerekmedi)
 - [x] Hata mesajları kullanıcı dostu Türkçe — tüm ekranlarda Türkçe hata metni mevcut
 - [x] Sayfa geçiş animasyonları (go_router transitions) — fade+slide 250ms, tüm push route'lara uygulandı
 - [x] Haptic feedback: check-in ✓, mera kaydet ✓, düğüm öğrendim ✓, profil yenile ✓
