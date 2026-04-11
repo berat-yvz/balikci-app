@@ -1,3 +1,5 @@
+import 'package:balikci_app/core/constants/app_constants.dart';
+
 /// Check-in modeli — ARCHITECTURE.md `checkins` tablosu referans.
 class CheckinModel {
   // cleaned: oy sayıları ve gizleme kuralı model seviyesine eklendi
@@ -31,14 +33,11 @@ class CheckinModel {
     this.expiresAt,
   });
 
-  /// Oy tabanlı gizleme: en az 3 oy ve %70+ yanlış oy → otomatik gizle.
-  static const _minVotesForSuppress = 3;
-  static const _falseVoteThreshold = 0.70;
-
+  /// Oy tabanlı gizleme: AppConstants eşik değerlerini kullanır.
   bool get isSuppressedByVotes {
     final total = trueVotes + falseVotes;
-    if (total < _minVotesForSuppress) return false;
-    return falseVotes / total >= _falseVoteThreshold;
+    if (total < AppConstants.minVotesForHide) return false;
+    return falseVotes / total >= AppConstants.voteThresholdPercent;
   }
 
   /// Bildirim aktif mi? Gizlenmemiş, oy baskısı yok ve süresi dolmamış olmalı.
