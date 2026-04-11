@@ -209,15 +209,6 @@ class _ProfileContent extends ConsumerWidget {
                                 )
                               : null,
                         ),
-                        // ADIM 9: rank_badge profil fotosu yanında
-                        Positioned(
-                          bottom: -4,
-                          right: -8,
-                          child: RankBadge(
-                            rank: user.rank,
-                            size: RankBadgeSize.medium,
-                          ),
-                        ),
                         if (onPickAvatar != null)
                           Positioned(
                             top: 0,
@@ -244,17 +235,19 @@ class _ProfileContent extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(user.username, style: AppTextStyles.h2),
-                  const SizedBox(height: 4),
-                  Text(
-                    _rankLabel(user.rank),
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: RankBadge(
+                        rank: user.rank,
+                        size: RankBadgeSize.medium,
+                      ),
                     ),
                   ),
+                  const SizedBox(height: 14),
+                  Text(user.username, style: AppTextStyles.h2),
                 ],
               ),
             ),

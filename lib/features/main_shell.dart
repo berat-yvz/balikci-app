@@ -112,12 +112,12 @@ class _MainShellState extends ConsumerState<MainShell> {
           color: const Color(0xFF0D1B2E),
           elevation: 12,
           shadowColor: Colors.black54,
-          padding: const EdgeInsets.only(top: 8, bottom: 6),
-          height: 92,
+          padding: const EdgeInsets.only(top: 4, bottom: 2),
+          height: 108,
           child: SafeArea(
             top: false,
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
                   child: Row(
@@ -145,7 +145,7 @@ class _MainShellState extends ConsumerState<MainShell> {
                   ),
                 ),
                 Transform.translate(
-                  offset: const Offset(0, -20),
+                  offset: const Offset(0, -14),
                   child: _MapNavItem(
                     isActive: _currentIndex == 2,
                     onTap: () => _onTabTapped(2),
@@ -205,8 +205,8 @@ class _MapNavItem extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 68,
-                height: 68,
+                width: 62,
+                height: 62,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isActive
@@ -231,14 +231,14 @@ class _MapNavItem extends StatelessWidget {
                 child: Icon(
                   Icons.map_rounded,
                   color: isActive ? Colors.white : Colors.white70,
-                  size: 34,
+                  size: 32,
                 ),
               ),
-              const SizedBox(height: 5),
+              const SizedBox(height: 4),
               Text(
                 'Harita',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w800,
                   color: isActive ? AppColors.primary : Colors.white60,
                 ),

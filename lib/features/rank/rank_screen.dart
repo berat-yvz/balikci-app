@@ -436,10 +436,10 @@ class _LeaderboardRow extends StatelessWidget {
             : const Color(0xFF12233A));
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 76),
+      constraints: const BoxConstraints(minHeight: 64),
       decoration: BoxDecoration(
         color: baseFill,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: highlight
               ? AppColors.secondary.withValues(alpha: 0.55)
@@ -448,91 +448,88 @@ class _LeaderboardRow extends StatelessWidget {
         ),
       ),
       clipBehavior: Clip.antiAlias,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (topAccent != null)
-              Container(width: 5, color: topAccent.withValues(alpha: 0.95)),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 40,
-                      child: Text(
-                        '$rank',
-                        style: TextStyle(
-                          color: topAccent ?? AppColors.muted,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 20,
-                          height: 1.1,
-                        ),
-                        textAlign: TextAlign.center,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (topAccent != null)
+            Container(
+              width: 4,
+              color: topAccent.withValues(alpha: 0.95),
+            ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(10, 10, 8, 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 28,
+                    child: Text(
+                      '$rank',
+                      style: TextStyle(
+                        color: topAccent ?? AppColors.muted,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        height: 1.1,
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(width: 4),
-                    CircleAvatar(
-                      radius: 26,
-                      backgroundImage:
-                          avatarUrl != null && avatarUrl!.isNotEmpty
-                              ? NetworkImage(avatarUrl!)
-                              : null,
-                      backgroundColor: AppColors.surface,
-                      child: avatarUrl == null || avatarUrl!.isEmpty
-                          ? Icon(
-                              Icons.person_rounded,
-                              size: 28,
-                              color: AppColors.muted,
-                            )
-                          : null,
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            username,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                            ),
+                  ),
+                  const SizedBox(width: 6),
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundImage:
+                        avatarUrl != null && avatarUrl!.isNotEmpty
+                            ? NetworkImage(avatarUrl!)
+                            : null,
+                    backgroundColor: AppColors.surface,
+                    child: avatarUrl == null || avatarUrl!.isEmpty
+                        ? Icon(
+                            Icons.person_rounded,
+                            size: 22,
+                            color: AppColors.muted,
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          username.isEmpty ? 'Balıkçı' : username,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            height: 1.2,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            scoreText,
-                            style: TextStyle(
-                              color: AppColors.foam.withValues(alpha: 0.82),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: RankBadge(
-                          rank: rankLabel,
-                          size: RankBadgeSize.medium,
                         ),
-                      ),
+                        const SizedBox(height: 2),
+                        Text(
+                          scoreText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.foam.withValues(alpha: 0.82),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 6),
+                  RankBadge(rank: rankLabel, size: RankBadgeSize.small),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -605,10 +602,11 @@ class _StickyOwnRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      username,
+                      username.isEmpty ? 'Balıkçı' : username,
+                      maxLines: 2,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 17,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
                       overflow: TextOverflow.ellipsis,

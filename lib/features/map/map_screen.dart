@@ -758,14 +758,14 @@ class _MapScreenState extends State<MapScreen> {
           Positioned(
             top: MediaQuery.of(context).padding.top + 8 + 48 + 8,
             left: 12,
-            right: 92,
+            right: 82,
             child: const WeatherCard(),
           ),
 
           // Üst: Arama (floating)
           Positioned(
             left: 16,
-            right: 88,
+            right: 78,
             top: MediaQuery.of(context).padding.top + 8,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -947,7 +947,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          // ADIM 8: Sol alt "+ Nokta Ekle" FAB
+          // Sol alt — mera ekle (tema rengi)
           Positioned(
             left: 16,
             bottom: mapFabBottom,
@@ -958,15 +958,15 @@ class _MapScreenState extends State<MapScreen> {
                 if (!mounted) return;
                 if (ok == true) unawaited(_loadSpots());
               },
-              backgroundColor: Colors.black.withValues(alpha: 0.60),
-              foregroundColor: Colors.white70,
-              elevation: 2,
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 3,
               extendedPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-              icon: const Icon(Icons.add_location_alt, size: 18),
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+              icon: const Icon(Icons.add_location_alt, size: 20),
               label: const Text(
-                'Nokta Ekle',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                'Mera Ekle',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               ),
             ),
           ),
@@ -1333,15 +1333,15 @@ class _LayerToggleButton extends StatelessWidget {
 
     return Material(
       color: bg,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         onTap: onPressed,
         child: Container(
-          width: 68,
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          width: 58,
+          padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: active
                   ? AppColors.foam.withValues(alpha: 0.25)
@@ -1349,14 +1349,15 @@ class _LayerToggleButton extends StatelessWidget {
             ),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: fg, size: 26),
-              const SizedBox(height: 6),
+              Icon(icon, color: fg, size: 22),
+              const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
                   color: fg,
-                  fontSize: 15,
+                  fontSize: 12,
                   fontWeight: FontWeight.w800,
                 ),
               ),

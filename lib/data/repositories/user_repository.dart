@@ -220,9 +220,13 @@ class UserRepository {
 
       return sorted.take(limit).map((e) {
         final meta = userMeta[e.key]!;
+        final rawName = meta['username'];
+        final name = rawName is String && rawName.trim().isNotEmpty
+            ? rawName.trim()
+            : 'Balıkçı';
         return WeeklyRankEntry(
           userId: e.key,
-          username: (meta['username'] as String?) ?? 'Balıkçı',
+          username: name,
           avatarUrl: meta['avatar_url'] as String?,
           rank: meta['rank'] as String? ?? 'acemi',
           checkinCount: e.value,

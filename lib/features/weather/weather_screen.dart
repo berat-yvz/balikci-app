@@ -44,7 +44,7 @@ class WeatherScreen extends ConsumerWidget {
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(istanbulWeatherProvider),
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
               children: [
                 // Konum başlığı
                 Row(
@@ -101,19 +101,41 @@ class WeatherScreen extends ConsumerWidget {
 
                 // Ay fazı kartı — büyük ikon + Türkçe isim
                 const _MoonPhaseCard(),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
-                // Detaylı grafik (opsiyonel, collapse edilmiş)
+                // Grafik — varsayılan kapalı, kaydırma yükünü azaltır
                 if (data.hourly.isNotEmpty) ...[
-                  Text(
-                    'Sıcaklık Grafiği',
-                    style: AppTextStyles.h3.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
+                  Theme(
+                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                    child: ExpansionTile(
+                      initiallyExpanded: false,
+                      maintainState: true,
+                      tilePadding: EdgeInsets.zero,
+                      collapsedIconColor: AppColors.muted,
+                      iconColor: AppColors.primary,
+                      title: Text(
+                        'Sıcaklık grafiği',
+                        style: AppTextStyles.h3.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 17,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '24 saat detay — görmek için dokun',
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.muted,
+                          fontSize: 13,
+                        ),
+                      ),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8, top: 4),
+                          child: _HourlyWeatherChart(hours: hoursFromNow),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  _HourlyWeatherChart(hours: hoursFromNow),
                 ],
 
                 if (data.current != null) ...[
@@ -651,16 +673,8 @@ class _WeatherHeroCard extends StatelessWidget {
     return '🌤️';
   }
 
-  Color _scoreColor(int score) {
-    if (score >= 75) return AppColors.primary;
-    if (score >= 50) return AppColors.accent;
-    if (score >= 25) return const Color(0xFFE07B39);
-    return AppColors.danger;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final score = FishingWeatherUtils.getFishingScore(weather);
     final summary = FishingWeatherUtils.getSummary(weather);
     final icon = _weatherIcon(weather.weatherCode ?? 0);
 
@@ -691,29 +705,7 @@ class _WeatherHeroCard extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-            decoration: BoxDecoration(
-              color: _scoreColor(score).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: _scoreColor(score).withValues(alpha: 0.4),
-                width: 0.5,
-              ),
-            ),
-            child: Text(
-              '${FishingWeatherUtils.getScoreEmoji(score)} '
-              'Balıkçılık skoru: $score/100 — '
-              '${FishingWeatherUtils.getScoreLabel(score)}',
-              style: AppTextStyles.caption.copyWith(
-                fontSize: 15,
-                color: _scoreColor(score),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           _FishingTips(weather: weather),
         ],
       ),
@@ -738,7 +730,7 @@ class _WeatherDetailGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
-      childAspectRatio: 2.4,
+      childAspectRatio: 1.85,
       children: [
         _DetailTile(
           icon: '💨',
