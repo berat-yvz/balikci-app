@@ -1093,10 +1093,10 @@ class _PrivacyChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (level) {
-      'friends' => ('Takipçi', AppColors.pinFriends),
+      'friends' => ('Arkadaşlar', AppColors.pinFriends),
       'private' => ('Gizli', AppColors.pinPrivate),
       'vip' => ('VIP', AppColors.pinVip),
-      _ => ('Public', AppColors.pinPublic),
+      _ => ('Herkese Açık', AppColors.pinPublic),
     };
 
     return Container(

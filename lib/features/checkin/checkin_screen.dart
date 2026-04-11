@@ -162,19 +162,12 @@ class _CheckinScreenState extends State<CheckinScreen>
         return;
       }
 
-      final notes = _noteController.text.isNotEmpty
-          ? _noteController.text
-          : (_selectedFishTypes.isNotEmpty
-              ? 'Balık: ${_selectedFishTypes.join(', ')}'
-              : null);
-
       final payload = {
         'user_id': uid,
         'spot_id': widget.spotId,
         'crowd_level': _crowdLevel,
         'fish_density': _fishDensity,
         'is_active': true,
-        'notes': notes,
       };
 
       final connResult = await Connectivity().checkConnectivity();

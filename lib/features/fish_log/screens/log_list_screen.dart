@@ -21,6 +21,8 @@ class LogListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final logsAsync = ref.watch(fishLogsProvider);
 
+    final bottomPad = MediaQuery.of(context).padding.bottom + 80;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
@@ -63,7 +65,7 @@ class LogListScreen extends ConsumerWidget {
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(fishLogsProvider),
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPad),
               itemCount: logs.length,
               itemBuilder: (context, index) {
                 final log = logs[index];
@@ -76,7 +78,8 @@ class LogListScreen extends ConsumerWidget {
           );
         },
       ),
-      // Balık ekle FAB
+      // Balık ekle FAB — sağ alta hizalanmış, NavigationBar ile çakışmaz
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await context.push('/fish-log/add');
@@ -84,7 +87,7 @@ class LogListScreen extends ConsumerWidget {
         },
         backgroundColor: AppColors.secondary,
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded, size: 26),
+        icon: const Icon(Icons.add_rounded, size: 28),
         label: const Text(
           'Balık Ekle',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),

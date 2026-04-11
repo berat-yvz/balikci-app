@@ -688,21 +688,44 @@ class _SummaryStatsGrid extends ConsumerWidget {
   final String userId;
   const _SummaryStatsGrid({required this.userId});
 
+  static Future<int> _getSpotCount(String userId) async {
+    try {
+      final rows = await SupabaseService.client
+          .from('fishing_spots')
+          .select('id')
+          .eq('user_id', userId);
+      return (rows as List).length;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  static Future<int> _getCheckinCount(String userId) async {
+    try {
+      final rows = await SupabaseService.client
+          .from('checkins')
+          .select('id')
+          .eq('user_id', userId);
+      return (rows as List).length;
+    } catch (_) {
+      return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final fishRepo = ref.watch(fishLogRepositoryProvider);
-    final userRepo = ref.watch(userRepositoryProvider);
 
     return FutureBuilder<List<int>>(
       future: Future.wait([
         fishRepo.getLogCount(userId),
-        userRepo.getFollowerCount(userId),
-        userRepo.getFollowingCount(userId),
+        _getSpotCount(userId),
+        _getCheckinCount(userId),
       ]),
       builder: (context, snapshot) {
         final logCount = snapshot.data?[0] ?? 0;
-        final followerCount = snapshot.data?[1] ?? 0;
-        final followingCount = snapshot.data?[2] ?? 0;
+        final spotCount = snapshot.data?[1] ?? 0;
+        final checkinCount = snapshot.data?[2] ?? 0;
 
         return Row(
           children: [
@@ -716,17 +739,17 @@ class _SummaryStatsGrid extends ConsumerWidget {
             const SizedBox(width: 10),
             Expanded(
               child: _SummaryCard(
-                emoji: '👥',
-                value: '$followerCount',
-                label: 'Takipçi',
+                emoji: '📍',
+                value: '$spotCount',
+                label: 'Toplam Mera',
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _SummaryCard(
                 emoji: '🎣',
-                value: '$followingCount',
-                label: 'Takip',
+                value: '$checkinCount',
+                label: 'Bildirimlerim',
               ),
             ),
           ],
