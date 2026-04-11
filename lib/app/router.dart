@@ -108,10 +108,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Splash için kontrol yok
       if (path == AppRoutes.splash) return null;
 
+      // Şifre sıfırlama (e-posta linki / recovery): oturum açılmış olsa bile
+      // bu ekranda kalınsın; aksi halde ana sayfaya atılıp akış kırılıyordu.
+      if (path == AppRoutes.resetCallback || path == AppRoutes.resetPassword) {
+        return null;
+      }
+
       final isAuthFlow =
           path == AppRoutes.login ||
-          path == AppRoutes.register ||
-          path == AppRoutes.resetCallback;
+          path == AppRoutes.register;
 
       // 1. Durum: Kullanıcı giriş yapmamış
       if (!isLoggedIn) {
@@ -161,6 +166,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.resetCallback,
+        pageBuilder: (context, state) =>
+            _fadeSlidePage(state: state, child: const ResetPasswordScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.resetPassword,
         pageBuilder: (context, state) =>
             _fadeSlidePage(state: state, child: const ResetPasswordScreen()),
       ),

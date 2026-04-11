@@ -7,6 +7,7 @@ class AppRoutes {
   static const login = '/login';
   static const register = '/register';
   static const resetCallback = '/reset-callback';
+  /// E-posta / Site URL ile aynı ekran — Supabase redirect'te `/reset-callback` veya bunu kullan.
   static const resetPassword = '/reset-password';
   static const onboarding = '/onboarding';
 
