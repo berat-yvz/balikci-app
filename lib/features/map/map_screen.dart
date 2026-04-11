@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -1220,26 +1221,30 @@ class _MapScreenState extends State<MapScreen> {
                             waveM: weather?.waveHeight,
                           ),
                           const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _SheetPrimaryButton(
-                                  onPressed: () =>
-                                      _openCheckinForSpot(sheetSpot),
-                                  icon: Icons.check_circle_outline,
-                                  label: 'Balık Var!',
+                          SizedBox(
+                            height: 48,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: _SheetPrimaryButton(
+                                    onPressed: () =>
+                                        _openCheckinForSpot(sheetSpot),
+                                    icon: Icons.check_circle_outline,
+                                    label: 'Balık Var!',
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _SheetSecondaryButton(
-                                  onPressed: () =>
-                                      _openDirectionsForSpot(sheetSpot),
-                                  icon: Icons.directions,
-                                  label: 'Yol Tarifi',
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: _SheetSecondaryButton(
+                                    onPressed: () =>
+                                        _openDirectionsForSpot(sheetSpot),
+                                    icon: Icons.directions,
+                                    label: 'Yol Tarifi',
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           if (isOwner) ...[
                             const SizedBox(height: 10),
@@ -1558,7 +1563,6 @@ class _ActivePulseCount extends StatefulWidget {
 class _ActivePulseCountState extends State<_ActivePulseCount>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c;
-  late final Animation<double> _a;
 
   @override
   void initState() {
@@ -1567,7 +1571,6 @@ class _ActivePulseCountState extends State<_ActivePulseCount>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    _a = CurvedAnimation(parent: _c, curve: Curves.easeInOut);
     if (widget.count > 0) _c.repeat();
   }
 
@@ -1591,39 +1594,48 @@ class _ActivePulseCountState extends State<_ActivePulseCount>
   @override
   Widget build(BuildContext context) {
     final count = widget.count;
+    // ListView / sliver içinde her frame layout boyutu değişmesin: sabit kutu + scale.
     return AnimatedBuilder(
-      animation: _a,
+      animation: _c,
       builder: (context, _) {
-        final t = _a.value;
         final dot = count > 0;
+        final pulse = dot ? 1.0 + 0.22 * math.sin(_c.value * math.pi * 2) : 1.0;
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (dot)
-              Container(
-                width: 8 + 2 * t,
-                height: 8 + 2 * t,
-                decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.95),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.success.withValues(alpha: 0.45),
-                      blurRadius: 10 * (0.4 + t),
-                      spreadRadius: 1.0 + 2.0 * t,
-                    ),
-                  ],
-                ),
-              )
-            else
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: AppColors.muted.withValues(alpha: 0.55),
-                  shape: BoxShape.circle,
-                ),
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: Center(
+                child: dot
+                    ? Transform.scale(
+                        scale: pulse,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withValues(alpha: 0.95),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.success.withValues(alpha: 0.45),
+                                blurRadius: 6,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: AppColors.muted.withValues(alpha: 0.55),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
               ),
+            ),
             const SizedBox(width: 8),
             Text(
               '$count aktif bildirim',
