@@ -68,13 +68,8 @@ class UserRepository {
   }
 
   /// Toplam puana göre liderlik tablosu.
-  ///
-  /// [regionFilter] şu an için sadece imza seviyesinde tutuluyor; ileride
-  /// kullanıcı bölge alanı eklendiğinde sorguya dahil edilecek.
-  Future<List<UserModel>> getLeaderboard({
-    String? regionFilter,
-    int limit = 50,
-  }) async {
+  /// Bölgeye göre liste için [getLeaderboardInCoastalBox] kullanılır.
+  Future<List<UserModel>> getLeaderboard({int limit = 50}) async {
     try {
       final response = await _db
           .from('users')
@@ -83,8 +78,6 @@ class UserRepository {
           .limit(limit);
       final users = response.map<UserModel>(UserModel.fromJson).toList();
 
-      // regionFilter: kullanıcı `region` sütunu eklenene kadar
-      // [getLeaderboardInCoastalBox] ile kıyı kutusu kullanılır.
       return users;
     } on PostgrestException catch (e) {
       throw Exception(

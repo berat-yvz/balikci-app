@@ -166,7 +166,6 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
 
       ref.invalidate(fishLogsProvider);
       ref.invalidate(myFishLogsProvider);
-      ref.invalidate(fishLogStatsProvider);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

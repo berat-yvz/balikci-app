@@ -31,7 +31,6 @@ final leaderboardProvider = FutureProvider.autoDispose<List<UserModel>>((
   ref,
 ) async {
   final repo = ref.read(userRepositoryProvider);
-  // İleride bölge filtresi preferences üzerinden eklenebilir.
   return repo.getLeaderboard();
 });
 

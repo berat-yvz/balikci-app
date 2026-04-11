@@ -7,14 +7,9 @@ import 'package:balikci_app/data/models/knot_model.dart';
 class KnotRepository {
   final SupabaseClient _db = SupabaseService.client;
 
-  Future<List<KnotModel>> getKnots({String? typeFilter}) async {
+  Future<List<KnotModel>> getKnots() async {
     try {
-      var query = _db.from('knots').select();
-      if (typeFilter != null && typeFilter.trim().isNotEmpty) {
-        query = query.eq('type', typeFilter);
-      }
-
-      final response = await query;
+      final response = await _db.from('knots').select();
       return (response as List)
           .map((row) => KnotModel.fromJson(row as Map<String, dynamic>))
           .toList();

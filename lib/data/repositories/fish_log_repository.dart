@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -8,33 +7,12 @@ import '../../core/services/supabase_service.dart';
 import '../../data/local/database.dart';
 import '../../data/models/fish_log_model.dart';
 
-// cleaned: offline-first metotlar eklendi (H7), mevcut API korundu
-
-/// Balık günlüğü repository — offline-first H7.
-/// Önce Drift'e yaz, isSynced=false → arka planda Supabase'e sync et.
+/// Balık günlüğü repository — Supabase + Drift önbellek.
 class FishLogRepository {
   final AppDatabase _db;
   final _remote = SupabaseService.client;
 
   FishLogRepository([AppDatabase? db]) : _db = db ?? AppDatabase.instance;
-
-  // ─── REMOTE ──────────────────────────────────────────────
-
-  /// Fotoğrafı Supabase Storage'a yükler.
-  Future<void> uploadPhoto({
-    required File file,
-    required String storagePath,
-  }) async {
-    try {
-      await SupabaseService.storage
-          .from('fish-photos')
-          .upload(storagePath, file);
-    } on StorageException catch (e) {
-      throw Exception('Fotoğraf yüklenemedi: ${e.message}');
-    } catch (e) {
-      throw Exception('Fotoğraf yüklenemedi: $e');
-    }
-  }
 
   /// Kullanıcının günlük kayıtlarını döner — remote önce, hata durumunda cache.
   Future<List<FishLogModel>> getMyLogs(String userId) async {
@@ -54,34 +32,7 @@ class FishLogRepository {
     }
   }
 
-  /// Yeni kayıt — önce remote, offline ise local + sync kuyruğu.
-  Future<FishLogModel?> addLog(Map<String, dynamic> data) async {
-    try {
-      final response = await _remote
-          .from('fish_logs')
-          .insert(data)
-          .select(
-            'id, user_id, spot_id, species, weight, length, photo_url, exif_verified, weather_snapshot, is_private, released, created_at',
-          )
-          .single();
-      final log = FishLogModel.fromJson(response);
-      await _upsertLocalLog(log, isSynced: true);
-      return log;
-    } catch (_) {
-      final tempId = 'offline_${DateTime.now().millisecondsSinceEpoch}';
-      final offlineData = {
-        ...data,
-        'id': tempId,
-        'created_at': DateTime.now().toIso8601String(),
-      };
-      final log = FishLogModel.fromJson(offlineData);
-      await _upsertLocalLog(log, isSynced: false);
-      await _enqueueSync('insert', 'fish_logs', data);
-      return log;
-    }
-  }
-
-  /// Offline-first kayıt oluşturma — mevcut ekran API'siyle uyumlu.
+  /// Yeni kayıt — doğrudan Supabase (ekran: `AddLogScreen`).
   Future<FishLogModel> createLog({
     required String userId,
     String? spotId,
@@ -125,17 +76,6 @@ class FishLogRepository {
     }
   }
 
-  /// Kayıt günceller.
-  Future<void> updateLog(String id, Map<String, dynamic> updates) async {
-    try {
-      await _remote.from('fish_logs').update(updates).eq('id', id);
-    } on PostgrestException catch (e) {
-      throw Exception('Günlük kaydı güncellenemedi: ${e.message}');
-    } catch (e) {
-      throw Exception('Günlük kaydı güncellenemedi: $e');
-    }
-  }
-
   /// Kayıt siler (remote + local).
   Future<void> deleteLog(String id) async {
     try {
@@ -147,59 +87,6 @@ class FishLogRepository {
     }
     await (_db.delete(_db.localFishLogs)..where((t) => t.id.equals(id))).go();
     await (_db.delete(_db.fishLogs)..where((t) => t.id.equals(id))).go();
-  }
-
-  /// Tür bazlı istatistik.
-  Future<Map<String, int>> getSpeciesStats(String userId) async {
-    final logs = await getMyLogs(userId);
-    final stats = <String, int>{};
-    for (final log in logs) {
-      stats[log.species] = (stats[log.species] ?? 0) + 1;
-    }
-    return stats;
-  }
-
-  /// Genel istatistik.
-  Future<Map<String, dynamic>> getStats(String userId) async {
-    final logs = await getMyLogs(userId);
-    if (logs.isEmpty) {
-      return {
-        'totalLogs': 0,
-        'topSpecies': <Map<String, dynamic>>[],
-        'bestSpotId': null,
-        'totalWeightKg': 0.0,
-      };
-    }
-
-    final speciesCount = <String, int>{};
-    final spotCount = <String, int>{};
-    double totalWeight = 0;
-
-    for (final log in logs) {
-      speciesCount[log.species] = (speciesCount[log.species] ?? 0) + 1;
-      if (log.spotId != null) {
-        spotCount[log.spotId!] = (spotCount[log.spotId!] ?? 0) + 1;
-      }
-      if (log.weight != null) totalWeight += log.weight!;
-    }
-
-    final topSpecies = speciesCount.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    String? bestSpotId;
-    if (spotCount.isNotEmpty) {
-      final best = spotCount.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-      bestSpotId = best.first.key;
-    }
-
-    return {
-      'totalLogs': logs.length,
-      'topSpecies':
-          topSpecies.map((e) => {'species': e.key, 'count': e.value}).toList(),
-      'bestSpotId': bestSpotId,
-      'totalWeightKg': totalWeight,
-    };
   }
 
   /// Kullanıcının toplam av kaydı sayısı.
@@ -217,8 +104,6 @@ class FishLogRepository {
       throw Exception('Kayıt sayısı alınamadı: $e');
     }
   }
-
-  // ─── LOCAL (DRIFT) ────────────────────────────────────────
 
   /// `FishLogs` Drift tablosunu döner — remote önce, hata durumunda local cache.
   Future<List<FishLog>> getLogs() async {
@@ -272,47 +157,16 @@ class FishLogRepository {
     return rows.map(_localToModel).toList();
   }
 
-  /// Sync edilmemiş kayıtları Supabase'e gönderir.
-  Future<void> syncPendingLogs() async {
-    final pending = await (_db.select(_db.localFishLogs)
-          ..where((t) => t.isSynced.equals(false)))
-        .get();
-    for (final row in pending) {
-      try {
-        final data = {
-          'user_id': row.userId,
-          'spot_id': row.spotId,
-          'species': row.species,
-          'weight': row.weight,
-          'length': row.length,
-          'photo_url': row.photoUrl,
-          'weather_snapshot': row.weatherSnapshot != null
-              ? jsonDecode(row.weatherSnapshot!)
-              : null,
-          'is_private': row.isPrivate,
-          'released': row.released,
-          'created_at': row.createdAt.toIso8601String(),
-        };
-        await _remote.from('fish_logs').insert(data);
-        await (_db.update(_db.localFishLogs)
-              ..where((t) => t.id.equals(row.id)))
-            .write(const LocalFishLogsCompanion(isSynced: Value(true)));
-      } catch (_) {
-        // Sonraki sync denemesinde tekrar denenecek
-      }
-    }
-  }
-
-  // ─── YARDIMCI ────────────────────────────────────────────
-
   Future<void> _cacheLogsLocally(List<FishLogModel> logs) async {
     for (final log in logs) {
       await _upsertLocalLog(log, isSynced: true);
     }
   }
 
-  Future<void> _upsertLocalLog(FishLogModel log,
-      {required bool isSynced}) async {
+  Future<void> _upsertLocalLog(
+    FishLogModel log, {
+    required bool isSynced,
+  }) async {
     await _db.into(_db.localFishLogs).insertOnConflictUpdate(
           LocalFishLogsCompanion(
             id: Value(log.id),
@@ -331,17 +185,6 @@ class FishLogRepository {
             released: Value(log.released),
             isSynced: Value(isSynced),
             createdAt: Value(log.createdAt),
-          ),
-        );
-  }
-
-  Future<void> _enqueueSync(
-      String operation, String tableName, Map<String, dynamic> payload) async {
-    await _db.into(_db.syncQueue).insert(
-          SyncQueueCompanion(
-            operation: Value(operation),
-            tableNameValue: Value(tableName),
-            payload: Value(jsonEncode(payload)),
           ),
         );
   }

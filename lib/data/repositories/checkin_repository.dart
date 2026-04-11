@@ -10,45 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class CheckinRepository {
   final _db = SupabaseService.client;
 
-  /// Belirli meradaki aktif check-in kayıtlarını döner.
-  Future<List<CheckinModel>> getActiveCheckins(String spotId) async {
-    try {
-      final response = await _db
-          .from('checkins')
-          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_hidden, true_votes, false_votes, created_at, expires_at')
-          .eq('spot_id', spotId)
-          .eq('is_hidden', false)
-          .gt('expires_at', DateTime.now().toIso8601String())
-          .order('created_at', ascending: false);
-      return response.map<CheckinModel>(CheckinModel.fromJson).toList();
-    } on PostgrestException catch (e) {
-      throw Exception('Aktif check-in kayıtları alınamadı: ${e.message}');
-    } catch (e) {
-      throw Exception('Aktif check-in kayıtları alınamadı: $e');
-    }
-  }
-
-  /// H5 (Map UI) için: Realtime olmadan global aktif check-in'leri tek çağrıyla çek.
-  /// Sonra Map içindeki visible meralarla eşleştirilir.
-  Future<List<CheckinModel>> getActiveCheckinsAll({int limit = 2000}) async {
-    try {
-      final response = await _db
-          .from('checkins')
-          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_hidden, true_votes, false_votes, created_at, expires_at')
-          .eq('is_hidden', false)
-          .gt('expires_at', DateTime.now().toIso8601String())
-          .order('created_at', ascending: false)
-          .range(0, limit - 1);
-
-      return response.map<CheckinModel>(CheckinModel.fromJson).toList();
-    } on PostgrestException catch (e) {
-      throw Exception('Aktif check-in listesi alınamadı: ${e.message}');
-    } catch (e) {
-      throw Exception('Aktif check-in listesi alınamadı: $e');
-    }
-  }
-
-  /// H5 (Map UI) için: Son N saat içindeki check-in'leri çek.
+  /// Harita için: Son N saat içindeki check-in'leri çek.
   ///
   /// - 2 saatten eski olanlar UI'da "soluk"
   /// - 6 saatten eski olanlar UI'dan kalkar
@@ -186,11 +148,11 @@ class CheckinRepository {
     try {
       final existing = await getUserVote(checkinId, voterId);
       if (existing == voteValue) {
-        await unvote(checkinId: checkinId, voterId: voterId);
+        await _unvote(checkinId: checkinId, voterId: voterId);
         return;
       }
 
-      await unvote(checkinId: checkinId, voterId: voterId);
+      await _unvote(checkinId: checkinId, voterId: voterId);
       await _db.from('checkin_votes').insert({
         'checkin_id': checkinId,
         'voter_id': voterId,
@@ -203,8 +165,7 @@ class CheckinRepository {
     }
   }
 
-  /// Unvote — kullanıcı oyunu geri alır.
-  Future<void> unvote({
+  Future<void> _unvote({
     required String checkinId,
     required String voterId,
   }) async {
@@ -221,15 +182,6 @@ class CheckinRepository {
     }
   }
 
-  /// %70+ yanlış oy geldiğinde check-in'i gizle.
-  /// is_hidden = true yaparak tüm is_hidden filtreli sorgulardan kaldırır.
-  Future<void> hideCheckin(String checkinId) async {
-    await _db
-        .from('checkins')
-        .update({'is_hidden': true})
-        .eq('id', checkinId);
-  }
-
   /// Oy sayılarını hesapla; eşik aşıldıysa check-in'i gizle.
   /// Dönüş: true → gizlendi, false → henüz eşik aşılmadı
   Future<bool> evaluateAndHide(String checkinId) async {
@@ -241,7 +193,10 @@ class CheckinRepository {
 
     final ratio = falseCount / total;
     if (ratio >= AppConstants.voteThresholdPercent) {
-      await hideCheckin(checkinId);
+      await _db
+          .from('checkins')
+          .update({'is_hidden': true})
+          .eq('id', checkinId);
       return true;
     }
     return false;
