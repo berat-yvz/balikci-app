@@ -67,18 +67,18 @@ class WeatherScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 if (data.current != null) ...[
                   _WeatherHeroCard(weather: data.current!),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   _FishingScoreCard(weather: data.current!, compact: true),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _WeatherDetailGrid(
                     weather: data.current!,
                     currentHour: currentHour,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                 ],
 
                 // ADIM 4: Saatlik tahmin yatay kaydırmalı
@@ -90,9 +90,9 @@ class WeatherScreen extends ConsumerWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   _HourlyScrollRow(hours: hoursFromNow),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
                   Text(
                     'Sıcaklık grafiği',
                     style: AppTextStyles.h3.copyWith(
@@ -111,15 +111,15 @@ class WeatherScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   _HourlyWeatherChart(hours: hoursFromNow),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
                 ],
 
                 // Ay fazı kartı — büyük ikon + Türkçe isim
                 const _MoonPhaseCard(),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 if (data.current != null) ...[
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
                   _UpdateInfo(
                     weather: data.current!,
                     lastUpdated: data.lastUpdated,
@@ -768,7 +768,7 @@ class _WeatherHeroCard extends StatelessWidget {
           Text(icon, style: const TextStyle(fontSize: 52)),
           const SizedBox(height: 8),
           Text(
-            '${weather.tempCelsius.toStringAsFixed(1)}°C',
+            '${weather.tempCelsius.round()}°C',
             style: AppTextStyles.h1.copyWith(color: Colors.white),
           ),
           const SizedBox(height: 4),
@@ -797,6 +797,12 @@ class _WeatherDetailGrid extends StatelessWidget {
     this.currentHour,
   });
 
+  String _visibilityLabel() {
+    final km = weather.visibilityKm ?? currentHour?.visibilityKm;
+    if (km == null) return 'Veri yok';
+    return '${km.round()} km';
+  }
+
   @override
   Widget build(BuildContext context) {
     return GridView.count(
@@ -805,7 +811,7 @@ class _WeatherDetailGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
-      childAspectRatio: 1.85,
+      childAspectRatio: 2.45,
       children: [
         _DetailTile(
           icon: '💨',
@@ -815,7 +821,7 @@ class _WeatherDetailGrid extends StatelessWidget {
         _DetailTile(
           icon: '🌡️',
           label: 'Sıcaklık',
-          value: '${weather.tempCelsius.toStringAsFixed(1)}°C',
+          value: '${weather.tempCelsius.round()}°C',
         ),
         // Dalga yüksekliği — saatlik tahmin verisinden
         if (currentHour?.waveHeight != null)
@@ -834,9 +840,7 @@ class _WeatherDetailGrid extends StatelessWidget {
         _DetailTile(
           icon: '👁️',
           label: 'Görüş',
-          value: weather.visibilityKm != null
-              ? '${weather.visibilityKm!.toStringAsFixed(1)} km'
-              : 'Veri yok',
+          value: _visibilityLabel(),
         ),
         _DetailTile(
           icon: '☁️',
@@ -853,7 +857,7 @@ class _WeatherDetailGrid extends StatelessWidget {
             icon: '🌡',
             label: 'Deniz Sıcaklığı',
             value:
-                '${currentHour!.seaSurfaceTemperature!.toStringAsFixed(1)}°C',
+                '${currentHour!.seaSurfaceTemperature!.round()}°C',
           ),
         // Akıntı hızı ve yönü — saatlik tahmin verisinden
         if (currentHour?.currentVelocity != null)

@@ -196,6 +196,8 @@ class _MapNavItem extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
+        splashColor: AppColors.teal.withValues(alpha: 0.35),
+        highlightColor: AppColors.foam.withValues(alpha: 0.12),
         child: SizedBox(
           width: 100,
           child: Column(
@@ -272,32 +274,37 @@ class _NavItem extends StatelessWidget {
     final isActive = currentIndex == index;
     final iconSize = compact ? 28.0 : 30.0;
     final fontSize = compact ? 12.5 : 13.0;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: compact ? 68 : 72,
-        height: 64,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isActive ? activeIcon : icon,
-              color: isActive ? AppColors.primary : Colors.white54,
-              size: iconSize,
-            ),
-            SizedBox(height: compact ? 3 : 4),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: fontSize,
-                color: isActive ? AppColors.primary : Colors.white54,
-                fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        splashColor: AppColors.teal.withValues(alpha: 0.35),
+        highlightColor: AppColors.foam.withValues(alpha: 0.12),
+        child: SizedBox(
+          width: compact ? 68 : 72,
+          height: 64,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isActive ? activeIcon : icon,
+                color: isActive ? AppColors.foam : Colors.white54,
+                size: iconSize,
               ),
-            ),
-          ],
+              SizedBox(height: compact ? 3 : 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: fontSize,
+                  color: isActive ? AppColors.foam : Colors.white54,
+                  fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

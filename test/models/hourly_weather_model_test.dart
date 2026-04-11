@@ -101,6 +101,20 @@ void main() {
       expect(m.cloudCover, isNull);
       expect(m.waveHeight, isNull);
       expect(m.currentVelocity, isNull);
+      expect(m.visibilityMeters, isNull);
+      expect(m.visibilityKm, isNull);
+    });
+
+    test('visibility metre → km', () {
+      final m = HourlyWeatherModel.fromOpenMeteo(
+        timeStr: '2025-06-01T10:00',
+        temperature: 18.0,
+        windspeed: 10.0,
+        precipitation: 0.0,
+        weatherCode: 0,
+        visibilityMeters: 5000,
+      );
+      expect(m.visibilityKm, 5.0);
     });
   });
 }

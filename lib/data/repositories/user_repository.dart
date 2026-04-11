@@ -83,9 +83,7 @@ class UserRepository {
         'leaderboard_users',
         params: {'limit_count': limit},
       );
-      if (raw == null) return [];
-      if (raw is List) {
-        if (raw.isEmpty) return [];
+      if (raw is List && raw.isNotEmpty) {
         return raw
             .map((row) => _userFromPublicRow(row as Map<String, dynamic>))
             .toList();
@@ -119,9 +117,7 @@ class UserRepository {
         'all_registered_anglers',
         params: {'limit_count': limit},
       );
-      if (raw == null) return [];
-      if (raw is List) {
-        if (raw.isEmpty) return [];
+      if (raw is List && raw.isNotEmpty) {
         return raw
             .map((row) => _userFromPublicRow(row as Map<String, dynamic>))
             .toList();
@@ -255,9 +251,7 @@ class UserRepository {
         'weekly_leaderboard',
         params: {'limit_count': limit},
       );
-      if (raw == null) return [];
-      if (raw is List) {
-        if (raw.isEmpty) return [];
+      if (raw is List && raw.isNotEmpty) {
         return raw
             .map((row) {
               final m = row as Map<String, dynamic>;

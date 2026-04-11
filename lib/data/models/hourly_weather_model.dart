@@ -10,6 +10,8 @@ class HourlyWeatherModel {
   final double? seaSurfaceTemperature; // °C (marine-api)
   final double? currentVelocity;       // m/s (marine-api)
   final double? currentDirection;      // derece, 0=kuzey (marine-api)
+  /// Open-Meteo forecast `visibility` — metre cinsinden.
+  final double? visibilityMeters;
 
   const HourlyWeatherModel({
     required this.time,
@@ -22,7 +24,12 @@ class HourlyWeatherModel {
     this.seaSurfaceTemperature,
     this.currentVelocity,
     this.currentDirection,
+    this.visibilityMeters,
   });
+
+  /// Görüş mesafesi (km); cache/OW ile aynı birimde kullanım için.
+  double? get visibilityKm =>
+      visibilityMeters == null ? null : visibilityMeters! / 1000.0;
 
   /// Open-Meteo WMO kodundan emoji döner.
   String get weatherEmoji {
@@ -55,6 +62,7 @@ class HourlyWeatherModel {
     double? seaSurfaceTemperature,
     double? currentVelocity,
     double? currentDirection,
+    double? visibilityMeters,
   }) {
     return HourlyWeatherModel(
       time: DateTime.parse(timeStr),
@@ -67,6 +75,7 @@ class HourlyWeatherModel {
       seaSurfaceTemperature: seaSurfaceTemperature,
       currentVelocity: currentVelocity,
       currentDirection: currentDirection,
+      visibilityMeters: visibilityMeters,
     );
   }
 }
