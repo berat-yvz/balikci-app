@@ -59,6 +59,41 @@ class CheckinRepository {
     }
   }
 
+  /// Tüm [checkinIds] için oyları tek seferde çeker (N+1 önlemi — mera sheet donmasını engeller).
+  Future<Map<String, Map<bool, int>>> _voteCountsForCheckinIdsBatch(
+    List<String> checkinIds,
+  ) async {
+    if (checkinIds.isEmpty) return {};
+    const chunk = 100;
+    final trueById = <String, int>{};
+    final falseById = <String, int>{};
+    for (var i = 0; i < checkinIds.length; i += chunk) {
+      final end = i + chunk > checkinIds.length ? checkinIds.length : i + chunk;
+      final slice = checkinIds.sublist(i, end);
+      final response = await _db
+          .from('checkin_votes')
+          .select('checkin_id, vote')
+          .inFilter('checkin_id', slice);
+      for (final row in response as List) {
+        final id = row['checkin_id'] as String;
+        final v = row['vote'] as bool;
+        if (v) {
+          trueById[id] = (trueById[id] ?? 0) + 1;
+        } else {
+          falseById[id] = (falseById[id] ?? 0) + 1;
+        }
+      }
+    }
+    final out = <String, Map<bool, int>>{};
+    for (final id in checkinIds) {
+      out[id] = {
+        true: trueById[id] ?? 0,
+        false: falseById[id] ?? 0,
+      };
+    }
+    return out;
+  }
+
   /// Belirli mera için son 6 saatlik check-in kayıtlarını kullanıcı adıyla döner.
   Future<List<CheckinModel>> getCheckinsForSpot(String spotId) async {
     try {
@@ -75,14 +110,15 @@ class CheckinRepository {
       final baseItems = response
           .map<CheckinModel>(CheckinModel.fromJson)
           .toList();
-      final voteCountsList = await Future.wait(
-        baseItems.map((c) => getVoteCounts(c.id)),
+      if (baseItems.isEmpty) return [];
+
+      final voteMap = await _voteCountsForCheckinIdsBatch(
+        baseItems.map((c) => c.id).toList(),
       );
 
       final withVotes = <CheckinModel>[];
-      for (var i = 0; i < baseItems.length; i++) {
-        final base = baseItems[i];
-        final counts = voteCountsList[i];
+      for (final base in baseItems) {
+        final counts = voteMap[base.id] ?? {true: 0, false: 0};
         final trueVotes = counts[true] ?? 0;
         final falseVotes = counts[false] ?? 0;
         final model = CheckinModel(

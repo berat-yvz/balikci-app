@@ -212,48 +212,51 @@ class _CheckinScreenState extends State<CheckinScreen>
 
       unawaited(ScoreService.award(uid, ScoreSource.checkinUnverified));
 
-      if (spot.userId != uid) {
-        unawaited(
-          NotificationRepository().sendNotification(
-            userId: spot.userId,
-            title: '🎣 Meranızda Balık Var!',
-            body: '${spot.name} merasında yeni bildirim geldi.',
-            data: {'type': 'checkin', 'spot_id': spot.id},
-          ),
-        );
-      }
+      // Push / edge çağrıları UI isolate’ini meşgul etmesin — bir sonraki event loop turunda çalışsın.
+      unawaited(
+        Future(() async {
+          try {
+            if (spot.userId != uid) {
+              await NotificationRepository().sendNotification(
+                userId: spot.userId,
+                title: '🎣 Meranızda Balık Var!',
+                body: '${spot.name} merasında yeni bildirim geldi.',
+                data: {'type': 'checkin', 'spot_id': spot.id},
+              );
+            }
+          } catch (_) {}
 
-      unawaited(() async {
-        try {
-          final favRepo = FavoriteRepository();
-          final userIds = await favRepo.getUsersWhoFavorited(spot.id);
-          final notifRepo = NotificationRepository();
-          for (final favUserId in userIds) {
-            if (favUserId == uid || favUserId == spot.userId) continue;
-            await notifRepo.sendNotification(
-              userId: favUserId,
-              title: '🎣 Favori Meranızda Balık Var!',
-              body: '${spot.name} merasında balık bildirimi geldi.',
-              data: {'type': 'checkin', 'spot_id': spot.id},
+          try {
+            final favRepo = FavoriteRepository();
+            final userIds = await favRepo.getUsersWhoFavorited(spot.id);
+            final notifRepo = NotificationRepository();
+            for (final favUserId in userIds) {
+              if (favUserId == uid || favUserId == spot.userId) continue;
+              try {
+                await notifRepo.sendNotification(
+                  userId: favUserId,
+                  title: '🎣 Favori Meranızda Balık Var!',
+                  body: '${spot.name} merasında balık bildirimi geldi.',
+                  data: {'type': 'checkin', 'spot_id': spot.id},
+                );
+              } catch (_) {}
+            }
+          } catch (_) {}
+
+          try {
+            await SupabaseService.client.functions.invoke(
+              'nearby-checkin-notifier',
+              body: {
+                'user_id': uid,
+                'spot_id': spot.id,
+                'lat': spot.lat,
+                'lng': spot.lng,
+                'spot_name': spot.name,
+              },
             );
-          }
-        } catch (_) {}
-      }());
-
-      unawaited(() async {
-        try {
-          await SupabaseService.client.functions.invoke(
-            'nearby-checkin-notifier',
-            body: {
-              'user_id': uid,
-              'spot_id': spot.id,
-              'lat': spot.lat,
-              'lng': spot.lng,
-              'spot_name': spot.name,
-            },
-          );
-        } catch (_) {}
-      }());
+          } catch (_) {}
+        }),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

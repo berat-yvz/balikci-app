@@ -62,7 +62,8 @@ class _MapScreenState extends State<MapScreen> {
   bool _showShops = false;
   bool _showSpots = true;
 
-  bool _checkingCheckins = false;
+  bool _checkinRefreshInFlight = false;
+  bool _checkinRefreshQueued = false;
   Timer? _checkinPollTimer;
   Timer? _boundsDebounce;
   RealtimeChannel? _checkinsRealtimeChannel;
@@ -71,8 +72,8 @@ class _MapScreenState extends State<MapScreen> {
   final DraggableScrollableController _sheetController =
       DraggableScrollableController();
 
-  /// Sheet içi ListView denetleyicisi — check-in sonrası scroll metriklerini düzeltmek için.
-  ScrollController? _sheetListScrollController;
+  /// Açık mera sheet’i için detaylı check-in isteği — eski cevapları yok say.
+  int _sheetDetailEpoch = 0;
 
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -291,9 +292,12 @@ class _MapScreenState extends State<MapScreen> {
 
   /// Açık mera için oy tabanlı gizleme kurallarını uygular (`getCheckinsForSpot`).
   Future<void> _applyDetailedCheckinsForSpot(String spotId) async {
+    final epoch = ++_sheetDetailEpoch;
     try {
       final list = await _checkinRepository.getCheckinsForSpot(spotId);
       if (!mounted) return;
+      if (epoch != _sheetDetailEpoch) return;
+      if (_sheetSpot?.id != spotId) return;
       setState(() {
         final copy = Map<String, List<CheckinModel>>.from(
           _activeCheckinsBySpotId,
@@ -370,47 +374,32 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  void _clampSheetListScrollExtent() {
-    final c = _sheetListScrollController;
-    if (c == null || !c.hasClients) return;
-    final p = c.position;
-    final clamped = p.pixels.clamp(p.minScrollExtent, p.maxScrollExtent);
-    if ((p.pixels - clamped).abs() > 0.5) {
-      c.jumpTo(clamped);
-    }
-  }
-
   Future<void> _openCheckinForSpot(SpotModel spot) async {
     final result = await context.push<bool>('/checkin/${spot.id}');
+    if (!mounted || result != true) return;
+
+    await _refreshActiveCheckins();
     if (!mounted) return;
-    if (result == true) {
-      await _refreshActiveCheckins();
-      if (_sheetSpot?.id == spot.id) {
-        await _loadWeatherForSpot(spot);
-      }
-      if (!mounted) return;
-      setState(() {});
-      // Route dönüşü + yeni bildirim satırları sonrası scroll metrikleri bozulabiliyor;
-      // önce offset'i güvenli aralığa çek, sonra sheet boyutunu animasyonla ayarla.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || _sheetSpot?.id != spot.id) return;
-        _clampSheetListScrollExtent();
-        final c = _sheetListScrollController;
-        if (c != null && c.hasClients) {
-          c.jumpTo(c.position.minScrollExtent);
-        }
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted || !_sheetController.isAttached) return;
-          if (_sheetSpot?.id != spot.id) return;
-          _clampSheetListScrollExtent();
-          _sheetController.animateTo(
-            0.42,
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.easeOut,
-          );
-        });
-      });
+
+    if (_sheetSpot?.id == spot.id) {
+      await _applyDetailedCheckinsForSpot(spot.id);
     }
+    if (!mounted) return;
+
+    if (_sheetSpot?.id == spot.id) {
+      await _loadWeatherForSpot(spot);
+    }
+    if (!mounted) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _sheetSpot?.id != spot.id) return;
+      if (!_sheetController.isAttached) return;
+      _sheetController.animateTo(
+        0.42,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   void _openEditForSpot(SpotModel spot) {
@@ -538,36 +527,47 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _refreshActiveCheckins() async {
-    if (_checkingCheckins) return;
-    if (!mounted) return;
-    if (_spots.isEmpty) return;
+    if (!mounted || _spots.isEmpty) return;
 
-    _checkingCheckins = true;
+    if (_checkinRefreshInFlight) {
+      _checkinRefreshQueued = true;
+      return;
+    }
+    _checkinRefreshInFlight = true;
     try {
-      final active = await _checkinRepository.getRecentCheckinsAll();
-      final spotIds = _spots.map((s) => s.id).toSet();
+      while (mounted) {
+        _checkinRefreshQueued = false;
 
-      final Map<String, List<CheckinModel>> grouped = {};
-      for (final c in active) {
-        if (!spotIds.contains(c.spotId)) continue;
-        grouped.putIfAbsent(c.spotId, () => []).add(c);
-      }
+        final active = await _checkinRepository.getRecentCheckinsAll();
+        final spotIds = _spots.map((s) => s.id).toSet();
 
-      // Created_at desc olduğu için çoğu zaman zaten doğru sıralı; yine de güvenli olsun.
-      for (final entry in grouped.entries) {
-        entry.value.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      }
+        final Map<String, List<CheckinModel>> grouped = {};
+        for (final c in active) {
+          if (!spotIds.contains(c.spotId)) continue;
+          grouped.putIfAbsent(c.spotId, () => []).add(c);
+        }
 
-      if (!mounted) return;
-      setState(() => _activeCheckinsBySpotId = grouped);
-      final openId = _sheetSpot?.id;
-      if (openId != null) {
-        unawaited(_applyDetailedCheckinsForSpot(openId));
+        for (final entry in grouped.entries) {
+          entry.value.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        }
+
+        if (!mounted) return;
+        setState(() => _activeCheckinsBySpotId = grouped);
+        final openId = _sheetSpot?.id;
+        if (openId != null) {
+          unawaited(_applyDetailedCheckinsForSpot(openId));
+        }
+
+        if (!_checkinRefreshQueued) break;
       }
     } catch (_) {
       // UI bozulmasın: kontrol başarısız olursa marker rozetleri değişmez.
     } finally {
-      _checkingCheckins = false;
+      _checkinRefreshInFlight = false;
+      if (_checkinRefreshQueued && mounted) {
+        _checkinRefreshQueued = false;
+        unawaited(_refreshActiveCheckins());
+      }
     }
   }
 
@@ -679,10 +679,6 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_sheetSpot == null) {
-      _sheetListScrollController = null;
-    }
-
     const sheetInitialSize = 0.18;
     const sheetMinSize = 0.14;
     const sheetMaxSize = 0.85;
@@ -1159,7 +1155,6 @@ class _MapScreenState extends State<MapScreen> {
                 snap: true,
                 snapSizes: const [sheetInitialSize, 0.32, 0.42, sheetMaxSize],
                 builder: (context, scrollController) {
-                  _sheetListScrollController = scrollController;
                   final bottomPad = MediaQuery.of(context).padding.bottom;
                   return Padding(
                     padding: EdgeInsets.only(bottom: bottomPad),
@@ -1179,9 +1174,7 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: ListView(
-                        key: ValueKey(
-                          'spot_sheet_${sheetSpot.id}_n${sheetCheckins.length}',
-                        ),
+                        key: ValueKey<String>('spot_sheet_${sheetSpot.id}'),
                         controller: scrollController,
                         physics: const AlwaysScrollableScrollPhysics(
                           parent: ClampingScrollPhysics(),
