@@ -144,12 +144,9 @@ class _MainShellState extends ConsumerState<MainShell> {
                     ],
                   ),
                 ),
-                Transform.translate(
-                  offset: const Offset(0, -14),
-                  child: _MapNavItem(
-                    isActive: _currentIndex == 2,
-                    onTap: () => _onTabTapped(2),
-                  ),
+                _MapNavItem(
+                  isActive: _currentIndex == 2,
+                  onTap: () => _onTabTapped(2),
                 ),
                 Expanded(
                   child: Row(

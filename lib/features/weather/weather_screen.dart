@@ -69,14 +69,10 @@ class WeatherScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // ADIM 4: "Bugün Balık Tutulur mu?" büyük kart
-                if (data.current != null) ...[
-                  _FishingScoreCard(weather: data.current!),
-                  const SizedBox(height: 16),
-                ],
-
                 if (data.current != null) ...[
                   _WeatherHeroCard(weather: data.current!),
+                  const SizedBox(height: 12),
+                  _FishingScoreCard(weather: data.current!, compact: true),
                   const SizedBox(height: 16),
                   _WeatherDetailGrid(
                     weather: data.current!,
@@ -97,46 +93,30 @@ class WeatherScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   _HourlyScrollRow(hours: hoursFromNow),
                   const SizedBox(height: 20),
+                  Text(
+                    'Sıcaklık grafiği',
+                    style: AppTextStyles.h3.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 17,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Önümüzdeki 24 saat',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.muted,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _HourlyWeatherChart(hours: hoursFromNow),
+                  const SizedBox(height: 20),
                 ],
 
                 // Ay fazı kartı — büyük ikon + Türkçe isim
                 const _MoonPhaseCard(),
                 const SizedBox(height: 16),
-
-                // Grafik — varsayılan kapalı, kaydırma yükünü azaltır
-                if (data.hourly.isNotEmpty) ...[
-                  Theme(
-                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                    child: ExpansionTile(
-                      initiallyExpanded: false,
-                      maintainState: true,
-                      tilePadding: EdgeInsets.zero,
-                      collapsedIconColor: AppColors.muted,
-                      iconColor: AppColors.primary,
-                      title: Text(
-                        'Sıcaklık grafiği',
-                        style: AppTextStyles.h3.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 17,
-                        ),
-                      ),
-                      subtitle: Text(
-                        '24 saat detay — görmek için dokun',
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.muted,
-                          fontSize: 13,
-                        ),
-                      ),
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8, top: 4),
-                          child: _HourlyWeatherChart(hours: hoursFromNow),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
 
                 if (data.current != null) ...[
                   const SizedBox(height: 24),
@@ -158,7 +138,9 @@ class WeatherScreen extends ConsumerWidget {
 
 class _FishingScoreCard extends StatelessWidget {
   final WeatherModel weather;
-  const _FishingScoreCard({required this.weather});
+  /// `true`: ana hava kartının altında kompakt şerit.
+  final bool compact;
+  const _FishingScoreCard({required this.weather, this.compact = false});
 
   Color _bgColor(int score) {
     if (score >= 70) return const Color(0xFF1A3A2A);
@@ -195,6 +177,99 @@ class _FishingScoreCard extends StatelessWidget {
     final score = FishingWeatherUtils.getFishingScore(weather);
     final bgColor = _bgColor(score);
     final accentColor = _accentColor(score);
+
+    if (compact) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: accentColor.withValues(alpha: 0.45),
+            width: 1.2,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Bugün balık tutulur mu?',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.95),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _verdict(score),
+                      style: TextStyle(
+                        color: accentColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _subtitle(weather),
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      height: 1.25,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$score',
+                  style: TextStyle(
+                    color: accentColor,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 5),
+                  child: Text(
+                    '/100',
+                    style: TextStyle(
+                      color: accentColor.withValues(alpha: 0.7),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.all(24),
