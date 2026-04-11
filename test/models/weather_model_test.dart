@@ -39,7 +39,7 @@ WeatherModel _makeFromDataJson({
     'wind': {'speed': windMs, 'deg': 270},
     'clouds': {'all': 40.0},
     if (weatherId != null) 'weather': [{'id': weatherId, 'main': 'Clear'}],
-    if (visibilityM != null) 'visibility': visibilityM,
+    if (visibilityM != null) 'visibility': visibilityM,  // ignore: use_null_aware_elements
   },
   temperature: tempC,
   windspeed: windMs * 3.6,
