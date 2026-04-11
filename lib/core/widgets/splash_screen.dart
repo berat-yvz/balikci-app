@@ -46,10 +46,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           children: [
             SvgPicture.asset(
               'assets/images/logo.svg',
-              width: 180,
-              height: 180,
+              width: 260,
+              height: 260,
+              fit: BoxFit.contain,
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 36),
             CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
               strokeWidth: 2,
