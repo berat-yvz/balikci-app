@@ -85,7 +85,7 @@ function isSilentHours(): boolean {
 
 // ── Ana handler ──────────────────────────────────────────────────────────────
 
-serve(async (req) => {
+serve(async (req: Request) => {
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,

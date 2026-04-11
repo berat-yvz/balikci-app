@@ -16,7 +16,7 @@ function haversineMeters(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
-serve(async (req) => {  
+serve(async (req: Request) => {
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -84,7 +84,7 @@ serve(async (req) => {
     }
     // Ayarı olmayan kullanıcılar için varsayılan = izin verilmiş
     for (const id of nearbyUserIds) {
-      if (!(notifSettings ?? []).some((s) => (s as { user_id: string }).user_id === id)) {
+      if (!(notifSettings ?? []).some((s: { user_id: string }) => s.user_id === id)) {
         allowedIds.add(id)
       }
     }

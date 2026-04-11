@@ -6,7 +6,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // Son 30 günde aktif olan kullanıcılara 1 bildirim gönderilir.
 // Her kullanıcı için weather_cache tablosundan güncel özet alınır.
 
-serve(async (req) => {
+serve(async (req: Request) => {
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,

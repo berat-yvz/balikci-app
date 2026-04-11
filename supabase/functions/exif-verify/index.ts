@@ -35,7 +35,7 @@ function extractCheckinIdFromObjectName(objectName: string): string | null {
   return parts[1] ?? null;
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405 });
   }

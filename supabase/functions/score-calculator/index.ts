@@ -11,7 +11,7 @@ const POINTS: Record<string, number> = {
   spot_public: 50,
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
