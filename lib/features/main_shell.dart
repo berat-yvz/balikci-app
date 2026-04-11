@@ -8,6 +8,7 @@ import 'package:balikci_app/shared/providers/connectivity_provider.dart';
 
 /// Ana shell — 5 sekme, harita ortada vurgulu.
 /// Sıra: Hava(0) | Sıralama(1) | Harita(2) | Sosyal(3) | Profil(4)
+/// [-1]: Bu shell’de karşılığı olmayan rotalar (ör. balık günlüğü) — hiçbir sekme seçili gösterilmez.
 class MainShell extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -25,7 +26,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     if (path.startsWith(AppRoutes.rank)) return 1;
     if (path == AppRoutes.home) return 2;
     if (path.startsWith(AppRoutes.social)) return 3;
-    if (path.startsWith(AppRoutes.fishLog)) return 4;
+    if (path.startsWith(AppRoutes.fishLog)) return -1;
     if (path.startsWith(AppRoutes.profile) ||
         path.startsWith(AppRoutes.settings) ||
         path.startsWith(AppRoutes.notifications)) {
