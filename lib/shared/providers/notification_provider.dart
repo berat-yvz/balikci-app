@@ -38,11 +38,13 @@ final myNotificationsProvider =
       });
     });
 
-/// Okunmamış bildirim sayısı.
-final unreadCountProvider = FutureProvider<int>((ref) async {
-  // Stream değişince bu FutureProvider da tekrar hesaplansın.
-  ref.watch(myNotificationsProvider);
-
-  final repo = ref.read(notificationRepositoryProvider);
-  return repo.getUnreadCount();
+/// Okunmamış bildirim sayısı — Realtime listesinden türetilir; ekstra DB sorgusu yok.
+/// Böylece stream her satırda tetiklenince FutureProvider + getUnreadCount döngüsü oluşmaz.
+final unreadCountProvider = Provider<int>((ref) {
+  final async = ref.watch(myNotificationsProvider);
+  return async.when(
+    data: (list) => list.where((n) => !n.read).length,
+    loading: () => 0,
+    error: (Object? err, StackTrace? st) => 0,
+  );
 });

@@ -66,6 +66,7 @@ class _MapScreenState extends State<MapScreen> {
   bool _checkinRefreshQueued = false;
   Timer? _checkinPollTimer;
   Timer? _boundsDebounce;
+  Timer? _checkinRealtimeDebounce;
   RealtimeChannel? _checkinsRealtimeChannel;
 
   SpotModel? _sheetSpot;
@@ -104,6 +105,7 @@ class _MapScreenState extends State<MapScreen> {
     _checkinsRealtimeChannel = null;
     _checkinPollTimer?.cancel();
     _boundsDebounce?.cancel();
+    _checkinRealtimeDebounce?.cancel();
     _sheetController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
@@ -154,19 +156,30 @@ class _MapScreenState extends State<MapScreen> {
           event: PostgresChangeEvent.insert,
           schema: 'public',
           table: 'checkins',
-          callback: (_) {
-            if (mounted) unawaited(_refreshActiveCheckins());
-          },
+          callback: (_) => _scheduleDebouncedCheckinRefresh(),
         )
         .onPostgresChanges(
           event: PostgresChangeEvent.update,
           schema: 'public',
           table: 'checkins',
-          callback: (_) {
-            if (mounted) unawaited(_refreshActiveCheckins());
-          },
+          callback: (_) => _scheduleDebouncedCheckinRefresh(),
         )
         .subscribe();
+  }
+
+  /// Realtime check-in yağmurunda layout içi setState döngüsünü önlemek için gecikmeli yenileme.
+  void _scheduleDebouncedCheckinRefresh() {
+    if (!mounted) return;
+    _checkinRealtimeDebounce?.cancel();
+    _checkinRealtimeDebounce = Timer(const Duration(milliseconds: 450), () {
+      if (mounted) unawaited(_refreshActiveCheckins());
+    });
+  }
+
+  void _postFrameSetState(VoidCallback fn) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(fn);
+    });
   }
 
   Future<void> _loadShops() async {
@@ -276,14 +289,16 @@ class _MapScreenState extends State<MapScreen> {
       // Harita henüz hazır değilse görmezden gel.
     }
 
-    // DraggableScrollableSheet'i aç (spot seçilince).
+    // Sheet bir frame sonra attach oluyor; aynı frame'de animateTo layout assert tetikleyebilir.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_sheetController.isAttached) return;
-      _sheetController.animateTo(
-        0.32,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_sheetController.isAttached) return;
+        _sheetController.animateTo(
+          0.32,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      });
     });
 
     unawaited(_loadWeatherForSpot(spot));
@@ -298,7 +313,7 @@ class _MapScreenState extends State<MapScreen> {
       if (!mounted) return;
       if (epoch != _sheetDetailEpoch) return;
       if (_sheetSpot?.id != spotId) return;
-      setState(() {
+      _postFrameSetState(() {
         final copy = Map<String, List<CheckinModel>>.from(
           _activeCheckinsBySpotId,
         );
@@ -311,7 +326,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _loadWeatherForSpot(SpotModel spot) async {
-    setState(() => _weatherLoading = true);
+    _postFrameSetState(() => _weatherLoading = true);
     try {
       final w = await WeatherService.getWeatherForLocation(
         lat: spot.lat,
@@ -320,11 +335,11 @@ class _MapScreenState extends State<MapScreen> {
       if (!mounted) return;
       // Kullanıcı hızlıca başka meraya geçtiyse eski sonucu ezmeyelim.
       if (_sheetSpot?.id != spot.id) return;
-      setState(() => _spotWeather = w);
+      _postFrameSetState(() => _spotWeather = w);
     } catch (_) {
       // Sessizce geç: kart placeholder kalsın.
     } finally {
-      if (mounted) setState(() => _weatherLoading = false);
+      if (mounted) _postFrameSetState(() => _weatherLoading = false);
     }
   }
 
@@ -552,7 +567,7 @@ class _MapScreenState extends State<MapScreen> {
         }
 
         if (!mounted) return;
-        setState(() => _activeCheckinsBySpotId = grouped);
+        _postFrameSetState(() => _activeCheckinsBySpotId = grouped);
         final openId = _sheetSpot?.id;
         if (openId != null) {
           unawaited(_applyDetailedCheckinsForSpot(openId));
@@ -694,6 +709,7 @@ class _MapScreenState extends State<MapScreen> {
         : (_activeCheckinsBySpotId[sheetSpot.id] ?? const <CheckinModel>[]);
     final activeCount = sheetCheckins.where((c) => !c.isStale).length;
     final mostRecent = sheetCheckins.isNotEmpty ? sheetCheckins.first : null;
+    final sheetDescriptionTrimmed = sheetSpot?.description?.trim();
 
     final uid = SupabaseService.auth.currentUser?.id;
     final isOwner = sheetSpot != null && uid != null && uid == sheetSpot.userId;
@@ -1043,7 +1059,7 @@ class _MapScreenState extends State<MapScreen> {
               children: [
                 Consumer(
                   builder: (context, ref, _) {
-                    final unreadAsync = ref.watch(unreadCountProvider);
+                    final count = ref.watch(unreadCountProvider);
                     final onlineAsync = ref.watch(connectivityProvider);
                     final online = onlineAsync.asData?.value ?? true;
 
@@ -1123,11 +1139,7 @@ class _MapScreenState extends State<MapScreen> {
                       );
                     }
 
-                    return unreadAsync.when(
-                      data: (count) => buildButton(count),
-                      loading: () => buildButton(0),
-                      error: (_, _) => buildButton(0),
-                    );
+                    return buildButton(count);
                   },
                 ),
                 const SizedBox(height: 8),
@@ -1244,14 +1256,16 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                           ],
                           const SizedBox(height: 12),
-                          if (sheetSpot.description?.trim().isNotEmpty == true)
+                          if (sheetDescriptionTrimmed != null &&
+                              sheetDescriptionTrimmed.isNotEmpty)
                             Text(
-                              sheetSpot.description!,
+                              sheetDescriptionTrimmed,
                               style: AppTextStyles.body.copyWith(
                                 color: AppColors.foam.withValues(alpha: 0.78),
                               ),
                             ),
-                          if (sheetSpot.description?.trim().isNotEmpty == true)
+                          if (sheetDescriptionTrimmed != null &&
+                              sheetDescriptionTrimmed.isNotEmpty)
                             const SizedBox(height: 12),
                           _RecentCheckinsRow(checkins: sheetCheckins),
                         ],
@@ -1552,8 +1566,20 @@ class _ActivePulseCountState extends State<_ActivePulseCount>
     _c = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    )..repeat();
+    );
     _a = CurvedAnimation(parent: _c, curve: Curves.easeInOut);
+    if (widget.count > 0) _c.repeat();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ActivePulseCount oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.count > 0 && !_c.isAnimating) {
+      _c.repeat();
+    } else if (widget.count <= 0 && _c.isAnimating) {
+      _c.stop();
+      _c.reset();
+    }
   }
 
   @override
