@@ -293,7 +293,8 @@
 - [x] Düğüm filtreleme ve clamp unit testleri (10 test)
 - [x] SpotMarker widget testleri (15 test): kilit/VIP görünümü, zoom etiketi, rozet, yaş etiketi
 - [x] LoadingWidget widget testleri (4 test): indicator, mesaj, ortalama
-- [x] 311 otomatik test, tümü yeşil
+- [x] ExifHelper unit testleri (14 test): isLocationValid, isTimestampValid, sınır değerleri
+- [x] 325 otomatik test, tümü yeşil
 - [ ] Tüm kullanıcı akışları uçtan uca test edildi *(manuel — cihaz gerektirir)*
 - [ ] Offline → online geçiş senaryoları test edildi *(manuel)*
 - [ ] Düşük ağ hızında test (throttling) *(manuel)*
