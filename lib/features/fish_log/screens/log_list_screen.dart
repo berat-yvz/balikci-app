@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/shared/widgets/empty_state_widget.dart';
 import 'package:balikci_app/shared/widgets/error_widget.dart';
-import 'package:balikci_app/shared/widgets/loading_widget.dart';
+import 'package:balikci_app/shared/widgets/skeleton_widget.dart';
 import '../../../data/local/database.dart';
 import '../../../shared/providers/fish_log_provider.dart';
 
@@ -40,8 +40,11 @@ class LogListScreen extends ConsumerWidget {
         ],
       ),
       body: logsAsync.when(
-        loading: () =>
-            const LoadingWidget(message: 'Kayıtlar yükleniyor...'),
+        loading: () => const SkeletonList(
+          itemCount: 6,
+          hasLeadingCircle: true,
+          hasTrailing: true,
+        ),
         error: (e, _) => AppErrorWidget(
           message: 'Kayıtlar yüklenemedi',
           onRetry: () => ref.invalidate(fishLogsProvider),
