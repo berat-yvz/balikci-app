@@ -31,9 +31,20 @@ class CheckinModel {
     this.expiresAt,
   });
 
-  /// Bildirim aktif mi? Gizlenmemiş ve süresi dolmamış olmalı.
+  /// Oy tabanlı gizleme: en az 3 oy ve %70+ yanlış oy → otomatik gizle.
+  static const _minVotesForSuppress = 3;
+  static const _falseVoteThreshold = 0.70;
+
+  bool get isSuppressedByVotes {
+    final total = trueVotes + falseVotes;
+    if (total < _minVotesForSuppress) return false;
+    return falseVotes / total >= _falseVoteThreshold;
+  }
+
+  /// Bildirim aktif mi? Gizlenmemiş, oy baskısı yok ve süresi dolmamış olmalı.
   bool get isActive {
     if (isHidden) return false;
+    if (isSuppressedByVotes) return false;
     if (expiresAt == null) return false;
     return expiresAt!.isAfter(DateTime.now());
   }

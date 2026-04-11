@@ -127,6 +127,62 @@ void main() {
     });
   });
 
+  group('CheckinModel.isSuppressedByVotes', () {
+    test('3 oydan az → gizleme yok', () {
+      final model = CheckinModel.fromJson(
+        baseJson(trueVotes: 0, falseVotes: 2),
+      );
+      expect(model.isSuppressedByVotes, isFalse);
+    });
+
+    test('tam %70 yanlış oy (3/3 false + 0 true → imkansız; 3 false 0 true) → gizle', () {
+      final model = CheckinModel.fromJson(
+        baseJson(trueVotes: 0, falseVotes: 3),
+      );
+      expect(model.isSuppressedByVotes, isTrue);
+    });
+
+    test('%70 eşik: 7 false 3 true (10 oy) → %70 → gizle', () {
+      final model = CheckinModel.fromJson(
+        baseJson(trueVotes: 3, falseVotes: 7),
+      );
+      expect(model.isSuppressedByVotes, isTrue);
+    });
+
+    test('%69 yanlış oy → gizleme yok (eşik altı)', () {
+      final model = CheckinModel.fromJson(
+        baseJson(trueVotes: 31, falseVotes: 69),
+      );
+      // 69/100 = 0.69 < 0.70
+      expect(model.isSuppressedByVotes, isFalse);
+    });
+
+    test('3 true 1 false (4 oy) → %25 yanlış → gizleme yok', () {
+      final model = CheckinModel.fromJson(
+        baseJson(trueVotes: 3, falseVotes: 1),
+      );
+      expect(model.isSuppressedByVotes, isFalse);
+    });
+
+    test('hiç oy yok → gizleme yok', () {
+      final model = CheckinModel.fromJson(baseJson());
+      expect(model.isSuppressedByVotes, isFalse);
+    });
+
+    test('oy baskısı isActive\'i de etkiler', () {
+      // %70+ false oy → isActive false olmalı (süresi dolmamış olsa bile)
+      final model = CheckinModel.fromJson(
+        baseJson(
+          trueVotes: 1,
+          falseVotes: 9,
+          expiresAt: DateTime.now().add(const Duration(hours: 2)),
+        ),
+      );
+      expect(model.isSuppressedByVotes, isTrue);
+      expect(model.isActive, isFalse);
+    });
+  });
+
   group('CheckinModel username parse', () {
     test('users Map formatında → username parse edilir', () {
       final model = CheckinModel.fromJson(

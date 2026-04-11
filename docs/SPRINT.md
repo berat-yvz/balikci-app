@@ -305,7 +305,7 @@
 #### Görevler
 - [ ] Loading state'leri her ekranda tutarlı (shimmer veya skeleton) *(shimmer paketi pubspec'te yok; H16'ya ertelendi)*
 - [x] Hata mesajları kullanıcı dostu Türkçe — tüm ekranlarda Türkçe hata metni mevcut
-- [ ] Sayfa geçiş animasyonları (go_router transitions) *(platform varsayılanı yeterli; ertelendi)*
+- [x] Sayfa geçiş animasyonları (go_router transitions) — fade+slide 250ms, tüm push route'lara uygulandı
 - [x] Haptic feedback: check-in ✓, mera kaydet ✓, düğüm öğrendim ✓, profil yenile ✓
 - [x] Dark mode desteği — uygulama baştan koyu tema (AppColors.navy)
 - [x] Türkçe karakter sorunu kontrolü — font varsayılanı Flutter; Türkçe özel karakter hatalar önceki sprint'lerde düzeltildi
