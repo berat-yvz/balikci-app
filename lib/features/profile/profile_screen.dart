@@ -640,22 +640,14 @@ class _FollowStatsRow extends ConsumerWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _FollowStat(
-              label: 'Takipçi',
-              count: follower,
-              onTap: () {},
-            ),
+            _FollowStat(label: 'Takipçi', count: follower),
             Container(
               width: 1,
               height: 32,
               margin: const EdgeInsets.symmetric(horizontal: 20),
               color: Colors.white12,
             ),
-            _FollowStat(
-              label: 'Takip',
-              count: following,
-              onTap: () {},
-            ),
+            _FollowStat(label: 'Takip', count: following),
           ],
         );
       },
@@ -666,34 +658,26 @@ class _FollowStatsRow extends ConsumerWidget {
 class _FollowStat extends StatelessWidget {
   final String label;
   final int count;
-  final VoidCallback onTap;
 
-  const _FollowStat({
-    required this.label,
-    required this.count,
-    required this.onTap,
-  });
+  const _FollowStat({required this.label, required this.count});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Text(
-            count.toString(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-            ),
+    return Column(
+      children: [
+        Text(
+          count.toString(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
           ),
-          Text(
-            label,
-            style: const TextStyle(color: AppColors.muted, fontSize: 14),
-          ),
-        ],
-      ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(color: AppColors.muted, fontSize: 14),
+        ),
+      ],
     );
   }
 }
@@ -823,10 +807,10 @@ class _ProfileActionSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         _ActionTile(
-          icon: Icons.military_tech_outlined,
-          label: 'Rozetlerim',
-          subtitle: 'Kazandığın rozetler',
-          onTap: () {}, // Rozet sayfası ileride eklenecek
+          icon: Icons.bar_chart_rounded,
+          label: 'İstatistiklerim',
+          subtitle: 'Av grafikleri ve sürdürülebilirlik',
+          onTap: onGoToStats,
         ),
         const SizedBox(height: 8),
         _ActionTile(

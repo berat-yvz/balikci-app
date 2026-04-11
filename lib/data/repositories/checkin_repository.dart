@@ -97,26 +97,6 @@ class CheckinRepository {
     }
   }
 
-  /// checkins.photo_url güncellemesi.
-  ///
-  /// EXIF doğrulama Edge Function'ı bu photo_url / dosya yolu üzerinden
-  /// checkin'i eşleyebilir (MVP akışı için photo path yeterli).
-  Future<void> updateCheckinPhotoUrl({
-    required String checkinId,
-    required String photoUrl,
-  }) async {
-    try {
-      await _db
-          .from('checkins')
-          .update({'photo_url': photoUrl})
-          .eq('id', checkinId);
-    } on PostgrestException catch (e) {
-      throw Exception('Check-in fotoğrafı güncellenemedi: ${e.message}');
-    } catch (e) {
-      throw Exception('Check-in fotoğrafı güncellenemedi: $e');
-    }
-  }
-
   /// Belirli mera için son 6 saatlik check-in kayıtlarını kullanıcı adıyla döner.
   Future<List<CheckinModel>> getCheckinsForSpot(String spotId) async {
     try {
