@@ -291,7 +291,9 @@
 - [x] SkeletonListTile/SkeletonList widget testleri (9 test): animasyon, dispose, parametre aktarımı
 - [x] AppButton widget testleri (8 test): primary/outlined, loading state, tıklanabilirlik
 - [x] Düğüm filtreleme ve clamp unit testleri (10 test)
-- [x] 225 otomatik test, tümü yeşil
+- [x] SpotMarker widget testleri (15 test): kilit/VIP görünümü, zoom etiketi, rozet, yaş etiketi
+- [x] LoadingWidget widget testleri (4 test): indicator, mesaj, ortalama
+- [x] 311 otomatik test, tümü yeşil
 - [ ] Tüm kullanıcı akışları uçtan uca test edildi *(manuel — cihaz gerektirir)*
 - [ ] Offline → online geçiş senaryoları test edildi *(manuel)*
 - [ ] Düşük ağ hızında test (throttling) *(manuel)*
