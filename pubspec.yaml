@@ -115,3 +115,5 @@ flutter_launcher_icons:
   image_path: "assets/icon/app_icon.png"
   adaptive_icon_background: "#132236"
   adaptive_icon_foreground: "assets/icon/app_icon.png"
+  # Varsayılan %16 kenar boşluğu balığı küçültür; 0 = tam alan (balık daha büyük).
+  adaptive_icon_foreground_inset: 0
