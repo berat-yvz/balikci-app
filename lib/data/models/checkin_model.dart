@@ -9,6 +9,8 @@ class CheckinModel {
   final String? username;
   final String? crowdLevel; // yoğun | normal | az | boş
   final String? fishDensity; // yoğun | normal | az | yok
+  /// Seçilen balık türleri (örn. Levrek, Lüfer) — DB `fish_species text[]`.
+  final List<String> fishSpecies;
   final String? photoUrl;
   final bool exifVerified;
   final bool isHidden;
@@ -24,6 +26,7 @@ class CheckinModel {
     this.username,
     this.crowdLevel,
     this.fishDensity,
+    this.fishSpecies = const [],
     this.photoUrl,
     this.exifVerified = false,
     this.isHidden = false,
@@ -61,6 +64,7 @@ class CheckinModel {
     username: _parseUsername(json['users']),
     crowdLevel: json['crowd_level'] as String?,
     fishDensity: json['fish_density'] as String?,
+    fishSpecies: _parseStringList(json['fish_species']),
     photoUrl: json['photo_url'] as String?,
     exifVerified: json['exif_verified'] as bool? ?? false,
     isHidden: json['is_hidden'] as bool? ?? false,
@@ -79,6 +83,7 @@ class CheckinModel {
     'username': username,
     'crowd_level': crowdLevel,
     'fish_density': fishDensity,
+    if (fishSpecies.isNotEmpty) 'fish_species': fishSpecies,
     'photo_url': photoUrl,
     'exif_verified': exifVerified,
     'is_hidden': isHidden,
@@ -87,6 +92,17 @@ class CheckinModel {
     'created_at': createdAt.toIso8601String(),
     'expires_at': expiresAt?.toIso8601String(),
   };
+
+  static List<String> _parseStringList(dynamic value) {
+    if (value == null) return const [];
+    if (value is List) {
+      return value
+          .map((e) => e.toString().trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    return const [];
+  }
 
   static String? _parseUsername(dynamic usersField) {
     if (usersField is Map<String, dynamic>) {

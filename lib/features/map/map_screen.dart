@@ -1920,6 +1920,19 @@ class _CheckinCard extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
+                if (checkin.fishSpecies.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    checkin.fishSpecies.join(' · '),
+                    style: TextStyle(
+                      color: AppColors.sand.withValues(alpha: 0.90),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
                 const SizedBox(height: 2),
                 Text(
                   _crowdLabel(checkin.crowdLevel),
@@ -2025,13 +2038,33 @@ class _LatestCheckinBanner extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              _fishLabel(checkin.fishDensity),
-              style: TextStyle(
-                color: isStale ? AppColors.muted : Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _fishLabel(checkin.fishDensity),
+                  style: TextStyle(
+                    color: isStale ? AppColors.muted : Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                if (checkin.fishSpecies.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    checkin.fishSpecies.join(' · '),
+                    style: TextStyle(
+                      color: isStale
+                          ? AppColors.muted.withValues(alpha: 0.8)
+                          : AppColors.sand.withValues(alpha: 0.85),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
             ),
           ),
           Text(

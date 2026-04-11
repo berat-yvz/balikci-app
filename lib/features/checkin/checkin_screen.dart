@@ -160,12 +160,14 @@ class _CheckinScreenState extends State<CheckinScreen>
         return;
       }
 
-      final payload = {
+      final payload = <String, dynamic>{
         'user_id': uid,
         'spot_id': widget.spotId,
         'crowd_level': _crowdLevel,
         'fish_density': _fishDensity,
         'is_active': true,
+        if (_selectedFishTypes.isNotEmpty)
+          'fish_species': List<String>.from(_selectedFishTypes),
       };
 
       final connResult = await Connectivity().checkConnectivity();
@@ -827,6 +829,17 @@ class _SuccessScreen extends StatelessWidget {
                         label: 'Balık Yoğunluğu',
                         value: checkin.fishDensity ?? '-',
                       ),
+                      if (checkin.fishSpecies.isNotEmpty) ...[
+                        const Divider(
+                          height: 16,
+                          thickness: 0.5,
+                          color: Colors.white12,
+                        ),
+                        _ResultRow(
+                          label: 'Balık Türleri',
+                          value: checkin.fishSpecies.join(', '),
+                        ),
+                      ],
                       const Divider(
                           height: 16, thickness: 0.5, color: Colors.white12),
                       _ResultRow(
@@ -874,7 +887,7 @@ class _ResultRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -884,12 +897,18 @@ class _ResultRow extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.end,
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

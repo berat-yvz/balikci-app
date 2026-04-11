@@ -54,6 +54,14 @@ void main() {
       expect(model.isHidden, isFalse);
       expect(model.trueVotes, 0);
       expect(model.falseVotes, 0);
+      expect(model.fishSpecies, isEmpty);
+    });
+
+    test('fish_species dizi olarak parse edilir', () {
+      final j = baseJson();
+      j['fish_species'] = ['Lüfer', 'Levrek'];
+      final model = CheckinModel.fromJson(j);
+      expect(model.fishSpecies, ['Lüfer', 'Levrek']);
     });
   });
 

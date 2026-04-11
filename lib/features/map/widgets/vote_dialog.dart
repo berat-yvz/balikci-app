@@ -302,15 +302,34 @@ class _CheckinSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  _fishLabel(checkin.fishDensity),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _fishLabel(checkin.fishDensity),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (checkin.fishSpecies.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        checkin.fishSpecies.join(' · '),
+                        style: const TextStyle(
+                          color: AppColors.sand,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
                 ),
               ),
               Text(

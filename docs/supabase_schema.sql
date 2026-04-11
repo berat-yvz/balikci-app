@@ -55,6 +55,7 @@ CREATE TABLE checkins (
   spot_id UUID REFERENCES fishing_spots(id) ON DELETE CASCADE,
   crowd_level TEXT CHECK (crowd_level IN ('yoğun','normal','az','boş')),
   fish_density TEXT CHECK (fish_density IN ('yoğun','normal','az','yok')),
+  fish_species TEXT[],
   photo_url TEXT,
   exif_verified BOOLEAN DEFAULT FALSE,
   is_active BOOLEAN DEFAULT TRUE,

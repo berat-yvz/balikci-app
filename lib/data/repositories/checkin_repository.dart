@@ -23,7 +23,9 @@ class CheckinRepository {
 
       final response = await _db
           .from('checkins')
-          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_hidden, true_votes, false_votes, created_at, expires_at')
+          .select(
+            'id, user_id, spot_id, crowd_level, fish_density, fish_species, photo_url, exif_verified, is_hidden, true_votes, false_votes, created_at, expires_at',
+          )
           .eq('is_hidden', false)
           .gte('created_at', threshold.toIso8601String())
           .order('created_at', ascending: false)
@@ -43,7 +45,9 @@ class CheckinRepository {
       final response = await _db
           .from('checkins')
           .insert(data)
-          .select('id, user_id, spot_id, crowd_level, fish_density, photo_url, exif_verified, is_hidden, true_votes, false_votes, created_at, expires_at')
+          .select(
+            'id, user_id, spot_id, crowd_level, fish_density, fish_species, photo_url, exif_verified, is_hidden, true_votes, false_votes, created_at, expires_at',
+          )
           .single();
       return CheckinModel.fromJson(response);
     } on PostgrestException catch (e) {
@@ -128,6 +132,7 @@ class CheckinRepository {
           username: base.username,
           crowdLevel: base.crowdLevel,
           fishDensity: base.fishDensity,
+          fishSpecies: base.fishSpecies,
           photoUrl: base.photoUrl,
           exifVerified: base.exifVerified,
           isHidden: base.isHidden,
