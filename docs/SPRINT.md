@@ -145,20 +145,20 @@
 
 **Durum:** H7 ✅ H8 ✅ H9 ✅ tamamlandı; H10 🔄 kısmen tamamlandı (favori bildirim + deep-link çalışıyor; konum bazlı bildirim, sessiz mod, limit kalmış).
 
-### H7 — Balık Günlüğü
+### H7 — Balık Günlüğü ✅
 **Hedef:** Balık kaydı eklenip görüntülenebiliyor
 
 #### Görevler
-- [ ] `local_fish_log.dart` ve Drift şeması oluşturuldu
-- [ ] `fish_log_repository.dart` yazıldı
-- [ ] `add_log_screen.dart` — kayıt formu
-- [ ] Hava snapshot: kayıt anında cache'den hava verisi ekleniyor
-- [ ] Fotoğraf yükleme: image_picker → WebP → Supabase Storage
-- [ ] Gizli kayıt toggle'ı UI'a eklendi
-- [ ] `log_list_screen.dart` — kayıt listesi
-- [ ] Offline-first: Drift'e yaz, internet gelince sync
-- [ ] `sync_queue.dart` — offline işlem kuyruğu
-- [ ] `stats_screen.dart` — istatistik ekranı (toplam, tür, mera, grafik)
+- [x] `local_fish_log.dart` ve Drift şeması oluşturuldu
+- [x] `fish_log_repository.dart` yazıldı
+- [x] `add_log_screen.dart` — kayıt formu
+- [x] Hava snapshot: kayıt anında cache'den hava verisi ekleniyor
+- [x] Fotoğraf yükleme: image_picker → WebP → Supabase Storage
+- [x] Gizli kayıt toggle'ı UI'a eklendi
+- [x] `log_list_screen.dart` — kayıt listesi
+- [x] Offline-first: Drift'e yaz, internet gelince sync
+- [x] `sync_queue.dart` — offline işlem kuyruğu
+- [x] `stats_screen.dart` — istatistik ekranı (toplam, tür, mera, grafik)
 
 **Çıktı:** Günlük kaydı offline çalışıyor, sync ediliyor ✓
 
