@@ -697,18 +697,40 @@ class _FriendshipActionBar extends ConsumerWidget {
 
 // ── ADIM 9: Takip/Takipçi tıklanabilir sayı satırı ───────────────────────────
 
-class _FollowStatsRow extends ConsumerWidget {
+class _FollowStatsRow extends ConsumerStatefulWidget {
   final String userId;
   const _FollowStatsRow({required this.userId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final userRepo = ref.watch(userRepositoryProvider);
+  ConsumerState<_FollowStatsRow> createState() => _FollowStatsRowState();
+}
+
+class _FollowStatsRowState extends ConsumerState<_FollowStatsRow> {
+  Future<List<int>>? _countsFuture;
+
+  @override
+  void didUpdateWidget(covariant _FollowStatsRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId != widget.userId) {
+      _countsFuture = null;
+    }
+  }
+
+  Future<List<int>> _loadCounts() {
+    final repo = ref.read(userRepositoryProvider);
+    return Future.wait([
+      repo.getFollowerCount(widget.userId),
+      repo.getFollowingCount(widget.userId),
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.watch(userRepositoryProvider);
+    _countsFuture ??= _loadCounts();
+
     return FutureBuilder<List<int>>(
-      future: Future.wait([
-        userRepo.getFollowerCount(userId),
-        userRepo.getFollowingCount(userId),
-      ]),
+      future: _countsFuture,
       builder: (context, snapshot) {
         final follower = snapshot.data?[0] ?? 0;
         final following = snapshot.data?[1] ?? 0;
@@ -719,7 +741,7 @@ class _FollowStatsRow extends ConsumerWidget {
             InkWell(
               borderRadius: BorderRadius.circular(10),
               onTap: () => context.push(
-                '${AppRoutes.profile}/$userId/followers',
+                '${AppRoutes.profile}/${widget.userId}/followers',
               ),
               child: Padding(
                 padding:
@@ -736,7 +758,7 @@ class _FollowStatsRow extends ConsumerWidget {
             InkWell(
               borderRadius: BorderRadius.circular(10),
               onTap: () => context.push(
-                '${AppRoutes.profile}/$userId/following',
+                '${AppRoutes.profile}/${widget.userId}/following',
               ),
               child: Padding(
                 padding:
@@ -780,7 +802,7 @@ class _FollowStat extends StatelessWidget {
 
 // ── ADIM 9: Özet istatistik kartları 3'lü grid ───────────────────────────────
 
-class _SummaryStatsGrid extends ConsumerWidget {
+class _SummaryStatsGrid extends ConsumerStatefulWidget {
   final String userId;
   const _SummaryStatsGrid({required this.userId});
 
@@ -809,15 +831,36 @@ class _SummaryStatsGrid extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final fishRepo = ref.watch(fishLogRepositoryProvider);
+  ConsumerState<_SummaryStatsGrid> createState() => _SummaryStatsGridState();
+}
+
+class _SummaryStatsGridState extends ConsumerState<_SummaryStatsGrid> {
+  Future<List<int>>? _statsFuture;
+
+  @override
+  void didUpdateWidget(covariant _SummaryStatsGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId != widget.userId) {
+      _statsFuture = null;
+    }
+  }
+
+  Future<List<int>> _loadStats() {
+    final fishRepo = ref.read(fishLogRepositoryProvider);
+    return Future.wait([
+      fishRepo.getLogCount(widget.userId),
+      _SummaryStatsGrid._getSpotCount(widget.userId),
+      _SummaryStatsGrid._getCheckinCount(widget.userId),
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.watch(fishLogRepositoryProvider);
+    _statsFuture ??= _loadStats();
 
     return FutureBuilder<List<int>>(
-      future: Future.wait([
-        fishRepo.getLogCount(userId),
-        _getSpotCount(userId),
-        _getCheckinCount(userId),
-      ]),
+      future: _statsFuture,
       builder: (context, snapshot) {
         final logCount = snapshot.data?[0] ?? 0;
         final spotCount = snapshot.data?[1] ?? 0;
