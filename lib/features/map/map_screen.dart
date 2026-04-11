@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -45,7 +46,12 @@ class _MapScreenState extends State<MapScreen> {
   final ShopRepository _shopRepository = ShopRepository();
   final MapController _mapController = MapController();
 
+  /// Hızlı zoom’da gereksiz indirmeleri iptal eder; beyaz kareleri azaltır.
+  final CancellableNetworkTileProvider _mapTileProvider =
+      CancellableNetworkTileProvider();
+
   List<SpotModel> _spots = const [];
+
   /// Uzak `getSpots` + `getSpotsInBounds` birleşimi (kimlik bazlı).
   final Map<String, SpotModel> _spotMap = {};
   List<ShopModel> _shops = const [];
@@ -289,7 +295,9 @@ class _MapScreenState extends State<MapScreen> {
       final list = await _checkinRepository.getCheckinsForSpot(spotId);
       if (!mounted) return;
       setState(() {
-        final copy = Map<String, List<CheckinModel>>.from(_activeCheckinsBySpotId);
+        final copy = Map<String, List<CheckinModel>>.from(
+          _activeCheckinsBySpotId,
+        );
         copy[spotId] = list;
         _activeCheckinsBySpotId = copy;
       });
@@ -366,10 +374,7 @@ class _MapScreenState extends State<MapScreen> {
     final c = _sheetListScrollController;
     if (c == null || !c.hasClients) return;
     final p = c.position;
-    final clamped = p.pixels.clamp(
-      p.minScrollExtent,
-      p.maxScrollExtent,
-    );
+    final clamped = p.pixels.clamp(p.minScrollExtent, p.maxScrollExtent);
     if ((p.pixels - clamped).abs() > 0.5) {
       c.jumpTo(clamped);
     }
@@ -708,98 +713,108 @@ class _MapScreenState extends State<MapScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: const LatLng(41.0082, 28.9784),
-                initialZoom: 11.0,
-                minZoom: 5.0,
-                maxZoom: 19.0,
-                onPositionChanged: (camera, _) {
-                  final z = camera.zoom;
-                  // Marker boyutları yalnızca zoom 13 eşiğini geçince değişir.
-                  // Her küçük zoom değişiminde tüm widget ağacını yeniden
-                  // buildlemek yerine sadece eşik aşıldığında setState çağır.
-                  final crossedThreshold = (_currentZoom > 13) != (z > 13);
-                  _currentZoom = z;
-                  if (crossedThreshold && mounted) setState(() {});
-                  if (z >= 10.5) _scheduleBoundsSpotsFetch();
-                },
-                onTap: (_, point) {
-                  _searchFocusNode.unfocus();
-                  setState(() {
-                    _searchResults = const [];
-                    _sheetSpot = null;
-                  });
-                },
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate:
-                      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                  maxZoom: 19,
-                  maxNativeZoom: 19,
-                  tileSize: 256,
-                  // keepBuffer: görüntü alanının dışında bellekte tutulan
-                  // tile satır/sütun sayısı. Yüksek değer zoom/pan
-                  // sırasında boşlukları/bozulmaları önler.
-                  keepBuffer: 4,
-                  panBuffer: 2,
-                  evictErrorTileStrategy:
-                      EvictErrorTileStrategy.notVisibleRespectMargin,
-                  userAgentPackageName: 'com.balikci.app',
+            child: RepaintBoundary(
+              child: FlutterMap(
+                mapController: _mapController,
+                options: MapOptions(
+                  initialCenter: const LatLng(41.0082, 28.9784),
+                  initialZoom: 11.0,
+                  minZoom: 5.0,
+                  maxZoom: 19.0,
+                  // Varsayılan açık gri; karo boşluklarında “beyaz kare” hissi verir.
+                  backgroundColor: AppColors.background,
+                  onPositionChanged: (camera, _) {
+                    final z = camera.zoom;
+                    // Marker boyutları yalnızca zoom 13 eşiğini geçince değişir.
+                    // Her küçük zoom değişiminde tüm widget ağacını yeniden
+                    // buildlemek yerine sadece eşik aşıldığında setState çağır.
+                    final crossedThreshold = (_currentZoom > 13) != (z > 13);
+                    _currentZoom = z;
+                    if (crossedThreshold && mounted) setState(() {});
+                    if (z >= 10.5) _scheduleBoundsSpotsFetch();
+                  },
+                  onTap: (_, point) {
+                    _searchFocusNode.unfocus();
+                    setState(() {
+                      _searchResults = const [];
+                      _sheetSpot = null;
+                    });
+                  },
                 ),
-                TileLayer(
-                  urlTemplate:
-                      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-                  maxZoom: 19,
-                  maxNativeZoom: 19,
-                  tileSize: 256,
-                  keepBuffer: 4,
-                  panBuffer: 2,
-                  evictErrorTileStrategy:
-                      EvictErrorTileStrategy.notVisibleRespectMargin,
-                  userAgentPackageName: 'com.balikci.app',
-                ),
-                if (_showSpots)
-                  MarkerClusterLayerWidget(
-                    options: MarkerClusterLayerOptions(
-                      markers: _buildMarkers(),
-                      maxClusterRadius: 58,
-                      size: const Size(42, 42),
-                      builder: (context, markers) {
-                        return Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0F6E56),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2.5),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Colors.black45,
-                                blurRadius: 6,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              markers.length.toString(),
-                              style: const TextStyle(
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                    maxZoom: 19,
+                    maxNativeZoom: 19,
+                    tileSize: 256,
+                    tileProvider: _mapTileProvider,
+                    // Geniş tampon: zoom sırasında üst katman karo yüklenene kadar
+                    // önceki zoom karoları tutulur; boşluk riski azalır.
+                    keepBuffer: 8,
+                    panBuffer: 3,
+                    // fadeIn başlangıç opaklığı 0 → yüklenene kadar arka plan görünür;
+                    // anında gösterim + koyu arka plan birleşimi daha akıcı.
+                    tileDisplay: const TileDisplay.instantaneous(),
+                    evictErrorTileStrategy: EvictErrorTileStrategy.none,
+                    userAgentPackageName: 'com.balikci.app',
+                  ),
+                  TileLayer(
+                    urlTemplate:
+                        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+                    maxZoom: 19,
+                    maxNativeZoom: 19,
+                    tileSize: 256,
+                    tileProvider: _mapTileProvider,
+                    keepBuffer: 8,
+                    panBuffer: 3,
+                    tileDisplay: const TileDisplay.instantaneous(),
+                    evictErrorTileStrategy: EvictErrorTileStrategy.none,
+                    userAgentPackageName: 'com.balikci.app',
+                  ),
+                  if (_showSpots)
+                    MarkerClusterLayerWidget(
+                      options: MarkerClusterLayerOptions(
+                        markers: _buildMarkers(),
+                        maxClusterRadius: 58,
+                        size: const Size(42, 42),
+                        builder: (context, markers) {
+                          return Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F6E56),
+                              shape: BoxShape.circle,
+                              border: Border.all(
                                 color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
+                                width: 2.5,
+                              ),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black45,
+                                  blurRadius: 6,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                markers.length.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                // Mera kümesinin üstünde çiz — aksi halde işaretler görünmeyebilir.
-                if (_showShops) MarkerLayer(markers: _buildShopMarkers()),
-              ],
+                  // Mera kümesinin üstünde çiz — aksi halde işaretler görünmeyebilir.
+                  if (_showShops) MarkerLayer(markers: _buildShopMarkers()),
+                ],
+              ),
             ),
           ),
 
@@ -1011,8 +1026,10 @@ class _MapScreenState extends State<MapScreen> {
               backgroundColor: AppColors.mapSpotLayerActive,
               foregroundColor: AppColors.foam,
               elevation: 3,
-              extendedPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+              extendedPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 0,
+              ),
               icon: const Icon(Icons.add_location_alt, size: 20),
               label: const Text(
                 'Mera Ekle',
@@ -1089,8 +1106,9 @@ class _MapScreenState extends State<MapScreen> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: AppColors.danger,
-                                        borderRadius:
-                                            BorderRadius.circular(999),
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
                                       ),
                                       child: Text(
                                         count > 99 ? '99+' : '$count',
@@ -1139,12 +1157,7 @@ class _MapScreenState extends State<MapScreen> {
                 minChildSize: sheetMinSize,
                 maxChildSize: sheetMaxSize,
                 snap: true,
-                snapSizes: const [
-                  sheetInitialSize,
-                  0.32,
-                  0.42,
-                  sheetMaxSize,
-                ],
+                snapSizes: const [sheetInitialSize, 0.32, 0.42, sheetMaxSize],
                 builder: (context, scrollController) {
                   _sheetListScrollController = scrollController;
                   final bottomPad = MediaQuery.of(context).padding.bottom;
@@ -1232,8 +1245,7 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                             const SizedBox(height: 8),
                             _SheetSecondaryButton(
-                              onPressed: () =>
-                                  _confirmAndDeleteSpot(sheetSpot),
+                              onPressed: () => _confirmAndDeleteSpot(sheetSpot),
                               icon: Icons.delete_outline,
                               label: 'Merayı Sil',
                             ),
@@ -2157,7 +2169,11 @@ class _ShopDetailSheet extends StatelessWidget {
                   color: const Color(0xFFF57C00).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.storefront, color: Color(0xFFF57C00), size: 28),
+                child: const Icon(
+                  Icons.storefront,
+                  color: Color(0xFFF57C00),
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -2175,15 +2191,23 @@ class _ShopDetailSheet extends StatelessWidget {
                       children: [
                         Text(
                           typeLabel,
-                          style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.muted,
+                          ),
                         ),
                         if (shop.verified) ...[
                           const SizedBox(width: 6),
-                          const Icon(Icons.verified, color: Color(0xFF4CB2FF), size: 14),
+                          const Icon(
+                            Icons.verified,
+                            color: Color(0xFF4CB2FF),
+                            size: 14,
+                          ),
                           const SizedBox(width: 2),
                           Text(
                             'Doğrulandı',
-                            style: AppTextStyles.caption.copyWith(color: const Color(0xFF4CB2FF)),
+                            style: AppTextStyles.caption.copyWith(
+                              color: const Color(0xFF4CB2FF),
+                            ),
                           ),
                         ],
                       ],
@@ -2198,17 +2222,11 @@ class _ShopDetailSheet extends StatelessWidget {
 
           // Telefon
           if (shop.phone != null)
-            _InfoRow(
-              icon: Icons.phone_outlined,
-              text: shop.phone!,
-            ),
+            _InfoRow(icon: Icons.phone_outlined, text: shop.phone!),
 
           // Çalışma saatleri
           if (shop.hours != null)
-            _InfoRow(
-              icon: Icons.schedule_outlined,
-              text: shop.hours!,
-            ),
+            _InfoRow(icon: Icons.schedule_outlined, text: shop.hours!),
 
           if (shop.phone == null && shop.hours == null)
             Text(
