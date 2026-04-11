@@ -63,6 +63,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(title: const Text('Şifre Sıfırla')),
       body: Center(
         child: ConstrainedBox(

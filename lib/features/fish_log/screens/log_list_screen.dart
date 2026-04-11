@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/shared/widgets/empty_state_widget.dart';
+import 'package:balikci_app/shared/widgets/error_widget.dart';
+import 'package:balikci_app/shared/widgets/loading_widget.dart';
 import '../../../data/local/database.dart';
 import '../../../shared/providers/fish_log_provider.dart';
 
@@ -10,6 +13,7 @@ final fishLogsProvider = FutureProvider<List<FishLog>>((ref) async {
   return ref.read(fishLogRepositoryProvider).getLogs();
 });
 
+/// ADIM 6: Balık günlüğü listesi — swipe-to-delete, tür bazlı ikon, ağırlık büyük.
 class LogListScreen extends ConsumerWidget {
   const LogListScreen({super.key});
 
@@ -18,102 +22,38 @@ class LogListScreen extends ConsumerWidget {
     final logsAsync = ref.watch(fishLogsProvider);
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A1628),
-        title: const Text(
-          '🎣 Balık Günlüğüm',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-          ),
-        ),
+        title: const Text('Balık Günlüğüm'),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.bar_chart_rounded, size: 28, color: Colors.white),
+            icon: const Icon(Icons.bar_chart_rounded, size: 28),
             tooltip: 'İstatistikler',
             onPressed: () => context.push('/fish-log/stats'),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh, size: 28, color: Colors.white),
+            icon: const Icon(Icons.refresh_rounded, size: 28),
+            tooltip: 'Yenile',
             onPressed: () => ref.invalidate(fishLogsProvider),
           ),
         ],
       ),
       body: logsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline,
-                  size: 64, color: AppColors.danger),
-              const SizedBox(height: 16),
-              const Text(
-                'Kayıtlar yüklenemedi',
-                style: TextStyle(fontSize: 18, color: Colors.white),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(fishLogsProvider),
-                child: const Text('Tekrar Dene',
-                    style: TextStyle(fontSize: 16)),
-              ),
-            ],
-          ),
+        loading: () =>
+            const LoadingWidget(message: 'Kayıtlar yükleniyor...'),
+        error: (e, _) => AppErrorWidget(
+          message: 'Kayıtlar yüklenemedi',
+          onRetry: () => ref.invalidate(fishLogsProvider),
         ),
         data: (logs) {
           if (logs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('🐟', style: TextStyle(fontSize: 64)),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Henüz kayıt yok',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'İlk balığını kaydet!',
-                    style: TextStyle(
-                        fontSize: 15, color: Color(0xFF8EA0B5)),
-                  ),
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    height: 56,
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        await context.push('/fish-log/add');
-                        ref.invalidate(fishLogsProvider);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 24),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      icon: const Icon(Icons.add, size: 28),
-                      label: const Text(
-                        'Yeni Kayıt Ekle',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            return EmptyStateWidget.noFishLogs(
+              buttonLabel: 'İlk Balığını Ekle',
+              onButtonPressed: () async {
+                await context.push('/fish-log/add');
+                ref.invalidate(fishLogsProvider);
+              },
             );
           }
 
@@ -124,7 +64,7 @@ class LogListScreen extends ConsumerWidget {
               itemCount: logs.length,
               itemBuilder: (context, index) {
                 final log = logs[index];
-                return _LogCard(
+                return _SwipableLogCard(
                   log: log,
                   onDeleted: () => ref.invalidate(fishLogsProvider),
                 );
@@ -133,6 +73,90 @@ class LogListScreen extends ConsumerWidget {
           );
         },
       ),
+      // Balık ekle FAB
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          await context.push('/fish-log/add');
+          ref.invalidate(fishLogsProvider);
+        },
+        backgroundColor: AppColors.secondary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_rounded, size: 26),
+        label: const Text(
+          'Balık Ekle',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+        ),
+      ),
+    );
+  }
+}
+
+/// ADIM 6: Swipe-to-delete destekli kart.
+class _SwipableLogCard extends ConsumerWidget {
+  final FishLog log;
+  final VoidCallback onDeleted;
+
+  const _SwipableLogCard({required this.log, required this.onDeleted});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Dismissible(
+      key: ValueKey(log.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 24),
+        decoration: BoxDecoration(
+          color: AppColors.danger.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.delete_outline_rounded, color: Colors.white, size: 32),
+            SizedBox(height: 4),
+            Text(
+              'Sil',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+      ),
+      confirmDismiss: (direction) async {
+        return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Kaydı Sil',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            content: Text(
+              '${log.fishType} kaydı silinecek. Emin misiniz?',
+              style: const TextStyle(fontSize: 17),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('İptal', style: TextStyle(fontSize: 16)),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style:
+                    ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+                child: const Text('Sil',
+                    style: TextStyle(fontSize: 16, color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+      },
+      onDismissed: (direction) async {
+        await ref.read(fishLogRepositoryProvider).deleteLog(log.id);
+        onDeleted();
+      },
+      child: _LogCard(log: log, onDeleted: onDeleted),
     );
   }
 }
@@ -143,150 +167,171 @@ class _LogCard extends ConsumerWidget {
 
   const _LogCard({required this.log, required this.onDeleted});
 
+  String _fishEmoji(String fishType) {
+    return switch (fishType.toLowerCase()) {
+      'levrek' => '🐟',
+      'çipura' => '🐠',
+      'palamut' => '🐡',
+      'lüfer' => '🐟',
+      'kefal' => '🐟',
+      'alabalık' => '🐡',
+      'hamsi' => '🐟',
+      _ => '🎣',
+    };
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      color: const Color(0xFF132236),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: AppColors.teal.withValues(alpha: 0.25),
-          width: 1,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        color: const Color(0xFF132236),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: AppColors.teal.withValues(alpha: 0.20),
+            width: 1,
+          ),
         ),
-      ),
-      elevation: 3,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Fotoğraf varsa göster
-          if (log.photoUrl != null)
-            ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
-              child: Image.network(
-                log.photoUrl!,
-                height: 180,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context2, err, stack) => Container(
-                  height: 180,
-                  color: const Color(0xFF0B1C33),
-                  child: const Icon(Icons.image_not_supported,
-                      size: 48, color: AppColors.muted),
+        elevation: 2,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Fotoğraf
+            if (log.photoUrl != null)
+              ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
+                child: Image.network(
+                  log.photoUrl!,
+                  height: 160,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, err, stack) => Container(
+                    height: 100,
+                    color: const Color(0xFF0B1C33),
+                    child: const Center(
+                        child: Icon(Icons.image_not_supported,
+                            size: 40, color: AppColors.muted)),
+                  ),
                 ),
               ),
-            ),
 
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Tür + rozetler
-                Row(
-                  children: [
-                    Expanded(
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ADIM 6: Sol tarafta balık ikonu (tür bazlı)
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.25)),
+                    ),
+                    child: Center(
                       child: Text(
-                        log.fishType,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
+                        _fishEmoji(log.fishType),
+                        style: const TextStyle(fontSize: 26),
                       ),
                     ),
-                    if (log.isReleased)
-                      _Badge(label: '🔄 Bırakıldı'),
-                    if (log.isPrivate) ...[
-                      const SizedBox(width: 6),
-                      _Badge(label: '🔒 Gizli'),
-                    ],
-                    if (!log.synced) ...[
-                      const SizedBox(width: 6),
-                      const Tooltip(
-                        message: 'Senkronize edilmedi',
-                        child: Icon(Icons.cloud_off,
-                            color: AppColors.muted, size: 22),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                // Ağırlık ve uzunluk
-                Row(
-                  children: [
-                    if (log.weightKg != null) ...[
-                      const Icon(Icons.monitor_weight_outlined,
-                          size: 20, color: AppColors.muted),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${log.weightKg!.toStringAsFixed(1)} kg',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                log.fishType,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            // ADIM 6: Ağırlık büyük 20sp bold
+                            if (log.weightKg != null)
+                              Text(
+                                '${log.weightKg!.toStringAsFixed(1)} kg',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                    ],
-                    if (log.lengthCm != null) ...[
-                      const Icon(Icons.straighten,
-                          size: 20, color: AppColors.muted),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${log.lengthCm!.toStringAsFixed(1)} cm',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                        const SizedBox(height: 6),
+                        // ADIM 6: Konum ve tarih ikinci satır, 14sp muted
+                        Row(
+                          children: [
+                            const Icon(Icons.access_time_rounded,
+                                size: 14, color: AppColors.muted),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatDate(log.caughtAt),
+                              style: const TextStyle(
+                                  fontSize: 14, color: AppColors.muted),
+                            ),
+                            if (log.lengthCm != null) ...[
+                              const SizedBox(width: 12),
+                              const Icon(Icons.straighten,
+                                  size: 14, color: AppColors.muted),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${log.lengthCm!.toStringAsFixed(0)} cm',
+                                style: const TextStyle(
+                                    fontSize: 14, color: AppColors.muted),
+                              ),
+                            ],
+                          ],
                         ),
-                      ),
-                    ],
-                  ],
-                ),
-
-                // Not
-                if (log.notes != null && log.notes!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    log.notes!,
-                    style: const TextStyle(
-                        fontSize: 14, color: Colors.white70),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                        // Rozetler
+                        if (log.isReleased || log.isPrivate || !log.synced) ...[
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 6,
+                            children: [
+                              if (log.isReleased)
+                                _Badge(label: '🔄 Bırakıldı'),
+                              if (log.isPrivate)
+                                _Badge(label: '🔒 Gizli'),
+                              if (!log.synced)
+                                const Tooltip(
+                                  message: 'Senkronize edilmedi',
+                                  child: Icon(Icons.cloud_off,
+                                      color: AppColors.muted, size: 20),
+                                ),
+                            ],
+                          ),
+                        ],
+                        // Not
+                        if (log.notes != null && log.notes!.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            log.notes!,
+                            style: const TextStyle(
+                                fontSize: 14, color: Colors.white60),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ],
-
-                const SizedBox(height: 8),
-
-                // Tarih + sil butonu
-                Row(
-                  children: [
-                    const Icon(Icons.access_time,
-                        size: 18, color: AppColors.muted),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatDate(log.caughtAt),
-                      style: const TextStyle(
-                          fontSize: 14, color: AppColors.muted),
-                    ),
-                    const Spacer(),
-                    TextButton.icon(
-                      onPressed: () => _confirmDelete(context, ref),
-                      style: TextButton.styleFrom(
-                          foregroundColor: AppColors.danger),
-                      icon: const Icon(Icons.delete_outline, size: 22),
-                      label: const Text('Sil',
-                          style: TextStyle(fontSize: 15)),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -295,36 +340,6 @@ class _LogCard extends ConsumerWidget {
     return '${date.day.toString().padLeft(2, '0')}.'
         '${date.month.toString().padLeft(2, '0')}.'
         '${date.year}';
-  }
-
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Kaydı Sil',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        content: const Text('Bu kayıt silinecek. Emin misiniz?',
-            style: TextStyle(fontSize: 17)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal', style: TextStyle(fontSize: 16)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.danger),
-            child: const Text('Sil',
-                style: TextStyle(fontSize: 16, color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await ref.read(fishLogRepositoryProvider).deleteLog(log.id);
-      onDeleted();
-    }
   }
 }
 
@@ -335,7 +350,7 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: const Color(0xFF0B1C33),
         borderRadius: BorderRadius.circular(20),
@@ -343,7 +358,7 @@ class _Badge extends StatelessWidget {
       child: Text(
         label,
         style: const TextStyle(
-          fontSize: 13,
+          fontSize: 12,
           color: Colors.white70,
           fontWeight: FontWeight.w600,
         ),

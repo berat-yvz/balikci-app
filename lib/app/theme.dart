@@ -5,16 +5,17 @@ class AppColors {
 
   // Ocean / fishing palette
   static const navy = Color(0xFF0A1628); // deep navy
-  static const teal = Color(0xFF0D7E8A); // ocean teal
+  static const teal = Color(0xFF0D7E8A); // ocean teal (kept for markers/misc)
   static const sand = Color(0xFFC9A84C); // sandy gold
   static const foam = Color(0xFFF0F8FF); // foam white
 
-  // App semantic colors (kept for existing code references)
-  static const primary = teal;
-  static const secondary = Color(0xFF1B5FAE); // deep sea blue
-  static const accent = sand;
-  static const primaryLight = Color(0xFFE1F5EE);
-  static const background = Color(0xFF07101E); // slightly darker than navy
+  // App semantic colors — ADIM 1: hedef kitleye göre güncellendi
+  static const primary = Color(0xFF0077B6); // derin deniz mavisi
+  static const secondary = Color(0xFFF77F00); // aksan turuncu/amber
+  static const accent = secondary; // alias for convenience
+  static const primaryLight = Color(0xFFDCEEF8);
+  static const background = Color(0xFF07101E); // dark scaffold
+  static const backgroundLight = Color(0xFFF8F9FA); // açık yüzey (kartlar vb)
   static const surface = Color(0xFF0B1C33);
   static const dark = Color(0xFF06101D);
   static const muted = Color(0xFF8EA0B5);
@@ -30,7 +31,7 @@ class AppColors {
   static const rankUsta = Color(0xFF0D7E8A);
   static const rankDenizReisi = Color(0xFFC9A84C);
 
-  static const danger = Color(0xFFD64545);
+  static const danger = Color(0xFFE63946); // errorColor
   static const success = Color(0xFF2FBF71);
   static const warning = Color(0xFFF2C14E);
 }
@@ -39,7 +40,6 @@ class AppTextStyles {
   AppTextStyles._();
 
   // Display: Poppins if available on platform; otherwise fallback.
-  // (No new packages are added; this keeps build green.)
   static const String _displayFamily = 'Poppins';
 
   static const h1 = TextStyle(
@@ -57,17 +57,18 @@ class AppTextStyles {
     fontWeight: FontWeight.w700,
     fontFamily: _displayFamily,
   );
-  static const body = TextStyle(fontSize: 15, fontWeight: FontWeight.w500);
-  static const caption = TextStyle(fontSize: 13, fontWeight: FontWeight.w500);
+  // ADIM 1: body min 16sp, başlık min 20sp
+  static const body = TextStyle(fontSize: 16, fontWeight: FontWeight.w500);
+  static const caption = TextStyle(fontSize: 14, fontWeight: FontWeight.w500);
 }
 
 ThemeData buildAppTheme() {
   final colorScheme = const ColorScheme(
     brightness: Brightness.dark,
-    primary: AppColors.teal,
+    primary: AppColors.primary,
     onPrimary: AppColors.foam,
-    secondary: AppColors.sand,
-    onSecondary: AppColors.navy,
+    secondary: AppColors.secondary,
+    onSecondary: Colors.white,
     error: AppColors.danger,
     onError: AppColors.foam,
     surface: AppColors.surface,
@@ -79,7 +80,7 @@ ThemeData buildAppTheme() {
     scrim: Colors.black,
     inverseSurface: AppColors.foam,
     onInverseSurface: AppColors.navy,
-    inversePrimary: AppColors.teal,
+    inversePrimary: AppColors.primary,
     tertiary: Color(0xFF2E6FB9),
     onTertiary: AppColors.foam,
   );
@@ -98,9 +99,10 @@ ThemeData buildAppTheme() {
       foregroundColor: AppColors.foam,
       elevation: 0,
       centerTitle: false,
+      toolbarHeight: 60, // ADIM 1: AppBar 60dp
       titleTextStyle: TextStyle(
         color: AppColors.foam,
-        fontSize: 18,
+        fontSize: 20, // ADIM 1: başlık 20sp bold
         fontWeight: FontWeight.w800,
         fontFamily: 'Poppins',
       ),
@@ -111,7 +113,7 @@ ThemeData buildAppTheme() {
       shadowColor: Colors.black,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12), // subtle wave-like radius
+        borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: const Color(0xFF173454).withValues(alpha: 0.9),
           width: 1,
@@ -120,9 +122,9 @@ ThemeData buildAppTheme() {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.teal,
+        backgroundColor: AppColors.primary,
         foregroundColor: AppColors.foam,
-        minimumSize: const Size.fromHeight(48),
+        minimumSize: const Size.fromHeight(52), // ADIM 1: min 52dp
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         textStyle: const TextStyle(
           fontSize: 16,
@@ -135,13 +137,13 @@ ThemeData buildAppTheme() {
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         minimumSize: const Size(48, 48),
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(48),
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        minimumSize: const Size.fromHeight(52), // ADIM 1: min 52dp
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     ),
@@ -167,7 +169,7 @@ ThemeData buildAppTheme() {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.teal, width: 2),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -206,9 +208,11 @@ ThemeData buildAppTheme() {
       ),
       bodyLarge: base.textTheme.bodyLarge?.copyWith(
         fontWeight: FontWeight.w500,
+        fontSize: 16,
       ),
       bodyMedium: base.textTheme.bodyMedium?.copyWith(
         fontWeight: FontWeight.w500,
+        fontSize: 16,
       ),
       labelLarge: base.textTheme.labelLarge?.copyWith(
         fontWeight: FontWeight.w800,

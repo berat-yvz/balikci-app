@@ -79,6 +79,7 @@ class _StatsScreenState extends State<StatsScreen> {
     final maxMonthly = monthly.values.fold(0, (a, b) => a > b ? a : b);
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(title: const Text('İstatistiklerim')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {

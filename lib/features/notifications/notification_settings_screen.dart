@@ -63,6 +63,7 @@ class _NotificationSettingsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(title: const Text('Bildirim Ayarları')),
       body: ListView(
         padding: const EdgeInsets.all(20),

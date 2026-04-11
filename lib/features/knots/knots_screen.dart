@@ -88,6 +88,7 @@ class _KnotsScreenState extends State<KnotsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Düğüm & Takım Rehberi'),
         bottom: TabBar(

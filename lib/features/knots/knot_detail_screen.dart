@@ -53,6 +53,7 @@ class _KnotDetailScreenState extends State<KnotDetailScreen> {
     final knot = widget.knot;
     final diff = knot.difficulty.clamp(1, 5);
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(title: Text(knot.title)),
       body: ListView(
         padding: const EdgeInsets.all(16),

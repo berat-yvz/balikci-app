@@ -30,6 +30,7 @@ class WeatherScreen extends ConsumerWidget {
     final weatherAsync = ref.watch(istanbulWeatherProvider);
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Hava Durumu'),
       ),
@@ -43,70 +44,293 @@ class WeatherScreen extends ConsumerWidget {
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(istanbulWeatherProvider),
             child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Konum başlığı — GPS veya fallback göstergesi
-              Row(
-                children: [
-                  Icon(
-                    data.gpsUsed ? Icons.gps_fixed : Icons.location_city,
-                    color: data.gpsUsed ? AppColors.primary : AppColors.muted,
-                    size: 20,
+              padding: const EdgeInsets.all(16),
+              children: [
+                // Konum başlığı
+                Row(
+                  children: [
+                    Icon(
+                      data.gpsUsed ? Icons.gps_fixed : Icons.location_city,
+                      color:
+                          data.gpsUsed ? AppColors.primary : AppColors.muted,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      data.gpsUsed ? 'Konumunuz' : 'İstanbul (varsayılan)',
+                      style: AppTextStyles.h3.copyWith(
+                        color: data.gpsUsed
+                            ? AppColors.primary
+                            : AppColors.muted,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // ADIM 4: "Bugün Balık Tutulur mu?" büyük kart
+                if (data.current != null) ...[
+                  _FishingScoreCard(weather: data.current!),
+                  const SizedBox(height: 16),
+                ],
+
+                if (data.current != null) ...[
+                  _WeatherHeroCard(weather: data.current!),
+                  const SizedBox(height: 16),
+                  _WeatherDetailGrid(
+                    weather: data.current!,
+                    currentHour: currentHour,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(height: 16),
+                ],
+
+                // ADIM 4: Saatlik tahmin yatay kaydırmalı
+                if (hoursFromNow.isNotEmpty) ...[
                   Text(
-                    data.gpsUsed ? 'Konumunuz' : 'İstanbul (varsayılan)',
+                    'Saatlik Tahmin',
                     style: AppTextStyles.h3.copyWith(
-                      color: data.gpsUsed ? AppColors.primary : AppColors.muted,
-                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  _HourlyScrollRow(hours: hoursFromNow),
+                  const SizedBox(height: 20),
                 ],
-              ),
-              const SizedBox(height: 16),
 
-              if (data.current != null) ...[
-                _WeatherHeroCard(weather: data.current!),
-                const SizedBox(height: 16),
-                _WeatherDetailGrid(
-                  weather: data.current!,
-                  currentHour: currentHour,
-                ),
-                const SizedBox(height: 16),
+                // Ay fazı kartı — büyük ikon + Türkçe isim
+                const _MoonPhaseCard(),
+                const SizedBox(height: 20),
+
+                // Detaylı grafik (opsiyonel, collapse edilmiş)
+                if (data.hourly.isNotEmpty) ...[
+                  Text(
+                    'Sıcaklık Grafiği',
+                    style: AppTextStyles.h3.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _HourlyWeatherChart(hours: hoursFromNow),
+                ],
+
+                if (data.current != null) ...[
+                  const SizedBox(height: 24),
+                  _UpdateInfo(
+                    weather: data.current!,
+                    lastUpdated: data.lastUpdated,
+                  ),
+                ],
               ],
-
-              // Ay fazı kartı
-              const _MoonPhaseCard(),
-              const SizedBox(height: 20),
-
-              Text(
-                'Saatlik Tahmin',
-                style: AppTextStyles.h3.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 12),
-              data.hourly.isEmpty
-                  ? Text(
-                      'Saatlik hava verisi alınamadı',
-                      style: AppTextStyles.caption.copyWith(
-                        color: Colors.white70,
-                      ),
-                    )
-                  : _HourlyWeatherChart(hours: hoursFromNow),
-
-              if (data.current != null) ...[
-                const SizedBox(height: 24),
-                _UpdateInfo(
-                  weather: data.current!,
-                  lastUpdated: data.lastUpdated,
-                ),
-              ],
-            ],
-          ),
+            ),
           );
         },
+      ),
+    );
+  }
+}
+
+// ── ADIM 4: Bugün Balık Tutulur mu? ─────────────────────────────────────────
+
+class _FishingScoreCard extends StatelessWidget {
+  final WeatherModel weather;
+  const _FishingScoreCard({required this.weather});
+
+  Color _bgColor(int score) {
+    if (score >= 70) return const Color(0xFF1A3A2A);
+    if (score >= 40) return const Color(0xFF3A2A0A);
+    return const Color(0xFF3A0A0A);
+  }
+
+  Color _accentColor(int score) {
+    if (score >= 70) return AppColors.success;
+    if (score >= 40) return AppColors.secondary;
+    return AppColors.danger;
+  }
+
+  String _verdict(int score) {
+    if (score >= 70) return 'İyi!';
+    if (score >= 40) return 'Orta';
+    return 'Kötü';
+  }
+
+  String _subtitle(WeatherModel w) {
+    final parts = <String>[];
+    if (w.windKmh > 25) parts.add('Rüzgar kuvvetli');
+    if (w.tempCelsius > 28) parts.add('Çok sıcak');
+    if (w.tempCelsius < 8) parts.add('Çok soğuk');
+    if (w.windKmh <= 15 && w.tempCelsius >= 16 && w.tempCelsius <= 24) {
+      parts.add('İdeal koşullar');
+    }
+    if (parts.isEmpty) return FishingWeatherUtils.getSummary(w);
+    return parts.join(' · ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final score = FishingWeatherUtils.getFishingScore(weather);
+    final bgColor = _bgColor(score);
+    final accentColor = _accentColor(score);
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accentColor.withValues(alpha: 0.5), width: 1.5),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Bugün Balık Tutulur mu?',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '$score',
+                style: TextStyle(
+                  color: accentColor,
+                  fontSize: 64, // ADIM 4: 64sp bold
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  '/100',
+                  style: TextStyle(
+                    color: accentColor.withValues(alpha: 0.7),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              _verdict(score),
+              style: TextStyle(
+                color: accentColor,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _subtitle(weather),
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── ADIM 4: Saatlik kartlar — yatay kaydırmalı Row ───────────────────────────
+
+class _HourlyScrollRow extends StatelessWidget {
+  final List<HourlyWeatherModel> hours;
+  const _HourlyScrollRow({required this.hours});
+
+  String _weatherEmoji(int? code) {
+    if (code == null) return '🌤️';
+    if (code == 800) return '☀️';
+    if (code > 800) return '⛅';
+    if (code >= 700) return '🌫️';
+    if (code >= 600) return '❄️';
+    if (code >= 500) return '🌧️';
+    if (code >= 300) return '🌦️';
+    if (code >= 200) return '⛈️';
+    return '🌤️';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: hours.map((h) {
+          final isNow =
+              h.time.difference(DateTime.now()).abs().inMinutes <= 30;
+          return Container(
+            width: 72,
+            margin: const EdgeInsets.only(right: 8),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            decoration: BoxDecoration(
+              color: isNow
+                  ? AppColors.primary.withValues(alpha: 0.20)
+                  : const Color(0xFF132236),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isNow
+                    ? AppColors.primary.withValues(alpha: 0.5)
+                    : Colors.white10,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${h.time.hour.toString().padLeft(2, '0')}:00',
+                  style: TextStyle(
+                    color: isNow ? AppColors.primary : Colors.white60,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _weatherEmoji(h.weatherCode),
+                  style: const TextStyle(fontSize: 22),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${h.temperature.round()}°',
+                  style: TextStyle(
+                    color: isNow ? Colors.white : Colors.white70,
+                    fontSize: 16,
+                    fontWeight:
+                        isNow ? FontWeight.w900 : FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '💨${h.windspeed.round()}',
+                  style: const TextStyle(
+                    color: Color(0xFF88BBFF),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -720,7 +944,7 @@ class _UpdateInfo extends StatelessWidget {
   }
 }
 
-/// Anlık ay fazını hesaplar ve balıkçılık ipucu ile gösterir.
+/// ADIM 4: Ay fazı kartı — büyük ikon + Türkçe faz adı.
 class _MoonPhaseCard extends StatelessWidget {
   const _MoonPhaseCard();
 
@@ -730,73 +954,63 @@ class _MoonPhaseCard extends StatelessWidget {
     final pct = (moon.illumination * 100).round();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFF1A2F47),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white10),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
         children: [
-          Text(moon.emoji, style: const TextStyle(fontSize: 44)),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      moon.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '%$pct aydınlık',
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: moon.illumination,
-                    backgroundColor: Colors.white12,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFFFFF176),
-                    ),
-                    minHeight: 6,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  moon.fishingTip,
-                  style: const TextStyle(
-                    color: Color(0xFFB0BEC5),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+          // Büyük ay ikonu
+          Text(moon.emoji, style: const TextStyle(fontSize: 64)),
+          const SizedBox(height: 10),
+          // Faz adı Türkçe
+          Text(
+            moon.name,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
             ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '%$pct aydınlık',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: moon.illumination,
+              backgroundColor: Colors.white12,
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFFFFF176),
+              ),
+              minHeight: 8,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            moon.fishingTip,
+            style: const TextStyle(
+              color: Color(0xFFB0BEC5),
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

@@ -190,6 +190,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(title: Text(_isEdit ? 'Mera Düzenle' : 'Mera Ekle')),
       body: Form(
         key: _formKey,
@@ -198,6 +199,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
           children: [
             TextFormField(
               controller: _nameCtrl,
+              textInputAction: TextInputAction.next,
               decoration: const InputDecoration(
                 labelText: 'Mera Adı',
               ),
@@ -208,6 +210,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _descCtrl,
+              textInputAction: TextInputAction.done,
               decoration: const InputDecoration(
                 labelText: 'Açıklama (isteğe bağlı)',
               ),

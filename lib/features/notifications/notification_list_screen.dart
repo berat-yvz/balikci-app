@@ -17,6 +17,7 @@ class NotificationListScreen extends ConsumerWidget {
     final asyncNotifications = ref.watch(myNotificationsProvider);
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Bildirimler'),
         actions: [

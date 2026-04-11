@@ -12,6 +12,7 @@ import 'package:balikci_app/features/weather/providers/istanbul_weather_provider
 import '../../../core/services/supabase_service.dart';
 import '../../../data/repositories/fish_log_repository.dart';
 
+/// ADIM 5: Balık kayıt formu — sadeleştirilmiş, hedef kitleye göre optimize.
 class AddLogScreen extends ConsumerStatefulWidget {
   const AddLogScreen({super.key});
 
@@ -22,13 +23,17 @@ class AddLogScreen extends ConsumerStatefulWidget {
 class _AddLogScreenState extends ConsumerState<AddLogScreen> {
   final _formKey = GlobalKey<FormState>();
   final _weightController = TextEditingController();
+
+  // Opsiyonel alanlar (genişletilebilir bölüm)
   final _lengthController = TextEditingController();
   final _notesController = TextEditingController();
+  final _locationNoteController = TextEditingController();
 
   String? _selectedFishType;
   bool _isPrivate = false;
   bool _isReleased = false;
   bool _isLoading = false;
+  bool _showExtra = false; // "Daha Fazla Bilgi Ekle" açık mı?
   File? _selectedImage;
 
   static const List<String> _fishTypes = [
@@ -55,6 +60,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
     _weightController.dispose();
     _lengthController.dispose();
     _notesController.dispose();
+    _locationNoteController.dispose();
     super.dispose();
   }
 
@@ -84,7 +90,6 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
     }
   }
 
-  /// Mevcut hava durumunu snapshot olarak Map'e çevirir.
   Map<String, dynamic>? _buildWeatherSnapshot() {
     final weatherData = ref.read(istanbulWeatherProvider).valueOrNull;
     final weather = weatherData?.current;
@@ -105,8 +110,11 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
     if (_selectedFishType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Lütfen balık türü seçin',
-              style: TextStyle(fontSize: 16)),
+          content: Row(children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.white),
+            SizedBox(width: 8),
+            Text('Balık türü seçin', style: TextStyle(fontSize: 16)),
+          ]),
           backgroundColor: AppColors.warning,
         ),
       );
@@ -123,6 +131,12 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
         photoUrl = await _uploadPhoto(_selectedImage!);
       }
 
+      final notes = [
+        if (_notesController.text.isNotEmpty) _notesController.text,
+        if (_locationNoteController.text.isNotEmpty)
+          'Konum: ${_locationNoteController.text}',
+      ].join(' | ');
+
       final weatherSnapshot = _buildWeatherSnapshot();
 
       await FishLogRepository().createLog(
@@ -135,23 +149,28 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
             ? double.tryParse(_lengthController.text)
             : null,
         photoUrl: photoUrl,
-        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+        notes: notes.isNotEmpty ? notes : null,
         isPrivate: _isPrivate,
         released: _isReleased,
         weatherSnapshot: weatherSnapshot,
       );
 
-      // Gizli değilse puan ver
       if (!_isPrivate) {
-        final source = _isReleased ? ScoreSource.releaseExif : ScoreSource.fishLogPublic;
+        final source =
+            _isReleased ? ScoreSource.releaseExif : ScoreSource.fishLogPublic;
         unawaited(ScoreService.award(userId, source));
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Kayıt eklendi! 🎣',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            content: Row(children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 24),
+              SizedBox(width: 10),
+              Text('Kayıt eklendi! 🎣',
+                  style:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ]),
             backgroundColor: AppColors.success,
             duration: Duration(seconds: 2),
           ),
@@ -173,73 +192,31 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
     }
   }
 
-  // ── Shared input decoration ─────────────────────────────
-  InputDecoration _fieldDecoration({required String hint}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(fontSize: 16, color: Color(0xFF8EA0B5)),
-      filled: true,
-      fillColor: const Color(0xFF132236),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide:
-            const BorderSide(color: Color(0xFF24415F), width: 1.5),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide:
-            const BorderSide(color: Color(0xFF24415F), width: 1.5),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.teal, width: 2),
-      ),
-    );
-  }
-
-  static const _labelStyle = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w700,
-    color: Colors.white,
-  );
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A1628),
-        title: const Text(
-          '🎣 Yeni Balık Kaydı',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-          ),
-        ),
+        title: const Text('Yeni Balık Kaydı'),
         centerTitle: true,
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
           children: [
-            // ── Anlık hava durumu özeti ───────────────────
-            _WeatherBanner(),
-            const SizedBox(height: 16),
-
-            // ── Fotoğraf seç ──────────────────────────────
+            // ── ADIM 5: Fotoğraf alanı en üstte, büyük (200dp), dashed border
             GestureDetector(
               onTap: _pickImage,
               child: Container(
-                height: 180,
+                height: 200,
                 decoration: BoxDecoration(
                   color: const Color(0xFF132236),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.muted.withValues(alpha: 0.3),
-                    width: 1.5,
+                    color: AppColors.muted.withValues(alpha: 0.5),
+                    width: 2,
+                    strokeAlign: BorderSide.strokeAlignInside,
                   ),
                   image: _selectedImage != null
                       ? DecorationImage(
@@ -249,35 +226,62 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                       : null,
                 ),
                 child: _selectedImage == null
-                    ? const Column(
+                    ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.add_a_photo,
-                              size: 56, color: Color(0xFF8EA0B5)),
-                          SizedBox(height: 8),
-                          Text(
+                          Icon(Icons.add_a_photo_outlined,
+                              size: 56,
+                              color: AppColors.muted.withValues(alpha: 0.8)),
+                          const SizedBox(height: 8),
+                          const Text(
                             'Fotoğraf Ekle',
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF8EA0B5),
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Galeriden seç',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color:
+                                  AppColors.muted.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
                       )
-                    : null,
+                    : Align(
+                        alignment: Alignment.topRight,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: CircleAvatar(
+                            radius: 18,
+                            backgroundColor: Colors.black54,
+                            child: IconButton(
+                              icon: const Icon(Icons.close,
+                                  size: 18, color: Colors.white),
+                              onPressed: () =>
+                                  setState(() => _selectedImage = null),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ),
+                      ),
               ),
             ),
             const SizedBox(height: 20),
 
-            // ── Balık türü ────────────────────────────────
-            const Text('Balık Türü *', style: _labelStyle),
+            // ── Balık türü — zorunlu, büyük dropdown
+            const _FieldLabel(text: 'Balık Türü *'),
             const SizedBox(height: 8),
             Container(
+              height: 56,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: const Color(0xFF132236),
-                border: Border.all(color: AppColors.teal, width: 1.5),
+                border: Border.all(color: AppColors.primary, width: 1.5),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: DropdownButtonHideUnderline(
@@ -288,7 +292,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                     'Balık seçin...',
                     style: TextStyle(fontSize: 16, color: AppColors.muted),
                   ),
-                  style: const TextStyle(fontSize: 16, color: Colors.white),
+                  style: const TextStyle(fontSize: 18, color: Colors.white),
                   isExpanded: true,
                   icon: const Icon(Icons.arrow_drop_down,
                       size: 32, color: AppColors.muted),
@@ -304,215 +308,318 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                         ),
                       )
                       .toList(),
-                  onChanged: (val) =>
-                      setState(() => _selectedFishType = val),
+                  onChanged: (val) => setState(() => _selectedFishType = val),
                 ),
               ),
             ),
             const SizedBox(height: 20),
 
-            // ── Ağırlık ve Uzunluk ────────────────────────
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Ağırlık (kg)', style: _labelStyle),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _weightController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        style: const TextStyle(
-                            fontSize: 16, color: Colors.white),
-                        decoration: _fieldDecoration(hint: '0.0'),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Uzunluk (cm)', style: _labelStyle),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _lengthController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        style: const TextStyle(
-                            fontSize: 16, color: Colors.white),
-                        decoration: _fieldDecoration(hint: '0.0'),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // ── Geri bıraktım toggle ──────────────────────
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: _isReleased
-                    ? const Color(0xFF0B1C33)
-                    : const Color(0xFF132236),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _isReleased
-                      ? AppColors.teal
-                      : AppColors.muted.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.water, size: 32, color: AppColors.teal),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Geri bıraktım 🐟',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  Transform.scale(
-                    scale: 1.3,
-                    child: Switch(
-                      value: _isReleased,
-                      onChanged: (val) =>
-                          setState(() => _isReleased = val),
-                      activeThumbColor: AppColors.teal,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // ── Gizli kayıt toggle ────────────────────────
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: _isPrivate
-                    ? const Color(0xFF0B1C33)
-                    : const Color(0xFF132236),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _isPrivate
-                      ? AppColors.accent
-                      : AppColors.muted.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.lock_outline,
-                      size: 32, color: AppColors.accent),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Gizli kayıt',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  Transform.scale(
-                    scale: 1.3,
-                    child: Switch(
-                      value: _isPrivate,
-                      onChanged: (val) =>
-                          setState(() => _isPrivate = val),
-                      activeThumbColor: AppColors.accent,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // ── Not alanı ─────────────────────────────────
-            const Text('Not (isteğe bağlı)', style: _labelStyle),
+            // ── Ağırlık — zorunlu, büyük
+            const _FieldLabel(text: 'Ağırlık (kg) *'),
             const SizedBox(height: 8),
             TextFormField(
-              controller: _notesController,
-              maxLines: 3,
-              style: const TextStyle(fontSize: 16, color: Colors.white),
+              controller: _weightController,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              textInputAction: TextInputAction.done,
+              style: const TextStyle(
+                  fontSize: 22,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700),
               decoration: InputDecoration(
-                hintText: 'Nasıl bir gündü? Ne yedirdin?',
+                hintText: '0.0',
                 hintStyle: const TextStyle(
-                    fontSize: 16, color: Color(0xFF8EA0B5)),
+                    fontSize: 22, color: AppColors.muted),
                 filled: true,
                 fillColor: const Color(0xFF132236),
-                contentPadding: const EdgeInsets.all(16),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 18),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                      color: Color(0xFF24415F), width: 1.5),
+                  borderSide:
+                      const BorderSide(color: AppColors.primary, width: 1.5),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                      color: Color(0xFF24415F), width: 1.5),
+                  borderSide:
+                      const BorderSide(color: Color(0xFF24415F), width: 1.5),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide:
-                      const BorderSide(color: AppColors.teal, width: 2),
+                      const BorderSide(color: AppColors.primary, width: 2),
                 ),
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // ── KAYDET butonu ─────────────────────────────
-            SizedBox(
-              height: 56,
-              child: ElevatedButton.icon(
-                onPressed: _isLoading ? null : _save,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                icon: _isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Icon(Icons.save, size: 28),
-                label: Text(
-                  _isLoading ? 'Kaydediliyor...' : 'KAYDET',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700),
-                ),
+                suffixText: 'kg',
+                suffixStyle: const TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600),
               ),
             ),
             const SizedBox(height: 24),
+
+            // ── "Daha Fazla Bilgi Ekle" genişletilebilir bölüm
+            GestureDetector(
+              onTap: () => setState(() => _showExtra = !_showExtra),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF132236),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.muted.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _showExtra
+                          ? Icons.expand_less_rounded
+                          : Icons.expand_more_rounded,
+                      color: AppColors.muted,
+                      size: 26,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Daha Fazla Bilgi Ekle',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _showExtra
+                            ? Colors.white
+                            : AppColors.muted,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      'isteğe bağlı',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.muted.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Genişletilebilir bölüm içeriği
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 250),
+              crossFadeState: _showExtra
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              firstChild: const SizedBox.shrink(),
+              secondChild: Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Uzunluk
+                    const _FieldLabel(text: 'Boy (cm)'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _lengthController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      textInputAction: TextInputAction.next,
+                      style: const TextStyle(
+                          fontSize: 16, color: Colors.white),
+                      decoration: _fieldDec(hint: '0.0', suffix: 'cm'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Geri bıraktım
+                    _ToggleRow(
+                      icon: Icons.water,
+                      label: 'Geri bıraktım 🐟',
+                      value: _isReleased,
+                      onChanged: (v) => setState(() => _isReleased = v),
+                      activeColor: AppColors.teal,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Gizli kayıt
+                    _ToggleRow(
+                      icon: Icons.lock_outline,
+                      label: 'Gizli kayıt',
+                      value: _isPrivate,
+                      onChanged: (v) => setState(() => _isPrivate = v),
+                      activeColor: AppColors.secondary,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Konum notu
+                    const _FieldLabel(text: 'Konum Notu'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _locationNoteController,
+                      textInputAction: TextInputAction.next,
+                      style: const TextStyle(
+                          fontSize: 16, color: Colors.white),
+                      decoration: _fieldDec(hint: 'Hangi mera, köprü, koy?'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Not
+                    const _FieldLabel(text: 'Not'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _notesController,
+                      maxLines: 2,
+                      textInputAction: TextInputAction.done,
+                      style: const TextStyle(
+                          fontSize: 16, color: Colors.white),
+                      decoration: _fieldDec(
+                          hint: 'Nasıl bir gündü? Ne yedirdin?'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Hava durumu özeti
+            _WeatherBanner(),
           ],
         ),
+      ),
+      // ── ADIM 5: Sticky kaydet butonu altta
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: SizedBox(
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: _isLoading ? null : _save,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: _isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_rounded, size: 26),
+              label: Text(
+                _isLoading ? 'Kaydediliyor...' : 'KAYDET',
+                style: const TextStyle(
+                    fontSize: 17, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _fieldDec({required String hint, String? suffix}) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(fontSize: 16, color: Color(0xFF8EA0B5)),
+      filled: true,
+      fillColor: const Color(0xFF132236),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF24415F), width: 1.5),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF24415F), width: 1.5),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+      ),
+      suffixText: suffix,
+      suffixStyle: const TextStyle(
+          color: AppColors.muted, fontSize: 16, fontWeight: FontWeight.w600),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+        color: Colors.white,
       ),
     );
   }
 }
 
-/// Kayıt formunun üstünde gösterilen küçük hava durumu özet kartı.
+class _ToggleRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final Color activeColor;
+
+  const _ToggleRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    required this.activeColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: value ? const Color(0xFF0B1C33) : const Color(0xFF132236),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: value ? activeColor : AppColors.muted.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 28, color: activeColor),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white),
+            ),
+          ),
+          Transform.scale(
+            scale: 1.2,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeThumbColor: activeColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kayıt formunun altında gösterilen küçük hava durumu özet kartı.
 class _WeatherBanner extends ConsumerWidget {
   const _WeatherBanner();
 
@@ -549,7 +656,7 @@ class _WeatherBanner extends ConsumerWidget {
                       data.gpsUsed ? 'Konumunuzdaki Hava' : 'İstanbul Havası',
                       style: const TextStyle(
                         color: Color(0xFF8EA0B5),
-                        fontSize: 12,
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -558,7 +665,7 @@ class _WeatherBanner extends ConsumerWidget {
                       '🌡 $temp°C  |  💨 $wind km/s',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -567,10 +674,7 @@ class _WeatherBanner extends ConsumerWidget {
               ),
               const Text(
                 'Otomatik kaydedilecek',
-                style: TextStyle(
-                  color: Color(0xFF8EA0B5),
-                  fontSize: 11,
-                ),
+                style: TextStyle(color: Color(0xFF8EA0B5), fontSize: 12),
               ),
             ],
           ),

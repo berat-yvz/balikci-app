@@ -55,6 +55,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         : null;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: profileAsync.when(
           data: (u) => Text(
@@ -177,183 +178,187 @@ class _ProfileContent extends ConsumerWidget {
         ref.invalidate(favoriteSpotsProvider);
       },
       child: SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Column(
-              children: [
-                GestureDetector(
-                  onTap: onPickAvatar,
-                  child: Stack(
-                    alignment: Alignment.bottomRight,
-                    children: [
-                      CircleAvatar(
-                        radius: 48,
-                        backgroundColor: AppColors.primaryLight,
-                        backgroundImage: user.avatarUrl != null
-                            ? NetworkImage(_toPublicAvatarUrl(user.avatarUrl!))
-                            : null,
-                        child: user.avatarUrl == null
-                            ? Text(
-                                initials,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 18,
-                                  color: AppColors.dark,
-                                ),
-                              )
-                            : null,
-                      ),
-                      if (onPickAvatar != null)
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ADIM 9: Profil başlığı — avatar + rank_badge yan yana
+            Center(
+              child: Column(
+                children: [
+                  GestureDetector(
+                    onTap: onPickAvatar,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
                         CircleAvatar(
-                          radius: 18,
-                          backgroundColor: AppColors.primary,
-                          child: isUploadingAvatar
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
+                          radius: 52,
+                          backgroundColor: AppColors.primaryLight,
+                          backgroundImage: user.avatarUrl != null
+                              ? NetworkImage(_toPublicAvatarUrl(user.avatarUrl!))
+                              : null,
+                          child: user.avatarUrl == null
+                              ? Text(
+                                  initials,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 20,
+                                    color: AppColors.dark,
                                   ),
                                 )
-                              : const Icon(
-                                  Icons.camera_alt_outlined,
-                                  size: 18,
-                                  color: Colors.white,
-                                ),
+                              : null,
                         ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(user.username, style: AppTextStyles.h2),
-                const SizedBox(height: 8),
-                RankBadge(rank: user.rank, size: RankBadgeSize.large),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          _SectionTitle(title: 'Skorlar'),
-          const SizedBox(height: 10),
-          _ScoreRow(
-            totalScore: user.totalScore,
-            sustainabilityScore: user.sustainabilityScore,
-            onTapTotal: () {
-              _showExplanation(
-                context,
-                'Toplam puan nedir?',
-                'Balık bildirimi, doğru rapor oyları ve günlük kayıtlar puan kazandırır. Toplam puan rütbeni belirler.',
-              );
-            },
-            onTapSustainability: () {
-              _showExplanation(
-                context,
-                'Sürdürülebilirlik puanı nedir?',
-                'Balığı geri saldığın kayıtlar sürdürülebilirlik puanını artırır. Bu sayede “♻️” skorun yükselir.',
-              );
-            },
-          ),
-          const SizedBox(height: 18),
-          _SectionTitle(title: 'Rütbe İlerlemesi'),
-          const SizedBox(height: 10),
-          _RankProgress(currentRank: user.rank, totalScore: user.totalScore),
-          const SizedBox(height: 18),
-          _SectionTitle(title: 'İstatistikler'),
-          const SizedBox(height: 10),
-          _StatsRow(userId: user.id, isSelf: isSelf),
-          const SizedBox(height: 18),
-          _SectionTitle(title: 'Hızlı İşlemler'),
-          const SizedBox(height: 10),
-          if (isSelf) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
+                        // ADIM 9: rank_badge profil fotosu yanında
+                        Positioned(
+                          bottom: -4,
+                          right: -8,
+                          child: RankBadge(
+                            rank: user.rank,
+                            size: RankBadgeSize.medium,
+                          ),
+                        ),
+                        if (onPickAvatar != null)
+                          Positioned(
+                            top: 0,
+                            right: -4,
+                            child: CircleAvatar(
+                              radius: 16,
+                              backgroundColor: AppColors.primary,
+                              child: isUploadingAvatar
+                                  ? const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.camera_alt_outlined,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                            ),
+                          ),
+                      ],
                     ),
-                    onPressed: () => context.go(AppRoutes.fishLog),
-                    icon: const Icon(Icons.list_alt_outlined),
-                    label: const Text('Günlüğüm'),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1A2F47),
-                      foregroundColor: Colors.white,
+                  const SizedBox(height: 16),
+                  Text(user.username, style: AppTextStyles.h2),
+                  const SizedBox(height: 4),
+                  Text(
+                    _rankLabel(user.rank),
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                     ),
-                    onPressed: () => context.push(AppRoutes.fishLogStats),
-                    icon: const Icon(Icons.bar_chart_rounded),
-                    label: const Text('İstatistik'),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () => context.push(AppRoutes.settings),
-                icon: const Icon(Icons.settings_outlined),
-                label: const Text('Ayarlar'),
+                ],
               ),
             ),
-          ] else ...[
-            if (isFollowingAsync != null)
-              isFollowingAsync!.when(
-                data: (following) {
-                  final willFollow = !following;
-                  return SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: onFollowToggle == null
-                          ? null
-                          : () => onFollowToggle!(willFollow),
-                      icon: Icon(
-                        following ? Icons.person_remove : Icons.person_add,
-                      ),
-                      label: Text(following ? 'Takipten çık' : 'Takip et'),
-                    ),
-                  );
-                },
-                loading: () => const SizedBox(
-                  width: double.infinity,
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (e, _) => SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.person_add_outlined),
-                    label: const Text('Takip et'),
-                  ),
-                ),
-              )
-            else
-              const SizedBox.shrink(),
-          ],
-          // Favori meralar sadece kendi profilinde görünür
-          if (isSelf) ...[
-            const SizedBox(height: 24),
-            const _SectionTitle(title: 'Favori Meralarım'),
+            const SizedBox(height: 20),
+
+            // ADIM 9: Takip/Takipçi tıklanabilir sayılar
+            _FollowStatsRow(userId: user.id),
+            const SizedBox(height: 20),
+
+            // ADIM 9: Özet istatistik kartları 3'lü grid
+            _SummaryStatsGrid(userId: user.id),
+            const SizedBox(height: 20),
+
+            _SectionTitle(title: 'Rütbe İlerlemesi'),
             const SizedBox(height: 10),
-            const _FavoriteSpotsSection(),
+            _RankProgress(currentRank: user.rank, totalScore: user.totalScore),
+            const SizedBox(height: 20),
+
+            _SectionTitle(title: 'Skorlar'),
+            const SizedBox(height: 10),
+            _ScoreRow(
+              totalScore: user.totalScore,
+              sustainabilityScore: user.sustainabilityScore,
+              onTapTotal: () {
+                _showExplanation(
+                  context,
+                  'Toplam puan nedir?',
+                  'Balık bildirimi, doğru rapor oyları ve günlük kayıtlar puan kazandırır. Toplam puan rütbeni belirler.',
+                );
+              },
+              onTapSustainability: () {
+                _showExplanation(
+                  context,
+                  'Sürdürülebilirlik puanı nedir?',
+                  'Balığı geri saldığın kayıtlar sürdürülebilirlik puanını artırır. Bu sayede “♻️” skorun yükselir.',
+                );
+              },
+            ),
+
+            if (isSelf) ...[
+              const SizedBox(height: 20),
+              // ADIM 9: “Günlüğüm”, “Rozetlerim”, “Ayarlar” alt bölümleri
+              _ProfileActionSection(
+                onGoToLog: () => context.go(AppRoutes.fishLog),
+                onGoToStats: () => context.push(AppRoutes.fishLogStats),
+                onGoToSettings: () => context.push(AppRoutes.settings),
+              ),
+            ] else ...[
+              const SizedBox(height: 16),
+              if (isFollowingAsync != null)
+                isFollowingAsync!.when(
+                  data: (following) {
+                    final willFollow = !following;
+                    return SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: onFollowToggle == null
+                            ? null
+                            : () => onFollowToggle!(willFollow),
+                        icon: Icon(
+                          following ? Icons.person_remove : Icons.person_add,
+                        ),
+                        label: Text(following ? 'Takipten çık' : 'Takip et'),
+                      ),
+                    );
+                  },
+                  loading: () => const SizedBox(
+                    width: double.infinity,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (e, _) => SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {},
+                      icon: const Icon(Icons.person_add_outlined),
+                      label: const Text('Takip et'),
+                    ),
+                  ),
+                )
+              else
+                const SizedBox.shrink(),
+            ],
+
+            if (isSelf) ...[
+              const SizedBox(height: 24),
+              const _SectionTitle(title: 'Favori Meralarım'),
+              const SizedBox(height: 10),
+              const _FavoriteSpotsSection(),
+            ],
+            const SizedBox(height: 32),
           ],
-        ],
+        ),
       ),
-    ),
     );
+  }
+
+  String _rankLabel(String rank) {
+    return switch (rank) {
+      'acemi' => 'Acemi',
+      'olta_kurdu' => 'Olta Kurdu',
+      'usta' => 'Usta',
+      'deniz_reisi' => 'Deniz Reisi',
+      _ => rank,
+    };
   }
 
   String _initials(String username) {
@@ -614,61 +619,130 @@ class _RankProgress extends StatelessWidget {
   }
 }
 
-class _StatsRow extends ConsumerWidget {
-  final String userId;
-  final bool isSelf;
+// ── ADIM 9: Takip/Takipçi tıklanabilir sayı satırı ───────────────────────────
 
-  const _StatsRow({required this.userId, required this.isSelf});
+class _FollowStatsRow extends ConsumerWidget {
+  final String userId;
+  const _FollowStatsRow({required this.userId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userRepo = ref.watch(userRepositoryProvider);
-    final fishRepo = ref.watch(fishLogRepositoryProvider);
-
     return FutureBuilder<List<int>>(
       future: Future.wait([
         userRepo.getFollowerCount(userId),
         userRepo.getFollowingCount(userId),
-        fishRepo.getLogCount(userId),
       ]),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError || !snapshot.hasData) {
-          return Text(
-            'İstatistikler yüklenemedi.',
-            style: AppTextStyles.caption.copyWith(color: AppColors.danger),
-          );
-        }
+        final follower = snapshot.data?[0] ?? 0;
+        final following = snapshot.data?[1] ?? 0;
 
-        final followerCount = snapshot.data![0];
-        final followingCount = snapshot.data![1];
-        final logCount = snapshot.data![2];
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _FollowStat(
+              label: 'Takipçi',
+              count: follower,
+              onTap: () {},
+            ),
+            Container(
+              width: 1,
+              height: 32,
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              color: Colors.white12,
+            ),
+            _FollowStat(
+              label: 'Takip',
+              count: following,
+              onTap: () {},
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _FollowStat extends StatelessWidget {
+  final String label;
+  final int count;
+  final VoidCallback onTap;
+
+  const _FollowStat({
+    required this.label,
+    required this.count,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Text(
+            count.toString(),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(color: AppColors.muted, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── ADIM 9: Özet istatistik kartları 3'lü grid ───────────────────────────────
+
+class _SummaryStatsGrid extends ConsumerWidget {
+  final String userId;
+  const _SummaryStatsGrid({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final fishRepo = ref.watch(fishLogRepositoryProvider);
+    final userRepo = ref.watch(userRepositoryProvider);
+
+    return FutureBuilder<List<int>>(
+      future: Future.wait([
+        fishRepo.getLogCount(userId),
+        userRepo.getFollowerCount(userId),
+        userRepo.getFollowingCount(userId),
+      ]),
+      builder: (context, snapshot) {
+        final logCount = snapshot.data?[0] ?? 0;
+        final followerCount = snapshot.data?[1] ?? 0;
+        final followingCount = snapshot.data?[2] ?? 0;
 
         return Row(
           children: [
             Expanded(
-              child: _StatBox(
-                icon: Icons.group_outlined,
+              child: _SummaryCard(
+                emoji: '🐟',
+                value: '$logCount',
+                label: 'Toplam Kayıt',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _SummaryCard(
+                emoji: '👥',
+                value: '$followerCount',
                 label: 'Takipçi',
-                value: followerCount.toString(),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
-              child: _StatBox(
-                icon: Icons.people_alt_outlined,
-                label: 'Takip Edilen',
-                value: followingCount.toString(),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatBox(
-                icon: Icons.list_alt_outlined,
-                label: 'Av Sayısı',
-                value: logCount.toString(),
+              child: _SummaryCard(
+                emoji: '🎣',
+                value: '$followingCount',
+                label: 'Takip',
               ),
             ),
           ],
@@ -678,47 +752,155 @@ class _StatsRow extends ConsumerWidget {
   }
 }
 
-class _StatBox extends StatelessWidget {
-  final IconData icon;
-  final String label;
+class _SummaryCard extends StatelessWidget {
+  final String emoji;
   final String value;
-
-  const _StatBox({
-    required this.icon,
-    required this.label,
+  final String label;
+  const _SummaryCard({
+    required this.emoji,
     required this.value,
+    required this.label,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xFF132236),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: AppColors.primary),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF132236),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.20)),
+      ),
+      child: Column(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 24)),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(color: AppColors.muted, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── ADIM 9: Profil aksiyon bölümleri ─────────────────────────────────────────
+
+class _ProfileActionSection extends StatelessWidget {
+  final VoidCallback onGoToLog;
+  final VoidCallback onGoToStats;
+  final VoidCallback onGoToSettings;
+
+  const _ProfileActionSection({
+    required this.onGoToLog,
+    required this.onGoToStats,
+    required this.onGoToSettings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _ActionTile(
+          icon: Icons.menu_book_rounded,
+          label: 'Günlüğüm',
+          subtitle: 'Avladığın balıkları gör',
+          onTap: onGoToLog,
+        ),
+        const SizedBox(height: 8),
+        _ActionTile(
+          icon: Icons.military_tech_outlined,
+          label: 'Rozetlerim',
+          subtitle: 'Kazandığın rozetler',
+          onTap: () {}, // Rozet sayfası ileride eklenecek
+        ),
+        const SizedBox(height: 8),
+        _ActionTile(
+          icon: Icons.settings_outlined,
+          label: 'Ayarlar',
+          subtitle: 'Hesap ve uygulama ayarları',
+          onTap: onGoToSettings,
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _ActionTile({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF132236),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+                color: AppColors.muted.withValues(alpha: 0.15)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: AppColors.primary, size: 26),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                          color: AppColors.muted, fontSize: 13),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white70, fontSize: 14),
-            ),
-          ],
+              const Icon(Icons.chevron_right, color: AppColors.muted),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
 
 // ── Favori Meralar Bölümü ────────────────────────────────────────────────────
 

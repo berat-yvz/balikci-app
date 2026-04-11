@@ -770,6 +770,28 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
+          // ADIM 8: Sol alt "+ Nokta Ekle" FAB
+          Positioned(
+            left: 16,
+            bottom: mapFabBottom,
+            child: FloatingActionButton.extended(
+              heroTag: 'addSpotFab',
+              onPressed: () async {
+                final ok = await context.push<bool>('/map/add-spot');
+                if (!mounted) return;
+                if (ok == true) unawaited(_loadSpots());
+              },
+              backgroundColor: AppColors.secondary,
+              foregroundColor: Colors.white,
+              elevation: 4,
+              icon: const Icon(Icons.add_location_alt, size: 22),
+              label: const Text(
+                '+ Nokta Ekle',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+
           // Top-right: Bildirim + Katman toggles
           Positioned(
             right: 12,
