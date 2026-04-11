@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/constants/storage_buckets.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
@@ -349,6 +350,6 @@ String _publicAvatarUrl(String avatarUrlOrPath) {
   if (avatarUrlOrPath.startsWith('http')) return avatarUrlOrPath;
   final base = dotenv.env['SUPABASE_URL'] ?? '';
   if (base.isEmpty) return avatarUrlOrPath;
-  const bucket = 'users-avatars';
+  final bucket = avatarStorageBucket();
   return '$base/storage/v1/object/public/$bucket/$avatarUrlOrPath';
 }

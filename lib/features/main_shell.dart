@@ -210,17 +210,17 @@ class _MapNavItem extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isActive
-                      ? AppColors.primary
-                      : const Color(0xFF1B3A52),
+                      ? AppColors.mapSpotLayerActive
+                      : AppColors.mapSpotLayerInactive,
                   border: Border.all(
                     color: isActive
-                        ? AppColors.primaryLight.withValues(alpha: 0.5)
+                        ? AppColors.foam.withValues(alpha: 0.25)
                         : Colors.white24,
                     width: 2.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withValues(
+                      color: AppColors.teal.withValues(
                         alpha: isActive ? 0.45 : 0.2,
                       ),
                       blurRadius: isActive ? 16 : 10,
@@ -230,7 +230,7 @@ class _MapNavItem extends StatelessWidget {
                 ),
                 child: Icon(
                   Icons.map_rounded,
-                  color: isActive ? Colors.white : Colors.white70,
+                  color: isActive ? AppColors.foam : Colors.white70,
                   size: 32,
                 ),
               ),
@@ -240,7 +240,7 @@ class _MapNavItem extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: isActive ? AppColors.primary : Colors.white60,
+                  color: isActive ? AppColors.foam : Colors.white60,
                 ),
               ),
             ],

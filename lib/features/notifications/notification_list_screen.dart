@@ -27,6 +27,14 @@ class NotificationListScreen extends ConsumerWidget {
               try {
                 await repo.markAllAsRead();
                 ref.invalidate(myNotificationsProvider);
+                ref.invalidate(unreadCountProvider);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Tüm bildirimler okundu olarak işaretlendi'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
               } catch (e) {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(

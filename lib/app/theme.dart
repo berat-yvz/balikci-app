@@ -34,6 +34,11 @@ class AppColors {
   static const danger = Color(0xFFE63946); // errorColor
   static const success = Color(0xFF2FBF71);
   static const warning = Color(0xFFF2C14E);
+
+  /// Harita üstü «Meralar» katmanı açıkken — FAB / alt Harita ile aynı ton
+  static Color get mapSpotLayerActive => teal.withValues(alpha: 0.85);
+
+  static Color get mapSpotLayerInactive => navy.withValues(alpha: 0.70);
 }
 
 class AppTextStyles {

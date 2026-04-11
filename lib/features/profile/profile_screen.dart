@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/constants/storage_buckets.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/models/user_model.dart';
@@ -31,8 +32,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _imagePicker = ImagePicker();
   bool _uploadingAvatar = false;
-
-  static const _avatarBucket = 'users-avatars';
 
   @override
   Widget build(BuildContext context) {
@@ -120,9 +119,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final storagePath =
           'avatars/${user.id}/${DateTime.now().millisecondsSinceEpoch}.$ext';
 
-      await SupabaseService.storage
-          .from(_avatarBucket)
-          .upload(storagePath, file);
+      final bucket = avatarStorageBucket();
+      await SupabaseService.storage.from(bucket).upload(storagePath, file);
 
       final repo = ref.read(userRepositoryProvider);
       await repo.updateProfile(userId: user.id, avatarUrl: storagePath);
@@ -136,9 +134,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       );
     } catch (e) {
       if (!mounted) return;
+      final bucket = avatarStorageBucket();
+      final err = e.toString();
+      final isBucketMissing =
+          err.contains('Bucket not found') || err.contains('404');
+      final message = isBucketMissing
+          ? 'Avatar depolama hazır değil. Supabase → SQL: '
+              'supabase/migrations/20260411_storage_users_avatars_bucket.sql '
+              'dosyasını çalıştırın veya .env içinde SUPABASE_AVATAR_BUCKET ile '
+              'mevcut bucket adını yazın. (Aranan: $bucket)'
+          : 'Avatar güncellenemedi: $e';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Avatar güncellenemedi: $e'),
+          content: Text(message),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -149,8 +157,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 }
 
 class _ProfileContent extends ConsumerWidget {
-  static const _avatarBucket = 'users-avatars';
-
   final UserModel user;
   final bool isSelf;
   final AsyncValue<bool>? isFollowingAsync;
@@ -367,7 +373,8 @@ class _ProfileContent extends ConsumerWidget {
     if (avatarUrlOrPath.startsWith('http')) return avatarUrlOrPath;
     final base = dotenv.env['SUPABASE_URL'] ?? '';
     if (base.isEmpty) return avatarUrlOrPath;
-    return '$base/storage/v1/object/public/$_avatarBucket/$avatarUrlOrPath';
+    final b = avatarStorageBucket();
+    return '$base/storage/v1/object/public/$b/$avatarUrlOrPath';
   }
 
   void _showExplanation(BuildContext context, String title, String body) {

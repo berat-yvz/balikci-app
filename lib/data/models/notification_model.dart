@@ -28,7 +28,7 @@ class NotificationModel {
         title: json['title'] as String,
         body: json['body'] as String,
         data: (json['data_json'] as Map<String, dynamic>?) ?? const {},
-        read: json['read'] as bool? ?? false,
+        read: (json['read'] ?? json['is_read']) as bool? ?? false,
         createdAt: DateTime.parse(json['created_at'] as String),
       );
 }

@@ -40,8 +40,6 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  static const double _kSheetMaxSize = 0.85;
-
   final SpotRepository _repository = SpotRepository();
   final CheckinRepository _checkinRepository = CheckinRepository();
   final ShopRepository _shopRepository = ShopRepository();
@@ -66,6 +64,9 @@ class _MapScreenState extends State<MapScreen> {
   SpotModel? _sheetSpot;
   final DraggableScrollableController _sheetController =
       DraggableScrollableController();
+
+  /// Sheet içi ListView denetleyicisi — check-in sonrası scroll metriklerini düzeltmek için.
+  ScrollController? _sheetListScrollController;
 
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -361,6 +362,19 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  void _clampSheetListScrollExtent() {
+    final c = _sheetListScrollController;
+    if (c == null || !c.hasClients) return;
+    final p = c.position;
+    final clamped = p.pixels.clamp(
+      p.minScrollExtent,
+      p.maxScrollExtent,
+    );
+    if ((p.pixels - clamped).abs() > 0.5) {
+      c.jumpTo(clamped);
+    }
+  }
+
   Future<void> _openCheckinForSpot(SpotModel spot) async {
     final result = await context.push<bool>('/checkin/${spot.id}');
     if (!mounted) return;
@@ -371,18 +385,25 @@ class _MapScreenState extends State<MapScreen> {
       }
       if (!mounted) return;
       setState(() {});
-      // Check-in sonrası içerik taşmasından kaynaklanan kaydırma önceliğini
-      // ortadan kaldırmak için sheet'i tam boyuta aç.  Böylece grab handle,
-      // favori butonu ve diğer aksiyonlar ekran dışına çıkmaz.
+      // Route dönüşü + yeni bildirim satırları sonrası scroll metrikleri bozulabiliyor;
+      // önce offset'i güvenli aralığa çek, sonra sheet boyutunu animasyonla ayarla.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || !_sheetController.isAttached) return;
-        if (_sheetSpot?.id == spot.id) {
+        if (!mounted || _sheetSpot?.id != spot.id) return;
+        _clampSheetListScrollExtent();
+        final c = _sheetListScrollController;
+        if (c != null && c.hasClients) {
+          c.jumpTo(c.position.minScrollExtent);
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || !_sheetController.isAttached) return;
+          if (_sheetSpot?.id != spot.id) return;
+          _clampSheetListScrollExtent();
           _sheetController.animateTo(
-            _kSheetMaxSize,
-            duration: const Duration(milliseconds: 280),
+            0.42,
+            duration: const Duration(milliseconds: 260),
             curve: Curves.easeOut,
           );
-        }
+        });
       });
     }
   }
@@ -628,6 +649,10 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_sheetSpot == null) {
+      _sheetListScrollController = null;
+    }
+
     const sheetInitialSize = 0.18;
     const sheetMinSize = 0.14;
     const sheetMaxSize = 0.85;
@@ -958,8 +983,8 @@ class _MapScreenState extends State<MapScreen> {
                 if (!mounted) return;
                 if (ok == true) unawaited(_loadSpots());
               },
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.mapSpotLayerActive,
+              foregroundColor: AppColors.foam,
               elevation: 3,
               extendedPadding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
@@ -1089,8 +1114,14 @@ class _MapScreenState extends State<MapScreen> {
                 minChildSize: sheetMinSize,
                 maxChildSize: sheetMaxSize,
                 snap: true,
-                snapSizes: const [sheetInitialSize, 0.32, sheetMaxSize],
+                snapSizes: const [
+                  sheetInitialSize,
+                  0.32,
+                  0.42,
+                  sheetMaxSize,
+                ],
                 builder: (context, scrollController) {
+                  _sheetListScrollController = scrollController;
                   final bottomPad = MediaQuery.of(context).padding.bottom;
                   return Padding(
                     padding: EdgeInsets.only(bottom: bottomPad),
@@ -1110,7 +1141,13 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: ListView(
+                        key: ValueKey(
+                          'spot_sheet_${sheetSpot.id}_n${sheetCheckins.length}',
+                        ),
                         controller: scrollController,
+                        physics: const AlwaysScrollableScrollPhysics(
+                          parent: ClampingScrollPhysics(),
+                        ),
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                         children: [
                           Center(
@@ -1327,8 +1364,8 @@ class _LayerToggleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = active
-        ? AppColors.teal.withValues(alpha: 0.85)
-        : AppColors.navy.withValues(alpha: 0.70);
+        ? AppColors.mapSpotLayerActive
+        : AppColors.mapSpotLayerInactive;
     final fg = active ? AppColors.foam : AppColors.foam.withValues(alpha: 0.82);
 
     return Material(
