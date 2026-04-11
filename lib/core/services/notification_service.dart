@@ -15,8 +15,8 @@ import 'package:balikci_app/data/repositories/user_repository.dart';
 // ──────────────────────────────────────────────────────────────────────────────
 
 String _routeForType(String? type) => switch (type?.toLowerCase()) {
-  'checkin' => AppRoutes.map,
-  'vote' => AppRoutes.map,
+  'checkin' => AppRoutes.home,
+  'vote' => AppRoutes.home,
   'rank' => AppRoutes.rank,
   'follow' => AppRoutes.profile,
   'fish_log' => AppRoutes.fishLog,
@@ -175,7 +175,7 @@ class NotificationService {
     final spotId = message.data['spot_id'] as String?;
     debugPrint('FCM yönlendirme: type=$type, spotId=$spotId');
     if (spotId != null && (type == 'checkin' || type == 'vote')) {
-      _navigate(AppRoutes.map, extra: spotId);
+      _navigate(AppRoutes.home, extra: spotId);
     } else {
       _navigate(_routeForType(type));
     }
@@ -190,7 +190,7 @@ class NotificationService {
       final type = map['type'] as String?;
       final spotId = map['spot_id'] as String?;
       if (spotId != null && (type == 'checkin' || type == 'vote')) {
-        _navigate(AppRoutes.map, extra: spotId);
+        _navigate(AppRoutes.home, extra: spotId);
       } else {
         _navigate(_routeForType(type));
       }

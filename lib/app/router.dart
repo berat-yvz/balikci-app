@@ -170,11 +170,34 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: AppRoutes.home,
-            builder: (context, state) => const MapScreen(),
+            builder: (context, state) {
+              final spotId =
+                  state.extra is String ? state.extra as String : null;
+              return MapScreen(
+                key: ValueKey('map_${spotId ?? 'default'}'),
+                initialSpotId: spotId,
+              );
+            },
           ),
           GoRoute(
             path: AppRoutes.fishLog,
             builder: (context, state) => const LogListScreen(),
+            routes: [
+              GoRoute(
+                path: 'stats',
+                pageBuilder: (context, state) => _fadeSlidePage(
+                  state: state,
+                  child: const StatsScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'add',
+                pageBuilder: (context, state) => _fadeSlidePage(
+                  state: state,
+                  child: const AddLogScreen(),
+                ),
+              ),
+            ],
           ),
           GoRoute(
             path: AppRoutes.rank,
@@ -188,20 +211,55 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: AppRoutes.profile,
             builder: (context, state) => const ProfileScreen(),
           ),
+          GoRoute(
+            path: '${AppRoutes.profile}/:userId/followers',
+            pageBuilder: (context, state) => _fadeSlidePage(
+              state: state,
+              child: FollowListScreen(
+                userId: state.pathParameters['userId']!,
+                mode: FollowListMode.followers,
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '${AppRoutes.profile}/:userId/following',
+            pageBuilder: (context, state) => _fadeSlidePage(
+              state: state,
+              child: FollowListScreen(
+                userId: state.pathParameters['userId']!,
+                mode: FollowListMode.following,
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '${AppRoutes.profile}/:userId',
+            pageBuilder: (context, state) => _fadeSlidePage(
+              state: state,
+              child: ProfileScreen(userId: state.pathParameters['userId']),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.settings,
+            pageBuilder: (context, state) =>
+                _fadeSlidePage(state: state, child: const SettingsScreen()),
+          ),
+          GoRoute(
+            path: AppRoutes.notifications,
+            pageBuilder: (context, state) => _fadeSlidePage(
+              state: state,
+              child: const NotificationListScreen(),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.notificationsSettings,
+            pageBuilder: (context, state) => _fadeSlidePage(
+              state: state,
+              child: const NotificationSettingsScreen(),
+            ),
+          ),
         ],
       ),
 
-      // Map (ana ekran) — extra olarak String spotId geçilebilir (bildirim deep-link)
-      GoRoute(
-        path: AppRoutes.map,
-        pageBuilder: (context, state) {
-          final spotId = state.extra is String ? state.extra as String : null;
-          return _fadeSlidePage(
-            state: state,
-            child: MapScreen(initialSpotId: spotId),
-          );
-        },
-      ),
       GoRoute(
         path: AppRoutes.mapAddSpot,
         pageBuilder: (context, state) =>
@@ -247,18 +305,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
-      // Fish Log
-      GoRoute(
-        path: AppRoutes.fishLogAdd,
-        pageBuilder: (context, state) =>
-            _fadeSlidePage(state: state, child: const AddLogScreen()),
-      ),
-      GoRoute(
-        path: AppRoutes.fishLogStats,
-        pageBuilder: (context, state) =>
-            _fadeSlidePage(state: state, child: const StatsScreen()),
-      ),
-
       // Knots
       GoRoute(
         path: AppRoutes.knots,
@@ -279,54 +325,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           }
           return _fadeSlidePage(state: state, child: KnotDetailScreen(knot: extra));
         },
-      ),
-
-      // Notifications
-      GoRoute(
-        path: AppRoutes.notifications,
-        pageBuilder: (context, state) =>
-            _fadeSlidePage(state: state, child: const NotificationListScreen()),
-      ),
-      GoRoute(
-        path: AppRoutes.notificationsSettings,
-        pageBuilder: (context, state) => _fadeSlidePage(
-          state: state,
-          child: const NotificationSettingsScreen(),
-        ),
-      ),
-
-      // Profile — önce spesifik rotalar (go_router eşleşme sırası)
-      GoRoute(
-        path: '${AppRoutes.profile}/:userId/followers',
-        pageBuilder: (context, state) => _fadeSlidePage(
-          state: state,
-          child: FollowListScreen(
-            userId: state.pathParameters['userId']!,
-            mode: FollowListMode.followers,
-          ),
-        ),
-      ),
-      GoRoute(
-        path: '${AppRoutes.profile}/:userId/following',
-        pageBuilder: (context, state) => _fadeSlidePage(
-          state: state,
-          child: FollowListScreen(
-            userId: state.pathParameters['userId']!,
-            mode: FollowListMode.following,
-          ),
-        ),
-      ),
-      GoRoute(
-        path: '${AppRoutes.profile}/:userId',
-        pageBuilder: (context, state) => _fadeSlidePage(
-          state: state,
-          child: ProfileScreen(userId: state.pathParameters['userId']),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.settings,
-        pageBuilder: (context, state) =>
-            _fadeSlidePage(state: state, child: const SettingsScreen()),
       ),
     ],
     errorBuilder: (_, state) =>

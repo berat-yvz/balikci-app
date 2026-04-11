@@ -133,9 +133,9 @@ class NotificationListScreen extends ConsumerWidget {
       router.go(AppRoutes.profile);
     } else if (type.contains('checkin') || type.contains('vote')) {
       final spotId = n.data['spot_id'] as String?;
-      router.go(AppRoutes.map, extra: spotId);
+      router.go(AppRoutes.home, extra: spotId);
     } else {
-      router.go(AppRoutes.map);
+      router.go(AppRoutes.home);
     }
   }
 }

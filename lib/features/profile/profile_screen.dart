@@ -987,7 +987,7 @@ class _FavoriteSpotTile extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => context.go(AppRoutes.map, extra: spot.id),
+          onTap: () => context.go(AppRoutes.home, extra: spot.id),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
