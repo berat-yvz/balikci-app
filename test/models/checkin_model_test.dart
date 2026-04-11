@@ -83,8 +83,17 @@ void main() {
       expect(model.isActive, isTrue);
     });
 
-    test('expires_at null → aktif değil', () {
-      final model = CheckinModel.fromJson(baseJson());
+    test('expires_at null, kayıt remove penceresi içinde → aktif', () {
+      final model = CheckinModel.fromJson(
+        baseJson(createdAt: now.subtract(const Duration(hours: 1))),
+      );
+      expect(model.isActive, isTrue);
+    });
+
+    test('expires_at null, kayıt remove saatini aştı → aktif değil', () {
+      final model = CheckinModel.fromJson(
+        baseJson(createdAt: now.subtract(const Duration(hours: 7))),
+      );
       expect(model.isActive, isFalse);
     });
 

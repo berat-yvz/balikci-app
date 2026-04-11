@@ -43,12 +43,21 @@ class CheckinModel {
     return falseVotes / total >= AppConstants.voteThresholdPercent;
   }
 
-  /// Bildirim aktif mi? Gizlenmemiş, oy baskısı yok ve süresi dolmamış olmalı.
+  /// Bildirim aktif mi? Gizlenmemiş ve oy baskısı yok olmalı.
+  ///
+  /// - `expires_at` doluysa: sunucu süresi geçmemiş olmalı.
+  /// - `expires_at` null ise (eski kayıtlar / tetik yok): [isExpired] ile aynı
+  ///   mantık — yani son [AppConstants.checkinRemoveHours] saat içinde oluşturulmuş
+  ///   sayılır; harita sorgularıyla uyumlu.
   bool get isActive {
     if (isHidden) return false;
     if (isSuppressedByVotes) return false;
-    if (expiresAt == null) return false;
-    return expiresAt!.isAfter(DateTime.now());
+    final now = DateTime.now();
+    final exp = expiresAt;
+    if (exp != null) {
+      return exp.isAfter(now);
+    }
+    return !isExpired;
   }
 
   /// Rapor 2 saatten eski mi? (soluk gösterim için)
