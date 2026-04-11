@@ -20,7 +20,10 @@ class KnotModel {
   factory KnotModel.fromJson(Map<String, dynamic> json) => KnotModel(
     id: json['id'] as String? ?? '',
     title: json['title'] as String? ?? '',
-    category: json['category'] as String? ?? '',
+    // Supabase `knots.type` ile yerel JSON `category` aynı anlamda.
+    category: json['category'] as String? ??
+        json['type'] as String? ??
+        '',
     difficulty: (json['difficulty'] as num?)?.toInt() ?? 1,
     useCases:
         (json['use_cases'] as List?)

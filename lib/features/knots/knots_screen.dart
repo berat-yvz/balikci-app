@@ -8,6 +8,7 @@ import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/data/models/knot_model.dart';
 import 'package:balikci_app/data/models/tackle_model.dart';
+import 'package:balikci_app/data/repositories/knot_repository.dart';
 
 class KnotsScreen extends StatefulWidget {
   const KnotsScreen({super.key});
@@ -52,20 +53,32 @@ class _KnotsScreenState extends State<KnotsScreen>
       _error = null;
     });
     try {
-      final knotRaw =
-          await rootBundle.loadString('assets/knots/knots_data.json');
       final tackleRaw =
           await rootBundle.loadString('assets/tackle/tackle_data.json');
-
-      final knots = (jsonDecode(knotRaw) as List)
-          .whereType<Map<String, dynamic>>()
-          .map(KnotModel.fromJson)
-          .toList(growable: false);
-
       final tackle = (jsonDecode(tackleRaw) as List)
           .whereType<Map<String, dynamic>>()
           .map(TackleModel.fromJson)
           .toList(growable: false);
+
+      List<KnotModel> knots = const [];
+      try {
+        final remote = await KnotRepository().getKnots();
+        if (remote.isNotEmpty) {
+          knots = List<KnotModel>.from(remote)
+            ..sort((a, b) => a.title.compareTo(b.title));
+        }
+      } catch (_) {
+        knots = const [];
+      }
+
+      if (knots.isEmpty) {
+        final knotRaw =
+            await rootBundle.loadString('assets/knots/knots_data.json');
+        knots = (jsonDecode(knotRaw) as List)
+            .whereType<Map<String, dynamic>>()
+            .map(KnotModel.fromJson)
+            .toList(growable: false);
+      }
 
       if (!mounted) return;
       setState(() {

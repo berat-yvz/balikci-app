@@ -8,7 +8,10 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/score_service.dart';
+import 'package:balikci_app/features/fish_log/screens/log_list_screen.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
+import 'package:balikci_app/shared/providers/fish_log_provider.dart';
+
 import '../../../core/services/supabase_service.dart';
 import '../../../data/repositories/fish_log_repository.dart';
 
@@ -160,6 +163,10 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
             _isReleased ? ScoreSource.releaseExif : ScoreSource.fishLogPublic;
         unawaited(ScoreService.award(userId, source));
       }
+
+      ref.invalidate(fishLogsProvider);
+      ref.invalidate(myFishLogsProvider);
+      ref.invalidate(fishLogStatsProvider);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

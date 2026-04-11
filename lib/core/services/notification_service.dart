@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/router.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/data/repositories/user_repository.dart';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Yardımcı: mesaj türüne göre route belirle
@@ -221,10 +222,7 @@ class NotificationService {
     try {
       final user = SupabaseService.auth.currentUser;
       if (user == null) return;
-      await SupabaseService.client
-          .from('users')
-          .update({'fcm_token': token})
-          .eq('id', user.id);
+      await UserRepository().updateFcmToken(user.id, token);
       debugPrint('FCM Token kaydedildi.');
     } catch (e) {
       debugPrint('FCM Token Supabase kayıt hatası: $e');

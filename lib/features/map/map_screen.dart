@@ -232,6 +232,22 @@ class _MapScreenState extends State<MapScreen> {
     });
 
     unawaited(_loadWeatherForSpot(spot));
+    unawaited(_applyDetailedCheckinsForSpot(spot.id));
+  }
+
+  /// Açık mera için oy tabanlı gizleme kurallarını uygular (`getCheckinsForSpot`).
+  Future<void> _applyDetailedCheckinsForSpot(String spotId) async {
+    try {
+      final list = await _checkinRepository.getCheckinsForSpot(spotId);
+      if (!mounted) return;
+      setState(() {
+        final copy = Map<String, List<CheckinModel>>.from(_activeCheckinsBySpotId);
+        copy[spotId] = list;
+        _activeCheckinsBySpotId = copy;
+      });
+    } catch (_) {
+      // Özet liste (getRecentCheckinsAll) kalsın.
+    }
   }
 
   Future<void> _loadWeatherForSpot(SpotModel spot) async {
@@ -446,10 +462,72 @@ class _MapScreenState extends State<MapScreen> {
 
       if (!mounted) return;
       setState(() => _activeCheckinsBySpotId = grouped);
+      final openId = _sheetSpot?.id;
+      if (openId != null) {
+        unawaited(_applyDetailedCheckinsForSpot(openId));
+      }
     } catch (_) {
       // UI bozulmasın: kontrol başarısız olursa marker rozetleri değişmez.
     } finally {
       _checkingCheckins = false;
+    }
+  }
+
+  Future<void> _confirmAndDeleteSpot(SpotModel spot) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Merayı sil'),
+        content: Text(
+          '"${spot.name}" kalıcı olarak silinsin mi?',
+          style: AppTextStyles.body,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('İptal'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Sil'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await _repository.deleteSpot(spot.id);
+      if (!mounted) return;
+      ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).invalidate(favoriteSpotsProvider);
+      setState(() {
+        _spots = _spots.where((s) => s.id != spot.id).toList();
+        final copy = Map<String, List<CheckinModel>>.from(
+          _activeCheckinsBySpotId,
+        )..remove(spot.id);
+        _activeCheckinsBySpotId = copy;
+        if (_sheetSpot?.id == spot.id) {
+          _sheetSpot = null;
+        }
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mera silindi'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Mera silinemedi: $e'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
     }
   }
 
@@ -992,6 +1070,13 @@ class _MapScreenState extends State<MapScreen> {
                               onPressed: () => _openEditForSpot(sheetSpot),
                               icon: Icons.edit_outlined,
                               label: 'Mera Düzenle',
+                            ),
+                            const SizedBox(height: 8),
+                            _SheetSecondaryButton(
+                              onPressed: () =>
+                                  _confirmAndDeleteSpot(sheetSpot),
+                              icon: Icons.delete_outline,
+                              label: 'Merayı Sil',
                             ),
                           ],
                           const SizedBox(height: 12),
