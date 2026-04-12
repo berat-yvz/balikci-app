@@ -16,11 +16,11 @@ import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/geo_utils.dart';
 import 'package:balikci_app/core/services/weather_service.dart';
+import 'package:balikci_app/core/utils/mera_weather_display.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
 import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:balikci_app/data/repositories/checkin_repository.dart';
-import 'package:balikci_app/data/models/weather_model.dart';
 import 'package:balikci_app/data/models/shop_model.dart';
 import 'package:balikci_app/features/map/widgets/spot_marker.dart';
 import 'package:balikci_app/features/map/widgets/vote_dialog.dart';
@@ -82,7 +82,7 @@ class _MapScreenState extends State<MapScreen> {
   final FocusNode _searchFocusNode = FocusNode();
   List<SpotModel> _searchResults = const [];
 
-  WeatherModel? _spotWeather;
+  MeraWeatherSnapshot? _meraWeather;
   bool _weatherLoading = false;
 
   double _currentZoom = 10;
@@ -330,14 +330,14 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _loadWeatherForSpot(SpotModel spot) async {
     _postFrameSetState(() => _weatherLoading = true);
     try {
-      final w = await WeatherService.getWeatherForLocation(
+      final snap = await WeatherService.fetchMeraSheetWeather(
         lat: spot.lat,
         lng: spot.lng,
       );
       if (!mounted) return;
       // Kullanıcı hızlıca başka meraya geçtiyse eski sonucu ezmeyelim.
       if (_sheetSpot?.id != spot.id) return;
-      _postFrameSetState(() => _spotWeather = w);
+      _postFrameSetState(() => _meraWeather = snap);
     } catch (_) {
       // Sessizce geç: kart placeholder kalsın.
     } finally {
@@ -768,12 +768,6 @@ class _MapScreenState extends State<MapScreen> {
 
     final uid = SupabaseService.auth.currentUser?.id;
     final isOwner = sheetSpot != null && uid != null && uid == sheetSpot.userId;
-
-    final weather = _spotWeather;
-    final windKmh = weather != null ? weather.windKmh.round().toString() : '—';
-    final tempC = weather != null
-        ? weather.tempCelsius.round().toString()
-        : '—';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -1284,11 +1278,9 @@ class _MapScreenState extends State<MapScreen> {
                                     _LatestCheckinBanner(checkin: mostRecent),
                                   if (mostRecent != null)
                                     const SizedBox(height: 10),
-                                  _WeatherMiniRow(
+                                  _MeraWeatherSection(
                                     loading: _weatherLoading,
-                                    tempC: tempC,
-                                    windKmh: windKmh,
-                                    waveM: weather?.waveHeight,
+                                    snap: _meraWeather,
                                   ),
                                   const SizedBox(height: 10),
                                   SizedBox(
@@ -1733,21 +1725,18 @@ class _ActivePulseCountState extends State<_ActivePulseCount>
   }
 }
 
-class _WeatherMiniRow extends StatelessWidget {
+class _MeraWeatherSection extends StatelessWidget {
   final bool loading;
-  final String tempC;
-  final String windKmh;
-  final double? waveM;
+  final MeraWeatherSnapshot? snap;
 
-  const _WeatherMiniRow({
+  const _MeraWeatherSection({
     required this.loading,
-    required this.tempC,
-    required this.windKmh,
-    required this.waveM,
+    required this.snap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final muted = AppColors.foam.withValues(alpha: 0.72);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -1755,33 +1744,131 @@ class _WeatherMiniRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: _MiniStat(label: '🌡️ sıcaklık', value: '$tempC°C'),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.wb_cloudy_outlined,
+                color: AppColors.primary.withValues(alpha: 0.95),
+                size: 22,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      snap?.locationLabel ?? 'Hava durumu',
+                      style: TextStyle(
+                        color: AppColors.foam.withValues(alpha: 0.95),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    if (snap != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        snap!.locationSubtitle,
+                        style: TextStyle(
+                          color: muted,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (loading)
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _MiniStat(label: '💨 rüzgar', value: '$windKmh km/h'),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _MiniStat(
-              label: '🌊 dalga',
-              value: waveM == null ? '—' : '${waveM!.toStringAsFixed(1)} m',
+          if (snap != null) ...[
+            const SizedBox(height: 12),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 2.35,
+              children: [
+                _MiniStat(
+                  label: '🌡️ sıcaklık',
+                  value:
+                      '${_tempC(snap!).round()}°C',
+                ),
+                _MiniStat(
+                  label: '💨 rüzgar',
+                  value: '${_windKmh(snap!).round()} km/h',
+                ),
+                _MiniStat(
+                  label: '🌊 dalga (deniz)',
+                  value: _waveLabel(snap!),
+                ),
+                _MiniStat(
+                  label: '${_skyEmoji(snap!)} durum',
+                  value: _skyText(snap!),
+                ),
+              ],
             ),
-          ),
-          if (loading) ...[
-            const SizedBox(width: 10),
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
+          ] else if (!loading) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Hava verisi alınamadı.',
+              style: TextStyle(color: muted, fontSize: 13),
             ),
           ],
         ],
       ),
     );
+  }
+
+  double _tempC(MeraWeatherSnapshot s) {
+    final h = s.currentHour;
+    if (h != null) return h.temperature;
+    return s.weather.tempCelsius;
+  }
+
+  double _windKmh(MeraWeatherSnapshot s) {
+    final h = s.currentHour;
+    if (h != null) return h.windspeed;
+    return s.weather.windKmh;
+  }
+
+  String _waveLabel(MeraWeatherSnapshot s) {
+    final m = s.currentHour?.waveHeight ?? s.weather.waveHeight;
+    if (m == null) return 'Veri yok';
+    return '${m.toStringAsFixed(1)} m';
+  }
+
+  String _skyText(MeraWeatherSnapshot s) {
+    final h = s.currentHour;
+    if (h != null) return MeraWeatherDisplay.skyCondition(h);
+    return MeraWeatherDisplay.skyConditionFromWmo(
+      weatherCode: s.weather.weatherCode ?? 0,
+      precipitationMm: s.weather.precipitation ?? 0,
+    );
+  }
+
+  String _skyEmoji(MeraWeatherSnapshot s) {
+    final h = s.currentHour;
+    if (h != null) return h.weatherEmoji;
+    final code = s.weather.weatherCode ?? 0;
+    if (code == 0) return '☀️';
+    if (code <= 3) return '⛅';
+    if (code <= 49) return '🌫️';
+    if (code <= 69) return '🌧️';
+    if (code <= 79) return '❄️';
+    if (code <= 99) return '⛈️';
+    return '🌡️';
   }
 }
 

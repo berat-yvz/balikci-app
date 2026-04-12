@@ -1,4 +1,4 @@
--- Open-Meteo önbelleği — Edge Function: weather-cache (12 bölge tek istekte)
+-- Open-Meteo önbelleği — Edge Function: weather-cache (12 kıyı + İstanbul ilçe satırları)
 -- Supabase Dashboard > SQL Editor’da çalıştırın.
 -- Önkoşul: pg_cron + pg_net; Vault’ta çağrı için JWT (tercihen anon_key).
 --

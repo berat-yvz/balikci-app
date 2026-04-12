@@ -2,10 +2,11 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 /**
- * Open-Meteo → weather_cache (12 kıyı bölgesi).
+ * Open-Meteo → weather_cache (12 kıyı bölgesi + İstanbul ilçeleri saatlik).
  * pg_cron ile her saat başı tetiklenir; istemci doğrudan Open-Meteo çağırmaz.
  *
  * data_json şeması: { source: 'open_meteo_v1', hourly: [...], current: {...} }
+ * İlçe anahtarları: `lib/core/constants/istanbul_ilce_weather.dart` ile aynı olmalı.
  */
 
 const REGIONS: Record<string, { lat: number; lng: number }> = {
@@ -122,6 +123,105 @@ function mergeOpenMeteo(
   return { hourly, current: hourly[idx]! }
 }
 
+/** İstanbul ilçe merkezleri — Flutter `istanbulIlceWeatherPoints` ile eşleşmeli. */
+const ISTANBUL_ILCE_REGIONS: { region_key: string; lat: number; lng: number }[] = [
+  { region_key: 'istanbul_ilce_adalar', lat: 40.87, lng: 29.12 },
+  { region_key: 'istanbul_ilce_arnavutkoy', lat: 41.1844, lng: 28.7344 },
+  { region_key: 'istanbul_ilce_atasehir', lat: 40.9833, lng: 29.1167 },
+  { region_key: 'istanbul_ilce_avcilar', lat: 41.0214, lng: 28.7256 },
+  { region_key: 'istanbul_ilce_bagcilar', lat: 41.0392, lng: 28.8564 },
+  { region_key: 'istanbul_ilce_bahcelievler', lat: 41.0028, lng: 28.8597 },
+  { region_key: 'istanbul_ilce_bakirkoy', lat: 40.9819, lng: 28.8742 },
+  { region_key: 'istanbul_ilce_basaksehir', lat: 41.0911, lng: 28.8028 },
+  { region_key: 'istanbul_ilce_bayrampasa', lat: 41.0342, lng: 28.9142 },
+  { region_key: 'istanbul_ilce_besiktas', lat: 41.0422, lng: 29.0069 },
+  { region_key: 'istanbul_ilce_beyoglu', lat: 41.0369, lng: 28.985 },
+  { region_key: 'istanbul_ilce_beykoz', lat: 41.138, lng: 29.0911 },
+  { region_key: 'istanbul_ilce_beylikduzu', lat: 41.0061, lng: 28.6397 },
+  { region_key: 'istanbul_ilce_buyukcekmece', lat: 41.0203, lng: 28.5847 },
+  { region_key: 'istanbul_ilce_catalca', lat: 41.1486, lng: 28.4611 },
+  { region_key: 'istanbul_ilce_cekmekoy', lat: 41.0322, lng: 29.1781 },
+  { region_key: 'istanbul_ilce_esenler', lat: 41.0431, lng: 28.8775 },
+  { region_key: 'istanbul_ilce_esenyurt', lat: 41.0344, lng: 28.6775 },
+  { region_key: 'istanbul_ilce_eyupsultan', lat: 41.1736, lng: 28.935 },
+  { region_key: 'istanbul_ilce_fatih', lat: 41.0136, lng: 28.9497 },
+  { region_key: 'istanbul_ilce_gaziosmanpasa', lat: 41.0675, lng: 28.9181 },
+  { region_key: 'istanbul_ilce_gungoren', lat: 41.0325, lng: 28.8769 },
+  { region_key: 'istanbul_ilce_kadikoy', lat: 40.9903, lng: 29.0292 },
+  { region_key: 'istanbul_ilce_kagithane', lat: 41.0711, lng: 28.9753 },
+  { region_key: 'istanbul_ilce_kartal', lat: 40.91, lng: 29.1889 },
+  { region_key: 'istanbul_ilce_kucukcekmece', lat: 41.0025, lng: 28.7756 },
+  { region_key: 'istanbul_ilce_maltepe', lat: 40.9369, lng: 29.1306 },
+  { region_key: 'istanbul_ilce_pendik', lat: 40.8778, lng: 29.2356 },
+  { region_key: 'istanbul_ilce_sancaktepe', lat: 40.9931, lng: 29.2242 },
+  { region_key: 'istanbul_ilce_sariyer', lat: 41.1078, lng: 29.0569 },
+  { region_key: 'istanbul_ilce_silivri', lat: 41.0733, lng: 28.2464 },
+  { region_key: 'istanbul_ilce_sile', lat: 41.1753, lng: 29.6131 },
+  { region_key: 'istanbul_ilce_sultanbeyli', lat: 40.9647, lng: 29.2797 },
+  { region_key: 'istanbul_ilce_sultangazi', lat: 41.1058, lng: 28.8714 },
+  { region_key: 'istanbul_ilce_sisli', lat: 41.0603, lng: 28.9878 },
+  { region_key: 'istanbul_ilce_tuzla', lat: 40.8169, lng: 29.3031 },
+  { region_key: 'istanbul_ilce_umraniye', lat: 41.025, lng: 29.1236 },
+  { region_key: 'istanbul_ilce_uskudar', lat: 41.0214, lng: 29.0156 },
+  { region_key: 'istanbul_ilce_zeytinburnu', lat: 40.9906, lng: 28.9039 },
+]
+
+type SupabaseClient = ReturnType<typeof createClient>
+
+async function upsertWeatherRegion(
+  supabase: SupabaseClient,
+  regionKey: string,
+  lat: number,
+  lng: number,
+  fetchedAt: string,
+): Promise<void> {
+  const q = `latitude=${lat}&longitude=${lng}&timezone=Europe%2FIstanbul&forecast_days=2`
+
+  const forecastUrl =
+    `https://api.open-meteo.com/v1/forecast?${q}&hourly=temperature_2m,windspeed_10m,precipitation,weathercode,cloudcover,visibility`
+
+  const marineUrl =
+    `https://marine-api.open-meteo.com/v1/marine?${q}&hourly=wave_height,sea_surface_temperature,ocean_current_velocity,ocean_current_direction`
+
+  const forecast = await fetchJson(forecastUrl)
+  let marine: Record<string, unknown> | null = null
+  try {
+    marine = await fetchJson(marineUrl)
+  } catch {
+    // marine opsiyonel
+  }
+
+  const { hourly, current } = mergeOpenMeteo(lat, lng, forecast, marine)
+
+  const summary = fishingSummaryWmo(
+    current.temperature,
+    current.windspeed,
+    current.weather_code,
+  )
+
+  const dataJson = {
+    source: 'open_meteo_v1',
+    lat,
+    lng,
+    hourly,
+    current,
+  }
+
+  const { error } = await supabase.from('weather_cache').upsert(
+    {
+      region_key: regionKey,
+      lat,
+      lng,
+      data_json: dataJson,
+      fishing_summary: summary,
+      fetched_at: fetchedAt,
+    },
+    { onConflict: 'region_key' },
+  )
+
+  if (error) throw new Error(error.message)
+}
+
 serve(async (req: Request) => {
   if (req.method !== 'POST' && req.method !== 'OPTIONS') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
@@ -148,55 +248,19 @@ serve(async (req: Request) => {
 
   for (const [regionKey, coords] of Object.entries(REGIONS)) {
     try {
-      const { lat, lng } = coords
-      const q = `latitude=${lat}&longitude=${lng}&timezone=Europe%2FIstanbul&forecast_days=2`
-
-      const forecastUrl =
-        `https://api.open-meteo.com/v1/forecast?${q}&hourly=temperature_2m,windspeed_10m,precipitation,weathercode,cloudcover,visibility`
-
-      const marineUrl =
-        `https://marine-api.open-meteo.com/v1/marine?${q}&hourly=wave_height,sea_surface_temperature,ocean_current_velocity,ocean_current_direction`
-
-      const forecast = await fetchJson(forecastUrl)
-      let marine: Record<string, unknown> | null = null
-      try {
-        marine = await fetchJson(marineUrl)
-      } catch {
-        // marine opsiyonel
-      }
-
-      const { hourly, current } = mergeOpenMeteo(lat, lng, forecast, marine)
-
-      const summary = fishingSummaryWmo(
-        current.temperature,
-        current.windspeed,
-        current.weather_code,
-      )
-
-      const dataJson = {
-        source: 'open_meteo_v1',
-        lat,
-        lng,
-        hourly,
-        current,
-      }
-
-      const { error } = await supabase.from('weather_cache').upsert(
-        {
-          region_key: regionKey,
-          lat,
-          lng,
-          data_json: dataJson,
-          fishing_summary: summary,
-          fetched_at: fetchedAt,
-        },
-        { onConflict: 'region_key' },
-      )
-
-      if (error) throw new Error(error.message)
+      await upsertWeatherRegion(supabase, regionKey, coords.lat, coords.lng, fetchedAt)
       results.push(`✓ ${regionKey}`)
     } catch (err) {
       results.push(`✗ ${regionKey}: ${String(err)}`)
+    }
+  }
+
+  for (const row of ISTANBUL_ILCE_REGIONS) {
+    try {
+      await upsertWeatherRegion(supabase, row.region_key, row.lat, row.lng, fetchedAt)
+      results.push(`✓ ${row.region_key}`)
+    } catch (err) {
+      results.push(`✗ ${row.region_key}: ${String(err)}`)
     }
   }
 
