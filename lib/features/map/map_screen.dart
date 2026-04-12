@@ -474,16 +474,21 @@ class _MapScreenState extends State<MapScreen> {
             height: _spotMarkerH,
             alignment: tipAlignment,
             child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () => _selectSpot(spot),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned(
-                    left: _spotPinLeft,
-                    top: _spotPinTop,
-                    child: _buildSpotMarker(spot),
-                  ),
-                ],
+              child: SizedBox(
+                width: _spotMarkerW,
+                height: _spotMarkerH,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned(
+                      left: _spotPinLeft,
+                      top: _spotPinTop,
+                      child: _buildSpotMarker(spot),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1156,10 +1161,11 @@ class _MapScreenState extends State<MapScreen> {
 
           if (_isLoading) const Center(child: CircularProgressIndicator()),
 
-          // Alt: Draggable sheet — yalnızca mera seçilince görünür
+          // Alt: Draggable sheet — yalnızca mera seçilince görünür.
+          // Align(bottomCenter) + Stack gevşek kısıtları bazen sheet’e 0 yükseklik verir;
+          // hit test: "Cannot hit test a render box with no size". Positioned.fill gerekli.
           if (sheetSpot != null)
-            Align(
-              alignment: Alignment.bottomCenter,
+            Positioned.fill(
               child: DraggableScrollableSheet(
                 controller: _sheetController,
                 initialChildSize: sheetInitialSize,
