@@ -15,7 +15,6 @@ class FishEncyclopediaScreen extends ConsumerWidget {
     ('Kıyı', 'kiyi'),
     ('Açık Deniz', 'acik_deniz'),
     ('Dip', 'dip'),
-    ('Gece', 'gece'),
   ];
 
   @override
@@ -24,13 +23,13 @@ class FishEncyclopediaScreen extends ConsumerWidget {
     final selected = ref.watch(selectedFishCategoryProvider);
 
     return ColoredBox(
-      color: AppColors.leaderboardBanner,
+      color: AppColors.navy,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
             child: Row(
               children: _filters.map((f) {
                 final isSelected = selected == f.$2;
@@ -116,10 +115,11 @@ class _CategoryFilterChip extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(999),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 44),
+        child: SizedBox(
+          height: 40,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            alignment: Alignment.center,
             decoration: BoxDecoration(
               color: selected ? AppColors.primary : Colors.transparent,
               borderRadius: BorderRadius.circular(999),
@@ -128,12 +128,11 @@ class _CategoryFilterChip extends StatelessWidget {
                 width: 1.5,
               ),
             ),
-            alignment: Alignment.center,
             child: Text(
               label,
               style: AppTextStyles.caption.copyWith(
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.bold,
                 color: selected ? Colors.white : Colors.white54,
               ),
             ),
@@ -152,120 +151,44 @@ class _FishCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final baitLine = entry.baits.take(2).join(' • ');
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      constraints: const BoxConstraints(minHeight: 72),
       decoration: BoxDecoration(
         color: AppColors.encyclopediaCard,
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        minVerticalPadding: 8,
-        isThreeLine: true,
-        leading: Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            entry.emoji,
-            style: AppTextStyles.h2.copyWith(
-              fontSize: 28,
-              fontWeight: FontWeight.normal,
-            ),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        leading: Text(
+          entry.emoji,
+          style: AppTextStyles.h2.copyWith(
+            fontSize: 32,
+            fontWeight: FontWeight.normal,
           ),
         ),
         title: Text(
           entry.name,
           style: AppTextStyles.body.copyWith(
             color: Colors.white,
-            fontSize: 16,
+            fontSize: 17,
             fontWeight: FontWeight.w700,
           ),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 2),
-            Text(
-              entry.scientificName,
-              style: AppTextStyles.caption.copyWith(
-                color: Colors.white54,
-                fontSize: 12,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: entry.seasons.map(_SeasonChip.new).toList(),
-            ),
-          ],
+        subtitle: Text(
+          baitLine.isEmpty ? '—' : baitLine,
+          style: AppTextStyles.caption.copyWith(
+            color: Colors.white60,
+            fontSize: 13,
+          ),
         ),
-        trailing:
-            const Icon(Icons.chevron_right, color: Colors.white54, size: 24),
+        trailing: const Icon(
+          Icons.chevron_right,
+          color: Colors.white38,
+          size: 24,
+        ),
         onTap: onTap,
-      ),
-    );
-  }
-}
-
-class _SeasonChip extends StatelessWidget {
-  final String season;
-
-  const _SeasonChip(this.season);
-
-  Color _background() {
-    switch (season) {
-      case 'ilkbahar':
-        return AppColors.primary;
-      case 'yaz':
-        return AppColors.accent;
-      case 'sonbahar':
-        return AppColors.seasonAutumn;
-      case 'kis':
-        return AppColors.secondary;
-      default:
-        return AppColors.muted;
-    }
-  }
-
-  String _label() {
-    switch (season) {
-      case 'ilkbahar':
-        return 'İlkbahar';
-      case 'yaz':
-        return 'Yaz';
-      case 'sonbahar':
-        return 'Sonbahar';
-      case 'kis':
-        return 'Kış';
-      default:
-        return season;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: _background(),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        _label(),
-        style: AppTextStyles.caption.copyWith(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
       ),
     );
   }
