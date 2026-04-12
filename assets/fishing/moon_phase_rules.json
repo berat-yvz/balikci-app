@@ -1,0 +1,68 @@
+{
+  "phases": [
+    {
+      "illumination_min": 0.0,
+      "illumination_max": 0.12,
+      "phase_id": "new_moon",
+      "base_score_delta": -3,
+      "message": "ℹ️ Yeni ay: balık derine çekilebilir.",
+      "priority": 12
+    },
+    {
+      "illumination_min": 0.12,
+      "illumination_max": 0.38,
+      "phase_id": "waxing_crescent",
+      "base_score_delta": 2,
+      "message": "✓ Hilal: aktivite artmaya başlar.",
+      "priority": 14
+    },
+    {
+      "illumination_min": 0.38,
+      "illumination_max": 0.46,
+      "phase_id": "first_quarter",
+      "base_score_delta": 3,
+      "message": "✓ İlk dördün: dengeli av şansı.",
+      "priority": 15
+    },
+    {
+      "illumination_min": 0.46,
+      "illumination_max": 0.54,
+      "phase_id": "waxing_gibbous",
+      "base_score_delta": 4,
+      "message": "✓ Dolunaya yaklaşılıyor: iştah artabilir.",
+      "priority": 16
+    },
+    {
+      "illumination_min": 0.54,
+      "illumination_max": 0.68,
+      "phase_id": "full_moon",
+      "base_score_delta": 5,
+      "message": "✓ Dolunay: gece aktivitesi yüksek olabilir.",
+      "priority": 18
+    },
+    {
+      "illumination_min": 0.68,
+      "illumination_max": 0.82,
+      "phase_id": "waning_gibbous",
+      "base_score_delta": 3,
+      "message": "ℹ️ Dolunay sonrası: hâlâ verimli saatler.",
+      "priority": 14
+    },
+    {
+      "illumination_min": 0.82,
+      "illumination_max": 0.92,
+      "phase_id": "last_quarter",
+      "base_score_delta": 2,
+      "message": "ℹ️ Son dördün: gündüz denemesi iyi olabilir.",
+      "priority": 13
+    },
+    {
+      "illumination_min": 0.92,
+      "illumination_max": 1.001,
+      "phase_id": "waning_crescent",
+      "base_score_delta": 0,
+      "message": "ℹ️ Ay ince: yüzey aktivitesi azalabilir.",
+      "priority": 11
+    }
+  ]
+}

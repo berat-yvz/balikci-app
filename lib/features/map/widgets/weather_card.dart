@@ -4,6 +4,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/utils/fishing_weather_utils.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
+import 'package:balikci_app/shared/providers/fishing_score_provider.dart';
+
+Color _mapAccentFromLabelColor(String labelColor) {
+  switch (labelColor) {
+    case 'green':
+      return AppColors.success;
+    case 'teal':
+      return AppColors.teal;
+    case 'amber':
+      return AppColors.warning;
+    case 'orange':
+      return AppColors.accent;
+    case 'red':
+      return AppColors.danger;
+    default:
+      return AppColors.secondary;
+  }
+}
 
 /// Harita üstünde gösterilen kompakt hava kartı — H9.
 /// Weather page provider'ından veri alır, bağımsız API çağrısı yapmaz.
@@ -13,6 +31,7 @@ class WeatherCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final weatherAsync = ref.watch(istanbulWeatherProvider);
+    final fishingAsync = ref.watch(fishingScoreProvider);
 
     return weatherAsync.when(
       loading: () => Container(
@@ -36,9 +55,34 @@ class WeatherCard extends ConsumerWidget {
       data: (data) {
         final w = data.current;
 
-        final score = FishingWeatherUtils.getFishingScore(w);
-        final scoreEmoji = FishingWeatherUtils.getScoreEmoji(score);
-        final summary = FishingWeatherUtils.getSummary(w);
+        final fishing = fishingAsync.when(
+          data: (v) => v,
+          loading: () => null,
+          error: (Object e, StackTrace stackTrace) => null,
+        );
+
+        final int score;
+        final String label;
+        if (fishing != null) {
+          score = fishing.score;
+          label = fishing.label;
+        } else {
+          score = FishingWeatherUtils.getFishingScore(w);
+          label = score >= 70 ? 'İyi' : (score >= 40 ? 'Orta' : 'Kötü');
+        }
+
+        final accent = fishing != null
+            ? _mapAccentFromLabelColor(fishing.labelColor)
+            : (score >= 70
+                ? AppColors.success
+                : (score >= 40 ? AppColors.secondary : AppColors.danger));
+
+        final firstSpecies = fishing?.suggestedSpecies.isNotEmpty == true
+            ? fishing!.suggestedSpecies.first
+            : null;
+        final todayLine = firstSpecies != null
+            ? 'Bugün: ${firstSpecies.name}${firstSpecies.isInSeason ? ' ✓' : ''}'
+            : null;
 
         return Container(
           margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -63,7 +107,6 @@ class WeatherCard extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  // Sol: sıcaklık + konum göstergesi
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,12 +137,20 @@ class WeatherCard extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Sağ: balıkçılık skoru
                   Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(scoreEmoji, style: const TextStyle(fontSize: 18)),
                       Text(
-                        '$score/100',
+                        '$score',
+                        style: AppTextStyles.h3.copyWith(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: accent,
+                          height: 1,
+                        ),
+                      ),
+                      Text(
+                        '/100 · $label',
                         style: AppTextStyles.caption.copyWith(
                           fontSize: 11,
                           color: AppColors.muted,
@@ -110,16 +161,19 @@ class WeatherCard extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                summary,
-                style: AppTextStyles.caption.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
+              if (todayLine != null && firstSpecies != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  todayLine,
+                  style: AppTextStyles.caption.copyWith(
+                    color: firstSpecies.isInSeason
+                        ? AppColors.success
+                        : AppColors.muted,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+              ],
             ],
           ),
         );

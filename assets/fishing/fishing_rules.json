@@ -1,0 +1,136 @@
+{
+  "hard_stop_rules": [
+    {
+      "when": {
+        "windspeed_kmh_min": 55
+      },
+      "result_score": 10,
+      "message": "⚠️ Tehlikeli rüzgar: güvenlik önce, av iptal.",
+      "summary_key": "danger_wind",
+      "priority": 100
+    },
+    {
+      "when": {
+        "weather_code_in": [95, 96, 97, 98, 99]
+      },
+      "result_score": 15,
+      "message": "⚠️ Fırtına/gök gürültüsü: suya çıkma.",
+      "summary_key": "danger_storm",
+      "priority": 100
+    }
+  ],
+  "weather_score_modifiers": [
+    {
+      "when": { "windspeed_kmh_min": 40 },
+      "score_delta": -18,
+      "message": "⚠️ Rüzgar çok kuvvetli, av zor.",
+      "priority": 55
+    },
+    {
+      "when": { "windspeed_kmh_min": 28 },
+      "score_delta": -10,
+      "message": "ℹ️ Rüzgar belirgin; hafif takım önerilir.",
+      "priority": 45
+    },
+    {
+      "when": { "wave_height_m_min": 2.5 },
+      "score_delta": -15,
+      "message": "⚠️ Dalga yüksek, sahil güvenliği düşün.",
+      "priority": 52
+    },
+    {
+      "when": { "wave_height_m_min": 1.5 },
+      "score_delta": -8,
+      "message": "ℹ️ Dalga orta; deneyimli avcıya uygun.",
+      "priority": 40
+    },
+    {
+      "when": { "temperature_c_max": 4 },
+      "score_delta": -8,
+      "message": "ℹ️ Çok soğuk; kat kat giyin.",
+      "priority": 35
+    },
+    {
+      "when": { "temperature_c_min": 32 },
+      "score_delta": -6,
+      "message": "ℹ️ Sıcak hava; su ve gölge şart.",
+      "priority": 35
+    },
+    {
+      "when": { "precipitation_mm_h_min": 2.5 },
+      "score_delta": -12,
+      "message": "⚠️ Sağanak; görüş ve konfor düşer.",
+      "priority": 48
+    },
+    {
+      "when": { "precipitation_mm_h_min": 0.5 },
+      "score_delta": -5,
+      "message": "ℹ️ Hafif yağış; su geçirmez gerekir.",
+      "priority": 32
+    },
+    {
+      "when": { "weather_code_in": [51, 53, 55, 56, 57, 61, 63, 65, 67, 80, 81, 82] },
+      "score_delta": -7,
+      "message": "ℹ️ Yağışlı kod; kıyıda dikkatli ol.",
+      "priority": 38
+    },
+    {
+      "when": { "is_golden_hour": true },
+      "score_delta": 8,
+      "message": "✓ Altın saat: şafak/akşam uyumu yüksek.",
+      "priority": 42
+    },
+    {
+      "when": { "is_night": true },
+      "score_delta": 4,
+      "message": "ℹ️ Gece avı; ışık ve güvenlik unutma.",
+      "priority": 25
+    },
+    {
+      "when": { "windspeed_kmh_max": 12 },
+      "score_delta": 6,
+      "message": "✓ Rüzgar hafif; sakin deniz.",
+      "priority": 36
+    },
+    {
+      "when": { "sea_surface_temp_c_min": 16, "sea_surface_temp_c_max": 24 },
+      "score_delta": 5,
+      "message": "✓ Deniz suyu sıcaklığı balık için uygun aralıkta.",
+      "priority": 34
+    }
+  ],
+  "seasonal_modifiers": [
+    {
+      "months": [6, 7, 8],
+      "score_delta": 4,
+      "message": "ℹ️ Yaz sezonu: çeşitlilik artabilir.",
+      "priority": 20
+    },
+    {
+      "months": [12, 1, 2],
+      "score_delta": -4,
+      "message": "ℹ️ Kış: soğuk ve seçici balık davranışı.",
+      "priority": 18
+    },
+    {
+      "months": [4, 5, 9, 10],
+      "score_delta": 3,
+      "message": "ℹ️ Geçiş ayları: göç ve aktivite artışı olabilir.",
+      "priority": 22
+    }
+  ],
+  "score_labels": [
+    { "min_score": 85, "label": "Mükemmel", "label_color": "green" },
+    { "min_score": 70, "label": "İyi", "label_color": "teal" },
+    { "min_score": 50, "label": "Orta", "label_color": "amber" },
+    { "min_score": 30, "label": "Zayıf", "label_color": "orange" },
+    { "min_score": 0, "label": "Kötü", "label_color": "red" }
+  ],
+  "summary_templates": {
+    "danger_wind": "Rüzgar çok sert; güvenlik öncelikli.",
+    "danger_storm": "Fırtına riski: avı ertelemek iyi olur.",
+    "default_positive": "Koşullar genel olarak uygun.",
+    "default_neutral": "Koşullar ortalama; sabır gerekir.",
+    "default_negative": "Koşullar zorlayıcı; beklentiyi düşür."
+  }
+}

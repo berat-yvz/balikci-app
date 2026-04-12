@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/utils/fishing_weather_utils.dart';
 import 'package:balikci_app/core/utils/moon_phase_utils.dart';
+import 'package:balikci_app/data/models/fishing_score.dart';
 import 'package:balikci_app/data/models/hourly_weather_model.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
+import 'package:balikci_app/shared/providers/fishing_score_provider.dart';
 
 /// Detaylı hava durumu ekranı — H9 sprint.
 /// Veri yalnızca sunucu `weather_cache` üzerinden gelir; manuel yenileme yoktur.
@@ -118,214 +120,418 @@ class WeatherScreen extends ConsumerWidget {
   }
 }
 
-// ── ADIM 4: Bugün Balık Tutulur mu? ─────────────────────────────────────────
+// ── Bugün balık tutulur mu? — kural tabanlı motor ───────────────────────────
 
-class _FishingScoreCard extends StatelessWidget {
+Color _fishingAccentFromLabelColor(String labelColor) {
+  switch (labelColor) {
+    case 'green':
+      return AppColors.success;
+    case 'teal':
+      return AppColors.teal;
+    case 'amber':
+      return AppColors.warning;
+    case 'orange':
+      return AppColors.accent;
+    case 'red':
+      return AppColors.danger;
+    default:
+      return AppColors.secondary;
+  }
+}
+
+class _FishingScoreCard extends ConsumerWidget {
   final WeatherModel weather;
-  /// `true`: ana hava kartının altında kompakt şerit.
   final bool compact;
   const _FishingScoreCard({required this.weather, this.compact = false});
 
-  Color _bgColor(int score) {
-    if (score >= 70) return const Color(0xFF1A3A2A);
-    if (score >= 40) return const Color(0xFF3A2A0A);
-    return const Color(0xFF3A0A0A);
+  Color _cardBackground(Color accent) {
+    return accent.withValues(alpha: 0.12);
   }
 
-  Color _accentColor(int score) {
-    if (score >= 70) return AppColors.success;
-    if (score >= 40) return AppColors.secondary;
-    return AppColors.danger;
+  Widget _messageRow(String text) {
+    final isWarn = text.startsWith('⚠️');
+    final isOk = text.startsWith('✓');
+    final icon = isWarn ? '⚠️' : (isOk ? '✓' : 'ℹ️');
+    final body = text.replaceFirst(RegExp(r'^[✓⚠️ℹ️]+\s*'), '').trim();
+    final iconColor = isWarn
+        ? AppColors.accent
+        : (isOk ? AppColors.success : AppColors.muted);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(icon, style: TextStyle(fontSize: compact ? 13 : 14, color: iconColor)),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              body.isEmpty ? text : body,
+              style: AppTextStyles.caption.copyWith(
+                fontSize: compact ? 12 : 14,
+                color: Colors.white70,
+                height: 1.25,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  String _verdict(int score) {
-    if (score >= 70) return 'İyi!';
-    if (score >= 40) return 'Orta';
-    return 'Kötü';
-  }
-
-  String _subtitle(WeatherModel w) {
-    final parts = <String>[];
-    if (w.windKmh > 25) parts.add('Rüzgar kuvvetli');
-    if (w.tempCelsius > 28) parts.add('Çok sıcak');
-    if (w.tempCelsius < 8) parts.add('Çok soğuk');
-    if (w.windKmh <= 15 && w.tempCelsius >= 16 && w.tempCelsius <= 24) {
-      parts.add('İdeal koşullar');
-    }
-    if (parts.isEmpty) return FishingWeatherUtils.getSummary(w);
-    return parts.join(' · ');
+  Widget _speciesChips(BuildContext context, List<FishSpeciesTip> species) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: species.map((s) {
+        final seasonColor = s.isInSeason ? AppColors.success : AppColors.muted;
+        return ActionChip(
+          label: Text(
+            s.isInSeason ? '${s.name} ✓' : s.name,
+            style: AppTextStyles.caption.copyWith(
+              fontWeight: FontWeight.w700,
+              color: s.isInSeason ? AppColors.success : AppColors.muted,
+              fontSize: 12,
+            ),
+          ),
+          backgroundColor: seasonColor.withValues(alpha: 0.12),
+          side: BorderSide(color: seasonColor.withValues(alpha: 0.45)),
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          onPressed: () {
+            final tip = s.tip;
+            final msg = tip != null && tip.isNotEmpty
+                ? '${s.name} için ipucu: $tip'
+                : '${s.name} için ipucu henüz eklenmedi.';
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(msg)),
+            );
+          },
+        );
+      }).toList(),
+    );
   }
 
   @override
-  Widget build(BuildContext context) {
-    final score = FishingWeatherUtils.getFishingScore(weather);
-    final bgColor = _bgColor(score);
-    final accentColor = _accentColor(score);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncScore = ref.watch(fishingScoreProvider);
 
+    return asyncScore.when(
+      loading: () => _loadingShell(compact),
+      error: (Object e, StackTrace stackTrace) =>
+          _legacyCard(context, weather, compact),
+      data: (fs) {
+        final accent = _fishingAccentFromLabelColor(fs.labelColor);
+        final bg = _cardBackground(accent);
+        final messages = fs.activeMessages.take(2).toList();
+
+        if (compact) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: accent.withValues(alpha: 0.45),
+                width: 1.2,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Bugün balık tutulur mu?',
+                            style: AppTextStyles.caption.copyWith(
+                              color: Colors.white.withValues(alpha: 0.95),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              fs.label,
+                              style: AppTextStyles.caption.copyWith(
+                                color: accent,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          if (messages.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            ...messages.map(_messageRow),
+                          ] else ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              fs.summary,
+                              style: AppTextStyles.caption.copyWith(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                height: 1.25,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${fs.score}',
+                          style: AppTextStyles.h1.copyWith(
+                            color: accent,
+                            fontSize: 36,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 5),
+                          child: Text(
+                            '/100',
+                            style: AppTextStyles.caption.copyWith(
+                              color: accent.withValues(alpha: 0.7),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                if (fs.suggestedSpecies.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  _speciesChips(context, fs.suggestedSpecies),
+                ],
+              ],
+            ),
+          );
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: accent.withValues(alpha: 0.5),
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            children: [
+              Text(
+                'Bugün balık tutulur mu?',
+                style: AppTextStyles.h3.copyWith(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${fs.score}',
+                    style: AppTextStyles.h1.copyWith(
+                      color: accent,
+                      fontSize: 64,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      '/100',
+                      style: AppTextStyles.h3.copyWith(
+                        color: accent.withValues(alpha: 0.7),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  fs.label,
+                  style: AppTextStyles.h3.copyWith(
+                    color: accent,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              ...messages.map(_messageRow),
+              if (messages.isEmpty)
+                Text(
+                  fs.summary,
+                  style: AppTextStyles.body.copyWith(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              if (fs.suggestedSpecies.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                _speciesChips(context, fs.suggestedSpecies),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _loadingShell(bool compact) {
+    final accent = AppColors.secondary;
+    final bg = _cardBackground(accent);
     if (compact) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: bgColor,
+          color: bg,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: accentColor.withValues(alpha: 0.45),
+            color: accent.withValues(alpha: 0.35),
             width: 1.2,
           ),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Bugün balık tutulur mu?',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.95),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _verdict(score),
-                      style: TextStyle(
-                        color: accentColor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _subtitle(weather),
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      height: 1.25,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+              child: Text(
+                'Bugün balık tutulur mu?',
+                style: AppTextStyles.caption.copyWith(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
-            const SizedBox(width: 10),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '$score',
-                  style: TextStyle(
-                    color: accentColor,
-                    fontSize: 36,
-                    fontWeight: FontWeight.w900,
-                    height: 1,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 5),
-                  child: Text(
-                    '/100',
-                    style: TextStyle(
-                      color: accentColor.withValues(alpha: 0.7),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
+            const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
             ),
           ],
         ),
       );
     }
-
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: bg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: accentColor.withValues(alpha: 0.5), width: 1.5),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
       ),
-      child: Column(
-        children: [
-          Text(
-            'Bugün Balık Tutulur mu?',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-            ),
+      child: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(12),
+          child: CircularProgressIndicator(),
+        ),
+      ),
+    );
+  }
+
+  Widget _legacyCard(BuildContext context, WeatherModel w, bool compact) {
+    final score = FishingWeatherUtils.getFishingScore(w);
+    final accent = score >= 70
+        ? AppColors.success
+        : (score >= 40 ? AppColors.secondary : AppColors.danger);
+    final bg = _cardBackground(accent);
+    final label = score >= 70 ? 'İyi' : (score >= 40 ? 'Orta' : 'Kötü');
+    if (compact) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: accent.withValues(alpha: 0.45),
+            width: 1.2,
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '$score',
-                style: TextStyle(
-                  color: accentColor,
-                  fontSize: 64, // ADIM 4: 64sp bold
-                  fontWeight: FontWeight.w900,
-                  height: 1,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  '/100',
-                  style: TextStyle(
-                    color: accentColor.withValues(alpha: 0.7),
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Bugün balık tutulur mu?',
+                    style: AppTextStyles.caption.copyWith(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              _verdict(score),
-              style: TextStyle(
-                color: accentColor,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
+                  Text(
+                    'Skor yüklenemedi; basit tahmin gösteriliyor.',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.muted,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            _subtitle(weather),
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+            Text(
+              '$score',
+              style: AppTextStyles.h1.copyWith(
+                color: accent,
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            Text(
+              '  $label',
+              style: AppTextStyles.caption.copyWith(color: accent),
+            ),
+          ],
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent.withValues(alpha: 0.45)),
+      ),
+      child: Text(
+        'Skor yüklenemedi ($label · $score)',
+        style: AppTextStyles.body.copyWith(color: Colors.white70),
+        textAlign: TextAlign.center,
       ),
     );
   }

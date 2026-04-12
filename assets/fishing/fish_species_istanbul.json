@@ -1,0 +1,112 @@
+{
+  "species": [
+    {
+      "id": "lufer",
+      "name": "Lüfer",
+      "active_months": [4, 5, 6, 7, 8, 9, 10, 11],
+      "optimal_wind_max": 28,
+      "optimal_wave_max": 1.4,
+      "tip": "Hafif rüzgâr ve gel-git değişiminde yüzey yakını dene.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "levrek",
+      "name": "Levrek",
+      "active_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
+      "optimal_wind_max": 32,
+      "optimal_wave_max": 1.8,
+      "tip": "Yapı ve kaya kırığı dibinde yavaş suni yem iyi sonuç verir.",
+      "moon_phase_bonus": {
+        "new_moon": 3,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 5,
+        "full_moon": 6,
+        "waning_gibbous": 5,
+        "last_quarter": 4,
+        "waning_crescent": 3
+      }
+    },
+    {
+      "id": "cipura",
+      "name": "Çipura",
+      "active_months": [1, 2, 3, 4, 5, 9, 10, 11, 12],
+      "optimal_wind_max": 24,
+      "optimal_wave_max": 1.2,
+      "tip": "Sakin günlerde midye/ solucan ile dip veya yarı-dip.",
+      "moon_phase_bonus": {
+        "new_moon": 4,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 5,
+        "full_moon": 5,
+        "waning_gibbous": 4,
+        "last_quarter": 5,
+        "waning_crescent": 4
+      }
+    },
+    {
+      "id": "istanbullu",
+      "name": "İstanbullu",
+      "active_months": [5, 6, 7, 8, 9],
+      "optimal_wind_max": 22,
+      "optimal_wave_max": 1.0,
+      "tip": "Temiz akıntı kenarı ve küçük silikon yem deneyin.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 5,
+        "first_quarter": 6,
+        "waxing_gibbous": 7,
+        "full_moon": 7,
+        "waning_gibbous": 6,
+        "last_quarter": 5,
+        "waning_crescent": 3
+      }
+    },
+    {
+      "id": "mezgit",
+      "name": "Mezgit",
+      "active_months": [1, 2, 3, 4, 10, 11, 12],
+      "optimal_wind_max": 35,
+      "optimal_wave_max": 2.2,
+      "tip": "Soğuk aylarda derin ve yavaş jig hareketi.",
+      "moon_phase_bonus": {
+        "new_moon": 3,
+        "waxing_crescent": 3,
+        "first_quarter": 4,
+        "waxing_gibbous": 4,
+        "full_moon": 5,
+        "waning_gibbous": 4,
+        "last_quarter": 4,
+        "waning_crescent": 3
+      }
+    },
+    {
+      "id": "kolyoz",
+      "name": "Kolyoz",
+      "active_months": [4, 5, 6, 7, 8, 9],
+      "optimal_wind_max": 30,
+      "optimal_wave_max": 1.6,
+      "tip": "Sürü halindeyken küçük kaşık ve hızlı çekim.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 5,
+        "full_moon": 6,
+        "waning_gibbous": 5,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    }
+  ]
+}

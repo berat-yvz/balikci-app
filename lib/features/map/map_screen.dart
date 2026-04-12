@@ -1655,6 +1655,7 @@ class _MeraWeatherSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final muted = AppColors.foam.withValues(alpha: 0.72);
+    final s = snap;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -1668,28 +1669,34 @@ class _MeraWeatherSection extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.wb_cloudy_outlined,
-                color: AppColors.primary.withValues(alpha: 0.95),
-                size: 22,
-              ),
-              const SizedBox(width: 8),
+              if (s != null)
+                Text(
+                  _skyEmoji(s),
+                  style: const TextStyle(fontSize: 34, height: 1.05),
+                )
+              else
+                Icon(
+                  Icons.wb_cloudy_outlined,
+                  color: AppColors.primary.withValues(alpha: 0.95),
+                  size: 28,
+                ),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      snap?.locationLabel ?? 'Hava durumu',
+                      s?.locationLabel ?? 'Hava durumu',
                       style: TextStyle(
                         color: AppColors.foam.withValues(alpha: 0.95),
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
                       ),
                     ),
-                    if (snap != null) ...[
+                    if (s != null) ...[
                       const SizedBox(height: 2),
                       Text(
-                        snap!.locationSubtitle,
+                        s.locationSubtitle,
                         style: TextStyle(
                           color: muted,
                           fontSize: 11.5,
@@ -1708,34 +1715,26 @@ class _MeraWeatherSection extends StatelessWidget {
                 ),
             ],
           ),
-          if (snap != null) ...[
-            const SizedBox(height: 12),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 2.35,
-              children: [
-                _MiniStat(
-                  label: '🌡️ sıcaklık',
-                  value:
-                      '${_tempC(snap!).round()}°C',
-                ),
-                _MiniStat(
-                  label: '💨 rüzgar',
-                  value: '${_windKmh(snap!).round()} km/h',
-                ),
-                _MiniStat(
-                  label: '🌊 dalga (deniz)',
-                  value: _waveLabel(snap!),
-                ),
-                _MiniStat(
-                  label: '${_skyEmoji(snap!)} durum',
-                  value: _skyText(snap!),
-                ),
-              ],
+          if (s != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              _skyText(s),
+              style: TextStyle(
+                color: AppColors.primary.withValues(alpha: 0.95),
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '🌡️ ${_tempC(s).round()}°C   ·   💨 ${_windKmh(s).round()} km/h',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.foam,
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+              ),
             ),
           ] else if (!loading) ...[
             const SizedBox(height: 10),
@@ -1761,12 +1760,6 @@ class _MeraWeatherSection extends StatelessWidget {
     return s.weather.windKmh;
   }
 
-  String _waveLabel(MeraWeatherSnapshot s) {
-    final m = s.currentHour?.waveHeight ?? s.weather.waveHeight;
-    if (m == null) return 'Veri yok';
-    return '${m.toStringAsFixed(1)} m';
-  }
-
   String _skyText(MeraWeatherSnapshot s) {
     final h = s.currentHour;
     if (h != null) return MeraWeatherDisplay.skyCondition(h);
@@ -1787,38 +1780,6 @@ class _MeraWeatherSection extends StatelessWidget {
     if (code <= 79) return '❄️';
     if (code <= 99) return '⛈️';
     return '🌡️';
-  }
-}
-
-class _MiniStat extends StatelessWidget {
-  final String label;
-  final String value;
-  const _MiniStat({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: AppColors.foam.withValues(alpha: 0.75),
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppColors.foam,
-            fontWeight: FontWeight.w900,
-            fontSize: 15,
-          ),
-        ),
-      ],
-    );
   }
 }
 
