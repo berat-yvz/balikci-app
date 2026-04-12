@@ -22,6 +22,10 @@ class AppColors {
   static const surface = Color(0xFF0B1C33);
   /// Sıralama ekranı — kullanıcı özeti kartı (açık tema listesi üzerinde).
   static const leaderboardBanner = Color(0xFF132236);
+  /// Balık ansiklopedisi kart yüzeyi (koyu panel).
+  static const encyclopediaCard = Color(0xFF1A2E42);
+  /// Mevsim chip’i — sonbahar.
+  static const seasonAutumn = Color(0xFFE06B2A);
   static const dark = Color(0xFF06101D);
   static const muted = Color(0xFF8EA0B5);
 

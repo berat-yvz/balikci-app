@@ -1,0 +1,424 @@
+{
+  "fish": [
+    {
+      "id": "lufer",
+      "name": "Lüfer",
+      "scientific_name": "Pomatomus saltatrix",
+      "category": "acik_deniz",
+      "emoji": "🐟",
+      "seasons": ["ilkbahar", "yaz", "sonbahar"],
+      "best_months": [5, 6, 7, 8, 9, 10, 11],
+      "habitats": ["açık su", "akıntı kenarı", "kıyıya yakın sürüler"],
+      "baits": ["canlı istavrit", "yapay suni yem", "silikon balık", "kaşık"],
+      "techniques": ["kaşıklama", "sürü takibi", "trolling"],
+      "min_legal_size_cm": 25,
+      "avg_weight_kg": 1.2,
+      "difficulty": "orta",
+      "fun_fact": "Lüfer sürü halinde avlanır; bir balık yakalandığında diğerleri aynı yemi saldırmaya devam edebilir.",
+      "tips": [
+        "Gün doğumu ve gün batımında yüzey yakınında kaşık veya suni yem dene.",
+        "Kuş ve yırtıcı balık hareketini takip etmek sürüyü bulmana yardım eder.",
+        "Canlı yem kullanırken oksijenli kova ile taşı; lüfer canlı yeme çok iyi gelir."
+      ]
+    },
+    {
+      "id": "cipura",
+      "name": "Çipura",
+      "scientific_name": "Sparus aurata",
+      "category": "kiyi",
+      "emoji": "🐠",
+      "seasons": ["ilkbahar", "sonbahar", "kis"],
+      "best_months": [3, 4, 5, 10, 11, 12],
+      "habitats": ["kum zemin", "çayırlık dipler", "liman mendirek dipleri"],
+      "baits": ["midye", "solucan", "karides", "kalamar"],
+      "techniques": ["dip oltası", "surf casting", "hafif ledgering"],
+      "min_legal_size_cm": 20,
+      "avg_weight_kg": 0.8,
+      "difficulty": "orta",
+      "fun_fact": "Çipuranın alın çizgisi (altın bant) yaş ve popülasyona göre belirginleşir.",
+      "tips": [
+        "Sakin hava ve düşük dalgada dipte ince iğne ve küçük kurşun daha doğal sunum sağlar.",
+        "Yemini çok sık kontrol et; çipura yemi nazikçe emer.",
+        "Gece saatlerinde kıyıya yakın sığlıklarda ısırık artabilir."
+      ]
+    },
+    {
+      "id": "levrek",
+      "name": "Levrek",
+      "scientific_name": "Dicentrarchus labrax",
+      "category": "kiyi",
+      "emoji": "🐡",
+      "seasons": ["ilkbahar", "yaz", "sonbahar"],
+      "best_months": [4, 5, 6, 7, 8, 9, 10],
+      "habitats": ["kaya kırığı", "liman duvarı", "dalga kıran gölgesi"],
+      "baits": ["silikon yem", "vibrasyon kaşık", "canlı istavrit", "kalamar şeridi"],
+      "techniques": ["spinning", "jighead", "light rockfishing"],
+      "min_legal_size_cm": 26,
+      "avg_weight_kg": 1.0,
+      "difficulty": "orta",
+      "fun_fact": "Levrek avında “strike” anı kısadır; vuruşu hissedince hızlı ve kontrollü vuruş önemlidir.",
+      "tips": [
+        "Gel-git değişiminde yapı kenarlarında yem sunumunu yavaşlat.",
+        "Bulutlu ve hafif rüzgârlı günlerde kıyıya daha yakın avlanabilir.",
+        "İnce lider ve keskin kanca, ağız yapısına uygun seçilmelidir."
+      ]
+    },
+    {
+      "id": "istanvrit",
+      "name": "İstavrit",
+      "scientific_name": "Trachurus trachurus",
+      "category": "acik_deniz",
+      "emoji": "🐟",
+      "seasons": ["ilkbahar", "yaz", "sonbahar", "kis"],
+      "best_months": [1, 2, 3, 4, 10, 11, 12],
+      "habitats": ["açık su sürüleri", "dip yakını tabaka", "iskele ışığı altı"],
+      "baits": ["gırgır iğnesi", "küçük parça balık", "hafif jig"],
+      "techniques": ["sabiki", "dip serisi", "hafif kaşık"],
+      "min_legal_size_cm": 13,
+      "avg_weight_kg": 0.15,
+      "difficulty": "kolay",
+      "fun_fact": "İstavrit sürü balığıdır; bir balık yakalandığında aynı derinlikte seri vuruş alabilirsin.",
+      "tips": [
+        "İnce misina ve küçük kanca ile daha fazla temas alırsın.",
+        "Sonar veya kuş hareketi sürünün yerini gösterebilir.",
+        "Gece iskele lambaları altında yüzeye yakın çok verimli olabilir."
+      ]
+    },
+    {
+      "id": "palamut",
+      "name": "Palamut",
+      "scientific_name": "Sarda sarda",
+      "category": "acik_deniz",
+      "emoji": "🐟",
+      "seasons": ["yaz", "sonbahar"],
+      "best_months": [6, 7, 8, 9, 10],
+      "habitats": ["yüzey yakını", "akıntı hatları", "açık Marmara"],
+      "baits": ["kaşık", "tüylü jig", "canlı küçük balık"],
+      "techniques": ["kaşıklama", "hızlı çekme", "tekne üstü spinning"],
+      "min_legal_size_cm": null,
+      "avg_weight_kg": 0.9,
+      "difficulty": "kolay",
+      "fun_fact": "Palamut hızlı yüzücüdür; kaşığı hızlı çekmek tetikleyici olabilir.",
+      "tips": [
+        "Sürü yüzeye çıktığında uzun atış ve hızlı ritim dene.",
+        "Renkli kaşıklar bulutlu havada daha seçilebilir olabilir.",
+        "Kanca uçlarını düzenli kontrol et; sık vuruşta körelir."
+      ]
+    },
+    {
+      "id": "kolyoz",
+      "name": "Kolyoz",
+      "scientific_name": "Scomber japonicus",
+      "category": "acik_deniz",
+      "emoji": "🐠",
+      "seasons": ["ilkbahar", "yaz", "sonbahar"],
+      "best_months": [4, 5, 6, 7, 8, 9],
+      "habitats": ["yüzey", "orta su", "iskele ışığı"],
+      "baits": ["sabiki", "küçük parça yem", "hafif jig"],
+      "techniques": ["sabiki trol", "iskele dip serisi"],
+      "min_legal_size_cm": null,
+      "avg_weight_kg": 0.25,
+      "difficulty": "kolay",
+      "fun_fact": "Kolyoz sıcak su kümeslerinde toplanır; ışık altında gece avı keyiflidir.",
+      "tips": [
+        "Çok küçük iğne ve ince misina kullan.",
+        "Yem kokusu için hafifçe midye suyu sürmek işe yarayabilir.",
+        "Sürü geçerken hızlı ardışık sarım yap."
+      ]
+    },
+    {
+      "id": "barbunya",
+      "name": "Barbunya",
+      "scientific_name": "Mullus barbatus",
+      "category": "dip",
+      "emoji": "🦞",
+      "seasons": ["ilkbahar", "yaz", "sonbahar", "kis"],
+      "best_months": [3, 4, 5, 9, 10, 11, 12],
+      "habitats": ["kum ve çamur dipler", "20–80 m", "kıta sahanlığı"],
+      "baits": ["solucan", "midye", "karides"],
+      "techniques": ["dip oltası", "çift kanca düzeni", "tekne dip avı"],
+      "min_legal_size_cm": 11,
+      "avg_weight_kg": 0.2,
+      "difficulty": "kolay",
+      "fun_fact": "Barbunyayı sakallı barbunya ile karıştırmamak için bıyık uzunluğuna bakılır.",
+      "tips": [
+        "Dipte yavaş ve düzenli yem kokusu önemlidir.",
+        "Akıntı varsa daha ağır kurşun ve kısa köstür seç.",
+        "Gece dip avında ısırık sıklığı artabilir."
+      ]
+    },
+    {
+      "id": "tekir",
+      "name": "Tekir",
+      "scientific_name": "Mullus surmuletus",
+      "category": "dip",
+      "emoji": "🦐",
+      "seasons": ["ilkbahar", "yaz", "sonbahar"],
+      "best_months": [4, 5, 6, 9, 10],
+      "habitats": ["kaya ve çakıl dipleri", "otlu zemin"],
+      "baits": ["solucan", "karides", "midye"],
+      "techniques": ["dip oltası", "light bottom"],
+      "min_legal_size_cm": 11,
+      "avg_weight_kg": 0.25,
+      "difficulty": "kolay",
+      "fun_fact": "Tekirin kırmızı bıyıkları barbunyadan daha uzun ve incedir.",
+      "tips": [
+        "Yapı diplerinde yem sunumunu hafif zıplatmak ilgi çekebilir.",
+        "İnce misina ve küçük kanca daha fazla vuruş getirir.",
+        "Sakin havalarda dipte daha seçici davranır."
+      ]
+    },
+    {
+      "id": "dil_baligi",
+      "name": "Dil balığı",
+      "scientific_name": "Solea solea",
+      "category": "dip",
+      "emoji": "🐡",
+      "seasons": ["ilkbahar", "sonbahar", "kis"],
+      "best_months": [3, 4, 10, 11, 12],
+      "habitats": ["kum dipler", "sığ kıyı", "estuarler"],
+      "baits": ["solucan", "midye", "küçük karides"],
+      "techniques": ["dip oltası", "çok hafif kurşun"],
+      "min_legal_size_cm": 19,
+      "avg_weight_kg": 0.4,
+      "difficulty": "orta",
+      "fun_fact": "Dil balığı zemine yapışarak kamufle olur; yem zeminde kıpırdatılmadan beklenmelidir.",
+      "tips": [
+        "Isırık çoğunlukla hafif titreşimdir; çok sert vurma.",
+        "Düz ve kumlu zeminde daha kolay tespit edilir.",
+        "Gece avında kıyı sığlarında verim artar."
+      ]
+    },
+    {
+      "id": "kefal",
+      "name": "Kefal",
+      "scientific_name": "Mugil cephalus",
+      "category": "kiyi",
+      "emoji": "🐠",
+      "seasons": ["ilkbahar", "yaz", "sonbahar"],
+      "best_months": [4, 5, 6, 7, 9, 10],
+      "habitats": ["liman", "nehir ağzı", "kıyı çamurluğu"],
+      "baits": ["hamur", "ekmek", "mısır", "solucan"],
+      "techniques": ["float", "hafif dip", "iskele oltası"],
+      "min_legal_size_cm": null,
+      "avg_weight_kg": 1.5,
+      "difficulty": "zor",
+      "fun_fact": "Kefal dudakları kalın ve güçlüdür; ince iğne ve küçük yem parçası daha iyi tutar.",
+      "tips": [
+        "Çok ince misina ve küçük kanca kullan; ağız yapısı zordur.",
+        "Sakin su ve az gürültü kefale yaklaşmayı kolaylaştırır.",
+        "Yem tabakası oluşturmak sabırla sonuç verir."
+      ]
+    },
+    {
+      "id": "torik",
+      "name": "Torik (küçük orkinos)",
+      "scientific_name": "Thunnus thynnus",
+      "category": "acik_deniz",
+      "emoji": "🐟",
+      "seasons": ["yaz", "sonbahar"],
+      "best_months": [7, 8, 9, 10],
+      "habitats": ["açık su", "sıcak akıntı kenarı", "derin geçişler"],
+      "baits": ["canlı palamut", "büyük suni yem", "trolling yemi"],
+      "techniques": ["trolling", "tekne avı", "ağır jig"],
+      "min_legal_size_cm": null,
+      "avg_weight_kg": 8.0,
+      "difficulty": "zor",
+      "fun_fact": "Genç orkinoslar (torik) süratli yüzer; uzun ve dayanıklı ekipman ister.",
+      "tips": [
+        "Güvenlik ve tekne düzeni önceliklidir; büyük balık ekipmanı kullan.",
+        "Kuş ve yunus hareketini takip etmek sürü ipucu verir.",
+        "Av sonrası mevzuat ve boy sınırlarını mutlaka kontrol et."
+      ]
+    },
+    {
+      "id": "sarikanat",
+      "name": "Sarıkanat",
+      "scientific_name": "Diplodus vulgaris",
+      "category": "kiyi",
+      "emoji": "🐠",
+      "seasons": ["ilkbahar", "yaz", "sonbahar"],
+      "best_months": [5, 6, 7, 8, 9],
+      "habitats": ["kaya kırığı", "mendirek", "yapı dipleri"],
+      "baits": ["midye", "solucan", "karides", "hamur"],
+      "techniques": ["dip oltası", "hafif float"],
+      "min_legal_size_cm": 15,
+      "avg_weight_kg": 0.35,
+      "difficulty": "kolay",
+      "fun_fact": "Sarıkanat dişleri güçlüdür; midye kabuğunu ezerek yemlemek etkilidir.",
+      "tips": [
+        "Kaya diplerinde yemi yapıştırmamak için kurşun seçimine dikkat et.",
+        "Küçük kanca ve taze yem daha fazla ısırık getirir.",
+        "Dalga kıran arkasında sakin alanları dene."
+      ]
+    },
+    {
+      "id": "orfoz",
+      "name": "Orfoz",
+      "scientific_name": "Epinephelus marginatus",
+      "category": "dip",
+      "emoji": "🐡",
+      "seasons": ["yaz", "sonbahar"],
+      "best_months": [6, 7, 8, 9, 10],
+      "habitats": ["derin kaya mağaraları", "batık yapılar"],
+      "baits": ["canlı kalamar", "büyük karides", "canlı balık"],
+      "techniques": ["ağır dip", "jig", "tekne dip"],
+      "min_legal_size_cm": 45,
+      "avg_weight_kg": 2.5,
+      "difficulty": "zor",
+      "fun_fact": "Orfoz mağara tutkunudur; yemi mağara ağzına bırakmak sabır ister.",
+      "tips": [
+        "Güçlü misina ve sağlam ekipman şart.",
+        "Isırık sonrası hızlı çekiş mağaraya kaçmayı önler.",
+        "Koruma altındaki popülasyonlarda avlanma kurallarına mutlak uy."
+      ]
+    },
+    {
+      "id": "iskorpit",
+      "name": "İskorpit",
+      "scientific_name": "Scorpaena porcus",
+      "category": "dip",
+      "emoji": "🦀",
+      "seasons": ["ilkbahar", "yaz", "sonbahar"],
+      "best_months": [4, 5, 6, 7, 9, 10],
+      "habitats": ["kaya dipleri", "kamufle zemin", "düşük hareket"],
+      "baits": ["solucan", "midye", "küçük balık parçası"],
+      "techniques": ["dip oltası", "çok yavaş sunum"],
+      "min_legal_size_cm": null,
+      "avg_weight_kg": 0.3,
+      "difficulty": "orta",
+      "fun_fact": "İskorpit zehirli dikenlere sahiptir; balığı elle tutarken eldiven kullan.",
+      "tips": [
+        "Yavaş ve sabırlı dip avı; ani hareket balığı ürkütür.",
+        "Keskin dikenler için balığı ağ veya pense ile al.",
+        "Kaya görünümündeki zeminde dikkatli ayırt et."
+      ]
+    },
+    {
+      "id": "kalkan",
+      "name": "Kalkan",
+      "scientific_name": "Psetta maxima",
+      "category": "dip",
+      "emoji": "🐡",
+      "seasons": ["ilkbahar", "sonbahar"],
+      "best_months": [4, 5, 9, 10, 11],
+      "habitats": ["kum dipler", "çamur-kum geçişi"],
+      "baits": ["solucan", "karides", "midye"],
+      "techniques": ["dip oltası", "drift dip"],
+      "min_legal_size_cm": 30,
+      "avg_weight_kg": 1.8,
+      "difficulty": "orta",
+      "fun_fact": "Kalkan gözleri aynı taraftadır; zemine yatmış halde avlanır.",
+      "tips": [
+        "Yem zeminde sabit durmalı; sık sık kontrol etme.",
+        "Hafif akıntıda drift ile daha geniş alan taranır.",
+        "Isırık genelde yumuşak; çok erken vuruş kaçırır."
+      ]
+    },
+    {
+      "id": "hamsi",
+      "name": "Hamsi",
+      "scientific_name": "Engraulis encrasicolus",
+      "category": "acik_deniz",
+      "emoji": "🐟",
+      "seasons": ["sonbahar", "kis"],
+      "best_months": [10, 11, 12, 1, 2],
+      "habitats": ["sürü halinde açık su", "iskele ışığı", "yüzey yakını"],
+      "baits": ["sabiki", "çok küçük yem"],
+      "techniques": ["sabiki seri", "hafif kaşık"],
+      "min_legal_size_cm": 9,
+      "avg_weight_kg": 0.02,
+      "difficulty": "kolay",
+      "fun_fact": "Hamsi sürüsü bazen balina ve yırtıcı balıkları da Marmara’ya çeker.",
+      "tips": [
+        "İnce misina ve çok küçük kanca kullan.",
+        "Işık altında yüzeye yakın sürü oluşumunu izle.",
+        "Seri sarımda çoklu balık normaldir; oksijen için su tut."
+      ]
+    },
+    {
+      "id": "cinekop",
+      "name": "Çinekop (genç lüfer)",
+      "scientific_name": "Pomatomus saltatrix (juvenil)",
+      "category": "kiyi",
+      "emoji": "🐟",
+      "seasons": ["yaz", "sonbahar"],
+      "best_months": [6, 7, 8, 9, 10],
+      "habitats": ["kıyıya yakın", "küçük sürüler", "yapı gölgesi"],
+      "baits": ["küçük kaşık", "silikon", "canlı küçük balık"],
+      "techniques": ["hafif spinning", "iskele kaşığı"],
+      "min_legal_size_cm": 15,
+      "avg_weight_kg": 0.35,
+      "difficulty": "kolay",
+      "fun_fact": "Çinekop büyüdükçe lüfere dönüşür; aynı türün genç dönemidir.",
+      "tips": [
+        "Küçük yem ve ince misina daha doğal görünür.",
+        "Hızlı çek-kısa durak ritmi genelde işe yarar.",
+        "Boy sınırına dikkat et; küçük bireyleri bilinçli bırak."
+      ]
+    },
+    {
+      "id": "karagoz",
+      "name": "Karagöz",
+      "scientific_name": "Diplodus annularis",
+      "category": "kiyi",
+      "emoji": "🐠",
+      "seasons": ["ilkbahar", "yaz", "sonbahar"],
+      "best_months": [5, 6, 7, 8, 9],
+      "habitats": ["kaya dipleri", "mendirek", "sığ yapı"],
+      "baits": ["midye", "solucan", "hamur"],
+      "techniques": ["dip oltası", "hafif float"],
+      "min_legal_size_cm": 11,
+      "avg_weight_kg": 0.12,
+      "difficulty": "kolay",
+      "fun_fact": "Karagözde siyah halka deseni türü ayırt etmeye yardım eder.",
+      "tips": [
+        "Küçük ağız için küçük kanca seç.",
+        "Kaya diplerinde yem kaybını azaltmak için kompakt sunum yap.",
+        "Sakin havalarda kıyı sığlarında aktif olur."
+      ]
+    },
+    {
+      "id": "zargana",
+      "name": "Zargana",
+      "scientific_name": "Belone belone",
+      "category": "acik_deniz",
+      "emoji": "🐠",
+      "seasons": ["ilkbahar", "yaz"],
+      "best_months": [4, 5, 6, 7, 8],
+      "habitats": ["yüzey", "orta su", "sakin körfezler"],
+      "baits": ["ince suni yem", "küçük kaşık", "flüor karbon lider"],
+      "techniques": ["yüzey çekmesi", "hızlı spinning"],
+      "min_legal_size_cm": null,
+      "avg_weight_kg": 0.2,
+      "difficulty": "orta",
+      "fun_fact": "Zargananın uzun çenesi yüzeyde küçük balık taklit eden yemlere saldırır.",
+      "tips": [
+        "İnce ve uzun suni yemler daha iyi sonuç verir.",
+        "Ani ve hızlı çekişler tetikleyicidir.",
+        "İnce lider ve keskin kanca önemlidir."
+      ]
+    },
+    {
+      "id": "ahtapot",
+      "name": "Ahtapot",
+      "scientific_name": "Octopus vulgaris",
+      "category": "dip",
+      "emoji": "🐙",
+      "seasons": ["ilkbahar", "yaz", "sonbahar"],
+      "best_months": [5, 6, 7, 8, 9, 10],
+      "habitats": ["kaya çatlakları", "batık yapı", "mağara ağzı"],
+      "baits": ["kalamar parçası", "yengeç", "özel ahtapot istiridyesi"],
+      "techniques": ["dip tuzak", "elle av", "spearfishing (kurallara uygun)"],
+      "min_legal_size_cm": null,
+      "avg_weight_kg": 1.2,
+      "difficulty": "zor",
+      "fun_fact": "Ahtapot zekâsı yüksektir; yemden şüphelenince uzun süre bekleyebilir.",
+      "tips": [
+        "Yem mağara önünde sabırla beklet; ani çekiş kaçırır.",
+        "Yasal olmayan yöntemlerden kaçın; sürdürülebilir av önemlidir.",
+        "Kıyı kayalıklarında gel-git dönüşünde hareket artabilir."
+      ]
+    }
+  ]
+}

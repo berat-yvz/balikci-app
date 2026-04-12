@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_screen.dart';
 import 'package:balikci_app/features/knots/knots_screen.dart';
 
 // TODO(Balıkçım Faz 1): KnotsScreen, düğüm ve takım Balıkçım’da iki ayrı sekmede
@@ -111,13 +112,7 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                const _PlaceholderTab(
-                  icon: Icons.set_meal,
-                  title: 'Balık Bilgisi',
-                  subtitle:
-                      'İstanbul balıkları, mevsimler ve yemler\nyakında burada olacak!',
-                  color: AppColors.primary,
-                ),
+                const FishEncyclopediaScreen(),
                 const _PlaceholderTab(
                   icon: Icons.wb_sunny,
                   title: 'Günlük Tahmin',
