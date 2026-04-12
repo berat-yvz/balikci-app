@@ -1259,7 +1259,10 @@ class _MapScreenState extends State<MapScreen> {
                                   if (sheetDescriptionTrimmed != null &&
                                       sheetDescriptionTrimmed.isNotEmpty)
                                     const SizedBox(height: 12),
-                                  _RecentCheckinsRow(checkins: sheetCheckins),
+                                  _RecentCheckinsRow(
+                                    checkins: sheetCheckins,
+                                    onVoteRefresh: _refreshActiveCheckins,
+                                  ),
                                 ],
                               ),
                             ),
@@ -1864,7 +1867,12 @@ class _SheetSecondaryButton extends StatelessWidget {
 /// Her kart; zaman, balık yoğunluğu, kalabalık ve "Doğru mu?" butonunu içerir.
 class _RecentCheckinsRow extends StatelessWidget {
   final List<CheckinModel> checkins;
-  const _RecentCheckinsRow({required this.checkins});
+  final Future<void> Function()? onVoteRefresh;
+
+  const _RecentCheckinsRow({
+    required this.checkins,
+    this.onVoteRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1906,7 +1914,11 @@ class _RecentCheckinsRow extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: _CheckinCard(
                   checkin: c,
-                  onVoteTap: () => VoteDialog.show(context, checkin: c),
+                  onVoteTap: () => VoteDialog.show(
+                    context,
+                    checkin: c,
+                    onClosed: onVoteRefresh,
+                  ),
                 ),
               ),
             ),

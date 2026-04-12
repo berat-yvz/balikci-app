@@ -3,7 +3,7 @@ import 'package:balikci_app/core/constants/app_constants.dart';
 import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// cleaned: public method dokümantasyonu ve eksik hata yönetimi standardize edildi
+// cleaned: oylama upsert, sayaç kolonları, evaluateAndHide + görünürlük bayrağı
 
 /// Check-in repository — checkins + checkin_votes CRUD.
 /// H5 ve H6 sprint görevleri.
@@ -63,42 +63,8 @@ class CheckinRepository {
     }
   }
 
-  /// Tüm [checkinIds] için oyları tek seferde çeker (N+1 önlemi — mera sheet donmasını engeller).
-  Future<Map<String, Map<bool, int>>> _voteCountsForCheckinIdsBatch(
-    List<String> checkinIds,
-  ) async {
-    if (checkinIds.isEmpty) return {};
-    const chunk = 100;
-    final trueById = <String, int>{};
-    final falseById = <String, int>{};
-    for (var i = 0; i < checkinIds.length; i += chunk) {
-      final end = i + chunk > checkinIds.length ? checkinIds.length : i + chunk;
-      final slice = checkinIds.sublist(i, end);
-      final response = await _db
-          .from('checkin_votes')
-          .select('checkin_id, vote')
-          .inFilter('checkin_id', slice);
-      for (final row in response as List) {
-        final id = row['checkin_id'] as String;
-        final v = row['vote'] as bool;
-        if (v) {
-          trueById[id] = (trueById[id] ?? 0) + 1;
-        } else {
-          falseById[id] = (falseById[id] ?? 0) + 1;
-        }
-      }
-    }
-    final out = <String, Map<bool, int>>{};
-    for (final id in checkinIds) {
-      out[id] = {
-        true: trueById[id] ?? 0,
-        false: falseById[id] ?? 0,
-      };
-    }
-    return out;
-  }
-
   /// Belirli mera için son 6 saatlik check-in kayıtlarını kullanıcı adıyla döner.
+  /// Oy sayıları `checkins.true_votes` / `false_votes` (tetikleyici ile senkron).
   Future<List<CheckinModel>> getCheckinsForSpot(String spotId) async {
     try {
       final threshold = DateTime.now().subtract(
@@ -111,46 +77,7 @@ class CheckinRepository {
           .eq('is_hidden', false)
           .gte('created_at', threshold.toIso8601String())
           .order('created_at', ascending: false);
-      final baseItems = response
-          .map<CheckinModel>(CheckinModel.fromJson)
-          .toList();
-      if (baseItems.isEmpty) return [];
-
-      final voteMap = await _voteCountsForCheckinIdsBatch(
-        baseItems.map((c) => c.id).toList(),
-      );
-
-      final withVotes = <CheckinModel>[];
-      for (final base in baseItems) {
-        final counts = voteMap[base.id] ?? {true: 0, false: 0};
-        final trueVotes = counts[true] ?? 0;
-        final falseVotes = counts[false] ?? 0;
-        final model = CheckinModel(
-          id: base.id,
-          userId: base.userId,
-          spotId: base.spotId,
-          username: base.username,
-          crowdLevel: base.crowdLevel,
-          fishDensity: base.fishDensity,
-          fishSpecies: base.fishSpecies,
-          photoUrl: base.photoUrl,
-          exifVerified: base.exifVerified,
-          isHidden: base.isHidden,
-          trueVotes: trueVotes,
-          falseVotes: falseVotes,
-          createdAt: base.createdAt,
-          expiresAt: base.expiresAt,
-        );
-        final total = trueVotes + falseVotes;
-        final falseRatio = total == 0 ? 0.0 : (falseVotes / total);
-        final shouldHide =
-            total >= AppConstants.minVotesForHide &&
-            falseRatio >= AppConstants.voteThresholdPercent;
-        if (!shouldHide) {
-          withVotes.add(model);
-        }
-      }
-      return withVotes;
+      return response.map<CheckinModel>(CheckinModel.fromJson).toList();
     } on PostgrestException catch (e) {
       throw Exception('Mera check-in kayıtları alınamadı: ${e.message}');
     } catch (e) {
@@ -176,11 +103,8 @@ class CheckinRepository {
   }
 
   /// Oylama: voteValue = true → doğru, false → yanlış
-  /// Toggle davranışı:
-  /// - Aynı oy: kaldır
-  /// - Farklı oy: eskiyi kaldır, yeniyi ekle
-  /// - Oy yoksa: yeni oy ekle
-  /// Kullanıcının oyunu toggle davranışıyla günceller.
+  /// Toggle: aynı değer → satır silinir.
+  /// Farklı değer / ilk oy → tek `upsert` (atomik).
   Future<void> castVote({
     required String checkinId,
     required String voterId,
@@ -193,12 +117,14 @@ class CheckinRepository {
         return;
       }
 
-      await _unvote(checkinId: checkinId, voterId: voterId);
-      await _db.from('checkin_votes').insert({
-        'checkin_id': checkinId,
-        'voter_id': voterId,
-        'vote': voteValue,
-      });
+      await _db.from('checkin_votes').upsert(
+        {
+          'checkin_id': checkinId,
+          'voter_id': voterId,
+          'vote': voteValue,
+        },
+        onConflict: 'checkin_id,voter_id',
+      );
     } on PostgrestException catch (e) {
       throw Exception('Oylama gönderilemedi: ${e.message}');
     } catch (e) {
@@ -223,42 +149,79 @@ class CheckinRepository {
     }
   }
 
-  /// Oy sayılarını hesapla; eşik aşıldıysa check-in'i gizle.
-  /// Dönüş: true → gizlendi, false → henüz eşik aşılmadı
-  Future<bool> evaluateAndHide(String checkinId) async {
-    final counts = await getVoteCounts(checkinId);
-    final falseCount = counts[false] ?? 0;
-    final total = (counts[true] ?? 0) + falseCount;
-
-    if (total < AppConstants.minVotesForHide) return false;
-
-    final ratio = falseCount / total;
-    if (ratio >= AppConstants.voteThresholdPercent) {
-      await _db
-          .from('checkins')
-          .update({'is_hidden': true})
-          .eq('id', checkinId);
-      return true;
+  /// Oy sonrası: sunucu tetikleyicisi `is_hidden` günceller. İstemci doğrular;
+  /// tetikleyici yoksa `is_hidden` için yedek UPDATE dener.
+  ///
+  /// [checkinWasVisible]: oy öncesi bu bildirim listede görünür müydü (`!checkin.isHidden`).
+  /// Dönüş: **yeni** gizlendi mi (önce görünür + şimdi gizli) — `ScoreService.wrongReport` için.
+  ///
+  /// Gizleme başarısız olursa (RLS vb.) exception fırlatır; oy kaydı geri alınmaz.
+  Future<bool> evaluateAndHide(
+    String checkinId, {
+    required bool checkinWasVisible,
+  }) async {
+    if (!checkinWasVisible) {
+      return false;
     }
-    return false;
+
+    try {
+      var row = await _db
+          .from('checkins')
+          .select('is_hidden, true_votes, false_votes')
+          .eq('id', checkinId)
+          .maybeSingle();
+
+      if (row == null) {
+        throw Exception('Bildirim bulunamadı.');
+      }
+
+      if (row['is_hidden'] == true) {
+        return checkinWasVisible;
+      }
+
+      final tv = (row['true_votes'] as num?)?.toInt() ?? 0;
+      final fv = (row['false_votes'] as num?)?.toInt() ?? 0;
+      final total = tv + fv;
+      final shouldHide = total >= AppConstants.minVotesForHide &&
+          total > 0 &&
+          (fv / total) >= AppConstants.voteThresholdPercent;
+
+      if (!shouldHide) {
+        return false;
+      }
+
+      await _db.from('checkins').update({'is_hidden': true}).eq('id', checkinId);
+
+      row = await _db
+          .from('checkins')
+          .select('is_hidden')
+          .eq('id', checkinId)
+          .maybeSingle();
+
+      if (row == null || row['is_hidden'] != true) {
+        throw Exception(
+          'Bildirim gizlenemedi. Sunucu politikası veya bağlantı sorunu olabilir.',
+        );
+      }
+
+      return true;
+    } on PostgrestException catch (e) {
+      throw Exception('Bildirim gizlenemedi: ${e.message}');
+    }
   }
 
-  /// Oylama istatistiği — score-calculator Edge Function'ı da bunu kullanır
+  /// Oy sayıları — `checkins` sayaç kolonları (tetikleyici ile uyumlu).
   Future<Map<bool, int>> getVoteCounts(String checkinId) async {
     try {
-      final response = await _db
-          .from('checkin_votes')
-          .select('vote')
-          .eq('checkin_id', checkinId);
-      int trueCount = 0, falseCount = 0;
-      for (final row in response) {
-        if (row['vote'] == true) {
-          trueCount++;
-        } else {
-          falseCount++;
-        }
-      }
-      return {true: trueCount, false: falseCount};
+      final row = await _db
+          .from('checkins')
+          .select('true_votes, false_votes')
+          .eq('id', checkinId)
+          .single();
+      return {
+        true: (row['true_votes'] as num?)?.toInt() ?? 0,
+        false: (row['false_votes'] as num?)?.toInt() ?? 0,
+      };
     } on PostgrestException catch (e) {
       throw Exception('Oy sayıları alınamadı: ${e.message}');
     } catch (e) {
