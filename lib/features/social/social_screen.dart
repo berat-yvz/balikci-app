@@ -276,7 +276,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen> {
                 const SliverToBoxAdapter(child: SizedBox(height: 24)),
               ],
             ),
-            const LeaderboardScreen(),
+            const LeaderboardScreen(embedded: true),
           ],
         ),
       ),
