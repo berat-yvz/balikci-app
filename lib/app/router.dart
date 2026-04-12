@@ -34,8 +34,8 @@ import 'package:balikci_app/features/fish_log/screens/log_list_screen.dart';
 import 'package:balikci_app/features/fish_log/screens/add_log_screen.dart';
 import 'package:balikci_app/features/fish_log/stats_screen.dart';
 
-// Features — Rank
-import 'package:balikci_app/features/rank/rank_screen.dart';
+// Features — Balıkçım
+import 'package:balikci_app/features/balikcim/balikcim_screen.dart';
 
 // Features — Social
 import 'package:balikci_app/features/social/friend_requests_screen.dart';
@@ -221,7 +221,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.rank,
-            builder: (context, state) => const RankScreen(),
+            redirect: (context, state) => AppRoutes.social,
+          ),
+          GoRoute(
+            path: AppRoutes.balikcim,
+            builder: (context, state) => const BalikcimScreen(),
           ),
           GoRoute(
             path: AppRoutes.weather,

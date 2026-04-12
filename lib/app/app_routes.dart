@@ -18,6 +18,7 @@ class AppRoutes {
   static const socialFriends = '/social/friends';
   static const socialRequests = '/social/requests';
   static const rank = '/rank';
+  static const balikcim = '/balikcim';
   static const weather = '/weather';
   static const profile = '/profile';
 

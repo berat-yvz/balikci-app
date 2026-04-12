@@ -7,7 +7,7 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/shared/providers/connectivity_provider.dart';
 
 /// Ana shell — 5 sekme, harita ortada vurgulu.
-/// Sıra: Hava(0) | Sıralama(1) | Harita(2) | Sosyal(3) | Profil(4)
+/// Sıra: Hava(0) | Balıkçım(1) | Harita(2) | Sosyal(3) | Profil(4)
 /// [-1]: Bu shell’de karşılığı olmayan rotalar (ör. balık günlüğü) — hiçbir sekme seçili gösterilmez.
 class MainShell extends ConsumerStatefulWidget {
   final Widget child;
@@ -41,7 +41,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       case 0:
         context.go(AppRoutes.weather);
       case 1:
-        context.go(AppRoutes.rank);
+        context.go(AppRoutes.balikcim);
       case 2:
         context.go(AppRoutes.home);
       case 3:
@@ -136,9 +136,9 @@ class _MainShellState extends ConsumerState<MainShell> {
                         compact: true,
                       ),
                       _NavItem(
-                        icon: Icons.leaderboard_outlined,
-                        activeIcon: Icons.leaderboard,
-                        label: 'Sıra',
+                        icon: Icons.person_pin_outlined,
+                        activeIcon: Icons.person_pin,
+                        label: 'Balıkçım',
                         index: 1,
                         currentIndex: _currentIndex,
                         onTap: () => _onTabTapped(1),

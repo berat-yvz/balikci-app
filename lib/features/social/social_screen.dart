@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/features/rank/leaderboard_screen.dart';
 import 'package:balikci_app/core/constants/storage_buckets.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
@@ -55,189 +56,229 @@ class _SocialScreenState extends ConsumerState<SocialScreen> {
     final searchAsync = ref.watch(userSearchByUsernameProvider(_searchQuery));
     final discoverAsync = ref.watch(allRegisteredAnglersProvider);
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(title: const Text('Topluluk')),
-      body: CustomScrollView(
-        slivers: [
-          if (current != null) ...[
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _ShortcutCard(
-                        icon: Icons.people_outline,
-                        label: 'Arkadaşlarım',
-                        onTap: () => context.push(AppRoutes.socialFriends),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _ShortcutCard(
-                        icon: Icons.mail_outline,
-                        label: 'İstekler',
-                        onTap: () => context.push(AppRoutes.socialRequests),
-                      ),
-                    ),
-                  ],
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          title: const Text('Topluluk'),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: ColoredBox(
+              color: AppColors.navy,
+              child: TabBar(
+                indicatorColor: AppColors.primary,
+                indicatorWeight: 3,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white70,
+                labelStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
                 ),
-              ),
-            ),
-          ],
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: TextField(
-                controller: _searchController,
-                textInputAction: TextInputAction.search,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Balıkçı ara (kullanıcı adı)',
-                  hintStyle: TextStyle(color: AppColors.muted),
-                  prefixIcon:
-                      const Icon(Icons.search, color: AppColors.muted),
-                  filled: true,
-                  fillColor: const Color(0xFF132236),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: AppColors.muted.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: AppColors.muted.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primary),
-                  ),
+                unselectedLabelStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
+                tabs: const [
+                  Tab(text: 'Arkadaşlar'),
+                  Tab(text: 'Sıralama'),
+                ],
               ),
             ),
           ),
-          if (_searchQuery.length >= 2)
-            searchAsync.when(
-              data: (users) {
-                if (users.isEmpty) {
-                  return const SliverToBoxAdapter(
+        ),
+        body: TabBarView(
+          children: [
+            CustomScrollView(
+              slivers: [
+                if (current != null) ...[
+                  SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          'Sonuç bulunamadı.',
-                          style: TextStyle(color: AppColors.muted),
-                        ),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _ShortcutCard(
+                              icon: Icons.people_outline,
+                              label: 'Arkadaşlarım',
+                              onTap: () =>
+                                  context.push(AppRoutes.socialFriends),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _ShortcutCard(
+                              icon: Icons.mail_outline,
+                              label: 'İstekler',
+                              onTap: () =>
+                                  context.push(AppRoutes.socialRequests),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                }
-                return SliverMainAxisGroup(
-                  slivers: [
-                    const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
-                        child: Text(
-                          'Arama sonuçları',
-                          style: TextStyle(
-                            color: AppColors.muted,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
+                  ),
+                ],
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: TextField(
+                      controller: _searchController,
+                      textInputAction: TextInputAction.search,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Balıkçı ara (kullanıcı adı)',
+                        hintStyle: TextStyle(color: AppColors.muted),
+                        prefixIcon:
+                            const Icon(Icons.search, color: AppColors.muted),
+                        filled: true,
+                        fillColor: const Color(0xFF132236),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppColors.muted.withValues(alpha: 0.2),
                           ),
                         ),
-                      ),
-                    ),
-                    SliverList.separated(
-                      itemCount: users.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (context, i) {
-                        final u = users[i];
-                        return _DiscoverUserTile(user: u);
-                      },
-                    ),
-                  ],
-                );
-              },
-              loading: () => const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ),
-              error: (e, _) => SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    'Arama başarısız: $e',
-                    style: const TextStyle(color: AppColors.danger),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            )
-          else ...[
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
-                child: Text(
-                  'Kayıtlı balıkçılar — profil açıp arkadaşlık isteği gönderebilirsin',
-                  style: TextStyle(
-                    color: AppColors.muted,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ),
-            discoverAsync.when(
-              data: (users) {
-                final selfId = current?.id;
-                final list = selfId == null
-                    ? users
-                    : users.where((u) => u.id != selfId).toList();
-                if (list.isEmpty) {
-                  return const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          'Liste boş.',
-                          style: TextStyle(color: AppColors.muted),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppColors.muted.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              const BorderSide(color: AppColors.primary),
                         ),
                       ),
                     ),
-                  );
-                }
-                return SliverList.separated(
-                  itemCount: list.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
-                  itemBuilder: (context, i) => _DiscoverUserTile(user: list[i]),
-                );
-              },
-              loading: () => const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ),
-              error: (e, _) => SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    'Liste yüklenemedi: $e',
-                    style: const TextStyle(color: AppColors.danger),
-                    textAlign: TextAlign.center,
                   ),
                 ),
-              ),
+                if (_searchQuery.length >= 2)
+                  searchAsync.when(
+                    data: (users) {
+                      if (users.isEmpty) {
+                        return const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Center(
+                              child: Text(
+                                'Sonuç bulunamadı.',
+                                style: TextStyle(color: AppColors.muted),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return SliverMainAxisGroup(
+                        slivers: [
+                          const SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
+                              child: Text(
+                                'Arama sonuçları',
+                                style: TextStyle(
+                                  color: AppColors.muted,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SliverList.separated(
+                            itemCount: users.length,
+                            separatorBuilder: (_, _) =>
+                                const Divider(height: 1),
+                            itemBuilder: (context, i) {
+                              final u = users[i];
+                              return _DiscoverUserTile(user: u);
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                    loading: () => const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
+                    error: (e, _) => SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          'Arama başarısız: $e',
+                          style: const TextStyle(color: AppColors.danger),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  )
+                else ...[
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
+                      child: Text(
+                        'Kayıtlı balıkçılar — profil açıp arkadaşlık isteği gönderebilirsin',
+                        style: TextStyle(
+                          color: AppColors.muted,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                  discoverAsync.when(
+                    data: (users) {
+                      final selfId = current?.id;
+                      final list = selfId == null
+                          ? users
+                          : users.where((u) => u.id != selfId).toList();
+                      if (list.isEmpty) {
+                        return const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Center(
+                              child: Text(
+                                'Liste boş.',
+                                style: TextStyle(color: AppColors.muted),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return SliverList.separated(
+                        itemCount: list.length,
+                        separatorBuilder: (_, _) =>
+                            const Divider(height: 1),
+                        itemBuilder: (context, i) =>
+                            _DiscoverUserTile(user: list[i]),
+                      );
+                    },
+                    loading: () => const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
+                    error: (e, _) => SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          'Liste yüklenemedi: $e',
+                          style: const TextStyle(color: AppColors.danger),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              ],
             ),
+            const LeaderboardScreen(),
           ],
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-        ],
+        ),
       ),
     );
   }
