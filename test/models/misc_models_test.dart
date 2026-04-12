@@ -79,6 +79,13 @@ void main() {
       final notif = NotificationModel.fromJson(json);
       expect(notif.read, isFalse);
     });
+
+    test('read 1 veya "true" → okundu', () {
+      final j1 = Map<String, dynamic>.from(baseJson)..['read'] = 1;
+      expect(NotificationModel.fromJson(j1).read, isTrue);
+      final j2 = Map<String, dynamic>.from(baseJson)..['read'] = 'true';
+      expect(NotificationModel.fromJson(j2).read, isTrue);
+    });
   });
 
   // ─── FishLogModel ────────────────────────────────────────────────────────

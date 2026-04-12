@@ -32,7 +32,8 @@ class NotificationRepository {
     }
   }
 
-  /// Okundu kabul edilir ve satır silinir (bildirim panelinde görünmez).
+  /// Okundu işaretlenir; liste `read == false` filtrelediği için panelden kaybolur.
+  /// (DELETE yerine UPDATE — Realtime stream ile güvenilir senkron.)
   Future<void> markAsRead(String notificationId) async {
     final currentUserId = SupabaseService.auth.currentUser?.id;
     if (currentUserId == null) {
@@ -42,13 +43,13 @@ class NotificationRepository {
     try {
       await _db
           .from('notifications')
-          .delete()
+          .update({'read': true})
           .eq('id', notificationId)
           .eq('user_id', currentUserId);
     } on PostgrestException catch (e) {
-      throw Exception('Bildirim kaldırılamadı: ${e.message}');
+      throw Exception('Bildirim güncellenemedi: ${e.message}');
     } catch (e) {
-      throw Exception('Bildirim kaldırılamadı: $e');
+      throw Exception('Bildirim güncellenemedi: $e');
     }
   }
 
@@ -61,13 +62,13 @@ class NotificationRepository {
     try {
       await _db
           .from('notifications')
-          .delete()
+          .update({'read': true})
           .eq('user_id', currentUserId)
           .eq('read', false);
     } on PostgrestException catch (e) {
-      throw Exception('Tüm bildirimler kaldırılamadı: ${e.message}');
+      throw Exception('Tüm bildirimler okunamadı: ${e.message}');
     } catch (e) {
-      throw Exception('Tüm bildirimler kaldırılamadı: $e');
+      throw Exception('Tüm bildirimler okunamadı: $e');
     }
   }
 

@@ -28,7 +28,18 @@ class NotificationModel {
         title: json['title'] as String,
         body: json['body'] as String,
         data: (json['data_json'] as Map<String, dynamic>?) ?? const {},
-        read: (json['read'] ?? json['is_read']) as bool? ?? false,
+        read: _parseRead(json['read'] ?? json['is_read']),
         createdAt: DateTime.parse(json['created_at'] as String),
       );
+
+  static bool _parseRead(Object? value) {
+    if (value == null) return false;
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final v = value.toLowerCase();
+      return v == 'true' || v == 't' || v == '1';
+    }
+    return false;
+  }
 }
