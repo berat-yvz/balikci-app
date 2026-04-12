@@ -117,6 +117,21 @@ BEGIN
   END IF;
 END $$;
 
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'notifications'
+      AND policyname = 'Users update own notifications'
+  ) THEN
+    CREATE POLICY "Users update own notifications"
+      ON notifications FOR UPDATE
+      TO authenticated
+      USING (user_id = auth.uid())
+      WITH CHECK (user_id = auth.uid());
+  END IF;
+END $$;
+
 -- ─── shadow_points ───
 
 ALTER TABLE shadow_points ENABLE ROW LEVEL SECURITY;

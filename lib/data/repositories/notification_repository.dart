@@ -57,14 +57,12 @@ class NotificationRepository {
     }
 
     try {
-      // Tek tek markAsRead: toplu `.update(...).eq(user_id)` bazı ortamlarda
-      // Realtime stream'de güncellenmiyor; tekil güncelleme bildirim listesiyle uyumlu.
-      final list = await getMyNotifications(limit: 200);
-      for (final n in list) {
-        if (!n.read) {
-          await markAsRead(n.id);
-        }
-      }
+      // Tek sorguda tüm okunmamışları işaretle (limit 200’lük döngü eski kayıtları atlıyordu).
+      await _db
+          .from('notifications')
+          .update({'read': true})
+          .eq('user_id', currentUserId)
+          .eq('read', false);
     } on PostgrestException catch (e) {
       throw Exception('Tüm bildirimler okunamadı: ${e.message}');
     } catch (e) {

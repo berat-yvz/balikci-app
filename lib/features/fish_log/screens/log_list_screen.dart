@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/shared/widgets/empty_state_widget.dart';
 import 'package:balikci_app/shared/widgets/error_widget.dart';
@@ -23,9 +24,21 @@ class LogListScreen extends ConsumerWidget {
 
     final bottomPad = MediaQuery.of(context).padding.bottom + 80;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (!context.mounted) return;
+        context.go(AppRoutes.profile);
+      },
+      child: Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, size: 28),
+          tooltip: 'Profile dön',
+          onPressed: () => context.go(AppRoutes.profile),
+        ),
         title: const Text('Balık Günlüğüm'),
         centerTitle: true,
         actions: [
@@ -92,6 +105,7 @@ class LogListScreen extends ConsumerWidget {
           'Balık Ekle',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
+      ),
       ),
     );
   }
