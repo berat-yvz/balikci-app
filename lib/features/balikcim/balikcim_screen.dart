@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/features/balikcim/daily_forecast/daily_forecast_screen.dart';
 import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_screen.dart';
 import 'package:balikci_app/features/knots/knots_screen.dart';
 
@@ -113,13 +114,7 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
               controller: _tabController,
               children: [
                 const FishEncyclopediaScreen(),
-                const _PlaceholderTab(
-                  icon: Icons.wb_sunny,
-                  title: 'Günlük Tahmin',
-                  subtitle:
-                      'Bugün balık çıkar mı?\nHava ve gelgit analizi yakında!',
-                  color: AppColors.accent,
-                ),
+                const DailyForecastScreen(),
                 const KnotsScreen(layout: KnotsScreenLayout.knotsOnly),
                 const KnotsScreen(layout: KnotsScreenLayout.tackleOnly),
                 const _PlaceholderTab(

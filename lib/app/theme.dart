@@ -11,6 +11,8 @@ class AppColors {
 
   // App semantic colors — marka / erişilebilirlik
   static const primary = Color(0xFF0F6E56);
+  /// Günlük tahmin skor kartı gradyanı (koyu uç).
+  static const scoreGradientDeep = Color(0xFF0A4A38);
   static const secondary = Color(0xFF185FA5);
   static const accent = Color(0xFFEF9F27);
 
