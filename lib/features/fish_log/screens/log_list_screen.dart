@@ -66,13 +66,7 @@ class LogListScreen extends ConsumerWidget {
         ),
         data: (logs) {
           if (logs.isEmpty) {
-            return EmptyStateWidget.noFishLogs(
-              buttonLabel: 'İlk Balığını Ekle',
-              onButtonPressed: () async {
-                await context.push('/fish-log/add');
-                ref.invalidate(fishLogsProvider);
-              },
-            );
+            return const EmptyStateWidget.noFishLogs();
           }
 
           return RefreshIndicator(

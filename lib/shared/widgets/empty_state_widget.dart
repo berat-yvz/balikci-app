@@ -173,23 +173,33 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
                   ),
                 ] else ...[
                   const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        widget.icon,
-                        size: 18,
-                        color: AppColors.muted.withValues(alpha: 0.9),
+                  if (widget.contextType == EmptyStateContext.noFishLogs)
+                    Text(
+                      'Sağ alttaki Balık Ekle düğmesiyle ilk kaydını oluştur.',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.muted,
+                        fontSize: 14,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'İpucu: yukarıdan yenile',
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.muted,
+                      textAlign: TextAlign.center,
+                    )
+                  else
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          widget.icon,
+                          size: 18,
+                          color: AppColors.muted.withValues(alpha: 0.9),
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'İpucu: yukarıdan yenile',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.muted,
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
               ],
             ),

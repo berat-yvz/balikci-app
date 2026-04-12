@@ -1,13 +1,18 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/constants/app_constants.dart';
 import 'package:balikci_app/core/services/score_service.dart';
+import 'package:balikci_app/core/utils/avatar_image_prepare.dart';
 import 'package:balikci_app/features/fish_log/screens/log_list_screen.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
 import 'package:balikci_app/shared/providers/fish_log_provider.dart';
@@ -37,7 +42,9 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
   bool _isReleased = false;
   bool _isLoading = false;
   bool _showExtra = false; // "Daha Fazla Bilgi Ekle" açık mı?
-  File? _selectedImage;
+  XFile? _pickedImage;
+  /// Web önizleme (path dosya yolu değil).
+  Uint8List? _previewBytes;
 
   static const List<String> _fishTypes = [
     'Levrek',
@@ -67,45 +74,83 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
     super.dispose();
   }
 
+  /// Önizleme — sıkıştırma `_save` sırasında yapılır.
+  DecorationImage? _previewImageProvider() {
+    if (_previewBytes != null) {
+      return DecorationImage(
+        image: MemoryImage(_previewBytes!),
+        fit: BoxFit.cover,
+      );
+    }
+    final picked = _pickedImage;
+    if (picked == null || picked.path.isEmpty) return null;
+    return DecorationImage(
+      image: FileImage(File(picked.path)),
+      fit: BoxFit.cover,
+    );
+  }
+
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 80,
-      maxWidth: 1200,
+      imageQuality: 85,
+      maxWidth: 1600,
     );
     if (picked != null && mounted) {
-      setState(() => _selectedImage = File(picked.path));
+      Uint8List? webBytes;
+      if (kIsWeb) {
+        webBytes = await picked.readAsBytes();
+      }
+      setState(() {
+        _pickedImage = picked;
+        _previewBytes = webBytes;
+      });
     }
   }
 
-  Future<String?> _uploadPhoto(File file) async {
-    try {
-      final userId = SupabaseService.auth.currentUser?.id ?? 'unknown';
-      final fileName =
-          'fish_logs/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
-      await SupabaseService.storage.from('fish-photos').upload(fileName, file);
-      return SupabaseService.storage
-          .from('fish-photos')
-          .getPublicUrl(fileName);
-    } catch (_) {
-      return null;
-    }
+  /// Avatar ile aynı sıkıştırma (2MB); `upload(File)` yerine `uploadBinary` — Android/iOS güvenilir.
+  Future<String?> _uploadPhoto(XFile picked) async {
+    final userId = SupabaseService.auth.currentUser?.id ?? 'unknown';
+    final fileName =
+        'fish_logs/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final bytes = await prepareAvatarUploadBytes(picked);
+    await SupabaseService.storage.from(AppConstants.photoBucket).uploadBinary(
+          fileName,
+          bytes,
+          fileOptions: const FileOptions(
+            contentType: 'image/jpeg',
+            upsert: true,
+          ),
+        );
+    return SupabaseService.storage
+        .from(AppConstants.photoBucket)
+        .getPublicUrl(fileName);
   }
 
   Map<String, dynamic>? _buildWeatherSnapshot() {
     final weatherData = ref.read(istanbulWeatherProvider).valueOrNull;
     final weather = weatherData?.current;
     if (weather == null) return null;
-    return {
-      'temperature': weather.tempCelsius,
-      'windspeed': weather.windKmh,
-      'wave_height': weather.waveHeight,
+
+    double? finite(double? v) =>
+        v != null && v.isFinite ? v : null;
+
+    final map = <String, dynamic>{
+      'temperature': finite(weather.tempCelsius) ?? 0.0,
+      'windspeed': finite(weather.windKmh) ?? 0.0,
+      'wave_height': finite(weather.waveHeight),
       'weather_code': weather.weatherCode,
       'lat': weatherData!.lat,
       'lng': weatherData.lng,
       'recorded_at': DateTime.now().toIso8601String(),
     };
+    try {
+      jsonEncode(map);
+      return map;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _save() async {
@@ -130,8 +175,25 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
       final userId = SupabaseService.auth.currentUser?.id ?? '';
 
       String? photoUrl;
-      if (_selectedImage != null) {
-        photoUrl = await _uploadPhoto(_selectedImage!);
+      if (_pickedImage != null) {
+        try {
+          photoUrl = await _uploadPhoto(_pickedImage!);
+        } catch (e) {
+          debugPrint('Balık günlüğü foto yükleme: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Fotoğraf yüklenemedi — kayıt fotoğrafsız kaydedilecek.',
+                  style: TextStyle(fontSize: 15),
+                ),
+                backgroundColor: AppColors.warning,
+                duration: Duration(seconds: 4),
+              ),
+            );
+          }
+          photoUrl = null;
+        }
       }
 
       final notes = [
@@ -184,11 +246,16 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
         context.pop();
       }
     } catch (e) {
+      debugPrint('Balık günlüğü createLog: $e');
       if (mounted) {
+        final detail = e.toString().replaceFirst('Exception: ', '');
+        final short = detail.length > 140 ? '${detail.substring(0, 140)}…' : detail;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Kayıt eklenemedi, tekrar deneyin',
-                style: TextStyle(fontSize: 16)),
+          SnackBar(
+            content: Text(
+              'Kayıt eklenemedi: $short',
+              style: const TextStyle(fontSize: 15),
+            ),
             backgroundColor: AppColors.danger,
           ),
         );
@@ -224,14 +291,9 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                     width: 2,
                     strokeAlign: BorderSide.strokeAlignInside,
                   ),
-                  image: _selectedImage != null
-                      ? DecorationImage(
-                          image: FileImage(_selectedImage!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
+                  image: _previewImageProvider(),
                 ),
-                child: _selectedImage == null
+                child: _pickedImage == null
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -268,8 +330,10 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                             child: IconButton(
                               icon: const Icon(Icons.close,
                                   size: 18, color: Colors.white),
-                              onPressed: () =>
-                                  setState(() => _selectedImage = null),
+                              onPressed: () => setState(() {
+                                _pickedImage = null;
+                                _previewBytes = null;
+                              }),
                               padding: EdgeInsets.zero,
                             ),
                           ),

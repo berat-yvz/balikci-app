@@ -14,6 +14,7 @@ import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/core/utils/geo_utils.dart';
 import 'package:balikci_app/core/services/weather_service.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
@@ -422,13 +423,17 @@ class _MapScreenState extends State<MapScreen> {
     context.push(AppRoutes.mapEditSpot, extra: spot);
   }
 
+  static const int _searchNearestLimit = 15;
+  static const int _searchDropdownMaxRows = 8;
+
+  /// Harita varsayılan merkezi — konum yokken yakınlık sıralaması için.
+  static const double _fallbackSearchLat = 41.0082;
+  static const double _fallbackSearchLng = 28.9784;
+
   void _onSearchChanged(String value) {
     final q = value.trim();
     if (q.isEmpty) {
-      // Arama boşken tüm meraları göster (max 8)
-      setState(() {
-        _searchResults = _spots.take(8).toList();
-      });
+      unawaited(_loadNearestSpotsForSearch());
       return;
     }
 
@@ -440,12 +445,56 @@ class _MapScreenState extends State<MapScreen> {
       final type = (spot.type ?? '').toLowerCase();
       if (name.contains(qLower) || type.contains(qLower)) {
         results.add(spot);
-        if (results.length >= 8) break;
+        if (results.length >= _searchNearestLimit) break;
       }
     }
 
     setState(() {
       _searchResults = results;
+    });
+  }
+
+  /// Boş arama: kullanıcı konumuna en yakın [ _searchNearestLimit ] mera.
+  Future<void> _loadNearestSpotsForSearch() async {
+    if (!mounted) return;
+    if (_spots.isEmpty) {
+      setState(() => _searchResults = const []);
+      return;
+    }
+
+    double refLat = _fallbackSearchLat;
+    double refLng = _fallbackSearchLng;
+    try {
+      final pos = await LocationService.getCurrentPosition();
+      if (pos != null) {
+        refLat = pos.latitude;
+        refLng = pos.longitude;
+      }
+    } catch (_) {
+      // GPS yok — İstanbul merkezi ile sırala
+    }
+
+    if (!mounted) return;
+
+    final sorted = List<SpotModel>.from(_spots);
+    sorted.sort((a, b) {
+      final da = GeoUtils.distanceInMeters(
+        lat1: refLat,
+        lng1: refLng,
+        lat2: a.lat,
+        lng2: a.lng,
+      );
+      final db = GeoUtils.distanceInMeters(
+        lat1: refLat,
+        lng1: refLng,
+        lat2: b.lat,
+        lng2: b.lng,
+      );
+      return da.compareTo(db);
+    });
+
+    setState(() {
+      _searchResults = sorted.take(_searchNearestLimit).toList();
     });
   }
 
@@ -904,7 +953,9 @@ class _MapScreenState extends State<MapScreen> {
                   curve: Curves.easeOut,
                   height: _searchResults.isEmpty
                       ? 0
-                      : 56.0 * (_searchResults.length.clamp(1, 6)) + 16,
+                      : 56.0 *
+                              (_searchResults.length.clamp(1, _searchDropdownMaxRows)) +
+                          16,
                   child: _searchResults.isEmpty
                       ? const SizedBox.shrink()
                       : Container(
@@ -932,7 +983,8 @@ class _MapScreenState extends State<MapScreen> {
                                     vertical: 8,
                                     horizontal: 8,
                                   ),
-                                  itemCount: _searchResults.length.clamp(0, 6),
+                                  physics: const ClampingScrollPhysics(),
+                                  itemCount: _searchResults.length,
                                   separatorBuilder: (_, _) =>
                                       const SizedBox(height: 4),
                                   itemBuilder: (context, idx) {
