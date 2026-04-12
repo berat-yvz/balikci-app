@@ -20,6 +20,12 @@ class WeatherModel {
   final double? visibilityKm; // km
   final double? cloudCover; // %
 
+  /// Open-Meteo `surface_pressure` (hPa), anlık.
+  final double? pressureHpa;
+
+  /// Yaklaşık 3 saat önceki basınç (saatlik diziden); trend için.
+  final double? pressureHpa3hAgo;
+
   // weatherCode: getter olarak tanımlandı (aşağıya bak)
   final int? _weatherCode;
 
@@ -43,6 +49,8 @@ class WeatherModel {
     required this.humidity,
     required this.visibilityKm,
     required this.cloudCover,
+    this.pressureHpa,
+    this.pressureHpa3hAgo,
     int? weatherCode,
     required this.fishingSummary,
     required this.fetchedAt,
@@ -96,6 +104,8 @@ class WeatherModel {
     if (dataJson != null && dataJson['source'] == 'open_meteo_v1') {
       final cur = dataJson['current'] as Map<String, dynamic>?;
       if (cur != null) {
+        final pressureNow = (cur['surface_pressure'] as num?)?.toDouble();
+        final pressure3h = _surfacePressure3hAgo(dataJson, cur);
         return WeatherModel(
           id: json['id'] as String? ?? '',
           lat: (json['lat'] as num?)?.toDouble() ??
@@ -117,6 +127,8 @@ class WeatherModel {
               ? (cur['visibility_m'] as num).toDouble() / 1000
               : null,
           cloudCover: (cur['cloud_cover'] as num?)?.toDouble(),
+          pressureHpa: pressureNow,
+          pressureHpa3hAgo: pressure3h,
           weatherCode: (cur['weather_code'] as num?)?.toInt(),
           fishingSummary: json['fishing_summary'] as String?,
           fetchedAt: DateTime.parse(json['fetched_at'] as String),
@@ -149,10 +161,40 @@ class WeatherModel {
           ? (dataJson!['visibility'] as num).toDouble() / 1000
           : null,
       cloudCover:              (clouds?['all']    as num?)?.toDouble(),
+      pressureHpa:             null,
+      pressureHpa3hAgo:        null,
       weatherCode:             null, // getter dataJson'dan okur
       fishingSummary:          json['fishing_summary'] as String?,
       fetchedAt:               DateTime.parse(json['fetched_at'] as String),
       regionKey:               json['region_key'] as String?,
     );
+  }
+
+  /// `hourly` içinde `current` ile aynı `time` satırını bulup 3 saat önceki `surface_pressure`.
+  static double? _surfacePressure3hAgo(
+    Map<String, dynamic> dataJson,
+    Map<String, dynamic> current,
+  ) {
+    final hourly = dataJson['hourly'];
+    if (hourly is! List || hourly.isEmpty) return null;
+    final timeStr = current['time'] as String?;
+    var idx = -1;
+    if (timeStr != null) {
+      for (var i = 0; i < hourly.length; i++) {
+        final row = hourly[i];
+        if (row is Map && row['time'] == timeStr) {
+          idx = i;
+          break;
+        }
+      }
+    }
+    if (idx < 0) {
+      idx = hourly.length - 1;
+    }
+    final j = idx - 3;
+    if (j < 0) return null;
+    final prev = hourly[j];
+    if (prev is! Map<String, dynamic>) return null;
+    return (prev['surface_pressure'] as num?)?.toDouble();
   }
 }

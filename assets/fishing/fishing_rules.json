@@ -1,24 +1,21 @@
 {
   "hard_stop_rules": [
     {
-      "when": {
-        "windspeed_kmh_min": 55
-      },
+      "when": { "windspeed_kmh_min": 55 },
       "result_score": 10,
       "message": "⚠️ Tehlikeli rüzgar: güvenlik önce, av iptal.",
       "summary_key": "danger_wind",
       "priority": 100
     },
     {
-      "when": {
-        "weather_code_in": [95, 96, 97, 98, 99]
-      },
+      "when": { "weather_code_in": [95, 96, 97, 98, 99] },
       "result_score": 15,
       "message": "⚠️ Fırtına/gök gürültüsü: suya çıkma.",
       "summary_key": "danger_storm",
       "priority": 100
     }
   ],
+
   "weather_score_modifiers": [
     {
       "when": { "windspeed_kmh_min": 40 },
@@ -35,7 +32,7 @@
     {
       "when": { "wave_height_m_min": 2.5 },
       "score_delta": -15,
-      "message": "⚠️ Dalga yüksek, sahil güvenliği düşün.",
+      "message": "⚠️ Dalga yüksek, sahil güvenliğini düşün.",
       "priority": 52
     },
     {
@@ -99,6 +96,127 @@
       "priority": 34
     }
   ],
+
+  "barometric_pressure_rules": {
+    "_comment": "pressure_hpa ve pressure_trend ('rising'|'falling'|'stable') WeatherModel'dan gelir. Open-Meteo surface_pressure alanı kullanılır. Trend, son 3 saatteki değişime göre Dart tarafında hesaplanır: >1.5 hPa artış=rising, <-1.5 hPa=falling, diğer=stable.",
+    "rules": [
+      {
+        "when": { "pressure_trend": "falling_fast", "pressure_hpa_max": 1005 },
+        "score_delta": 15,
+        "message": "✓ Basınç hızlı düşüyor: fırtına öncesi yoğun aktivite!",
+        "priority": 70,
+        "_note": "falling_fast: son 3 saatte >3 hPa düşüş. En iyi pencere."
+      },
+      {
+        "when": { "pressure_trend": "falling" },
+        "score_delta": 10,
+        "message": "✓ Basınç düşüyor: balıklar hareketleniyor.",
+        "priority": 60
+      },
+      {
+        "when": { "pressure_trend": "stable", "pressure_hpa_min": 1016 },
+        "score_delta": 5,
+        "message": "✓ Basınç yüksek ve stabil; normal beslenme ritmi.",
+        "priority": 34
+      },
+      {
+        "when": { "pressure_trend": "stable", "pressure_hpa_max": 1010 },
+        "score_delta": -8,
+        "message": "ℹ️ Düşük basınç stabil; balıklar derinlerde.",
+        "priority": 42
+      },
+      {
+        "when": { "pressure_trend": "rising_fast" },
+        "score_delta": -12,
+        "message": "⚠️ Basınç hızlı yükseliyor: 24–48 saat aktivite azalır.",
+        "priority": 55,
+        "_note": "rising_fast: son 3 saatte >3 hPa artış. Fırtına sonrası berraklaşma."
+      },
+      {
+        "when": { "pressure_trend": "rising" },
+        "score_delta": -5,
+        "message": "ℹ️ Basınç yükseliyor; balıklar adaptasyon aşamasında.",
+        "priority": 40
+      }
+    ]
+  },
+
+  "pre_storm_barometric": {
+    "_comment": "Basınç hızlı düşerken (falling_fast) + yağış/fırtına WMO kodu: standart falling_fast barometrik kuralı yerine bu bonus uygulanır.",
+    "weather_codes": [61, 63, 65, 80, 81, 82, 95],
+    "score_delta": 18,
+    "message": "✓ Hızlı basınç düşüşü ve yağış sinyali: fırtına öncesi pencere.",
+    "priority": 78
+  },
+
+  "pre_post_storm_rules": {
+    "_comment": "is_pre_storm_window: sonraki 2–4 saat içinde weather_code 95+ bekleniyor (API'den hourly forecast). is_post_storm_recovery: son 12–48 saatte storm kodu geçti, şu an stable. Bu alanlar Dart tarafında ek hourly forecast mantığı gerektirir; ileriye dönük geliştirme için işaretlendi.",
+    "rules": [
+      {
+        "when": { "is_pre_storm_window": true },
+        "score_delta": 18,
+        "message": "✓ Fırtına öncesi 2–4 saat: olağanüstü aktivite penceresi!",
+        "priority": 75
+      },
+      {
+        "when": { "is_post_storm_recovery_24h": true },
+        "score_delta": -10,
+        "message": "ℹ️ Fırtına yeni geçti; balıklar henüz toparlanıyor.",
+        "priority": 50
+      },
+      {
+        "when": { "is_post_storm_recovery_48h": true },
+        "score_delta": 8,
+        "message": "✓ Fırtına sonrası toparlanma: aktivite artıyor.",
+        "priority": 45
+      }
+    ]
+  },
+
+  "solunar_rules": {
+    "_comment": "Solunar periyotlar Dart'ta MoonPhaseCalculator.getSolunarPeriods(DateTime) ile hesaplanır. Ay'ın meridyenden geçişine göre günde 2 major (2 saat) + 2 minor (1 saat) pencere vardır.",
+    "major_period_score_bonus": 12,
+    "major_period_message": "✓ Solunar ana periyot: av zamanı!",
+    "major_period_priority": 65,
+    "minor_period_score_bonus": 6,
+    "minor_period_message": "✓ Solunar yan periyot.",
+    "minor_period_priority": 38
+  },
+
+  "istanbul_specific_rules": {
+    "_comment": "İstanbul Boğazı ve çevresine özgü balıkçılık faktörleri. Bilimsel kaynaklar: Boğaz çift akıntı sistemi (yüzey: Karadeniz→Marmara, dip: Marmara→Karadeniz), mevsimsel göç dinamiği.",
+    "bosphorus_current_rules": [
+      {
+        "when": { "month_in": [3, 4, 5], "wind_direction_deg_min": 0, "wind_direction_deg_max": 90 },
+        "score_delta": 10,
+        "message": "✓ İlkbahar göçü + K-D rüzgar: Boğaz'da yoğun geçiş.",
+        "priority": 62,
+        "_note": "Mart–Mayıs: Karadeniz balıkları Marmara'ya iniyor. K-D rüzgarı yüzey akıntısını kuvvetlendiriyor."
+      },
+      {
+        "when": { "month_in": [9, 10, 11], "wind_direction_deg_min": 0, "wind_direction_deg_max": 90 },
+        "score_delta": 12,
+        "message": "✓ Sonbahar göçü + K-D rüzgar: lüfer, palamut, uskumru Boğaz'da!",
+        "priority": 68,
+        "_note": "Eylül–Kasım: en büyük göç dalgası güneye iniyor."
+      },
+      {
+        "when": { "month_in": [12, 1, 2], "wind_direction_deg_min": 150, "wind_direction_deg_max": 210 },
+        "score_delta": -8,
+        "message": "⚠️ Kış güneyden orkoz rüzgarı: Boğaz akıntısı tersine döndü, dikkat.",
+        "priority": 50,
+        "_note": "Kış aylarında güney rüzgarı (orkoz) yüzey akıntısını ters çevirir, turbülans artar."
+      },
+      {
+        "when": { "month_in": [6, 7, 8] },
+        "score_delta": -6,
+        "message": "ℹ️ Yaz: göçmen balıklar Karadeniz'de, kıyı türleri aktif.",
+        "priority": 28,
+        "_note": "Yaz aylarında büyük göç bitti, yerli kıyı türleri (levrek, kefal, çipura) dominant."
+      }
+    ]
+  },
+
   "seasonal_modifiers": [
     {
       "months": [6, 7, 8],
@@ -119,18 +237,25 @@
       "priority": 22
     }
   ],
+
   "score_labels": [
     { "min_score": 85, "label": "Mükemmel", "label_color": "green" },
-    { "min_score": 70, "label": "İyi", "label_color": "teal" },
-    { "min_score": 50, "label": "Orta", "label_color": "amber" },
-    { "min_score": 30, "label": "Zayıf", "label_color": "orange" },
-    { "min_score": 0, "label": "Kötü", "label_color": "red" }
+    { "min_score": 70, "label": "İyi",       "label_color": "teal" },
+    { "min_score": 50, "label": "Orta",      "label_color": "amber" },
+    { "min_score": 30, "label": "Zayıf",     "label_color": "orange" },
+    { "min_score": 0,  "label": "Kötü",      "label_color": "red" }
   ],
+
   "summary_templates": {
-    "danger_wind": "Rüzgar çok sert; güvenlik öncelikli.",
-    "danger_storm": "Fırtına riski: avı ertelemek iyi olur.",
-    "default_positive": "Koşullar genel olarak uygun.",
-    "default_neutral": "Koşullar ortalama; sabır gerekir.",
-    "default_negative": "Koşullar zorlayıcı; beklentiyi düşür."
+    "danger_wind":        "Rüzgar çok sert; güvenlik öncelikli.",
+    "danger_storm":       "Fırtına riski: avı ertelemek iyi olur.",
+    "pre_storm_window":   "Fırtına öncesi en verimli pencere; hızlı ol!",
+    "falling_pressure":   "Basınç düşüyor, balıklar aktif.",
+    "post_storm_slow":    "Fırtına yeni geçti; sabırlı ol.",
+    "post_storm_recover": "Toparlanma süreci, aktivite artıyor.",
+    "bosphorus_migration":"Göç zamanı! Boğaz'da tür yoğunluğu yüksek.",
+    "default_positive":   "Koşullar genel olarak uygun.",
+    "default_neutral":    "Koşullar ortalama; sabır gerekir.",
+    "default_negative":   "Koşullar zorlayıcı; beklentiyi düşür."
   }
 }

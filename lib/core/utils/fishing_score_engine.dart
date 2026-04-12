@@ -33,7 +33,8 @@ class FishingScoreEngine {
   ) {
     final moonIll = moonIllumination.clamp(0.0, 1.0);
     final phaseId = MoonPhaseCalculator.phaseIdForIllumination(moonIll);
-    final ctx = _WeatherContext.from(weather, now);
+    final pressureTrendStr = _computePressureTrend(weather);
+    final ctx = _WeatherContext.from(weather, now, pressureTrendStr);
 
     final hardStops =
         (_rules['hard_stop_rules'] as List<dynamic>? ?? const [])
@@ -66,6 +67,7 @@ class FishingScoreEngine {
           summary: summary,
           activeMessages: message.isEmpty ? [] : [message],
           suggestedSpecies: const [],
+          pressureTrend: null,
         );
       }
     }
@@ -134,6 +136,148 @@ class FishingScoreEngine {
       break;
     }
 
+    // ── Barometrik trend + fırtına öncesi (basınç + WMO) ────────────────
+    final preStormMap = _rules['pre_storm_barometric'] as Map<String, dynamic>?;
+    final preStormCodes = (preStormMap?['weather_codes'] as List<dynamic>? ??
+            const [])
+        .map((e) => (e as num).toInt())
+        .toSet();
+    final isPreStormBarometric = pressureTrendStr == 'falling_fast' &&
+        preStormCodes.contains(ctx.weatherCode);
+
+    if (isPreStormBarometric) {
+      final d = preStormMap?['score_delta'];
+      if (d is num) {
+        score += d.round();
+      }
+      final msg = preStormMap?['message']?.toString() ?? '';
+      final p = preStormMap?['priority'];
+      messages.add(
+        _WeightedMessage(
+          message: msg,
+          priority: p is num ? p.round() : 78,
+          tier: 2,
+        ),
+      );
+    }
+
+    final baroRoot = _rules['barometric_pressure_rules'] as Map<String, dynamic>?;
+    final baroRules =
+        (baroRoot?['rules'] as List<dynamic>? ?? const [])
+            .cast<Map<String, dynamic>>();
+    for (final rule in baroRules) {
+      final when = rule['when'] as Map<String, dynamic>? ?? {};
+      if (isPreStormBarometric && when['pressure_trend'] == 'falling_fast') {
+        continue;
+      }
+      if (!_matchesWhen(when, ctx)) {
+        continue;
+      }
+      final d = rule['score_delta'];
+      if (d is num) {
+        score += d.round();
+      }
+      final msg = rule['message']?.toString() ?? '';
+      final p = rule['priority'];
+      messages.add(
+        _WeightedMessage(
+          message: msg,
+          priority: p is num ? p.round() : 50,
+          tier: 2,
+        ),
+      );
+    }
+
+    // ── Solunar (bonus: moon JSON; mesaj/öncelik: moon + fishing yedek) ───
+    final guide = _moonRoot['solunar_calculation_guide'] as Map<String, dynamic>?;
+    final solBonuses = guide?['score_bonuses'] as Map<String, dynamic>?;
+    final majorBonus =
+        (solBonuses?['major_period_active_bonus'] as num?)?.round() ?? 12;
+    final minorBonus =
+        (solBonuses?['minor_period_active_bonus'] as num?)?.round() ?? 6;
+    final solunarRulesRoot = _rules['solunar_rules'] as Map<String, dynamic>?;
+    final majorP =
+        (solunarRulesRoot?['major_period_priority'] as num?)?.round() ?? 65;
+    final minorP =
+        (solunarRulesRoot?['minor_period_priority'] as num?)?.round() ?? 38;
+    final majorSolMsg = solBonuses?['major_period_message']?.toString() ??
+        solunarRulesRoot?['major_period_message']?.toString() ??
+        '✓ Solunar ana periyot: av zamanı!';
+    final minorSolMsg = solBonuses?['minor_period_message']?.toString() ??
+        solunarRulesRoot?['minor_period_message']?.toString() ??
+        '✓ Solunar yan periyot.';
+
+    if (MoonPhaseCalculator.isInMajorPeriod(now)) {
+      score += majorBonus;
+      messages.add(
+        _WeightedMessage(
+          message: majorSolMsg,
+          priority: majorP,
+          tier: 2,
+        ),
+      );
+    } else if (MoonPhaseCalculator.isInSolunarPeriod(now)) {
+      score += minorBonus;
+      messages.add(
+        _WeightedMessage(
+          message: minorSolMsg,
+          priority: minorP,
+          tier: 2,
+        ),
+      );
+    }
+
+    // ── İstanbul Boğazı ─────────────────────────────────────────────────
+    final istRules =
+        _rules['istanbul_specific_rules'] as Map<String, dynamic>?;
+    final bosphorus = (istRules?['bosphorus_current_rules'] as List<dynamic>? ??
+            const [])
+        .cast<Map<String, dynamic>>();
+    for (final rule in bosphorus) {
+      final when = rule['when'] as Map<String, dynamic>? ?? {};
+      if (!_matchesWhen(when, ctx)) {
+        continue;
+      }
+      final d = rule['score_delta'];
+      if (d is num) {
+        score += d.round();
+      }
+      final msg = rule['message']?.toString() ?? '';
+      final p = rule['priority'];
+      messages.add(
+        _WeightedMessage(
+          message: msg,
+          priority: p is num ? p.round() : 45,
+          tier: 2,
+        ),
+      );
+    }
+
+    // ── Fırtına öncesi/sonrası (ileri sprint; bayraklar şimdilik false) ───
+    final ppsRoot = _rules['pre_post_storm_rules'] as Map<String, dynamic>?;
+    final ppsRules =
+        (ppsRoot?['rules'] as List<dynamic>? ?? const [])
+            .cast<Map<String, dynamic>>();
+    for (final rule in ppsRules) {
+      final when = rule['when'] as Map<String, dynamic>? ?? {};
+      if (!_matchesWhen(when, ctx)) {
+        continue;
+      }
+      final d = rule['score_delta'];
+      if (d is num) {
+        score += d.round();
+      }
+      final msg = rule['message']?.toString() ?? '';
+      final p = rule['priority'];
+      messages.add(
+        _WeightedMessage(
+          message: msg,
+          priority: p is num ? p.round() : 50,
+          tier: 2,
+        ),
+      );
+    }
+
     score = _clampInt(score, 0, 100);
     messages.sort((a, b) {
       final c = b.priority.compareTo(a.priority);
@@ -161,7 +305,31 @@ class FishingScoreEngine {
       summary: summary,
       activeMessages: topMessages,
       suggestedSpecies: species,
+      pressureTrend: pressureTrendStr,
     );
+  }
+
+  /// `pressureHpa` ve `pressureHpa3hAgo` farkına göre trend anahtarı; veri yoksa null.
+  static String? _computePressureTrend(WeatherModel w) {
+    final now = w.pressureHpa;
+    final ago = w.pressureHpa3hAgo;
+    if (now == null || ago == null) {
+      return null;
+    }
+    final diff = now - ago;
+    if (diff > 3.0) {
+      return 'rising_fast';
+    }
+    if (diff > 1.5) {
+      return 'rising';
+    }
+    if (diff < -3.0) {
+      return 'falling_fast';
+    }
+    if (diff < -1.5) {
+      return 'falling';
+    }
+    return 'stable';
   }
 
   (String, String) _labelForScore(int score) {
@@ -348,6 +516,30 @@ class FishingScoreEngine {
         return value == true && ctx.isGoldenHour;
       case 'is_night':
         return value == true && ctx.isNight;
+      case 'month_in':
+        if (value is! List) {
+          return false;
+        }
+        final months = value.map((e) => (e as num).toInt()).toList();
+        return months.contains(ctx.month);
+      case 'pressure_trend':
+        return value != null && value.toString() == ctx.pressureTrend;
+      case 'pressure_hpa_min':
+        if (ctx.pressureHpa == null) {
+          return false;
+        }
+        return value is num && ctx.pressureHpa! >= value.toDouble();
+      case 'pressure_hpa_max':
+        if (ctx.pressureHpa == null) {
+          return false;
+        }
+        return value is num && ctx.pressureHpa! <= value.toDouble();
+      case 'is_pre_storm_window':
+        return value == true && ctx.isPreStormWindow;
+      case 'is_post_storm_recovery_24h':
+        return value == true && ctx.isPostStormRecovery24h;
+      case 'is_post_storm_recovery_48h':
+        return value == true && ctx.isPostStormRecovery48h;
       default:
         return false;
     }
@@ -394,6 +586,12 @@ class _WeatherContext {
     required this.windDir,
     required this.isGoldenHour,
     required this.isNight,
+    required this.month,
+    required this.pressureTrend,
+    required this.pressureHpa,
+    required this.isPreStormWindow,
+    required this.isPostStormRecovery24h,
+    required this.isPostStormRecovery48h,
   });
 
   final double windKmh;
@@ -405,8 +603,18 @@ class _WeatherContext {
   final int? windDir;
   final bool isGoldenHour;
   final bool isNight;
+  final int month;
+  final String? pressureTrend;
+  final double? pressureHpa;
+  final bool isPreStormWindow;
+  final bool isPostStormRecovery24h;
+  final bool isPostStormRecovery48h;
 
-  factory _WeatherContext.from(WeatherModel w, DateTime nowLocal) {
+  factory _WeatherContext.from(
+    WeatherModel w,
+    DateTime nowLocal,
+    String? pressureTrend,
+  ) {
     final code = w.weatherCode ?? 0;
     final windDir = w.windDirection;
     return _WeatherContext(
@@ -419,6 +627,12 @@ class _WeatherContext {
       windDir: windDir,
       isGoldenHour: _isGoldenHourIstanbul(nowLocal),
       isNight: _isNight(nowLocal),
+      month: nowLocal.month,
+      pressureTrend: pressureTrend,
+      pressureHpa: w.pressureHpa,
+      isPreStormWindow: false,
+      isPostStormRecovery24h: false,
+      isPostStormRecovery48h: false,
     );
   }
 

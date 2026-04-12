@@ -19,6 +19,9 @@ class FishingScore {
 
   final List<FishSpeciesTip> suggestedSpecies;
 
+  /// "rising_fast"|"rising"|"stable"|"falling"|"falling_fast" veya veri yoksa null
+  final String? pressureTrend;
+
   const FishingScore({
     required this.score,
     required this.label,
@@ -26,6 +29,7 @@ class FishingScore {
     required this.summary,
     required this.activeMessages,
     required this.suggestedSpecies,
+    this.pressureTrend,
   });
 }
 

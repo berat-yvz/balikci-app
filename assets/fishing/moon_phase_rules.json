@@ -64,5 +64,30 @@
       "message": "ℹ️ Ay ince: yüzey aktivitesi azalabilir.",
       "priority": 11
     }
-  ]
+  ],
+
+  "solunar_calculation_guide": {
+    "_comment": "Bu bölüm MoonPhaseCalculator.dart için referanstır. Solunar periyotlar Dart'ta matematiksel olarak hesaplanır; JSON sadece bonus değerlerini tanımlar.",
+
+    "theory": "1926 yılında John Alden Knight tarafından geliştirilen solunar teoriye göre, Ay tam tepedeyken (upper transit) veya tam altındayken (lower transit) balıklar en aktif beslenme dönemine girer. Bu 2 saatlik pencerelere 'major period' denir. Ay'ın doğuşu ve batışı ise 1 saatlik 'minor period' oluşturur. Günde 4 aktif pencere var.",
+
+    "calculation_method": {
+      "step_1": "Julian Day Number (JDN) hesapla: Dart tarihinden astronomik formülle",
+      "step_2": "Ay'ın meridyen geçiş saatini (upper transit) hesapla: moon_transit_hour = (JDN - floor(JDN)) * 24 + longitude_correction",
+      "step_3": "Lower transit = upper_transit + 12.0 saat (yaklaşık)",
+      "step_4": "Major periods: upper_transit ± 1 saat, lower_transit ± 1 saat",
+      "step_5": "Minor periods: moonrise ± 30 dakika, moonset ± 30 dakika",
+      "istanbul_longitude_correction": 28.97,
+      "note": "Kesin hesap için: https://aa.usno.navy.mil/data/MoonPhases algoritması referans alınabilir"
+    },
+
+    "score_bonuses": {
+      "major_period_active_bonus": 12,
+      "minor_period_active_bonus": 6,
+      "new_full_moon_day_bonus": 8,
+      "major_period_message": "✓ Solunar ana periyot: av zamanı!",
+      "minor_period_message": "✓ Solunar yan periyot.",
+      "_note": "Yeni ay veya dolunay tarihinin kendisinde (+/- 1 gün) ekstra bonus. Bu 'spring tide' etkisini simüle eder."
+    }
+  }
 }

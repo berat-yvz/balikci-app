@@ -50,6 +50,7 @@ type HourlyPoint = {
   weather_code: number
   cloud_cover: number | null
   visibility_m: number | null
+  surface_pressure: number | null
   wave_height: number | null
   sea_surface_temperature: number | null
   ocean_current_velocity: number | null
@@ -76,6 +77,7 @@ function mergeOpenMeteo(
   const codes = fh['weathercode'] as number[]
   const clouds = (fh['cloudcover'] as number[] | undefined) ?? []
   const vis = (fh['visibility'] as number[] | undefined) ?? []
+  const pressure = (fh['surface_pressure'] as (number | null)[] | undefined) ?? []
 
   let mh: Record<string, unknown> | null = null
   if (marine) {
@@ -106,6 +108,7 @@ function mergeOpenMeteo(
       weather_code: Number(codes[i] ?? 0),
       cloud_cover: i < clouds.length ? (clouds[i] ?? null) : null,
       visibility_m: i < vis.length ? (vis[i] ?? null) : null,
+      surface_pressure: i < pressure.length ? (pressure[i] ?? null) : null,
       wave_height: i < wave.length ? (wave[i] ?? null) : null,
       sea_surface_temperature: i < sst.length ? (sst[i] ?? null) : null,
       ocean_current_velocity: i < ocV.length ? (ocV[i] ?? null) : null,
@@ -178,7 +181,7 @@ async function upsertWeatherRegion(
   const q = `latitude=${lat}&longitude=${lng}&timezone=Europe%2FIstanbul&forecast_days=2`
 
   const forecastUrl =
-    `https://api.open-meteo.com/v1/forecast?${q}&hourly=temperature_2m,windspeed_10m,precipitation,weathercode,cloudcover,visibility`
+    `https://api.open-meteo.com/v1/forecast?${q}&hourly=temperature_2m,windspeed_10m,precipitation,weathercode,cloudcover,visibility,surface_pressure`
 
   const marineUrl =
     `https://marine-api.open-meteo.com/v1/marine?${q}&hourly=wave_height,sea_surface_temperature,ocean_current_velocity,ocean_current_direction`
