@@ -70,7 +70,9 @@ class _MainShellState extends ConsumerState<MainShell> {
         }
       },
       child: Scaffold(
-        extendBody: true,
+        // Alt navigasyon her zaman içeriğin alt sınırı; gövde çubuğun altına uzanmasın
+        // (profil vb. kaydırılabilir alanlar çubuk altında kalmasın).
+        extendBody: false,
         resizeToAvoidBottomInset: true,
         body: Column(
           children: [

@@ -47,6 +47,13 @@ void main() {
       final user = UserModel.fromJson(json);
       expect(user.totalScore, 0);
     });
+
+    test('total_score double JSON → int', () {
+      final json = baseJson(username: 'X', totalScore: 0);
+      json['total_score'] = 42.7;
+      final user = UserModel.fromJson(json);
+      expect(user.totalScore, 43);
+    });
   });
 
   group('UserModel username çözümleme', () {
@@ -85,6 +92,21 @@ void main() {
       );
       // 'user_xyz' hex değil (x,y,z hex değil) → regex eşleşmez → username korunur
       expect(user.username, 'user_xyz');
+    });
+
+    test('RPC: email yok, otomatik user_* → boş kalmaz (otomatik ad gösterilir)', () {
+      final user = UserModel.fromJson(
+        baseJson(username: 'user_abc123def', email: ''),
+      );
+      expect(user.username, 'user_abc123def');
+    });
+
+    test('RPC: email ve username yok → Balıkçı + id kuyruğu', () {
+      final user = UserModel.fromJson(
+        baseJson(username: null, email: '')
+            ..['id'] = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+      );
+      expect(user.username, 'Balıkçı_eeeeee');
     });
   });
 

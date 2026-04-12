@@ -22,28 +22,59 @@ class UserModel {
     required this.createdAt,
   });
 
-  /// Otomatik üretilmiş `user_xxxxxxxx` kullanıcı adını e-posta ön ekiyle değiştirir.
-  static String _resolveUsername(String? raw, String email) {
-    if (raw != null && raw.isNotEmpty && !RegExp(r'^user_[0-9a-f]{6,}$').hasMatch(raw)) {
-      return raw;
+  /// RPC satırlarında `email` gelmeyebilir; otomatik `user_*` adını o zaman da göster.
+  static String _resolveUsername(String? raw, String email, String userId) {
+    final trimmed = raw?.trim() ?? '';
+    final autoPattern = RegExp(r'^user_[0-9a-f]{6,}$', caseSensitive: false);
+    if (trimmed.isNotEmpty && !autoPattern.hasMatch(trimmed)) {
+      return trimmed;
     }
-    return email.split('@').first;
+    final mail = email.trim();
+    if (mail.isNotEmpty) {
+      return mail.split('@').first;
+    }
+    if (trimmed.isNotEmpty) return trimmed;
+    final compact = userId.replaceAll('-', '');
+    final tail = compact.length >= 6
+        ? compact.substring(compact.length - 6)
+        : compact;
+    return tail.isNotEmpty ? 'Balıkçı_$tail' : 'Balıkçı';
   }
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-    id: json['id'] as String,
-    email: json['email'] as String? ?? '',
-    username: _resolveUsername(
-      json['username'] as String?,
-      json['email'] as String? ?? '',
-    ),
-    avatarUrl: json['avatar_url'] as String?,
-    rank: json['rank'] as String? ?? 'acemi',
-    totalScore: json['total_score'] as int? ?? 0,
-    sustainabilityScore: json['sustainability_score'] as int? ?? 0,
-    fcmToken: json['fcm_token'] as String?,
-    createdAt: DateTime.parse(json['created_at'] as String),
-  );
+  /// RPC / join sonucu tek satırda `email` yokken sosyal ve sıralama listeleri için.
+  static String displayUsername({
+    String? rawUsername,
+    String email = '',
+    required String userId,
+  }) =>
+      _resolveUsername(rawUsername, email, userId);
+
+  /// JSON / PostgREST sayıları (int, double, büyük bigint string) için güvenli dönüşüm.
+  static int coerceToInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    if (v is num) return v.round();
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    final id = json['id'] as String;
+    return UserModel(
+      id: id,
+      email: json['email'] as String? ?? '',
+      username: _resolveUsername(
+        json['username'] as String?,
+        json['email'] as String? ?? '',
+        id,
+      ),
+      avatarUrl: json['avatar_url'] as String?,
+      rank: json['rank'] as String? ?? 'acemi',
+      totalScore: coerceToInt(json['total_score']),
+      sustainabilityScore: coerceToInt(json['sustainability_score']),
+      fcmToken: json['fcm_token'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,

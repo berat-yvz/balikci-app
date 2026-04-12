@@ -30,6 +30,7 @@ final currentUserProfileProvider = FutureProvider.autoDispose<UserModel?>((
 final leaderboardProvider = FutureProvider.autoDispose<List<UserModel>>((
   ref,
 ) async {
+  ref.watch(currentUserProvider);
   final repo = ref.read(userRepositoryProvider);
   return repo.getLeaderboard();
 });
@@ -37,6 +38,7 @@ final leaderboardProvider = FutureProvider.autoDispose<List<UserModel>>((
 /// Toplulukta tüm kayıtlı balıkçılar (sıra limiti yok, alfabetik).
 final allRegisteredAnglersProvider =
     FutureProvider.autoDispose<List<UserModel>>((ref) async {
+  ref.watch(currentUserProvider);
   final repo = ref.read(userRepositoryProvider);
   return repo.getAllRegisteredAnglers();
 });
@@ -61,6 +63,7 @@ final userProfileProvider = FutureProvider.autoDispose
 /// Haftalık check-in aktivitesine göre sıralama.
 final weeklyLeaderboardProvider =
     FutureProvider.autoDispose<List<WeeklyRankEntry>>((ref) async {
+  ref.watch(currentUserProvider);
   final repo = ref.read(userRepositoryProvider);
   return repo.getWeeklyLeaderboard();
 });
@@ -71,6 +74,7 @@ final regionalLeaderboardProvider =
       ref,
       regionKey,
     ) async {
+      ref.watch(currentUserProvider);
       CoastalLeaderboardRegion? box;
       for (final r in kCoastalLeaderboardRegions) {
         if (r.key == regionKey) {

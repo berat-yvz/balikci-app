@@ -84,9 +84,13 @@ class UserRepository {
         params: {'limit_count': limit},
       );
       if (raw is List && raw.isNotEmpty) {
-        return raw
-            .map((row) => _userFromPublicRow(row as Map<String, dynamic>))
-            .toList();
+        try {
+          return raw
+              .map((row) => _userFromPublicRow(row as Map<String, dynamic>))
+              .toList();
+        } catch (_) {
+          // RPC kolon tipi / şema farkı — REST’e düş
+        }
       }
     } on PostgrestException catch (_) {
       // RPC yoksa veya şema henüz uygulanmadıysa tablo sorgusuna düş.
@@ -118,9 +122,11 @@ class UserRepository {
         params: {'limit_count': limit},
       );
       if (raw is List && raw.isNotEmpty) {
-        return raw
-            .map((row) => _userFromPublicRow(row as Map<String, dynamic>))
-            .toList();
+        try {
+          return raw
+              .map((row) => _userFromPublicRow(row as Map<String, dynamic>))
+              .toList();
+        } catch (_) {}
       }
     } on PostgrestException catch (_) {}
 
@@ -252,22 +258,25 @@ class UserRepository {
         params: {'limit_count': limit},
       );
       if (raw is List && raw.isNotEmpty) {
-        return raw
-            .map((row) {
-              final m = row as Map<String, dynamic>;
-              final rawName = m['username'];
-              final name = rawName is String && rawName.trim().isNotEmpty
-                  ? rawName.trim()
-                  : 'Balıkçı';
-              return WeeklyRankEntry(
-                userId: m['user_id'] as String,
-                username: name,
-                avatarUrl: m['avatar_url'] as String?,
-                rank: m['rank'] as String? ?? 'acemi',
-                checkinCount: (m['checkin_count'] as num).toInt(),
-              );
-            })
-            .toList();
+        try {
+          return raw
+              .map((row) {
+                final m = row as Map<String, dynamic>;
+                final uid = m['user_id'] as String;
+                final name = UserModel.displayUsername(
+                  rawUsername: m['username'] as String?,
+                  userId: uid,
+                );
+                return WeeklyRankEntry(
+                  userId: uid,
+                  username: name,
+                  avatarUrl: m['avatar_url'] as String?,
+                  rank: m['rank'] as String? ?? 'acemi',
+                  checkinCount: UserModel.coerceToInt(m['checkin_count']),
+                );
+              })
+              .toList();
+        } catch (_) {}
       }
     } on PostgrestException catch (_) {}
 
@@ -297,10 +306,10 @@ class UserRepository {
 
       return sorted.take(limit).map((e) {
         final meta = userMeta[e.key]!;
-        final rawName = meta['username'];
-        final name = rawName is String && rawName.trim().isNotEmpty
-            ? rawName.trim()
-            : 'Balıkçı';
+        final name = UserModel.displayUsername(
+          rawUsername: meta['username'] as String?,
+          userId: e.key,
+        );
         return WeeklyRankEntry(
           userId: e.key,
           username: name,
