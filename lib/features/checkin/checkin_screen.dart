@@ -19,6 +19,115 @@ import 'package:balikci_app/data/repositories/notification_repository.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
+/// Balık yoğunluğu — DB: fish_density
+const _checkinDensityOptions = [
+  ('yok', '❌', 'Balık Yok'),
+  ('az', '🐟', 'Az'),
+  ('normal', '🐟🐟', 'Normal'),
+  ('yoğun', '🐟🐟🐟', 'Çok Balık'),
+];
+
+/// Kalabalık — DB: crowd_level
+const _checkinCrowdOptions = [
+  ('boş', '🏖️', 'Boş'),
+  ('az', '👤', 'Sakin'),
+  ('normal', '👥', 'Normal'),
+  ('yoğun', '👥👥', 'Kalabalık'),
+];
+
+Widget _buildCheckinOptionsGrid({
+  required double maxWidth,
+  required List<(String, String, String)> options,
+  required String selectedValue,
+  required void Function(String) onSelect,
+  required Color accentColor,
+}) {
+  const gap = 8.0;
+  final cols = maxWidth >= 400 ? 4 : 2;
+  final tileW = (maxWidth - gap * (cols - 1)) / cols;
+  return Wrap(
+    spacing: gap,
+    runSpacing: gap,
+    children: [
+      for (final o in options)
+        SizedBox(
+          width: tileW,
+          child: _CheckinOptionTile(
+            emoji: o.$2,
+            label: o.$3,
+            isSelected: selectedValue == o.$1,
+            onTap: () => onSelect(o.$1),
+            accentColor: accentColor,
+          ),
+        ),
+    ],
+  );
+}
+
+class _CheckinOptionTile extends StatelessWidget {
+  final String emoji;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color accentColor;
+
+  const _CheckinOptionTile({
+    required this.emoji,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? accentColor.withValues(alpha: 0.20)
+                : AppColors.foam.withValues(alpha: 0.05),
+            border: Border.all(
+              color: isSelected
+                  ? accentColor
+                  : AppColors.muted.withValues(alpha: 0.35),
+              width: isSelected ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 20)),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.caption.copyWith(
+                  fontSize: 11,
+                  height: 1.2,
+                  color: isSelected ? accentColor : AppColors.muted,
+                  fontWeight:
+                      isSelected ? FontWeight.w800 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Check-in ekranı — 2 sayfalı akış, hedef kitleye göre optimize.
 class CheckinScreen extends StatefulWidget {
   final String spotId;
@@ -390,13 +499,6 @@ class _Page1 extends StatelessWidget {
     required this.onNext,
   });
 
-  static const _densityOptions = [
-    ('yok', '❌', 'Balık Yok'),
-    ('az', '🐟', 'Az'),
-    ('normal', '🐟🐟', 'Normal'),
-    ('yoğun', '🐟🐟🐟', 'Çok Balık'),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final cardBg = Theme.of(context).cardColor;
@@ -507,8 +609,8 @@ class _Page1 extends StatelessWidget {
                                   : AppColors.muted.withValues(alpha: 0.35),
                             ),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 12,
+                              horizontal: 10,
+                              vertical: 8,
                             ),
                           );
                         },
@@ -527,70 +629,16 @@ class _Page1 extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          Row(
-                            children: _densityOptions.map((opt) {
-                              final (value, emoji, label) = opt;
-                              final isSelected = fishDensity == value;
-                              return Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 6),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(12),
-                                      onTap: () => onDensityChanged(value),
-                                      child: AnimatedContainer(
-                                        duration:
-                                            const Duration(milliseconds: 150),
-                                        height: 72,
-                                        decoration: BoxDecoration(
-                                          color: isSelected
-                                              ? AppColors.primary
-                                                  .withValues(alpha: 0.20)
-                                              : AppColors.foam
-                                                  .withValues(alpha: 0.05),
-                                          border: Border.all(
-                                            color: isSelected
-                                                ? AppColors.primary
-                                                : AppColors.muted
-                                                    .withValues(alpha: 0.35),
-                                            width: isSelected ? 2 : 1,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              emoji,
-                                              style: const TextStyle(
-                                                fontSize: 28,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              label,
-                                              textAlign: TextAlign.center,
-                                              style: AppTextStyles.caption
-                                                  .copyWith(
-                                                color: isSelected
-                                                    ? AppColors.primary
-                                                    : AppColors.muted,
-                                                fontWeight: isSelected
-                                                    ? FontWeight.w800
-                                                    : FontWeight.w500,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                          LayoutBuilder(
+                            builder: (context, c) {
+                              return _buildCheckinOptionsGrid(
+                                maxWidth: c.maxWidth,
+                                options: _checkinDensityOptions,
+                                selectedValue: fishDensity,
+                                onSelect: onDensityChanged,
+                                accentColor: AppColors.primary,
                               );
-                            }).toList(),
+                            },
                           ),
                         ],
                       ),
@@ -598,15 +646,16 @@ class _Page1 extends StatelessWidget {
                   ],
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                   child: SizedBox(
                     width: double.infinity,
-                    height: 56,
+                    height: 50,
                     child: ElevatedButton(
                       onPressed: onNext,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.foam,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -617,15 +666,15 @@ class _Page1 extends StatelessWidget {
                           Text(
                             'Devam Et',
                             style: TextStyle(
-                              fontSize: 17,
+                              fontSize: 16,
                               fontWeight: FontWeight.w800,
                               color: AppColors.foam,
                             ),
                           ),
-                          SizedBox(width: 8),
+                          SizedBox(width: 6),
                           Icon(
                             Icons.arrow_forward_rounded,
-                            size: 28,
+                            size: 22,
                             color: AppColors.foam,
                           ),
                         ],
@@ -658,13 +707,6 @@ class _Page2 extends StatelessWidget {
     required this.onBack,
     required this.onSubmit,
   });
-
-  static const _crowdOptions = [
-    ('boş', '🏖️', 'Boş'),
-    ('az', '👤', 'Sakin'),
-    ('normal', '👥', 'Normal'),
-    ('yoğun', '👥👥', 'Kalabalık'),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -714,95 +756,42 @@ class _Page2 extends StatelessWidget {
                     ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                      child: Row(
-                        children: _crowdOptions.map((opt) {
-                          final (value, emoji, label) = opt;
-                          final isSelected = crowdLevel == value;
-                          return Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 6),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(12),
-                                  onTap: () => onCrowdChanged(value),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 150),
-                                    height: 72,
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? AppColors.secondary.withValues(
-                                              alpha: 0.20,
-                                            )
-                                          : AppColors.foam.withValues(
-                                              alpha: 0.05,
-                                            ),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? AppColors.secondary
-                                            : AppColors.muted
-                                                .withValues(alpha: 0.35),
-                                        width: isSelected ? 2 : 1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          emoji,
-                                          style: const TextStyle(
-                                            fontSize: 28,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          label,
-                                          textAlign: TextAlign.center,
-                                          style: AppTextStyles.caption
-                                              .copyWith(
-                                            color: isSelected
-                                                ? AppColors.secondary
-                                                : AppColors.muted,
-                                            fontWeight: isSelected
-                                                ? FontWeight.w800
-                                                : FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                      child: LayoutBuilder(
+                        builder: (context, c) {
+                          return _buildCheckinOptionsGrid(
+                            maxWidth: c.maxWidth,
+                            options: _checkinCrowdOptions,
+                            selectedValue: crowdLevel,
+                            onSelect: onCrowdChanged,
+                            accentColor: AppColors.secondary,
                           );
-                        }).toList(),
+                        },
                       ),
                     ),
                   ],
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                   child: SizedBox(
                     width: double.infinity,
-                    height: 56,
+                    height: 50,
                     child: ElevatedButton(
                       onPressed: submitting ? null : onSubmit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.secondary,
                         foregroundColor: AppColors.foam,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                       child: submitting
                           ? const SizedBox(
-                              width: 28,
-                              height: 28,
+                              width: 24,
+                              height: 24,
                               child: CircularProgressIndicator(
                                 color: AppColors.foam,
-                                strokeWidth: 2.5,
+                                strokeWidth: 2,
                               ),
                             )
                           : const Row(
@@ -810,14 +799,14 @@ class _Page2 extends StatelessWidget {
                               children: [
                                 Icon(
                                   Icons.share_rounded,
-                                  size: 28,
+                                  size: 22,
                                   color: AppColors.foam,
                                 ),
-                                SizedBox(width: 8),
+                                SizedBox(width: 6),
                                 Text(
                                   'Paylaş!',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w900,
                                     color: AppColors.foam,
                                   ),

@@ -1218,7 +1218,7 @@ class _MapScreenState extends State<MapScreen> {
                                   ),
                                   const SizedBox(height: 10),
                                   SizedBox(
-                                    height: 56,
+                                    height: 48,
                                     child: Row(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.stretch,
@@ -1231,7 +1231,7 @@ class _MapScreenState extends State<MapScreen> {
                                             label: 'Balık Var!',
                                           ),
                                         ),
-                                        const SizedBox(width: 10),
+                                        const SizedBox(width: 8),
                                         Expanded(
                                           child: _SheetSecondaryButton(
                                             onPressed: () =>
@@ -1835,12 +1835,25 @@ class _SheetPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 56,
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon),
-        label: Text(label),
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20),
+      label: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w800,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+        minimumSize: const Size(0, 48),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
@@ -1859,20 +1872,27 @@ class _SheetSecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 56,
-      child: OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, color: AppColors.foam.withValues(alpha: 0.92)),
-        label: Text(
-          label,
-          style: TextStyle(color: AppColors.foam.withValues(alpha: 0.92)),
+    final fg = AppColors.foam.withValues(alpha: 0.92);
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20, color: fg),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: fg,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
         ),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+        minimumSize: const Size(0, 48),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );
