@@ -157,6 +157,7 @@ class _ProfileContent extends ConsumerWidget {
         HapticFeedback.lightImpact();
         ref.invalidate(currentUserProfileProvider);
         ref.invalidate(favoriteSpotsProvider);
+        ref.invalidate(mutualFriendCountForUserProvider(user.id));
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -234,8 +235,8 @@ class _ProfileContent extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
-            // ADIM 9: Takip/Takipçi tıklanabilir sayılar
-            _FollowStatsRow(userId: user.id),
+            // ADIM 9: Arkadaş sayısı (karşılıklı takip)
+            _FriendsStatRow(userId: user.id),
             const SizedBox(height: 20),
 
             // ADIM 9: Özet istatistik kartları 3'lü grid
@@ -721,107 +722,67 @@ class _FriendshipActionBar extends ConsumerWidget {
   }
 }
 
-// ── ADIM 9: Takip/Takipçi tıklanabilir sayı satırı ───────────────────────────
+// ── ADIM 9: Arkadaş sayısı (liste: Sosyal > Arkadaşlarım veya başka profil) ──
 
-class _FollowStatsRow extends ConsumerStatefulWidget {
+class _FriendsStatRow extends ConsumerWidget {
   final String userId;
-  const _FollowStatsRow({required this.userId});
+
+  const _FriendsStatRow({required this.userId});
 
   @override
-  ConsumerState<_FollowStatsRow> createState() => _FollowStatsRowState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final me = ref.watch(currentUserProvider)?.id;
+    final isSelf = me == userId;
+    final async = ref.watch(mutualFriendCountForUserProvider(userId));
 
-class _FollowStatsRowState extends ConsumerState<_FollowStatsRow> {
-  Future<List<int>>? _countsFuture;
-
-  @override
-  void didUpdateWidget(covariant _FollowStatsRow oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.userId != widget.userId) {
-      _countsFuture = null;
-    }
-  }
-
-  Future<List<int>> _loadCounts() {
-    final repo = ref.read(userRepositoryProvider);
-    return Future.wait([
-      repo.getFollowerCount(widget.userId),
-      repo.getFollowingCount(widget.userId),
-    ]);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    ref.watch(userRepositoryProvider);
-    _countsFuture ??= _loadCounts();
-
-    return FutureBuilder<List<int>>(
-      future: _countsFuture,
-      builder: (context, snapshot) {
-        final follower = snapshot.data?[0] ?? 0;
-        final following = snapshot.data?[1] ?? 0;
-
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: () => context.push(
-                '${AppRoutes.profile}/${widget.userId}/followers',
-              ),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                child: _FollowStat(label: 'Takipçi', count: follower),
+    return async.when(
+      data: (count) {
+        return Center(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () {
+              if (isSelf) {
+                context.push(AppRoutes.socialFriends);
+              } else {
+                context.push(AppRoutes.socialFriends, extra: userId);
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              child: Column(
+                children: [
+                  Text(
+                    count.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text(
+                    'Arkadaş',
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
             ),
-            Container(
-              width: 1,
-              height: 32,
-              margin: const EdgeInsets.symmetric(horizontal: 12),
-              color: Colors.white12,
-            ),
-            InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: () => context.push(
-                '${AppRoutes.profile}/${widget.userId}/following',
-              ),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                child: _FollowStat(label: 'Takip', count: following),
-              ),
-            ),
-          ],
+          ),
         );
       },
-    );
-  }
-}
-
-class _FollowStat extends StatelessWidget {
-  final String label;
-  final int count;
-
-  const _FollowStat({required this.label, required this.count});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          count.toString(),
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
-        Text(
-          label,
-          style: const TextStyle(color: AppColors.muted, fontSize: 14),
-        ),
-      ],
+      ),
+      error: (e, _) => const SizedBox.shrink(),
     );
   }
 }
@@ -907,6 +868,9 @@ class _SummaryStatsGridState extends ConsumerState<_SummaryStatsGrid> {
                 emoji: '📍',
                 value: '$spotCount',
                 label: 'Toplam Mera',
+                onTap: () => context.push(
+                  AppRoutes.profileUserSpots(widget.userId),
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -928,19 +892,23 @@ class _SummaryCard extends StatelessWidget {
   final String emoji;
   final String value;
   final String label;
+  final VoidCallback? onTap;
+
   const _SummaryCard({
     required this.emoji,
     required this.value,
     required this.label,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final radius = BorderRadius.circular(14);
+    final child = Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF132236),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: radius,
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.20)),
       ),
       child: Column(
@@ -965,6 +933,17 @@ class _SummaryCard extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+
+    if (onTap == null) return child;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: radius,
+        child: child,
       ),
     );
   }

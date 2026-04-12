@@ -52,7 +52,7 @@ final socialEdgeProvider =
       return const SocialEdge(SocialEdgeKind.stranger);
     });
 
-/// Karşılıklı takip (kabul edilmiş arkadaşlıklar).
+/// Karşılıklı takip (kabul edilmiş arkadaşlıklar) — oturumdaki kullanıcı.
 final mutualFriendsProvider =
     FutureProvider.autoDispose<List<UserModel>>((ref) async {
       final me = ref.watch(currentUserProvider)?.id;
@@ -62,6 +62,27 @@ final mutualFriendsProvider =
       final ids = await followRepo.getMutualFriendIds(me);
       if (ids.isEmpty) return [];
       return userRepo.getProfilesByIds(ids);
+    });
+
+/// [userId] için arkadaş (karşılıklı takip) profilleri.
+final mutualFriendsForUserProvider =
+    FutureProvider.autoDispose.family<List<UserModel>, String>((
+      ref,
+      userId,
+    ) async {
+      final followRepo = ref.read(followRepositoryProvider);
+      final userRepo = ref.read(userRepositoryProvider);
+      final ids = await followRepo.getMutualFriendIds(userId);
+      if (ids.isEmpty) return [];
+      return userRepo.getProfilesByIds(ids);
+    });
+
+/// Profil kartı için arkadaş sayısı.
+final mutualFriendCountForUserProvider =
+    FutureProvider.autoDispose.family<int, String>((ref, userId) async {
+      final ids =
+          await ref.read(followRepositoryProvider).getMutualFriendIds(userId);
+      return ids.length;
     });
 
 final incomingFriendRequestsProvider =

@@ -64,6 +64,22 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
       _privacy = e.privacyLevel;
       _lat = e.lat;
       _lng = e.lng;
+
+      final uid = SupabaseService.auth.currentUser?.id;
+      if (uid != e.userId) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Bu merayı yalnızca ekleyen kullanıcı düzenleyebilir.',
+              ),
+              backgroundColor: AppColors.danger,
+            ),
+          );
+          context.pop();
+        });
+      }
     }
   }
 
@@ -136,7 +152,20 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
       final user = SupabaseService.auth.currentUser!;
       await AuthRepository().ensureUserProfile(user);
       if (_isEdit) {
-        final id = widget.spotToEdit!.id;
+        final spot = widget.spotToEdit!;
+        if (spot.userId != uid) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Bu merayı yalnızca ekleyen kullanıcı düzenleyebilir.',
+              ),
+              backgroundColor: AppColors.danger,
+            ),
+          );
+          return;
+        }
+        final id = spot.id;
         await _repo.updateSpot(id, {
           'name': _nameCtrl.text.trim(),
           'lat': _lat,

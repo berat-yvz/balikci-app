@@ -215,38 +215,6 @@ class UserRepository {
     }
   }
 
-  /// Belirli bir kullanıcının takipçi sayısı.
-  Future<int> getFollowerCount(String userId) async {
-    try {
-      final response = await _db
-          .from('follows')
-          .select('id')
-          .eq('following_id', userId);
-      return (response as List).length;
-    } on PostgrestException catch (e) {
-      throw Exception('Takipçi sayısı alınırken bir hata oluştu: ${e.message}');
-    } catch (e) {
-      throw Exception('Takipçi sayısı alınamadı: $e');
-    }
-  }
-
-  /// Belirli bir kullanıcının takip ettiği kişi sayısı.
-  Future<int> getFollowingCount(String userId) async {
-    try {
-      final response = await _db
-          .from('follows')
-          .select('id')
-          .eq('follower_id', userId);
-      return (response as List).length;
-    } on PostgrestException catch (e) {
-      throw Exception(
-        'Takip edilen sayısı alınırken bir hata oluştu: ${e.message}',
-      );
-    } catch (e) {
-      throw Exception('Takip edilen sayısı alınamadı: $e');
-    }
-  }
-
   /// Son 7 gündeki check-in sayısına göre haftalık sıralama.
   ///
   /// Checkins tablosundan son 7 günün aktivitesi kullanılır;

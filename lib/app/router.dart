@@ -55,9 +55,9 @@ import 'package:balikci_app/features/notifications/notification_list_screen.dart
 import 'package:balikci_app/features/notifications/notification_settings_screen.dart';
 
 // Features — Profile
-import 'package:balikci_app/features/profile/follow_list_screen.dart';
 import 'package:balikci_app/features/profile/profile_screen.dart';
 import 'package:balikci_app/features/profile/settings_screen.dart';
+import 'package:balikci_app/features/profile/user_spots_list_screen.dart';
 
 /// Bildirim yönlendirme ve genel navigasyon için global key.
 /// NotificationService bu key üzerinden GoRouter.of(context).go() çağırır.
@@ -156,8 +156,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Auth
       GoRoute(
         path: AppRoutes.login,
-        pageBuilder: (context, state) =>
-            _fadeSlidePage(state: state, child: const LoginScreen()),
+        pageBuilder: (context, state) {
+          final msg = state.extra is String ? state.extra as String : null;
+          return _fadeSlidePage(
+            state: state,
+            child: LoginScreen(bannerMessage: msg),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.register,
@@ -228,10 +233,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.socialFriends,
-            pageBuilder: (context, state) => _fadeSlidePage(
-              state: state,
-              child: const FriendsListScreen(),
-            ),
+            pageBuilder: (context, state) {
+              final forUserId =
+                  state.extra is String ? state.extra as String : null;
+              return _fadeSlidePage(
+                state: state,
+                child: FriendsListScreen(forUserId: forUserId),
+              );
+            },
           ),
           GoRoute(
             path: AppRoutes.socialRequests,
@@ -245,22 +254,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ProfileScreen(),
           ),
           GoRoute(
-            path: '${AppRoutes.profile}/:userId/followers',
+            path: '${AppRoutes.profile}/:userId/meralar',
             pageBuilder: (context, state) => _fadeSlidePage(
               state: state,
-              child: FollowListScreen(
+              child: UserSpotsListScreen(
                 userId: state.pathParameters['userId']!,
-                mode: FollowListMode.followers,
-              ),
-            ),
-          ),
-          GoRoute(
-            path: '${AppRoutes.profile}/:userId/following',
-            pageBuilder: (context, state) => _fadeSlidePage(
-              state: state,
-              child: FollowListScreen(
-                userId: state.pathParameters['userId']!,
-                mode: FollowListMode.following,
               ),
             ),
           ),

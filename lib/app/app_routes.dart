@@ -44,4 +44,7 @@ class AppRoutes {
 
   // Profile
   static const settings = '/settings';
+
+  /// [userId] kullanıcısının eklediği meralar listesi (profil istatistikten).
+  static String profileUserSpots(String userId) => '$profile/$userId/meralar';
 }

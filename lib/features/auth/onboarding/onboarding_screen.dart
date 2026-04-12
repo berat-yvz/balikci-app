@@ -190,18 +190,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               },
             ),
           ),
-          Positioned(
-            right: 12,
-            top: safeTop + 6,
-            child: TextButton(
-              onPressed: _finishOnboarding,
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.muted,
-                minimumSize: const Size(48, 48),
-              ),
-              child: const Text('Atla'),
-            ),
-          ),
           SafeArea(
             child: Column(
               children: [
@@ -302,6 +290,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   ),
                 ),
               ],
+            ),
+          ),
+          // En üstte: SafeArea PageView dokunuşlarını kesmesin diye Atla son sırada.
+          Positioned(
+            right: 12,
+            top: safeTop + 6,
+            child: Material(
+              type: MaterialType.transparency,
+              child: TextButton(
+                onPressed: () => unawaited(_finishOnboarding()),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.muted,
+                  minimumSize: const Size(48, 48),
+                ),
+                child: const Text('Atla'),
+              ),
             ),
           ),
         ],

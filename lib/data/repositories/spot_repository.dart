@@ -57,6 +57,32 @@ class SpotRepository {
     }
   }
 
+  /// Belirli kullanıcının eklediği meralar (yeniden eskiye).
+  Future<List<SpotModel>> getSpotsByUserId(
+    String userId, {
+    int limit = 200,
+  }) async {
+    try {
+      final response = await _db
+          .from('fishing_spots')
+          .select(
+            'id, user_id, name, lat, lng, type, privacy_level, description, verified, muhtar_id, created_at',
+          )
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .limit(limit);
+      return (response as List)
+          .map<SpotModel>(
+            (row) => SpotModel.fromJson(Map<String, dynamic>.from(row as Map)),
+          )
+          .toList();
+    } on PostgrestException catch (e) {
+      throw Exception('Kullanıcı meraları alınamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Kullanıcı meraları alınamadı: $e');
+    }
+  }
+
   /// ID ile tek bir mera kaydı döner, bulunamazsa `null` verir.
   Future<SpotModel?> getSpotById(String id) async {
     try {
@@ -90,9 +116,25 @@ class SpotRepository {
   }
 
   /// Mevcut mera kaydını günceller ve cache'i tazeler.
+  /// Yalnızca `user_id` oturumdaki kullanıcı ile eşleşen satır güncellenir.
   Future<void> updateSpot(String id, Map<String, dynamic> updates) async {
+    final uid = SupabaseService.auth.currentUser?.id;
+    if (uid == null) {
+      throw Exception('Mera güncellemek için giriş yapmalısın.');
+    }
     try {
-      await _db.from('fishing_spots').update(updates).eq('id', id);
+      final row = await _db
+          .from('fishing_spots')
+          .update(updates)
+          .eq('id', id)
+          .eq('user_id', uid)
+          .select('id')
+          .maybeSingle();
+      if (row == null) {
+        throw Exception(
+          'Bu merayı yalnızca ekleyen kullanıcı düzenleyebilir.',
+        );
+      }
       final fresh = await getSpotById(id);
       if (fresh != null) {
         await _cacheSpots([fresh]);
@@ -100,20 +142,37 @@ class SpotRepository {
     } on PostgrestException catch (e) {
       throw Exception('Mera güncellenemedi: ${e.message}');
     } catch (e) {
+      if (e is Exception) rethrow;
       throw Exception('Mera güncellenemedi: $e');
     }
   }
 
   /// Mera kaydını uzak ve yerel depodan siler.
+  /// Yalnızca `user_id` oturumdaki kullanıcı ile eşleşen satır silinir.
   Future<void> deleteSpot(String id) async {
+    final uid = SupabaseService.auth.currentUser?.id;
+    if (uid == null) {
+      throw Exception('Mera silmek için giriş yapmalısın.');
+    }
     try {
-      await _db.from('fishing_spots').delete().eq('id', id);
+      final removed = await _db
+          .from('fishing_spots')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', uid)
+          .select('id');
+      if ((removed as List).isEmpty) {
+        throw Exception(
+          'Bu merayı yalnızca ekleyen kullanıcı silebilir.',
+        );
+      }
       await (_localDb.delete(
         _localDb.localSpots,
       )..where((tbl) => tbl.id.equals(id))).go();
     } on PostgrestException catch (e) {
       throw Exception('Mera silinemedi: ${e.message}');
     } catch (e) {
+      if (e is Exception) rethrow;
       throw Exception('Mera silinemedi: $e');
     }
   }

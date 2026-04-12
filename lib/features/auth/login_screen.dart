@@ -13,8 +13,10 @@ import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/preferences_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  // cleaned: dialog doğrulaması ve async context kullanımı lint uyumlu hale getirildi
-  const LoginScreen({super.key});
+  /// Kayıt ekranından (ör. mevcut Google hesabı) yönlendirildiğinde SnackBar metni.
+  final String? bannerMessage;
+
+  const LoginScreen({super.key, this.bannerMessage});
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -36,6 +38,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   @override
   void initState() {
     super.initState();
+    final msg = widget.bannerMessage?.trim();
+    if (msg != null && msg.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: AppColors.warning,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      });
+    }
     _shakeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 420),

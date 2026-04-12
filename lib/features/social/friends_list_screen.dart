@@ -9,16 +9,26 @@ import 'package:balikci_app/core/constants/storage_buckets.dart';
 import 'package:balikci_app/shared/providers/friend_request_provider.dart';
 
 /// Karşılıklı takip (kabul edilmiş arkadaşlıklar).
+/// [forUserId] null → oturumdaki kullanıcı; dolu → o kullanıcının arkadaş listesi.
 class FriendsListScreen extends ConsumerWidget {
-  const FriendsListScreen({super.key});
+  final String? forUserId;
+
+  const FriendsListScreen({super.key, this.forUserId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(mutualFriendsProvider);
+    final async = forUserId == null
+        ? ref.watch(mutualFriendsProvider)
+        : ref.watch(mutualFriendsForUserProvider(forUserId!));
+
+    final title = forUserId == null ? 'Arkadaşlarım' : 'Arkadaşlar';
+    final emptyOwn =
+        'Henüz arkadaşın yok.\nTopluluk sekmesinden istek gönderebilirsin.';
+    final emptyOther = 'Bu kullanıcının henüz arkadaşı yok.';
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(title: const Text('Arkadaşlarım')),
+      appBar: AppBar(title: Text(title)),
       body: async.when(
         data: (users) {
           if (users.isEmpty) {
@@ -26,7 +36,7 @@ class FriendsListScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Henüz arkadaşın yok.\nTopluluk sekmesinden istek gönderebilirsin.',
+                  forUserId == null ? emptyOwn : emptyOther,
                   textAlign: TextAlign.center,
                   style: AppTextStyles.body.copyWith(
                     color: AppColors.muted,
@@ -38,7 +48,13 @@ class FriendsListScreen extends ConsumerWidget {
             );
           }
           return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(mutualFriendsProvider),
+            onRefresh: () async {
+              if (forUserId == null) {
+                ref.invalidate(mutualFriendsProvider);
+              } else {
+                ref.invalidate(mutualFriendsForUserProvider(forUserId!));
+              }
+            },
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: users.length,

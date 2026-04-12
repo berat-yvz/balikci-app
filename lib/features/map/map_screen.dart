@@ -419,10 +419,6 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  void _openEditForSpot(SpotModel spot) {
-    context.push(AppRoutes.mapEditSpot, extra: spot);
-  }
-
   static const int _searchNearestLimit = 15;
   static const int _searchDropdownMaxRows = 8;
 
@@ -688,65 +684,6 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  Future<void> _confirmAndDeleteSpot(SpotModel spot) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Merayı sil'),
-        content: Text(
-          '"${spot.name}" kalıcı olarak silinsin mi?',
-          style: AppTextStyles.body,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('İptal'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Sil'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !mounted) return;
-    try {
-      await _repository.deleteSpot(spot.id);
-      if (!mounted) return;
-      ProviderScope.containerOf(
-        context,
-        listen: false,
-      ).invalidate(favoriteSpotsProvider);
-      setState(() {
-        _spotMap.remove(spot.id);
-        _spots = _spotMap.values.toList();
-        final copy = Map<String, List<CheckinModel>>.from(
-          _activeCheckinsBySpotId,
-        )..remove(spot.id);
-        _activeCheckinsBySpotId = copy;
-        if (_sheetSpot?.id == spot.id) {
-          _sheetSpot = null;
-        }
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mera silindi'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Mera silinemedi: $e'),
-          backgroundColor: AppColors.danger,
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     const sheetInitialSize = 0.18;
@@ -765,9 +702,6 @@ class _MapScreenState extends State<MapScreen> {
     final activeCount = sheetCheckins.where((c) => !c.isStale).length;
     final mostRecent = sheetCheckins.isNotEmpty ? sheetCheckins.first : null;
     final sheetDescriptionTrimmed = sheetSpot?.description?.trim();
-
-    final uid = SupabaseService.auth.currentUser?.id;
-    final isOwner = sheetSpot != null && uid != null && uid == sheetSpot.userId;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -1311,22 +1245,6 @@ class _MapScreenState extends State<MapScreen> {
                                       ],
                                     ),
                                   ),
-                                  if (isOwner) ...[
-                                    const SizedBox(height: 10),
-                                    _SheetSecondaryButton(
-                                      onPressed: () =>
-                                          _openEditForSpot(sheetSpot),
-                                      icon: Icons.edit_outlined,
-                                      label: 'Mera Düzenle',
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _SheetSecondaryButton(
-                                      onPressed: () =>
-                                          _confirmAndDeleteSpot(sheetSpot),
-                                      icon: Icons.delete_outline,
-                                      label: 'Merayı Sil',
-                                    ),
-                                  ],
                                   const SizedBox(height: 12),
                                   if (sheetDescriptionTrimmed != null &&
                                       sheetDescriptionTrimmed.isNotEmpty)

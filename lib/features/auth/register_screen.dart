@@ -34,6 +34,48 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
+  static const Duration _googleNewUserMaxAge = Duration(seconds: 120);
+
+  Future<void> _signUpWithGoogle() async {
+    await ref.read(authNotifierProvider.notifier).signInWithGoogle();
+    if (!mounted) return;
+    if (ref.read(authNotifierProvider).hasError) return;
+
+    final user = SupabaseService.client.auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Tarayıcıda Google ile girişi tamamlayın; '
+            'uygulamaya döndüğünüzde oturum açılır.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final created = DateTime.tryParse(user.createdAt);
+    final nowUtc = DateTime.now().toUtc();
+    final isExisting = created != null &&
+        nowUtc.difference(created.toUtc()) > _googleNewUserMaxAge;
+
+    if (isExisting) {
+      try {
+        await ref.read(authNotifierProvider.notifier).signOut();
+      } catch (_) {}
+      if (!mounted) return;
+      context.go(
+        AppRoutes.login,
+        extra: 'Bu hesapla kaydınız zaten mevcut. Giriş yapabilirsiniz.',
+      );
+      return;
+    }
+
+    final done = ref.read(onboardingStateProvider);
+    if (!mounted) return;
+    context.go(done ? AppRoutes.home : AppRoutes.onboarding);
+  }
+
   void _submit() async {
     if (_formKey.currentState!.validate()) {
       final username = _usernameController.text.trim();
@@ -222,30 +264,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   const SizedBox(height: 16),
 
                   OutlinedButton.icon(
-                    onPressed: authState.isLoading
-                        ? null
-                        : () async {
-                            await ref
-                                .read(authNotifierProvider.notifier)
-                                .signInWithGoogle();
-                            if (!context.mounted) return;
-                            if (ref.read(authNotifierProvider).hasError) {
-                              return;
-                            }
-                            if (ref.read(authRepositoryProvider).isLoggedIn()) {
-                              final done = ref.read(onboardingStateProvider);
-                              context.go(done ? AppRoutes.home : AppRoutes.onboarding);
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Tarayıcıda Google ile girişi tamamlayın; '
-                                    'uygulamaya döndüğünüzde oturum açılır.',
-                                  ),
-                                ),
-                              );
-                            }
-                          },
+                    onPressed: authState.isLoading ? null : _signUpWithGoogle,
                     icon: const Icon(Icons.login),
                     label: const Text('Google ile kayıt ol'),
                   ),
