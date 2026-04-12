@@ -113,11 +113,12 @@ serve(async (req: Request) => {
       )
     }
 
-    const calendarRows = (rows ?? [])
-      .map((r) => rowToCalendar(r as unknown as Record<string, unknown>))
-      .filter((x): x is CalendarRow => x != null)
+    const rawCalendar = Array.isArray(rows) ? rows : []
+    const calendarRows: CalendarRow[] = rawCalendar
+      .map((r: unknown) => rowToCalendar(r as Record<string, unknown>))
+      .filter((c): c is CalendarRow => c != null)
 
-    const due = calendarRows.filter((r) => {
+    const due = calendarRows.filter((r: CalendarRow) => {
       const days = daysUntilSeasonStart(r.start_month, r.start_day, now)
       return days === r.notify_days_before
     })
@@ -145,9 +146,19 @@ serve(async (req: Request) => {
       )
     }
 
-    const uniqueUserIds = [...new Set(
-      (activeUsers ?? []).map((r: { user_id: string }) => r.user_id),
-    )]
+    const checkinRows = Array.isArray(activeUsers) ? activeUsers : []
+    const uniqueUserIds: string[] = [
+      ...new Set(
+        checkinRows
+          .map((r: unknown) =>
+            r && typeof r === 'object' && 'user_id' in r &&
+            typeof (r as { user_id: unknown }).user_id === 'string'
+              ? (r as { user_id: string }).user_id
+              : null,
+          )
+          .filter((id): id is string => id != null && id.length > 0),
+      ),
+    ]
 
     if (uniqueUserIds.length === 0) {
       return new Response(

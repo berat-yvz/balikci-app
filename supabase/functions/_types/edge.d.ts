@@ -19,7 +19,7 @@ type SupabaseQueryResult = Promise<{
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: _AnyData;
   count?: number | null;
-  error: { message: string } | null;
+  error: { message: string; code?: string } | null;
 }>;
 
 type SupabaseQueryBuilder = {
