@@ -52,23 +52,35 @@ class WeatherModel {
   // ── Computed getters ───────────────────────────────────────
 
   /// Sıcaklık °C. dataJson varsa direkt oku (units=metric → zaten Celsius).
+  bool get _isOpenMeteoV1 =>
+      dataJson != null && dataJson!['source'] == 'open_meteo_v1';
+
   double get tempCelsius {
+    if (_isOpenMeteoV1) {
+      return (temperature ?? 0).toDouble();
+    }
     if (dataJson != null) {
       return (dataJson!['main']?['temp'] as num?)?.toDouble() ?? 0.0;
     }
     return (temperature ?? 0).toDouble();
   }
 
-  /// Rüzgar km/s. dataJson varsa m/s → km/s çevir.
+  /// Rüzgar km/h. Open-Meteo bundle’da zaten km/h; OpenWeather’da m/s → km/h.
   double get windKmh {
+    if (_isOpenMeteoV1) {
+      return (windspeed ?? 0).toDouble();
+    }
     if (dataJson != null) {
       return ((dataJson!['wind']?['speed'] as num?)?.toDouble() ?? 0.0) * 3.6;
     }
     return (windspeed ?? 0).toDouble();
   }
 
-  /// OpenWeather hava kodu. dataJson['weather'][0]['id'], bulunamazsa 800.
+  /// WMO (Open-Meteo) veya OpenWeather kodu.
   int? get weatherCode {
+    if (_isOpenMeteoV1) {
+      return _weatherCode;
+    }
     if (dataJson != null) {
       final list = dataJson!['weather'];
       if (list is List && list.isNotEmpty) {
@@ -81,10 +93,42 @@ class WeatherModel {
 
   factory WeatherModel.fromJson(Map<String, dynamic> json) {
     final dataJson = json['data_json'] as Map<String, dynamic>?;
-    final main     = dataJson?['main']   as Map<String, dynamic>?;
-    final wind     = dataJson?['wind']   as Map<String, dynamic>?;
-    final clouds   = dataJson?['clouds'] as Map<String, dynamic>?;
-    final rain     = dataJson?['rain']   as Map<String, dynamic>?;
+    if (dataJson != null && dataJson['source'] == 'open_meteo_v1') {
+      final cur = dataJson['current'] as Map<String, dynamic>?;
+      if (cur != null) {
+        return WeatherModel(
+          id: json['id'] as String? ?? '',
+          lat: (json['lat'] as num?)?.toDouble() ??
+              (dataJson['lat'] as num?)?.toDouble() ??
+              0,
+          lng: (json['lng'] as num?)?.toDouble() ??
+              (dataJson['lng'] as num?)?.toDouble() ??
+              0,
+          dataJson: dataJson,
+          temperature: (cur['temperature'] as num?)?.toDouble(),
+          windspeed: (cur['windspeed'] as num?)?.toDouble(),
+          windDirection: null,
+          waveHeight: (cur['wave_height'] as num?)?.toDouble(),
+          seaSurfaceTemperature:
+              (cur['sea_surface_temperature'] as num?)?.toDouble(),
+          precipitation: (cur['precipitation'] as num?)?.toDouble(),
+          humidity: null,
+          visibilityKm: (cur['visibility_m'] as num?) != null
+              ? (cur['visibility_m'] as num).toDouble() / 1000
+              : null,
+          cloudCover: (cur['cloud_cover'] as num?)?.toDouble(),
+          weatherCode: (cur['weather_code'] as num?)?.toInt(),
+          fishingSummary: json['fishing_summary'] as String?,
+          fetchedAt: DateTime.parse(json['fetched_at'] as String),
+          regionKey: json['region_key'] as String?,
+        );
+      }
+    }
+
+    final main = dataJson?['main'] as Map<String, dynamic>?;
+    final wind = dataJson?['wind'] as Map<String, dynamic>?;
+    final clouds = dataJson?['clouds'] as Map<String, dynamic>?;
+    final rain = dataJson?['rain'] as Map<String, dynamic>?;
     final windSpeedMs = (wind?['speed'] as num?)?.toDouble();
 
     return WeatherModel(

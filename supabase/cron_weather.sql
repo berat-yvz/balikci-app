@@ -1,39 +1,34 @@
--- Supabase Dashboard > SQL Editor'da çalıştır
--- pg_cron ile günde 2 kez weather-cache Edge Function tetiklenir
--- 06:00 İstanbul = 03:00 UTC, 14:00 İstanbul = 11:00 UTC
+-- Open-Meteo önbelleği — Edge Function: weather-cache (12 bölge tek istekte)
+-- Supabase Dashboard > SQL Editor’da çalıştırın.
+-- Önkoşul: pg_cron + pg_net; Vault’ta çağrı için JWT (tercihen anon_key).
 --
--- Önkoşul: pg_cron ve pg_net extension'larının aktif olması gerekir.
--- Dashboard > Database > Extensions bölümünden aktif edilebilir.
+-- Barındırılan Supabase’te ALTER DATABASE ... SET app.service_role_key genelde
+-- 42501 verir. Anahtarı Vault’a koyun:
+--   SELECT vault.create_secret('eyJ..._ANON_KEY', 'anon_key');
+-- Anon ile invoke yetmezse:
+--   SELECT vault.create_secret('eyJ..._SERVICE_ROLE', 'service_role_key');
+-- ve aşağıda decrypted_secrets sorgusunda name = 'service_role_key' kullanın.
+--
+-- Eski günde 2 kez çalışan job’ları kaldırmak için (bir kez, gerekirse):
+--   SELECT cron.unschedule('weather-cache-morning');
+--   SELECT cron.unschedule('weather-cache-afternoon');
+--
+-- 1) Deploy:  supabase functions deploy weather-cache
+-- 2) URL’yi proje Reference ID ile eşleştirin.
 
 SELECT cron.schedule(
-  'weather-cache-morning',
-  '0 3 * * *',
+  'weather-cache-hourly',
+  '0 * * * *',   -- her saat başı UTC (İstanbul saatiyle çakışmaz; saatlik taze veri)
   $$
   SELECT net.http_post(
     url := 'https://bcsihxgekoqwbovbmlog.supabase.co/functions/v1/weather-cache',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.service_role_key', true)
+      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'anon_key')
     ),
-    body := jsonb_build_object('region', 'istanbul', 'lat', 41.0082, 'lng', 28.9784)
+    body := '{}'::jsonb
   );
   $$
 );
 
-SELECT cron.schedule(
-  'weather-cache-afternoon',
-  '0 11 * * *',
-  $$
-  SELECT net.http_post(
-    url := 'https://bcsihxgekoqwbovbmlog.supabase.co/functions/v1/weather-cache',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.service_role_key', true)
-    ),
-    body := jsonb_build_object('region', 'istanbul', 'lat', 41.0082, 'lng', 28.9784)
-  );
-  $$
-);
-
--- Kayıtlı cron job'ları doğrulamak için:
--- SELECT * FROM cron.job;
+-- Doğrulama: SELECT * FROM cron.job WHERE jobname = 'weather-cache-hourly';

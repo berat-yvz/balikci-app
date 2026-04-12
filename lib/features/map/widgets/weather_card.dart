@@ -35,7 +35,6 @@ class WeatherCard extends ConsumerWidget {
       error: (error, stack) => const SizedBox.shrink(),
       data: (data) {
         final w = data.current;
-        if (w == null) return const SizedBox.shrink();
 
         final score = FishingWeatherUtils.getFishingScore(w);
         final scoreEmoji = FishingWeatherUtils.getScoreEmoji(score);
@@ -76,10 +75,10 @@ class WeatherCard extends ConsumerWidget {
                               style: AppTextStyles.h3.copyWith(color: Colors.white),
                             ),
                             const SizedBox(width: 6),
-                            Icon(
-                              data.gpsUsed ? Icons.gps_fixed : Icons.location_city,
+                            const Icon(
+                              Icons.location_city,
                               size: 12,
-                              color: data.gpsUsed ? AppColors.primary : AppColors.muted,
+                              color: AppColors.muted,
                             ),
                           ],
                         ),

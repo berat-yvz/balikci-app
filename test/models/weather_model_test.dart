@@ -190,5 +190,39 @@ void main() {
       // stored windspeed = 10 * 3.6 = 36
       expect(m.windspeed, closeTo(36.0, 0.01));
     });
+
+    test('open_meteo_v1 bundle → current alanları ve getter’lar', () {
+      final json = {
+        'id': 'w-om',
+        'lat': 41.0,
+        'lng': 29.0,
+        'data_json': {
+          'source': 'open_meteo_v1',
+          'lat': 41.015,
+          'lng': 28.979,
+          'current': {
+            'temperature': 19.5,
+            'windspeed': 22.0,
+            'weather_code': 0,
+            'wave_height': 0.4,
+            'sea_surface_temperature': 18.0,
+            'precipitation': 0.0,
+            'visibility_m': 12000.0,
+            'cloud_cover': 10.0,
+          },
+          'hourly': [],
+        },
+        'fishing_summary': 'Test özeti',
+        'fetched_at': '2025-06-01T09:00:00.000',
+        'region_key': 'istanbul',
+      };
+      final m = WeatherModel.fromJson(json);
+      expect(m.tempCelsius, 19.5);
+      expect(m.windKmh, 22.0);
+      expect(m.weatherCode, 0);
+      expect(m.visibilityKm, 12.0);
+      expect(m.waveHeight, 0.4);
+      expect(m.regionKey, 'istanbul');
+    });
   });
 }

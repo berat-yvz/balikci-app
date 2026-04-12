@@ -1,15 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 
-import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/weather_service.dart';
 import 'package:balikci_app/data/models/hourly_weather_model.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
 
-/// Kullanıcı konumuna göre hava durumu verileri.
-/// GPS alınamazsa İstanbul fallback kullanılır.
+/// Hava durumu sekmesi — tek kaynak: Supabase `weather_cache` (İstanbul bölgesi).
+/// Sunucu her saat başı Open-Meteo verisini yazar; istemci yenileme göstermez / çekmez.
 ///
 /// Provider adı geriye uyumluluk için korunmuştur.
 final istanbulWeatherProvider =
@@ -19,101 +17,62 @@ final istanbulWeatherProvider =
 
 class IstanbulWeatherData {
   final List<HourlyWeatherModel> hourly;
-  final WeatherModel? current;
-  final DateTime lastUpdated;
-
-  /// Gerçek konumu temsil eder (GPS veya fallback).
+  final WeatherModel current;
   final double lat;
   final double lng;
-
-  /// GPS başarılı mıydı?
-  final bool gpsUsed;
 
   const IstanbulWeatherData({
     required this.hourly,
     required this.current,
-    required this.lastUpdated,
     required this.lat,
     required this.lng,
-    required this.gpsUsed,
   });
-
-  IstanbulWeatherData copyWith({
-    List<HourlyWeatherModel>? hourly,
-    WeatherModel? current,
-    DateTime? lastUpdated,
-    double? lat,
-    double? lng,
-    bool? gpsUsed,
-  }) {
-    return IstanbulWeatherData(
-      hourly: hourly ?? this.hourly,
-      current: current ?? this.current,
-      lastUpdated: lastUpdated ?? this.lastUpdated,
-      lat: lat ?? this.lat,
-      lng: lng ?? this.lng,
-      gpsUsed: gpsUsed ?? this.gpsUsed,
-    );
-  }
 }
 
 class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
-  static const double _fallbackLat = 41.0082;
-  static const double _fallbackLng = 28.9784;
+  static const String _regionKey = 'istanbul';
 
-  Timer? _updateTimer;
+  Timer? _pollTimer;
 
   @override
   Future<IstanbulWeatherData> build() async {
-    final data = await _fetchAllData();
-    _scheduleNextHourlyUpdate();
-    ref.onDispose(() => _updateTimer?.cancel());
+    final data = await _loadFromSupabase();
+    _scheduleHourlySupabasePoll();
+    ref.onDispose(() => _pollTimer?.cancel());
     return data;
   }
 
-  /// Bir sonraki tam saat başına kadar bekler, sonra günceller ve
-  /// tekrar planlar. Böylece veri her saat başında (00, 01, 02…)
-  /// otomatik yenilenir.
-  void _scheduleNextHourlyUpdate() {
-    _updateTimer?.cancel();
+  /// Bir sonraki tam saat başında yalnızca Supabase’ten tekrar oku (Open-Meteo yok).
+  void _scheduleHourlySupabasePoll() {
+    _pollTimer?.cancel();
     final now = DateTime.now();
     final nextHour = DateTime(now.year, now.month, now.day, now.hour + 1);
-    _updateTimer = Timer(nextHour.difference(now), () {
-      _autoRefresh();
-      _scheduleNextHourlyUpdate();
+    _pollTimer = Timer(nextHour.difference(now), () {
+      unawaited(_silentReload());
+      _scheduleHourlySupabasePoll();
     });
   }
 
-  Future<IstanbulWeatherData> _fetchAllData() async {
-    // Cihaz konumunu al; başarısız olursa fallback
-    Position? pos;
-    bool gpsUsed = false;
+  Future<void> _silentReload() async {
     try {
-      pos = await LocationService.getCurrentPosition();
-      gpsUsed = pos != null;
-    } catch (_) {}
-
-    final lat = pos?.latitude ?? _fallbackLat;
-    final lng = pos?.longitude ?? _fallbackLng;
-
-    final hourly = await WeatherService.fetchHourlyForecast(lat: lat, lng: lng);
-    final current =
-        await WeatherService.getWeatherForLocation(lat: lat, lng: lng);
-
-    return IstanbulWeatherData(
-      hourly: hourly,
-      current: current,
-      lastUpdated: DateTime.now(),
-      lat: lat,
-      lng: lng,
-      gpsUsed: gpsUsed,
-    );
+      final next = await _loadFromSupabase();
+      state = AsyncData(next);
+    } catch (_) {
+      // Mevcut veriyi koru
+    }
   }
 
-  Future<void> _autoRefresh() async {
-    try {
-      final newData = await _fetchAllData();
-      state = AsyncData(newData);
-    } catch (_) {}
+  Future<IstanbulWeatherData> _loadFromSupabase() async {
+    final snap =
+        await WeatherService.fetchRegionalWeatherFromSupabase(_regionKey);
+    if (snap == null) {
+      throw StateError('Hava önbelleği boş. Sunucu weather-cache cron kontrol edin.');
+    }
+    return IstanbulWeatherData(
+      hourly: snap.hourly,
+      current: snap.current,
+      lat: snap.lat,
+      lng: snap.lng,
+    );
   }
 }

@@ -9,7 +9,7 @@ import 'package:balikci_app/data/models/weather_model.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
 
 /// Detaylı hava durumu ekranı — H9 sprint.
-/// Veri her saat başında otomatik güncellenir; manuel yenileme yoktur.
+/// Veri yalnızca sunucu `weather_cache` üzerinden gelir; manuel yenileme yoktur.
 class WeatherScreen extends ConsumerWidget {
   const WeatherScreen({super.key});
 
@@ -41,27 +41,21 @@ class WeatherScreen extends ConsumerWidget {
           final hoursFromNow = _next24Hours(data.hourly);
           final currentHour =
               hoursFromNow.isNotEmpty ? hoursFromNow.first : null;
-          return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(istanbulWeatherProvider),
-            child: ListView(
+          return ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
               children: [
-                // Konum başlığı
                 Row(
                   children: [
-                    Icon(
-                      data.gpsUsed ? Icons.gps_fixed : Icons.location_city,
-                      color:
-                          data.gpsUsed ? AppColors.primary : AppColors.muted,
+                    const Icon(
+                      Icons.location_city,
+                      color: AppColors.muted,
                       size: 20,
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      data.gpsUsed ? 'Konumunuz' : 'İstanbul (varsayılan)',
+                      'İstanbul kıyı özeti',
                       style: AppTextStyles.h3.copyWith(
-                        color: data.gpsUsed
-                            ? AppColors.primary
-                            : AppColors.muted,
+                        color: AppColors.muted,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -69,17 +63,15 @@ class WeatherScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
 
-                if (data.current != null) ...[
-                  _WeatherHeroCard(weather: data.current!),
-                  const SizedBox(height: 10),
-                  _FishingScoreCard(weather: data.current!, compact: true),
-                  const SizedBox(height: 12),
-                  _WeatherDetailGrid(
-                    weather: data.current!,
-                    currentHour: currentHour,
-                  ),
-                  const SizedBox(height: 12),
-                ],
+                _WeatherHeroCard(weather: data.current),
+                const SizedBox(height: 10),
+                _FishingScoreCard(weather: data.current, compact: true),
+                const SizedBox(height: 12),
+                _WeatherDetailGrid(
+                  weather: data.current,
+                  currentHour: currentHour,
+                ),
+                const SizedBox(height: 12),
 
                 // ADIM 4: Saatlik tahmin yatay kaydırmalı
                 if (hoursFromNow.isNotEmpty) ...[
@@ -118,16 +110,8 @@ class WeatherScreen extends ConsumerWidget {
                 const _MoonPhaseCard(),
                 const SizedBox(height: 12),
 
-                if (data.current != null) ...[
-                  const SizedBox(height: 8),
-                  _UpdateInfo(
-                    weather: data.current!,
-                    lastUpdated: data.lastUpdated,
-                  ),
-                ],
               ],
-            ),
-          );
+            );
         },
       ),
     );
@@ -970,47 +954,6 @@ class _FishingTips extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _UpdateInfo extends StatelessWidget {
-  final WeatherModel weather;
-  final DateTime lastUpdated;
-  const _UpdateInfo({required this.weather, required this.lastUpdated});
-
-  @override
-  Widget build(BuildContext context) {
-    final ago = DateTime.now().difference(lastUpdated);
-    final label = ago.inMinutes < 60
-        ? '${ago.inMinutes} dakika önce güncellendi'
-        : '${ago.inHours} saat önce güncellendi';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppColors.muted.withValues(alpha: 0.2),
-          width: 0.5,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('🕐', style: TextStyle(fontSize: 14)),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.muted,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

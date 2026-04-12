@@ -52,18 +52,24 @@ serve(async (req: Request) => {
       )
     }
 
-    // ── İstanbul hava özetini al ─────────────────────────────────────────────
+    // ── İstanbul hava özetini al (weather_cache: region_key + open_meteo_v1) ─
     const { data: weatherRow } = await supabase
       .from('weather_cache')
-      .select('fishing_summary, wind_speed, temperature_2m')
-      .eq('region', 'istanbul')
-      .order('fetched_at', { ascending: false })
-      .limit(1)
-      .single()
+      .select('fishing_summary, data_json')
+      .eq('region_key', 'istanbul')
+      .maybeSingle()
 
     const summary = weatherRow?.fishing_summary ?? 'Bugün hava durumunu kontrol et 🎣'
-    const wind = weatherRow?.wind_speed != null ? `💨 ${Math.round(weatherRow.wind_speed)} km/s` : ''
-    const temp = weatherRow?.temperature_2m != null ? `🌡️ ${Math.round(weatherRow.temperature_2m)}°C` : ''
+    let wind = ''
+    let temp = ''
+    const dj = weatherRow?.data_json as Record<string, unknown> | null | undefined
+    const cur = dj?.current as Record<string, unknown> | undefined
+    if (cur) {
+      const w = cur.windspeed as number | undefined
+      const t = cur.temperature as number | undefined
+      if (w != null) wind = `💨 ${Math.round(w)} km/s`
+      if (t != null) temp = `🌡️ ${Math.round(t)}°C`
+    }
     const detail = [temp, wind].filter(Boolean).join('  ')
 
     const notifBody = detail ? `${summary}\n${detail}` : summary

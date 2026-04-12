@@ -638,8 +638,6 @@ class _WeatherBanner extends ConsumerWidget {
       error: (error, stack) => const SizedBox.shrink(),
       data: (data) {
         final w = data.current;
-        if (w == null) return const SizedBox.shrink();
-
         final temp = w.tempCelsius.toStringAsFixed(1);
         final wind = w.windKmh.toStringAsFixed(0);
 
@@ -659,7 +657,7 @@ class _WeatherBanner extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      data.gpsUsed ? 'Konumunuzdaki Hava' : 'İstanbul Havası',
+                      'İstanbul kıyı havası',
                       style: const TextStyle(
                         color: Color(0xFF8EA0B5),
                         fontSize: 13,
