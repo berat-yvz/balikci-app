@@ -50,14 +50,54 @@ type CalendarRow = {
   notify_days_before: number
 }
 
+function rowToCalendar(r: Record<string, unknown>): CalendarRow | null {
+  const id = r.id
+  const species = r.species_name
+  if (typeof id !== 'string' || typeof species !== 'string') return null
+  const startMonth = Number(r.start_month)
+  const startDay = Number(r.start_day)
+  const notifyDays = Number(r.notify_days_before)
+  if (![startMonth, startDay, notifyDays].every((n) => Number.isFinite(n))) return null
+  if (startMonth < 1 || startMonth > 12 || startDay < 1 || startDay > 31) return null
+  if (notifyDays < 1 || notifyDays > 90) return null
+  return {
+    id,
+    species_name: species,
+    start_month: startMonth,
+    start_day: startDay,
+    notify_days_before: notifyDays,
+  }
+}
+
+function requireEnv(name: string): string | null {
+  const v = Deno.env.get(name)?.trim()
+  return v && v.length > 0 ? v : null
+}
+
 // ── Günlük cron: N gün kala aktif kullanıcılara bir kez push ─────────────────
 
 serve(async (req: Request) => {
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    )
+    if (req.method !== 'POST' && req.method !== 'OPTIONS') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { status: 204 })
+    }
+
+    const supabaseUrl = requireEnv('SUPABASE_URL')
+    const serviceKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY')
+    if (!supabaseUrl || !serviceKey) {
+      return new Response(
+        JSON.stringify({ error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } },
+      )
+    }
+
+    const supabase = createClient(supabaseUrl, serviceKey)
 
     const now = new Date()
 
@@ -73,7 +113,11 @@ serve(async (req: Request) => {
       )
     }
 
-    const due = (rows ?? []).filter((r: CalendarRow) => {
+    const calendarRows = (rows ?? [])
+      .map((r) => rowToCalendar(r as unknown as Record<string, unknown>))
+      .filter((x): x is CalendarRow => x != null)
+
+    const due = calendarRows.filter((r) => {
       const days = daysUntilSeasonStart(r.start_month, r.start_day, now)
       return days === r.notify_days_before
     })
@@ -86,11 +130,20 @@ serve(async (req: Request) => {
     }
 
     const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-    const { data: activeUsers } = await supabase
+    const { data: activeUsers, error: checkinsErr } = await supabase
       .from('checkins')
       .select('user_id')
       .gte('created_at', since30d)
+      .eq('is_hidden', false)
       .limit(2000)
+
+    if (checkinsErr) {
+      console.error('checkins (aktif kullanıcılar):', checkinsErr.message)
+      return new Response(
+        JSON.stringify({ error: `checkins: ${checkinsErr.message}` }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } },
+      )
+    }
 
     const uniqueUserIds = [...new Set(
       (activeUsers ?? []).map((r: { user_id: string }) => r.user_id),
@@ -125,19 +178,28 @@ serve(async (req: Request) => {
 
     const eligibleUserIds = uniqueUserIds.filter((id) => !disabledSeason.has(id))
 
-    const senderUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/notification-sender`
-    const authHeader = `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+    const baseUrl = supabaseUrl.replace(/\/$/, '')
+    const senderUrl = `${baseUrl}/functions/v1/notification-sender`
+    const authHeader = `Bearer ${serviceKey}`
 
     let sent = 0
 
     for (const season of due) {
       const seasonYear = seasonYearForStart(season.start_month, season.start_day, now)
 
-      const { data: already } = await supabase
+      const { data: already, error: logReadErr } = await supabase
         .from('fish_season_push_log')
         .select('user_id')
         .eq('calendar_id', season.id)
         .eq('season_year', seasonYear)
+
+      if (logReadErr) {
+        console.error(
+          'fish_season_push_log okunamadı; bu sezon atlanıyor (çift gönderim riski):',
+          logReadErr.message,
+        )
+        continue
+      }
 
       const sentSet = new Set<string>(
         (already ?? []).map((r: { user_id: string }) => r.user_id),
@@ -150,9 +212,9 @@ serve(async (req: Request) => {
       const batchSize = 40
       for (let i = 0; i < eligibleUserIds.length; i += batchSize) {
         const batch = eligibleUserIds.slice(i, i + batchSize)
-        await Promise.allSettled(
-          batch.map(async (uid) => {
-            if (sentSet.has(uid)) return
+        const increments = await Promise.all(
+          batch.map(async (uid): Promise<number> => {
+            if (sentSet.has(uid)) return 0
             try {
               // Önce log: çift cron / yarışta yalnızca bir kez push (unique ihlal = atla).
               const { error: insErr } = await supabase.from('fish_season_push_log').insert({
@@ -161,9 +223,9 @@ serve(async (req: Request) => {
                 season_year: seasonYear,
               })
               if (insErr) {
-                if (insErr.code === '23505') return
+                if (insErr.code === '23505') return 0
                 console.error('fish_season_push_log insert:', insErr.message)
-                return
+                return 0
               }
               let pushOk = false
               try {
@@ -197,15 +259,17 @@ serve(async (req: Request) => {
                   .eq('user_id', uid)
                   .eq('calendar_id', season.id)
                   .eq('season_year', seasonYear)
-                return
+                return 0
               }
               sentSet.add(uid)
-              sent++
+              return 1
             } catch (e) {
               console.error(`season-reminder gönderilemedi (${uid}):`, e)
+              return 0
             }
           }),
         )
+        sent += increments.reduce((a, b) => a + b, 0)
       }
     }
 
