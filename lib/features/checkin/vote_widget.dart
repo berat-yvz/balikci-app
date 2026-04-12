@@ -221,11 +221,10 @@ class _VoteWidgetState extends State<VoteWidget> {
             ),
           )
         else if (_myVote == null) ...[
-          const Text(
+          Text(
             'Bu bildirim doğru mu?',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 15,
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.foam,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -260,29 +259,35 @@ class _VoteWidgetState extends State<VoteWidget> {
                 _myVote == true
                     ? Icons.check_circle_rounded
                     : Icons.cancel_rounded,
-                size: 20,
+                size: 28,
                 color:
                     _myVote == true ? AppColors.success : AppColors.danger,
               ),
               const SizedBox(width: 7),
-              Text(
-                _myVote == true ? 'Doğru oyladınız' : 'Yanlış oyladınız',
-                style: TextStyle(
-                  color:
-                      _myVote == true ? AppColors.success : AppColors.danger,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+              Expanded(
+                child: Text(
+                  _myVote == true ? 'Doğru oyladınız' : 'Yanlış oyladınız',
+                  style: TextStyle(
+                    color:
+                        _myVote == true ? AppColors.success : AppColors.danger,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              const Spacer(),
-              GestureDetector(
-                onTap: _voting ? null : () => _castOrToggle(_myVote!),
-                child: const Text(
-                  'Geri al',
-                  style: TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 12,
-                    decoration: TextDecoration.underline,
+              SizedBox(
+                height: 48,
+                child: TextButton(
+                  onPressed:
+                      _voting ? null : () => _castOrToggle(_myVote!),
+                  child: Text(
+                    'Geri al',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.muted,
+                      decoration: TextDecoration.underline,
+                      decorationColor: AppColors.muted,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -364,11 +369,14 @@ class _VoteBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: disabled ? null : onTap,
-      child: AnimatedContainer(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: disabled ? null : onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 140),
-        height: 52,
+        height: 56,
         decoration: BoxDecoration(
           color: selected
               ? color.withValues(alpha: 0.18)
@@ -386,11 +394,12 @@ class _VoteBtn extends StatelessWidget {
             label,
             style: TextStyle(
               color: disabled ? AppColors.muted : color,
-              fontSize: 15,
+              fontSize: 16,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.4,
             ),
           ),
+        ),
         ),
       ),
     );

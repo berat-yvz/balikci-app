@@ -9,10 +9,13 @@ class AppColors {
   static const sand = Color(0xFFC9A84C); // sandy gold
   static const foam = Color(0xFFF0F8FF); // foam white
 
-  // App semantic colors — ADIM 1: hedef kitleye göre güncellendi
-  static const primary = Color(0xFF0077B6); // derin deniz mavisi
-  static const secondary = Color(0xFFF77F00); // aksan turuncu/amber
-  static const accent = secondary; // alias for convenience
+  // App semantic colors — marka / erişilebilirlik
+  static const primary = Color(0xFF0F6E56);
+  static const secondary = Color(0xFF185FA5);
+  static const accent = Color(0xFFEF9F27);
+
+  /// Harita dükkan pin’i (meralardan ayrışan turuncu)
+  static const shopMarker = Color(0xFFF57C00);
   static const primaryLight = Color(0xFFDCEEF8);
   static const background = Color(0xFF07101E); // dark scaffold
   static const backgroundLight = Color(0xFFF8F9FA); // açık yüzey (kartlar vb)
@@ -129,7 +132,7 @@ ThemeData buildAppTheme() {
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.foam,
-        minimumSize: const Size.fromHeight(52), // ADIM 1: min 52dp
+        minimumSize: const Size.fromHeight(56),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         textStyle: const TextStyle(
           fontSize: 16,
@@ -147,7 +150,7 @@ ThemeData buildAppTheme() {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(52), // ADIM 1: min 52dp
+        minimumSize: const Size.fromHeight(56),
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:balikci_app/app/router.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/score_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
@@ -103,7 +104,8 @@ class _VoteDialogState extends State<VoteDialog> {
         if (wasHidden) {
           setState(() => _hidden = true);
           await Future<void>.delayed(const Duration(milliseconds: 1200));
-          if (mounted) Navigator.of(context).pop();
+          if (!mounted) return;
+          appNavigatorKey.currentState?.pop();
           return;
         }
 
@@ -128,7 +130,8 @@ class _VoteDialogState extends State<VoteDialog> {
 
       // Oy başarılı → kısa bekleme sonra kapat
       await Future<void>.delayed(const Duration(milliseconds: 600));
-      if (mounted) Navigator.of(context).pop();
+      if (!mounted) return;
+      appNavigatorKey.currentState?.pop();
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -148,15 +151,21 @@ class _VoteDialogState extends State<VoteDialog> {
     final total = _trueCount + _falseCount;
     final trustPct = total == 0 ? 0.0 : (_trueCount / total).clamp(0.0, 1.0);
 
+    final maxH = MediaQuery.sizeOf(context).height * 0.85;
+
     return Dialog(
       backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxH),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
             // Başlık
             Text(
               '🎣  Bu Bildirim Doğru mu?',
@@ -231,14 +240,22 @@ class _VoteDialogState extends State<VoteDialog> {
             ],
 
             const SizedBox(height: 14),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'İptal',
-                style: TextStyle(color: AppColors.muted, fontSize: 16),
+            SizedBox(
+              height: 48,
+              child: TextButton(
+                onPressed: () {
+                  if (!context.mounted) return;
+                  Navigator.of(context).pop();
+                },
+                child: Text(
+                  'İptal',
+                  style: AppTextStyles.body.copyWith(color: AppColors.muted),
+                ),
               ),
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -280,9 +297,11 @@ class _CheckinSummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: AppColors.foam.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+        border: Border.all(
+          color: AppColors.foam.withValues(alpha: 0.10),
+        ),
       ),
       child: Column(
         children: [
@@ -310,9 +329,8 @@ class _CheckinSummaryCard extends StatelessWidget {
                   children: [
                     Text(
                       _fishLabel(checkin.fishDensity),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.foam,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -431,7 +449,7 @@ class _VoteBtn extends StatelessWidget {
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.foam,
           disabledBackgroundColor: color.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -439,10 +457,11 @@ class _VoteBtn extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: const TextStyle(
+          style: AppTextStyles.body.copyWith(
             fontSize: 16,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.4,
+            color: AppColors.foam,
           ),
         ),
       ),
@@ -485,15 +504,19 @@ class _VotedState extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        GestureDetector(
-          onTap: onUndo,
-          child: const Text(
-            'Oyumu geri al',
-            style: TextStyle(
-              color: AppColors.muted,
-              fontSize: 14,
-              decoration: TextDecoration.underline,
-              decorationColor: AppColors.muted,
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: TextButton(
+            onPressed: onUndo,
+            child: Text(
+              'Oyumu geri al',
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.muted,
+                decoration: TextDecoration.underline,
+                decorationColor: AppColors.muted,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ),

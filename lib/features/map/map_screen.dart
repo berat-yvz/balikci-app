@@ -801,7 +801,7 @@ class _MapScreenState extends State<MapScreen> {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0F6E56),
+                              color: AppColors.primary,
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: Colors.white,
@@ -1192,93 +1192,116 @@ class _MapScreenState extends State<MapScreen> {
                         ],
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: ListView(
+                      child: CustomScrollView(
                         key: ValueKey<String>('spot_sheet_${sheetSpot.id}'),
                         controller: scrollController,
                         physics: const AlwaysScrollableScrollPhysics(
                           parent: ClampingScrollPhysics(),
                         ),
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        children: [
-                          Center(
-                            child: Container(
-                              margin: const EdgeInsets.only(top: 8, bottom: 12),
-                              width: 40,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.withValues(alpha: 0.4),
-                                borderRadius: BorderRadius.circular(2),
+                        slivers: [
+                          SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            sliver: SliverToBoxAdapter(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Center(
+                                    child: Container(
+                                      margin: const EdgeInsets.only(
+                                        top: 8,
+                                        bottom: 12,
+                                      ),
+                                      width: 40,
+                                      height: 4,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.muted.withValues(
+                                          alpha: 0.45,
+                                        ),
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                  ),
+                                  _SpotSheetHeader(
+                                    spot: sheetSpot,
+                                    activeCount: activeCount,
+                                    hasMuhtar: sheetSpot.muhtarId != null,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  if (mostRecent != null)
+                                    _LatestCheckinBanner(checkin: mostRecent),
+                                  if (mostRecent != null)
+                                    const SizedBox(height: 10),
+                                  _WeatherMiniRow(
+                                    loading: _weatherLoading,
+                                    tempC: tempC,
+                                    windKmh: windKmh,
+                                    waveM: weather?.waveHeight,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  SizedBox(
+                                    height: 56,
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Expanded(
+                                          child: _SheetPrimaryButton(
+                                            onPressed: () =>
+                                                _openCheckinForSpot(sheetSpot),
+                                            icon: Icons.check_circle_outline,
+                                            label: 'Balık Var!',
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: _SheetSecondaryButton(
+                                            onPressed: () =>
+                                                _openDirectionsForSpot(
+                                                  sheetSpot,
+                                                ),
+                                            icon: Icons.directions,
+                                            label: 'Yol Tarifi',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isOwner) ...[
+                                    const SizedBox(height: 10),
+                                    _SheetSecondaryButton(
+                                      onPressed: () =>
+                                          _openEditForSpot(sheetSpot),
+                                      icon: Icons.edit_outlined,
+                                      label: 'Mera Düzenle',
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _SheetSecondaryButton(
+                                      onPressed: () =>
+                                          _confirmAndDeleteSpot(sheetSpot),
+                                      icon: Icons.delete_outline,
+                                      label: 'Merayı Sil',
+                                    ),
+                                  ],
+                                  const SizedBox(height: 12),
+                                  if (sheetDescriptionTrimmed != null &&
+                                      sheetDescriptionTrimmed.isNotEmpty)
+                                    Text(
+                                      sheetDescriptionTrimmed,
+                                      style: AppTextStyles.body.copyWith(
+                                        color: AppColors.foam.withValues(
+                                          alpha: 0.78,
+                                        ),
+                                      ),
+                                    ),
+                                  if (sheetDescriptionTrimmed != null &&
+                                      sheetDescriptionTrimmed.isNotEmpty)
+                                    const SizedBox(height: 12),
+                                  _RecentCheckinsRow(checkins: sheetCheckins),
+                                ],
                               ),
                             ),
                           ),
-                          _SpotSheetHeader(
-                            spot: sheetSpot,
-                            activeCount: activeCount,
-                            hasMuhtar: sheetSpot.muhtarId != null,
-                          ),
-                          const SizedBox(height: 10),
-                          if (mostRecent != null)
-                            _LatestCheckinBanner(checkin: mostRecent),
-                          if (mostRecent != null) const SizedBox(height: 10),
-                          _WeatherMiniRow(
-                            loading: _weatherLoading,
-                            tempC: tempC,
-                            windKmh: windKmh,
-                            waveM: weather?.waveHeight,
-                          ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            height: 48,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Expanded(
-                                  child: _SheetPrimaryButton(
-                                    onPressed: () =>
-                                        _openCheckinForSpot(sheetSpot),
-                                    icon: Icons.check_circle_outline,
-                                    label: 'Balık Var!',
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: _SheetSecondaryButton(
-                                    onPressed: () =>
-                                        _openDirectionsForSpot(sheetSpot),
-                                    icon: Icons.directions,
-                                    label: 'Yol Tarifi',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (isOwner) ...[
-                            const SizedBox(height: 10),
-                            _SheetSecondaryButton(
-                              onPressed: () => _openEditForSpot(sheetSpot),
-                              icon: Icons.edit_outlined,
-                              label: 'Mera Düzenle',
-                            ),
-                            const SizedBox(height: 8),
-                            _SheetSecondaryButton(
-                              onPressed: () => _confirmAndDeleteSpot(sheetSpot),
-                              icon: Icons.delete_outline,
-                              label: 'Merayı Sil',
-                            ),
-                          ],
-                          const SizedBox(height: 12),
-                          if (sheetDescriptionTrimmed != null &&
-                              sheetDescriptionTrimmed.isNotEmpty)
-                            Text(
-                              sheetDescriptionTrimmed,
-                              style: AppTextStyles.body.copyWith(
-                                color: AppColors.foam.withValues(alpha: 0.78),
-                              ),
-                            ),
-                          if (sheetDescriptionTrimmed != null &&
-                              sheetDescriptionTrimmed.isNotEmpty)
-                            const SizedBox(height: 12),
-                          _RecentCheckinsRow(checkins: sheetCheckins),
                         ],
                       ),
                     ),
@@ -1756,7 +1779,7 @@ class _SheetPrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 48,
+      height: 56,
       child: ElevatedButton.icon(
         onPressed: onPressed,
         icon: Icon(icon),
@@ -1780,7 +1803,7 @@ class _SheetSecondaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 48,
+      height: 56,
       child: OutlinedButton.icon(
         onPressed: onPressed,
         icon: Icon(icon, color: AppColors.foam.withValues(alpha: 0.92)),
@@ -1958,9 +1981,8 @@ class _CheckinCard extends StatelessWidget {
               children: [
                 Text(
                   _fishLabel(checkin.fishDensity),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
+                  style: AppTextStyles.body.copyWith(
+                    color: AppColors.foam,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -2010,15 +2032,18 @@ class _CheckinCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
 
-          // Sağ: "Doğru mu?" butonu
+          // Sağ: "Doğru mu?" butonu — minimum 56dp dokunma hedefi
           SizedBox(
-            height: 44,
+            width: 72,
+            height: 56,
             child: OutlinedButton(
               onPressed: onVoteTap,
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
                 foregroundColor: AppColors.foam,
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.20)),
+                side: BorderSide(
+                  color: AppColors.foam.withValues(alpha: 0.22),
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -2026,7 +2051,11 @@ class _CheckinCard extends StatelessWidget {
               child: const Text(
                 'Doğru\nmu?',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.foam,
+                ),
               ),
             ),
           ),
@@ -2166,7 +2195,7 @@ class _ShopPin extends StatelessWidget {
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: const Color(0xFFF57C00), // turuncu — meralardan farklı
+        color: AppColors.shopMarker,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -2183,9 +2212,9 @@ class _ShopPin extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: Colors.white, size: 20),
+          Icon(icon, color: AppColors.foam, size: 22),
           if (shop.verified)
-            const Icon(Icons.verified, color: Colors.white, size: 10),
+            const Icon(Icons.verified, color: AppColors.foam, size: 10),
         ],
       ),
     );
@@ -2236,12 +2265,12 @@ class _ShopDetailSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF57C00).withValues(alpha: 0.15),
+                  color: AppColors.shopMarker.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.storefront,
-                  color: Color(0xFFF57C00),
+                  color: AppColors.shopMarker,
                   size: 28,
                 ),
               ),
@@ -2252,7 +2281,7 @@ class _ShopDetailSheet extends StatelessWidget {
                   children: [
                     Text(
                       shop.name,
-                      style: AppTextStyles.h3,
+                      style: AppTextStyles.h3.copyWith(color: AppColors.foam),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -2267,16 +2296,16 @@ class _ShopDetailSheet extends StatelessWidget {
                         ),
                         if (shop.verified) ...[
                           const SizedBox(width: 6),
-                          const Icon(
+                          Icon(
                             Icons.verified,
-                            color: Color(0xFF4CB2FF),
+                            color: AppColors.secondary.withValues(alpha: 0.95),
                             size: 14,
                           ),
                           const SizedBox(width: 2),
                           Text(
                             'Doğrulandı',
                             style: AppTextStyles.caption.copyWith(
-                              color: const Color(0xFF4CB2FF),
+                              color: AppColors.secondary.withValues(alpha: 0.95),
                             ),
                           ),
                         ],
@@ -2322,7 +2351,10 @@ class _InfoRow extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: AppColors.muted),
           const SizedBox(width: 10),
-          Text(text, style: AppTextStyles.body.copyWith(color: Colors.white)),
+          Text(
+            text,
+            style: AppTextStyles.body.copyWith(color: AppColors.foam),
+          ),
         ],
       ),
     );

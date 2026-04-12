@@ -122,17 +122,19 @@ class _CheckinScreenState extends State<CheckinScreen>
 
       if (pos == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(children: [
-              Icon(Icons.gps_off, color: Colors.white),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Konum alınamadı. GPS açık mı?',
-                  style: TextStyle(fontSize: 16),
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.gps_off, color: AppColors.foam),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Konum alınamadı. GPS açık mı?',
+                    style: AppTextStyles.body.copyWith(color: AppColors.foam),
+                  ),
                 ),
-              ),
-            ]),
+              ],
+            ),
             backgroundColor: AppColors.danger,
           ),
         );
@@ -152,7 +154,7 @@ class _CheckinScreenState extends State<CheckinScreen>
             content: Text(
               'Meradan çok uzaksın (~${distMeters.toStringAsFixed(0)} m). '
               '${AppConstants.checkinRadiusMeters} m yaklaşman gerek.',
-              style: const TextStyle(fontSize: 16),
+              style: AppTextStyles.body.copyWith(color: AppColors.foam),
             ),
             backgroundColor: AppColors.danger,
           ),
@@ -177,10 +179,10 @@ class _CheckinScreenState extends State<CheckinScreen>
         await SyncService.instance.enqueue('insert', 'checkins', payload);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
               '📡 Çevrimdışısın — bildirim kuyruğa alındı.',
-              style: TextStyle(fontSize: 16),
+              style: AppTextStyles.body.copyWith(color: AppColors.foam),
             ),
             backgroundColor: AppColors.warning,
             duration: Duration(seconds: 4),
@@ -195,10 +197,10 @@ class _CheckinScreenState extends State<CheckinScreen>
       if (created == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
               'Bildirim gönderilemedi',
-              style: TextStyle(fontSize: 16),
+              style: AppTextStyles.body.copyWith(color: AppColors.foam),
             ),
             backgroundColor: AppColors.danger,
           ),
@@ -265,7 +267,7 @@ class _CheckinScreenState extends State<CheckinScreen>
         SnackBar(
           content: Text(
             'Bildirim gönderilemedi: $e',
-            style: const TextStyle(fontSize: 16),
+            style: AppTextStyles.body.copyWith(color: AppColors.foam),
           ),
           backgroundColor: AppColors.danger,
         ),
@@ -289,23 +291,28 @@ class _CheckinScreenState extends State<CheckinScreen>
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: Colors.black54,
+      backgroundColor: AppColors.navy.withValues(alpha: 0.55),
       body: SafeArea(
         child: Column(
           children: [
-            // Küçük tutamaç göstergesi
-            GestureDetector(
-              onTap: () => context.pop(false),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white38,
-                      borderRadius: BorderRadius.circular(2),
+            // Küçük tutamaç — tam genişlik, açık dokunma alanı
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => context.pop(false),
+                child: const SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: Center(
+                    child: SizedBox(
+                      width: 40,
+                      height: 4,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: AppColors.muted,
+                          borderRadius: BorderRadius.all(Radius.circular(2)),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -314,16 +321,19 @@ class _CheckinScreenState extends State<CheckinScreen>
             Expanded(
               child: Container(
                 decoration: const BoxDecoration(
-                  color: Color(0xFF0B1C33),
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
+                clipBehavior: Clip.antiAlias,
                 child: _loadingSpot
                     ? const Center(child: CircularProgressIndicator())
                     : _spot == null
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'Mera bulunamadı.',
-                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          style: AppTextStyles.body.copyWith(
+                            color: AppColors.foam,
+                          ),
                         ),
                       )
                     : _currentPage == 0
@@ -389,200 +399,245 @@ class _Page1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Buraya Balık Tutuldu!',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Konum chip
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  border:
-                      Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
-                ),
-                child: Row(
+    final cardBg = Theme.of(context).cardColor;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.location_on,
-                        color: AppColors.primary, size: 18),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        spot.name,
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Buraya Balık Tutuldu!',
+                            style: AppTextStyles.h2.copyWith(
+                              color: AppColors.foam,
+                              fontSize: 24,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.location_on,
+                                  color: AppColors.primary,
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    spot.name,
+                                    style: AppTextStyles.body.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Ne Balığı Tutuldu?',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.muted,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: 60,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: _CheckinScreenState._fishTypeOptions.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final type =
+                              _CheckinScreenState._fishTypeOptions[index];
+                          final isSelected = selectedFishTypes.contains(type);
+                          return FilterChip(
+                            label: Text(
+                              type,
+                              style: AppTextStyles.body.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: isSelected
+                                    ? AppColors.foam
+                                    : AppColors.muted,
+                              ),
+                            ),
+                            selected: isSelected,
+                            onSelected: (_) => onFishTypeToggle(type),
+                            selectedColor: AppColors.secondary,
+                            backgroundColor: cardBg,
+                            checkmarkColor: AppColors.foam,
+                            side: BorderSide(
+                              color: isSelected
+                                  ? AppColors.secondary
+                                  : AppColors.muted.withValues(alpha: 0.35),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Balık Yoğunluğu',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.muted,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: _densityOptions.map((opt) {
+                              final (value, emoji, label) = opt;
+                              final isSelected = fishDensity == value;
+                              return Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 6),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(12),
+                                      onTap: () => onDensityChanged(value),
+                                      child: AnimatedContainer(
+                                        duration:
+                                            const Duration(milliseconds: 150),
+                                        height: 72,
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? AppColors.primary
+                                                  .withValues(alpha: 0.20)
+                                              : AppColors.foam
+                                                  .withValues(alpha: 0.05),
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? AppColors.primary
+                                                : AppColors.muted
+                                                    .withValues(alpha: 0.35),
+                                            width: isSelected ? 2 : 1,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              emoji,
+                                              style: const TextStyle(
+                                                fontSize: 28,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              label,
+                                              textAlign: TextAlign.center,
+                                              style: AppTextStyles.caption
+                                                  .copyWith(
+                                                color: isSelected
+                                                    ? AppColors.primary
+                                                    : AppColors.muted,
+                                                fontWeight: isSelected
+                                                    ? FontWeight.w800
+                                                    : FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Ne Balığı Tutuldu?',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-          ),
-        ),
-        // Balık türleri — yatay kaydırmalı
-        SizedBox(
-          height: 48,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: _CheckinScreenState._fishTypeOptions.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              final type = _CheckinScreenState._fishTypeOptions[index];
-              final isSelected = selectedFishTypes.contains(type);
-              return FilterChip(
-                label: Text(
-                  type,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: isSelected ? Colors.white : Colors.white70,
-                  ),
-                ),
-                selected: isSelected,
-                onSelected: (_) => onFishTypeToggle(type),
-                selectedColor: AppColors.secondary,
-                backgroundColor: const Color(0xFF132236),
-                checkmarkColor: Colors.white,
-                side: BorderSide(
-                  color: isSelected
-                      ? AppColors.secondary
-                      : Colors.white24,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-              );
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Balık Yoğunluğu',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: _densityOptions.map((opt) {
-                  final (value, emoji, label) = opt;
-                  final isSelected = fishDensity == value;
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: GestureDetector(
-                        onTap: () => onDensityChanged(value),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          height: 72,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.primary.withValues(alpha: 0.20)
-                                : Colors.white.withValues(alpha: 0.05),
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : Colors.white24,
-                              width: isSelected ? 2 : 1,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                emoji,
-                                style: const TextStyle(fontSize: 18),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                label,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : Colors.white54,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w800
-                                      : FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: onNext,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.foam,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
                         ),
                       ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Devam Et',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.foam,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 28,
+                            color: AppColors.foam,
+                          ),
+                        ],
+                      ),
                     ),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-        ),
-        const Spacer(),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-          child: SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: onNext,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Devam Et',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
                   ),
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_forward_rounded, size: 22),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
@@ -613,127 +668,170 @@ class _Page2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Geri + başlık
-        Padding(
-          padding: const EdgeInsets.fromLTRB(8, 16, 20, 0),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: onBack,
-                icon: const Icon(Icons.arrow_back_rounded,
-                    color: Colors.white70, size: 26),
-                tooltip: 'Geri',
-              ),
-              const Text(
-                'Kalabalık Durumu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: _crowdOptions.map((opt) {
-                  final (value, emoji, label) = opt;
-                  final isSelected = crowdLevel == value;
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: GestureDetector(
-                        onTap: () => onCrowdChanged(value),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          height: 72,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.secondary.withValues(alpha: 0.20)
-                                : Colors.white.withValues(alpha: 0.05),
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppColors.secondary
-                                  : Colors.white24,
-                              width: isSelected ? 2 : 1,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(emoji,
-                                  style: const TextStyle(fontSize: 18)),
-                              const SizedBox(height: 4),
-                              Text(
-                                label,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: isSelected
-                                      ? AppColors.secondary
-                                      : Colors.white54,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w800
-                                      : FontWeight.w500,
-                                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 8, 20, 0),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 56,
+                            height: 56,
+                            child: IconButton(
+                              onPressed: onBack,
+                              icon: const Icon(
+                                Icons.arrow_back_rounded,
+                                color: AppColors.muted,
+                                size: 28,
                               ),
-                            ],
+                              tooltip: 'Geri',
+                            ),
                           ),
-                        ),
+                          Expanded(
+                            child: Text(
+                              'Kalabalık Durumu',
+                              style: AppTextStyles.h2.copyWith(
+                                color: AppColors.foam,
+                                fontSize: 22,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-        ),
-        const Spacer(),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-          child: SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: submitting ? null : onSubmit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.secondary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: submitting
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2.5),
-                    )
-                  : const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.share_rounded, size: 22),
-                        SizedBox(width: 8),
-                        Text(
-                          'Paylaş!',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.w900),
-                        ),
-                      ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                      child: Row(
+                        children: _crowdOptions.map((opt) {
+                          final (value, emoji, label) = opt;
+                          final isSelected = crowdLevel == value;
+                          return Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () => onCrowdChanged(value),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    height: 72,
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? AppColors.secondary.withValues(
+                                              alpha: 0.20,
+                                            )
+                                          : AppColors.foam.withValues(
+                                              alpha: 0.05,
+                                            ),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? AppColors.secondary
+                                            : AppColors.muted
+                                                .withValues(alpha: 0.35),
+                                        width: isSelected ? 2 : 1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          emoji,
+                                          style: const TextStyle(
+                                            fontSize: 28,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          label,
+                                          textAlign: TextAlign.center,
+                                          style: AppTextStyles.caption
+                                              .copyWith(
+                                            color: isSelected
+                                                ? AppColors.secondary
+                                                : AppColors.muted,
+                                            fontWeight: isSelected
+                                                ? FontWeight.w800
+                                                : FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: submitting ? null : onSubmit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.secondary,
+                        foregroundColor: AppColors.foam,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: submitting
+                          ? const SizedBox(
+                              width: 28,
+                              height: 28,
+                              child: CircularProgressIndicator(
+                                color: AppColors.foam,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.share_rounded,
+                                  size: 28,
+                                  color: AppColors.foam,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Paylaş!',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.foam,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
@@ -783,18 +881,23 @@ class _SuccessScreen extends StatelessWidget {
                           color: AppColors.success.withValues(alpha: 0.5),
                           width: 3),
                     ),
-                    child: const Center(
-                      child: Text('✅', style: TextStyle(fontSize: 56)),
+                    child: Center(
+                      child: Text(
+                        '✅',
+                        style: AppTextStyles.h1.copyWith(
+                          fontSize: 56,
+                          color: AppColors.success,
+                        ),
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'Bildiriminiz İletildi!',
-                  style: TextStyle(
-                    color: Colors.white,
+                  style: AppTextStyles.h2.copyWith(
+                    color: AppColors.foam,
                     fontSize: 24,
-                    fontWeight: FontWeight.w900,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -803,13 +906,13 @@ class _SuccessScreen extends StatelessWidget {
                   spot != null
                       ? '${spot!.name} merası haritada aktif görünüyor.'
                       : 'Haritada aktif olarak görünüyor.',
-                  style: const TextStyle(color: Colors.white60, fontSize: 16),
+                  style: AppTextStyles.body.copyWith(color: AppColors.muted),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Diğer balıkçılar sizi görüyor.',
-                  style: TextStyle(color: Colors.white60, fontSize: 16),
+                  style: AppTextStyles.body.copyWith(color: AppColors.muted),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
@@ -830,18 +933,20 @@ class _SuccessScreen extends StatelessWidget {
                         value: checkin.fishDensity ?? '-',
                       ),
                       if (checkin.fishSpecies.isNotEmpty) ...[
-                        const Divider(
+                        Divider(
                           height: 16,
                           thickness: 0.5,
-                          color: Colors.white12,
+                          color: AppColors.foam.withValues(alpha: 0.08),
                         ),
                         _ResultRow(
                           label: 'Balık Türleri',
                           value: checkin.fishSpecies.join(', '),
                         ),
                       ],
-                      const Divider(
-                          height: 16, thickness: 0.5, color: Colors.white12),
+                      Divider(
+                          height: 16,
+                          thickness: 0.5,
+                          color: AppColors.foam.withValues(alpha: 0.08)),
                       _ResultRow(
                         label: 'Kalabalık',
                         value: checkin.crowdLevel ?? '-',
@@ -852,20 +957,23 @@ class _SuccessScreen extends StatelessWidget {
                 const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
-                  height: 52,
+                  height: 56,
                   child: ElevatedButton.icon(
                     onPressed: onBack,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.foam,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                     ),
-                    icon: const Icon(Icons.map_outlined, size: 22),
-                    label: const Text(
+                    icon: const Icon(Icons.map_outlined, size: 28),
+                    label: Text(
                       'Haritaya Dön',
-                      style:
-                          TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                      style: AppTextStyles.body.copyWith(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.foam,
+                      ),
                     ),
                   ),
                 ),
@@ -891,9 +999,8 @@ class _ResultRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 16,
-            color: Colors.white70,
+          style: AppTextStyles.body.copyWith(
+            color: AppColors.muted,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -901,9 +1008,8 @@ class _ResultRow extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white,
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.foam,
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.end,
