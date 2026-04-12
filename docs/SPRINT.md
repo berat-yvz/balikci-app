@@ -13,9 +13,9 @@
 |-----|---------|------|-------|
 | Faz A | H1–H2 | Kurulum & Auth | ✅ |
 | Faz B | H3–H6 | Harita & Check-in Çekirdeği | ✅ |
-| Faz C | H7–H10 | Günlük, Puan, Hava, Bildirim | 🔄 (H10 kısmen ✓) |
+| Faz C | H7–H10 | Günlük, Puan, Hava, Bildirim | ✅ (H7–H10 kod tarafı tam) |
 | Faz D | H11–H13 | Offline & Motivasyon UI | ✅ (H11 ✅, H12 🔄, H13 ✅) |
-| Faz E | H14–H16 | Test, Polish & Launch | ⏳ |
+| Faz E | H14–H16 | Test, Polish & Launch | 🔄 (H14 test otomasyonu ✅, H16 mağaza adımları ⏳) |
 
 ---
 
@@ -52,10 +52,9 @@
 - [x] `login_screen.dart` — e-posta + şifre formu
 - [x] `register_screen.dart` — kayıt formu, validasyon
 - [x] go_router `redirect` — oturum kontrolü ve yönlendirme (`auth_gate.dart` yerine `router.dart`)
-- [x] `onboarding_screen.dart` — 3 adımlı akış
-- [x] `step_location.dart` — konum izni (geolocator)
-- [x] `step_notification.dart` — bildirim izni (FCM)
-- [x] `step_first_spot.dart` — hoş geldin / onboarding bitiş CTA
+- [x] `onboarding_screen.dart` — sayfalı akış; konum + bildirim izinleri aynı dosyada yönetiliyor
+- [x] `step_welcome.dart` — hoş geldin / görsel giriş
+- [ ] `step_location.dart` / `step_notification.dart` / `step_first_spot.dart` — **ayrı dosya yok** (işlev `onboarding_screen` içinde)
 - [x] Onboarding: izin sonrası otomatik sayfa geçişi yok; **İleri** ile ilerleme; izin isteğe bağlı; konum/bildirim adımlarında KeepAlive + OS/`resumed` senkronu; Android `POST_NOTIFICATIONS`
 - [x] go_router guard: giriş yapılmamışsa `/login`'e yönlendir
 - [x] Google OAuth (istemci: deep link + Supabase PKCE + login/register UI) — Supabase Dashboard redirect URL ve Google provider’ı doğrulanmalı
@@ -69,7 +68,7 @@
 
 ## FAZ B — Harita & Check-in Çekirdeği (H3–H6)
 
-**Durum:** ✅ H3–H6 tamamlandı. **Sıradaki odak:** H10 kalan bildirim görevleri → H11 Düğüm Rehberi. **Haritada dükkan (`shops`) pinleri** planın sonuna alındı (bkz. H15).
+**Durum:** ✅ H3–H6 tamamlandı. **Haritada dükkan (`shops`) pinleri** H15 ile kodlandı. Sonraki büyük boşluklar: M-08 tile indirme, H16 mağaza yayını (manuel).
 
 ### H3 — Harita Temeli ✅
 
@@ -81,7 +80,7 @@
 - [x] Mera pinleri haritada gösteriliyor (privacy_level'a göre renk)
 - [x] `flutter_map_marker_cluster` entegrasyonu
 - [x] Bottom sheet inline `DraggableScrollableSheet` (spot_detail_sheet ayrı dosya değil)
-- [x] Harita tile cache: `flutter_map_tile_caching` bağlandı
+- [x] Harita tile: `flutter_map_cancellable_tile_provider` (iptal edilebilir istekler); kalıcı tile cache paketi **pubspec’te yok** (H12)
 - [x] Mera verileri Drift'te cache'leniyor
 
 **Çıktı:** Harita açılıyor, mera pinleri cluster'lanmış görünüyor ✓
@@ -131,7 +130,7 @@
 #### Görevler
 - [x] `exif_helper.dart` yazıldı (balık günlüğü için kullanılıyor)
 - [x] Supabase Edge Function: `exif-verify` yazıldı (balık günlüğü için; check-in akışından bağımsız)
-- [x] Storage trigger: balık günlüğü fotoğrafları için (check-in fotoğrafı kaldırıldı)
+- [x] Storage: `fish-photos` bucket + RLS migration (`supabase/migrations/20260415_storage_fish_photos_bucket.sql`); EXIF doğrulama `exif-verify` Edge Function (check-in fotoğrafı yok)
 - [x] `vote_widget.dart` — Doğru/Yanlış oy butonu
 - [x] `checkin_repository.dart`'a vote fonksiyonu eklendi
 - [x] Oy sonucu: %70+ yanlış → check-in gizleniyor — `CheckinModel.isSuppressedByVotes` (min 3 oy eşiği)
@@ -143,7 +142,7 @@
 
 ## FAZ C — Günlük, Puan, Hava, Bildirim (H7–H10)
 
-**Durum:** H7 ✅ H8 ✅ H9 ✅ tamamlandı; H10 🔄 kısmen tamamlandı (favori bildirim + deep-link çalışıyor; konum bazlı bildirim, sessiz mod, limit kalmış).
+**Durum:** H7 ✅ H8 ✅ H9 ✅ H10 ✅ — kodda favori + deep-link + yakın check-in + sessiz mod + günlük limit + sabah hava + sezon + `rank_up` akışları mevcut; prod/cihaz doğrulaması manuel kalır.
 
 ### H7 — Balık Günlüğü ✅
 **Hedef:** Balık kaydı eklenip görüntülenebiliyor
@@ -169,8 +168,9 @@
 #### Görevler
 - [x] Edge Function: `score-calculator` yazıldı ve deploy edildi
 - [x] DB trigger: checkin/vote/fish_log insert → score-calculator tetikle
-- [x] `rank_screen.dart` — Genel / Haftalık / Bölge sekmeleri; **dikey liste** (podium kaldırıldı)
-- [x] Top-3 için 🥇🥈🥉 madalya + altın/gümüş/bronz zemin rengi
+- [x] `leaderboard_screen.dart` — genel sıralama; rütbe filtresi; “Senin sıran” kartı; `rank_screen.dart` ince sarmalayıcı
+- [x] `user_repository.getLeaderboard` + `leaderboardFilteredProvider`, `myLeaderboardRankProvider`; RPC `my_leaderboard_rank` (migration repo’da)
+- [x] Top-3 için 🥇🥈🥉 madalya + vurgu renkleri
 - [x] Rütbe rozeti: profil ekranında `RankBadge`
 - [x] `profile_screen.dart` — puan, rütbe, istatistik; "Favori Meralarım" bölümü (isSelf)
 - [x] **Bug düzeltme:** `user_repository.dart` varsayılan rank `'bronz'` → `'acemi'`
@@ -200,10 +200,26 @@
 
 ---
 
-### H10 — Push Bildirim Sistemi 🔄
+### H9-EXT — Fishing Score Engine ✅
+**Hedef:** “Bugün balık tutulur mu?” kartını kural tabanlı skorla beslemek (istemci tarafı, Edge Function değil).
 
 #### Görevler
-- [x] Edge Function: `notification-sender` yazıldı ve deploy edildi
+- [x] `assets/fishing/fishing_rules.json`, `fish_species_istanbul.json`, `moon_phase_rules.json` — `pubspec.yaml` `assets/fishing/`
+- [x] `lib/core/utils/fishing_score_engine.dart` — saf Dart motor; hava, basınç trendi (`WeatherModel.pressureHpa` / `pressureHpa3hAgo`), mevsim, ay evresi, solunar/İstanbul kuralları (JSON + `MoonPhaseCalculator`)
+- [x] `lib/core/utils/moon_phase_calculator.dart` — aydınlanma, faz kimliği, **solunar pencereler** (İstanbul referans enlem/boylam)
+- [x] `lib/data/models/fishing_score.dart` — skor, etiket, mesajlar, önerilen türler
+- [x] `lib/shared/providers/fishing_score_provider.dart` — `fishingScoreEngineProvider`, `fishingScoreProvider` (`istanbulWeatherProvider` + motor)
+- [x] `weather_screen.dart` — `_FishingScoreCard` → `ref.watch(fishingScoreProvider)`; hata durumunda `FishingWeatherUtils` legacy kart
+- [x] `map/widgets/weather_card.dart` — aynı provider ile skor özeti
+
+**Çıktı:** Hava ekranı ve harita hava kartı motor çıktısını gösteriyor ✓
+
+---
+
+### H10 — Push Bildirim Sistemi ✅
+
+#### Görevler
+- [x] Edge Function: `notification-sender` (repo’da; deploy ortamına bağlı)
 - [x] FCM token izin verildiğinde alınıp `users.fcm_token`'a yazılıyor
 - [x] **Bildirim deep-link:** tap → `{"type":"checkin","spot_id":"..."}` JSON payload; `_navigateFromPayload` ile spot açılır
 - [x] **Favori mera bildirimi:** `FavoriteRepository.getUsersWhoFavorited` → favorileyen kullanıcılara bildirim
@@ -232,7 +248,7 @@
 - [x] JSON assets olarak projeye eklendi (`assets/knots/`, `assets/tackle/`)
 - [x] `knots_screen.dart` — iki sekme: Düğümler (grid + filtre) + Takımlar (expandable liste)
 - [x] `knot_detail_screen.dart` — adım adım gösterim + "Öğrendim" toggle (SharedPreferences)
-- [x] `knot_filter_widget.dart` — tür + zorluk filtresi
+- [x] Düğüm filtreleri: `knots_screen.dart` içinde `FilterChip` + `_filteredKnots` (ayrı `knot_filter_widget.dart` dosyası yok)
 - [x] Takım önerileri: `tackle_data.json` hazırlandı (8 senaryo: lüfer, çipura, levrek, istavrit, sazan, palamut, kalamar, surf)
 - [x] `tackle_model.dart` yazıldı (`TackleModel`, `TackleItem`)
 - [ ] Tamamen offline test edildi (uçak modu)
@@ -294,7 +310,7 @@
 - [x] SpotMarker widget testleri (15 test): kilit/VIP görünümü, zoom etiketi, rozet, yaş etiketi
 - [x] LoadingWidget widget testleri (4 test): indicator, mesaj, ortalama
 - [x] ExifHelper unit testleri (14 test): isLocationValid, isTimestampValid, sınır değerleri
-- [x] 325 otomatik test, tümü yeşil
+- [x] 344 otomatik test, tümü yeşil (`flutter test`)
 - [ ] Tüm kullanıcı akışları uçtan uca test edildi *(manuel — cihaz gerektirir)*
 - [ ] Offline → online geçiş senaryoları test edildi *(manuel)*
 - [ ] Düşük ağ hızında test (throttling) *(manuel)*
@@ -318,7 +334,7 @@
 - [x] Dark mode desteği — uygulama baştan koyu tema (AppColors.navy)
 - [x] Türkçe karakter sorunu kontrolü — font varsayılanı Flutter; Türkçe özel karakter hatalar önceki sprint'lerde düzeltildi
 - [x] İnternet yok banner'ı — MainShell AnimatedContainer offline banner
-- [x] Pull-to-refresh tüm liste ekranlarında: bildirim ✓, fish-log ✓, rank ✓, profil ✓, hava ✓
+- [x] Pull-to-refresh: bildirim ✓, fish-log ✓, profil ✓, hava ✓; sıralama `leaderboard_screen` içinde `RefreshIndicator` ✓
 - [x] **Harita — dükkan katmanı:** `seed_shops.sql` (15 kayıt), `ShopModel` + `ShopRepository`, `MapScreen`’de turuncu `_ShopPin` + `_ShopDetailSheet` modal
 
 ---

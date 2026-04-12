@@ -14,11 +14,12 @@
 |--------|-----------|---------|
 | Framework | Flutter | 3.x |
 | Harita | flutter_map + OpenStreetMap | 7.x |
-| Offline Harita | flutter_map_tile_caching | 9.x |
+| Harita (iptal edilebilir tile isteği) | flutter_map_cancellable_tile_provider | 3.x |
+| Kalıcı offline tile cache | *(pubspec’te yok; H12’de planlı)* | — |
 | State Management | Riverpod | 2.x |
 | Local DB | Drift | 2.x |
 | Navigation | go_router | 14.x |
-| HTTP | Dio | 5.x |
+| HTTP | Supabase SDK + `http` (weather_service vb.); **dio paketi yok** | — |
 | Push Bildirim | Firebase Messaging | 15.x |
 
 ### Backend (Tamamı Ücretsiz Tier)
@@ -30,7 +31,7 @@
 | Supabase Storage | Fotoğraflar | 1 GB |
 | Supabase Edge Functions | İş mantığı | 500K istek/ay |
 | Firebase FCM | Push bildirim | Sınırsız |
-| OpenWeatherMap | Hava verisi | 1000 istek/gün |
+| Open-Meteo | Hava verisi (forecast + marine) | ücretsiz kullanım politikası |
 
 ---
 
@@ -60,8 +61,9 @@
 │  ┌───────────────────────────────────┐ │
 │  │      Edge Functions (Deno)        │ │
 │  │  weather-cache | exif-verify      │ │
-│  │  score-calculator | shadow-point  │ │
-│  │  notification-sender              │ │
+│  │  score-calculator                 │ │
+│  │  notification-sender | nearby-*   │ │
+│  │  morning-weather | season-reminder│ │
 │  └───────────────────────────────────┘ │
 │  ┌───────────────────────────────────┐ │
 │  │      Supabase Storage             │ │
@@ -72,7 +74,7 @@
         ▼
 ┌─────────────────────────────────────────┐
 │         Dış Servisler                   │
-│  OpenWeatherMap API  │  Firebase FCM    │
+│  Open-Meteo API      │  Firebase FCM    │
 └─────────────────────────────────────────┘
 ```
 
@@ -205,8 +207,9 @@ CREATE TABLE weather_cache (
 );
 ```
 
-Hava verisi sabit bölge değil, mera konumuna göre dinamik çekilir. 
-25km grid sistemi kullanılır.
+Hava verisi sabit bölge değil, mera konumuna göre dinamik çekilir; yakınlık/proxy mantığı `weather_service` ve Edge `weather-cache` ile uyumludur.
+
+**Şema notu:** Bazı ortamlarda `weather_cache` satırı `data_json JSONB` (ör. [supabase_schema.sql](supabase_schema.sql)) olarak tutulur; istemci `WeatherModel` Open-Meteo paketinden **`surface_pressure` → `pressureHpa`**, **`pressureHpa3hAgo`** (trend) ve deniz/saatlik alanları JSON’dan okur. Ayrı `pressure_hpa` kolonu şart değildir. Drift `local_weather` tablosunda basınç yoktur (sıcaklık, rüzgar, dalga, nem, zaman).
 
 ### notifications
 ```sql
@@ -362,8 +365,9 @@ CREATE POLICY "Follows visible to all"
 lib/
 ├── main.dart
 ├── app/
-│   ├── router.dart              ← go_router; /map extra (spotId) deep-link desteği
-│   ├── app_routes.dart          ← route path sabitleri
+│   ├── router.dart              ← go_router; `/home` + `extra: spotId` bildirim deep-link
+│   ├── app_routes.dart          ← route path sabitleri (`/map` sabiti var; shell’de ayrı rota yok)
+│   ├── go_router_refresh.dart   ← oturum değişiminde yenileme
 │   └── theme.dart               ← renkler, fontlar, tema sabitleri
 ├── core/
 │   ├── constants/
@@ -378,7 +382,13 @@ lib/
 │   └── utils/
 │       ├── exif_helper.dart         ← EXIF okuma (balık günlüğü için)
 │       ├── geo_utils.dart           ← mesafe hesaplama
-│       └── score_utils.dart         ← puan hesaplama yardımcıları
+│       ├── score_utils.dart         ← puan hesaplama yardımcıları
+│       ├── fishing_score_engine.dart← kural tabanlı balıkçı skoru (saf Dart)
+│       ├── moon_phase_calculator.dart← ay + solunar pencereler (İstanbul ref.)
+│       ├── fishing_weather_utils.dart← 30 kural özet skoru (legacy)
+│       ├── istanbul_ilce_resolver.dart
+│       ├── mera_weather_display.dart
+│       └── ... (avatar_image_prepare, notification_routing vb.)
 ├── data/
 │   ├── models/
 │   │   ├── user_model.dart
@@ -386,30 +396,38 @@ lib/
 │   │   ├── checkin_model.dart
 │   │   ├── fish_log_model.dart
 │   │   ├── hourly_weather_model.dart← Open-Meteo saatlik veri (cloudCover dahil)
+│   │   ├── fishing_score.dart       ← FishingScoreEngine çıktı modeli
 │   │   ├── notification_model.dart
-│   │   └── weather_model.dart
+│   │   ├── friend_request_model.dart
+│   │   ├── tackle_model.dart
+│   │   ├── shop_model.dart
+│   │   └── weather_model.dart       ← pressureHpa, pressureHpa3hAgo (Open-Meteo)
 │   ├── repositories/
 │   │   ├── auth_repository.dart
 │   │   ├── checkin_repository.dart
 │   │   ├── favorite_repository.dart ← spot_favorites CRUD (isFavorited, toggle, getFavoriteSpots, getUsersWhoFavorited)
 │   │   ├── fish_log_repository.dart
+│   │   ├── follow_repository.dart
+│   │   ├── friend_request_repository.dart
+│   │   ├── knot_repository.dart
 │   │   ├── notification_repository.dart
+│   │   ├── shop_repository.dart
 │   │   ├── spot_repository.dart
-│   │   └── user_repository.dart
+│   │   └── user_repository.dart     ← leaderboard, profil, FCM token güncelleme
 │   └── local/
-│       ├── database.dart            ← Drift DB init (schemaVersion 2)
+│       ├── database.dart            ← Drift DB init (**schemaVersion 6**)
 │       ├── local_spot.dart          ← Drift şema: mera
-│       ├── local_fish_log.dart      ← Drift şema: günlük
-│       └── sync_queue.dart          ← offline sync kuyruğu
+│       ├── local_fish_log.dart      ← Drift şema: günlük (yerel)
+│       ├── local_weather.dart       ← offline hava özeti (basınç yok)
+│       ├── sync_queue.dart          ← offline sync kuyruğu (+ retry alanları)
+│       └── (generated) database.g.dart
 ├── features/
 │   ├── auth/
 │   │   ├── login_screen.dart
 │   │   ├── register_screen.dart
 │   │   └── onboarding/
-│   │       ├── onboarding_screen.dart
-│   │       ├── step_location.dart
-│   │       ├── step_notification.dart
-│   │       └── step_first_spot.dart
+│   │       ├── onboarding_screen.dart  ← konum + bildirim akışı (sayfa içi)
+│   │       └── step_welcome.dart
 │   ├── map/
 │   │   ├── map_screen.dart          ← initialSpotId; _SpotSheetHeader favori butonu
 │   │   ├── add_spot_screen.dart
@@ -427,7 +445,12 @@ lib/
 │   │   │   └── add_log_screen.dart
 │   │   └── stats_screen.dart
 │   ├── rank/
-│   │   └── rank_screen.dart         ← dikey liste; top-3 madalya UI
+│   │   ├── leaderboard_screen.dart  ← genel sıra, filtre, “Senin sıran”
+│   │   └── rank_screen.dart         ← LeaderboardScreen sarmalayıcısı
+│   ├── social/
+│   │   ├── social_screen.dart
+│   │   ├── friends_list_screen.dart
+│   │   └── friend_requests_screen.dart
 │   ├── knots/
 │   │   ├── knots_screen.dart
 │   │   └── knot_detail_screen.dart
@@ -440,7 +463,8 @@ lib/
 │   │   └── notification_settings_screen.dart
 │   └── profile/
 │       ├── profile_screen.dart      ← _FavoriteSpotsSection (kendi profili)
-│       └── settings_screen.dart
+│       ├── settings_screen.dart
+│       └── user_spots_list_screen.dart
 └── shared/
     ├── widgets/
     │   ├── rank_badge.dart
@@ -451,11 +475,23 @@ lib/
         ├── connectivity_provider.dart
         ├── favorite_provider.dart   ← isFavoritedProvider, favoriteSpotsProvider
         ├── fish_log_provider.dart
+        ├── fishing_score_provider.dart
         ├── follow_provider.dart
+        ├── friend_request_provider.dart
         ├── notification_provider.dart
         ├── preferences_provider.dart
         └── user_provider.dart
 ```
+
+**Not — harita:** `MapScreen` OSM + `flutter_map_cancellable_tile_provider`; kalıcı tile indirme paketi yok (bkz. SPRINT H12).
+
+### assets/fishing (skor motoru)
+
+- `fishing_rules.json` — kural ağırlıkları, hard-stop, mevsim, İstanbul özeli vb.
+- `fish_species_istanbul.json` — tür önerileri
+- `moon_phase_rules.json` — ay evresi çarpanları
+
+**Fishing Score Engine** yalnızca istemcide çalışır; Edge Function olarak deploy edilmez.
 
 ---
 
@@ -465,11 +501,6 @@ lib/
 - **Tetikleyici:** Cron (her saat başı)
 - **Görev:** Saatte bir, son 24 saatte aktif merası olan cache kayıtlarını günceller
 - **Dosya:** `supabase/functions/weather-cache/index.ts`
-
-### weather-on-spot-create
-- **Tetikleyici:** `fishing_spots` INSERT trigger
-- **Görev:** Yeni mera eklendiğinde 25km yakınlık kontrolü, gerekirse Open-Meteo'dan çeker
-- **Dosya:** `supabase/functions/weather-on-spot-create/index.ts`
 
 ### exif-verify
 - **Tetikleyici:** Storage trigger (fotoğraf yüklenince)
@@ -482,10 +513,11 @@ lib/
 - **Görev:** Puan hesapla, users tablosunu güncelle, rütbe kontrol et
 - **Dosya:** `supabase/functions/score-calculator/index.ts`
 
+### nearby-checkin-notifier / morning-weather-push / season-reminder-push
+- **Dosyalar:** `supabase/functions/nearby-checkin-notifier`, `morning-weather-push`, `season-reminder-push` — bildirim tetikleme ve zamanlama (cron SQL dosyaları repo kökünde / `supabase/` altında).
+
 ### shadow-point-calculator
-- **Tetikleyici:** Yeni fish_log insert
-- **Görev:** O merayı paylaşanlara gölge puan yaz, bildirim gönder
-- **Dosya:** `supabase/functions/shadow-point/index.ts`
+- **Durum:** ⏳ MVP’de kodlandı olarak işaretlenmiş Edge Function **bu repoda klasör olarak yok**; gölge puan şeması `shadow_points` tablosu ile dokümante. Bildirim entegrasyonu SPRINT H10’da ertelendi.
 
 ### notification-sender
 - **Tetikleyici:** Uygulama tarafından çağrılır (check-in, favori check-in, oy)
@@ -510,20 +542,20 @@ Ayrıntılı akış: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md).
 
 ## Harita ve mera (M-02 H3–H4)
 
-- **Ekran:** `features/map/map_screen.dart` — FlutterMap + OSM tile; `flutter_map_marker_cluster` ile yoğun pin desteği; `flutter_map_tile_caching` ile tile önbelleği.
+- **Ekran:** `features/map/map_screen.dart` — FlutterMap + OSM tile; `flutter_map_marker_cluster`; `flutter_map_cancellable_tile_provider` ile iptal edilebilir tile istekleri (kalıcı offline tile paketi yok).
 - **Veri:** `SpotRepository` Supabase `fishing_spots` okur, başarılı yanıtları Drift `local_spots` tablosuna yazar; ağ hatasında `getCachedSpots()` ile offline fallback.
 - **UI:** Pin rengi `privacy_level` (public / friends / private / vip); pin tıklanınca `DraggableScrollableSheet` (inline); sahip için "Düzenle", herkes için "Balık Var!" + "Yol Tarifi".
 - **Favori butonu:** `_SpotSheetHeader` (`ConsumerWidget`) — `isFavoritedProvider` ile anlık durum, `bookmark`/`bookmark_border` ikonu; `FavoriteRepository.toggleFavorite` tap'ta çağrılır.
-- **Deep-link:** `/map` rotası `state.extra` (String `spotId`) kabul eder → `MapScreen(initialSpotId: spotId)`. `_initializeCacheAndLoad` tamamlanınca `_openInitialSpotIfNeeded` ilgili mera için `_selectSpot` çağırır.
-- **Giriş noktası:** Onboarding sonrası `/home` → `MainShell` → `MapScreen`; `/map` bildirimlerin doğrudan açtığı rota.
+- **Deep-link:** Shell içinde **`/home`** `state.extra` (String `spotId`) ile `MapScreen(initialSpotId: spotId)` açar. `NotificationService` ve bildirim listesi **`AppRoutes.home`** kullanır (`app_routes.dart` içindeki `AppRoutes.map` ayrı shell rotası olarak tanımlı değildir).
+- **Giriş noktası:** Onboarding sonrası `/home` → `MainShell` → `MapScreen`.
 - **H4 (mera):** `add_spot_screen.dart` (ekle + düzenleme modu), `pick_spot_location_screen.dart`; rotalar: `/map/add-spot`, `/map/edit-spot`, `/map/pick-location`. **Dükkan (`shops`) pin katmanı** → H15.
-- **Drift:** `AppDatabase` şema sürümü 2; `local_spots` için migrasyon `database.dart` (`verified`, `muhtarId`, `cachedAt`).
+- **Drift:** `AppDatabase` **schemaVersion 6** — `local_spots`, `local_fish_log`, `fish_logs` (Supabase uyumlu tablo), `local_weather`, `sync_queue`; migrasyon adımları `database.dart` `onUpgrade` içinde.
 
 ## Bildirim Sistemi (M-09)
 
 - **FCM + Yerel bildirim:** `notification_service.dart` — ön plan, arka plan ve kapalı durum için 3 ayrı tap akışı.
 - **Payload:** Yerel bildirimler artık sadece `type` değil `{"type":"checkin","spot_id":"..."}` şeklinde JSON payload taşır; `_navigateFromPayload` ile decode edilir.
-- **Deep-link:** `checkin` / `vote` türündeki bildirimlere tıklanınca `router.go(AppRoutes.map, extra: spotId)` ile mera doğrudan açılır (hem FCM tap hem bildirim listesi tap'ı).
+- **Deep-link:** `checkin` / `vote` türündeki bildirimlere tıklanınca `router.go(AppRoutes.home, extra: spotId)` ile `MapScreen` açılır (FCM tap ve bildirim listesi).
 - **Bildirim listesi:** `notification_list_screen.dart` — `_navigateForNotification` `notification.data['spot_id']`'yi okur; rank → `/rank`, follow → `/profile`, checkin/vote → `/map` + spotId.
 - **Favorileme bildirimi:** Check-in anında `FavoriteRepository.getUsersWhoFavorited(spot.id)` ile favorileyen kullanıcılar bulunur, "Favori Meranızda Balık Var!" bildirimi gönderilir (spot sahibi ve check-in yapan hariç).
 
@@ -532,20 +564,22 @@ Ayrıntılı akış: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md).
 - **DB:** `spot_favorites(user_id PK, spot_id PK, created_at)` — RLS: kendi kayıtları; `spot_id` üzerinde index.
 - **Repository:** `FavoriteRepository` — `isFavorited`, `toggleFavorite`, `getFavoriteSpots` (join), `getUsersWhoFavorited`.
 - **Provider:** `isFavoritedProvider(spotId)` (FutureProvider.autoDispose.family), `favoriteSpotsProvider` (FutureProvider.autoDispose).
-- **Profil:** `_FavoriteSpotsSection` — kendi profili (`isSelf == true`) için favori meralar kart listesi; tap'ta `/map?extra=spotId` ile mera açılır.
+- **Profil:** `_FavoriteSpotsSection` — kendi profili (`isSelf == true`) için favori meralar kart listesi; tap’ta `context.go(AppRoutes.home, extra: spotId)` ile mera açılır.
 
 ## Hava Durumu (M-04 / H9)
 
 - **Kaynak:** Open-Meteo (forecast + marine API) — 2 günlük veri (`forecast_days=2`).
 - **Saatlik grafik:** Sonraki 24 saat gösterilir; saat başı otomatik güncellenir (kesin saat başı `Timer` ile hesaplanır). Manuel yenileme yok.
 - **Metrikler:** `HourlyWeatherModel` — sıcaklık, rüzgar hızı, dalga yüksekliği, deniz yüzey sıcaklığı, akıntı hızı, `cloudCover`. Bulutluluk Open-Meteo `cloudcover` parametresinden çekilir.
+- **`WeatherModel`:** `pressureHpa` (anlık yüzey basıncı), `pressureHpa3hAgo` (trend) — Open-Meteo `surface_pressure` / saatlik dizi.
 - **Detay grid:** Dalga yüksekliği, deniz yüzey sıcaklığı, akıntı hızı ve bulutluluk `_WeatherDetailGrid`'de `currentHour` verisiyle gösterilir.
+- **Balıkçı skoru (istemci):** `FishingScoreEngine` + `fishingScoreProvider`; `weather_screen` “Bugün balık tutulur mu?” kartı `ref.watch(fishingScoreProvider)`; harita `weather_card` aynı provider’ı kullanır. Motor dışı özet için `FishingWeatherUtils` (30 kural) yedek yol olarak kalır.
 
 ## Sıralama (Rank)
 
-- **Genel tab:** Tüm kullanıcılar tek dikey listede; ilk 3 için madalya emoji (🥇🥈🥉) ve altın/gümüş/bronz zemin rengi.
-- **Haftalık / Bölge tab:** Aynı `_LeaderboardList` yapısı.
-- **Bug düzeltme:** `user_repository.dart`'ta varsayılan rank `'bronz'` → `'acemi'` düzeltildi.
+- **Ekran:** `leaderboard_screen.dart` — `users` tablosundan `getLeaderboard` (RPC `leaderboard_users` veya doğrudan sorgu); isteğe bağlı rütbe filtresi (`leaderboardFilteredProvider`); giriş yapan kullanıcı için global sıra (`my_leaderboard_rank` RPC + yedek sayım).
+- **UI:** Açık tema liste; ilk 3 madalya; “Senin sıran” kartı (`AppColors.leaderboardBanner`).
+- **Giriş:** `rank_screen.dart` yalnızca `LeaderboardScreen` döndürür; shell rotası `/rank`.
 
 ---
 

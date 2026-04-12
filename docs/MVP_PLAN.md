@@ -11,15 +11,15 @@
 
 | Kod | Özellik | Durum |
 |-----|---------|-------|
-| M-01 | Hesap Girişi & Onboarding | 🟡 Uygulama tarafı tamam (prod doğrulama bekliyor) |
-| M-02 | Harita & Mera Sistemi | 🔄 Devam Ediyor (H3 temel tamam) |
-| M-03 | Anlık Check-in & Doğrulama | ⏳ Bekliyor |
-| M-04 | Hava Durumu & Cache | ⏳ Bekliyor |
-| M-05 | Balık Günlüğü | ⏳ Bekliyor |
-| M-06 | Puan, Rütbe & Motivasyon | ⏳ Bekliyor |
-| M-07 | Düğüm & Takım Rehberi | ⏳ Bekliyor |
-| M-08 | Offline Harita İndirme | ⏳ Bekliyor |
-| M-09 | Push Bildirim Sistemi | ⏳ Bekliyor |
+| M-01 | Hesap Girişi & Onboarding | ✅ Uygulama tamam; prod tetikleyici/RLS doğrulaması kullanıcıya bağlı |
+| M-02 | Harita & Mera Sistemi | ✅ Harita, CRUD, favori, dükkan pinleri |
+| M-03 | Anlık Check-in & Doğrulama | ✅ Check-in + oylama + %70 yanlış gizleme (≥3 oy) |
+| M-04 | Hava Durumu & Cache | ✅ Open-Meteo, cache, **Fishing Score Engine** (istemci) |
+| M-05 | Balık Günlüğü | ✅ Liste, ekleme, istatistik, offline + Storage |
+| M-06 | Puan, Rütbe & Motivasyon | ✅ Profil, rozet, `LeaderboardScreen`, VIP kilidi |
+| M-07 | Düğüm & Takım Rehberi | ✅ JSON + ekranlar (Lottie yok) |
+| M-08 | Offline Harita İndirme | 🔄 Sadece Drift mera + kuyruk/sync; tile indirme paketi yok |
+| M-09 | Push Bildirim Sistemi | ✅ FCM, deep-link, limit, sessiz saat, yakın check-in, sabah/sezon/rütbe |
 
 > Durum: ⏳ Bekliyor | 🔄 Devam Ediyor | ✅ Tamamlandı
 
@@ -47,10 +47,8 @@
 splash_screen.dart          → /splash
 login_screen.dart           → /login
 register_screen.dart        → /register
-onboarding_screen.dart
-  ├── step_location.dart    (konum izni)
-  ├── step_notification.dart (FCM izni / bildirim)
-  └── step_first_spot.dart  (hoş geldin + onboarding bitişi)
+onboarding_screen.dart    (konum + bildirim adımları sayfa içi)
+  └── step_welcome.dart   (hoş geldin görünümü)
 main_shell.dart             → /home (şu an içinde MapScreen)
 ```
 (Router mantığı `lib/app/router.dart` içindedir; ayrı `auth_gate.dart` dosyası yoktur. Güncel özet: [PROJECT_STATUS.md](PROJECT_STATUS.md).)
@@ -61,9 +59,9 @@ main_shell.dart             → /home (şu an içinde MapScreen)
 
 ### Kodda güncel durum (repo ile senkron)
 
-- **H3 (harita temeli):** Uygulandı — `MapScreen` (FlutterMap + OSM), marker cluster, `flutter_map_tile_caching`, `SpotRepository` + Drift `local_spots` (şema sürümü 2), `SpotDetailSheet` salt okunur, `privacy_level` pin renkleri. `/home` → `MainShell` → `MapScreen`; `/map` rotası ayrıca mevcut.
+- **H3 (harita temeli):** Uygulandı — `MapScreen` (FlutterMap + OSM), marker cluster, `flutter_map_cancellable_tile_provider`, `SpotRepository` + Drift `local_spots` (**Drift schemaVersion 6**), sheet inline, `privacy_level` pin renkleri. **Ana rota:** `/home` → `MainShell` → `MapScreen`. `AppRoutes.map` sabiti vardır; shell altında ayrı `/map` **go_router kaydı yok** — deep-link `AppRoutes.home` + `extra: spotId`.
 - **H4 (mera yönetimi):** `add_spot_screen` (ekle + `spotToEdit` ile güncelle), `pick_spot_location_screen`, `/map/edit-spot`; `spot_detail_sheet` yol tarifi + sahip **Düzenle**; haritada **Mera ekle** FAB. **Dükkan verisi ve haritada `shops` pinleri** planın sonuna alındı — FAZ E **H15** ([SPRINT.md](SPRINT.md)).
-- **H5–H6:** Planlandı (check-in, Realtime, EXIF/oy).
+- **H5–H6:** Uygulandı — check-in, Realtime, oylama; check-in fotoğrafı yok.
 
 ### Teknik Uygulama
 - **Harita SDK:** FlutterMap + OpenStreetMap (ücretsiz, API key yok)
@@ -82,7 +80,7 @@ main_shell.dart             → /home (şu an içinde MapScreen)
 ### Performans Kuralları
 - Marker cluster zoom level < 12 için aktif
 - Mera verileri Drift'te cache, arka planda senkronize
-- Tile cache: flutter_map_tile_caching
+- Kalıcı tile cache: **pubspec’te yok** (M-08 / SPRINT H12)
 
 ---
 
@@ -102,8 +100,8 @@ main_shell.dart             → /home (şu an içinde MapScreen)
 
 ### Oylama Sistemi
 - Diğer kullanıcılar: `Doğru ✓` / `Yanlış ✗`
-- %70+ doğru oy → güvenilir rapor → tam puan
-- %70+ yanlış oy → rapor gizlenir + kullanıcıya -20 puan *(ileriye ertelendi)*
+- **Gizleme:** en az **3** oy ve **%70+ yanlış** → `CheckinModel.isSuppressedByVotes` (istemci + sunucu tutarlılığı için veri modeli)
+- Gizleme sonrası sahibe **-20** puan: `ScoreService.award(..., ScoreSource.wrongReport)` → `score-calculator` Edge Function (ağ hatasında sessiz düşer)
 
 ### Veri Yaşam Süresi
 - 2 saat sonra rapor "eski" işaretlenir
@@ -171,6 +169,30 @@ Parametreler:
 | temp > 28 + windspeed < 10 | "Sıcak ve sakin, derin sularda ara" |
 | sea_temp 18-22 + windspeed < 20 | "Su sıcaklığı lüfer için ideal ✓" |
 
+### Fishing Score Engine (istemci, M-04 genişlemesi) ✅
+
+> **Edge Function değil** — skor tamamen uygulama içinde hesaplanır; Supabase’e yazılmaz.
+
+**Çalışma mantığı:** `FishingScoreEngine` (`lib/core/utils/fishing_score_engine.dart`) asset JSON’larını yükler; `calculate(weather, now, moonIllumination)` ile 0–100 skor, etiket, özet, aktif mesajlar ve önerilen tür listesi üretir. Önce **hard-stop** kuralları, ardından hava, mevsim, ay evresi, basınç trendi, solunar ve İstanbul’a özel kurallar (JSON) uygulanır.
+
+**Girdiler:**
+- `WeatherModel` — sıcaklık, rüzgar, dalga, yağış, kod, görünürlük vb.; **`pressureHpa`**, **`pressureHpa3hAgo`** (Open-Meteo `surface_pressure` / saatlik dizi)
+- `DateTime` — yerel/UTC mantığı motor içinde; mevsimsel kurallar için ay/gün
+- `moonIllumination` — `MoonPhaseCalculator.getMoonIllumination(now)` (0–1)
+- Solunar pencereler — `MoonPhaseCalculator.getSolunarPeriods` / `isInSolunarPeriod` (İstanbul referans koordinatları)
+
+**Çıktı:** `FishingScore` (`lib/data/models/fishing_score.dart`) — `score`, `label`, `labelColor`, `summary`, `activeMessages`, `suggestedSpecies`, vb.
+
+**Kural kategorileri (JSON + kod):**
+- Hava koşulları (modifier / hard-stop)
+- Barometrik basınç ve trend (`pressureHpa` vs `pressureHpa3hAgo`)
+- Solunar (major/minor pencereler)
+- İstanbul’a özel kurallar (`fishing_rules.json` içi)
+- Mevsimsel çarpanlar
+- Ay evresi (`moon_phase_rules.json`)
+
+**UI bağlantısı:** `fishingScoreProvider` (`lib/shared/providers/fishing_score_provider.dart`) — `fishingScoreEngineProvider` + `istanbulWeatherProvider` birleşimi. **`weather_screen.dart`** içindeki “Bugün balık tutulur mu?” kartı `ref.watch(fishingScoreProvider)` kullanır; hata durumunda `FishingWeatherUtils.getFishingScore` ile yedek kart. Harita **`weather_card.dart`** aynı provider’dan özet alır.
+
 ---
 
 ## M-05 — Balık Günlüğü
@@ -212,11 +234,15 @@ Kayıt yap
 
 ## M-06 — Puan, Rütbe & Motivasyon Sistemi
 
+### Sıralama ekranı (kod) ✅
+- **`LeaderboardScreen`** — Supabase `users`, `total_score` azalan sırada; isteğe bağlı rütbe filtresi; giriş yapan için global sıra (`my_leaderboard_rank` RPC, repo migration’da).
+- **`rank_screen.dart`** — yalnızca `LeaderboardScreen` gösterir; alt navigasyonda “Sıra” sekmesi `/rank`.
+
 ### Puan Tablosu
 | Eylem | Puan | Koşul |
 |-------|------|-------|
 | Genel mera paylaşımı | +50 | privacy = public |
-| Doğrulanmış check-in | +30 | EXIF onaylı |
+| Doğrulanmış check-in | +30 | EXIF onaylı *(check-in akışında EXIF yok; tablo Edge Function sözleşmesi için korunur)* |
 | Doğrulanmamış check-in | +15 | — |
 | Doğru rapor oyu aldı | +10 | vote = true |
 | Gölge puan | +20 | Takipçi o meraya gidip av yaptı |
@@ -234,21 +260,9 @@ Kayıt yap
 
 ### Özel Mekanizmalar
 
-**Gölge Puan (Edge Function: `shadow-point-calculator`)**
-```
-Yeni check-in + av kaydı geldi
-    ↓
-O merayı daha önce "public" paylaşanları bul
-    ↓
-Her birine +20 gölge puan yaz
-    ↓
-"Senin sayende X kişi balık tuttu" bildirimi gönder
-```
+**Gölge Puan** — `shadow_points` şeması dokümante; **`shadow-point-calculator` Edge Function bu repoda yok**; bildirim ⏳ (bkz. SPRINT H10).
 
-**Mera Muhtarlığı**
-- Bir merada en yüksek doğrulanmış rapor sahibi → otomatik "Muhtar"
-- Profilde rozet, meranın pin'inde isim gösterilir
-- Haftalık yeniden hesaplanır
+**Mera Muhtarlığı** — ⏳ Haftalık cron / otomatik atama yok; `muhtar_id` alanı ve UI rozetleri kısmen kullanılabilir
 
 ---
 
@@ -304,36 +318,32 @@ Water Knot, Nail Knot
 4. Onayla → arka planda indir
 5. İndirme yöneticisinde ilerlemeyi takip et
 
-### Teknik Detay
-- `flutter_map_tile_caching` ile tile yönetimi
-- Zoom 10–16 arası tile'lar indirilir
-- Offline iken Drift'teki son mera verileri kullanılır
-- Check-in offline yazılır, bağlantı gelince sync edilir
+### Teknik Detay (gerçek durum)
+- **Tile indirme:** `flutter_map_tile_caching` **yok**; bölge indirme akışı ⏳
+- **Offline:** Drift’te son mera verisi + `sync_queue` / `SyncService`; check-in offline kuyruk ve bağlantı gelince sync ✅ (H12)
 
 ---
 
 ## M-09 — Push Bildirim Sistemi
 
-> **Durum:** 🔄 Kısmen tamamlandı
+> **Durum:** ✅ Kod tarafı tam (Edge Function + FCM + istemci); dağıtım ve cihaz testi kullanıcıya bağlı
 
 ### Bildirim Türleri
 | Tür | Tetikleyici | Durum | Örnek |
 |-----|------------|-------|-------|
 | Favori mera | Check-in → favorileyen kullanıcılar | ✅ | "Favori Meranızda Balık Var!" |
 | Mera sahibi | Check-in → spot owner | ✅ | "Meranızda Balık Var!" |
-| Bildirim deep-link | Tap → spot_id ile mera açılır | ✅ | — |
-| Yakın mera | 2km'de 3+ check-in | ⏳ | "Yakınında 5 kişi balık tutuyor 🎣" |
-| Gölge puan | Takipçi av yaptı | ⏳ | "Senin sayende 3 kişi boş dönmedi 🏆" |
-| Hava uyarısı | Sabah 06:00 cron | ⏳ | "Bugün hava tam lüfer havası ✓" |
-| Sezon hatırlatma | Takvim | ✅ | `fish_season_calendar` + günlük cron + `season-reminder-push` |
-| Rütbe yükselme | Puan eşiği | ⏳ | "Tebrikler! Usta rütbesine ulaştın ⚓" |
+| Bildirim deep-link | Tap → `spot_id` ile harita | ✅ | `AppRoutes.home` + `extra` |
+| Yakın kullanıcı | `nearby-checkin-notifier` (check-in sonrası ~2 km) | ✅ | Edge Function repo’da |
+| Gölge puan | Takipçi av yaptı | ⏳ | EF / bildirim henüz yok |
+| Sabah hava | `morning-weather-push` + cron SQL | ✅ | 03:00 UTC ≈ 06:00 İstanbul |
+| Sezon hatırlatma | `season-reminder-push` + takvim tabloları | ✅ | Ayar: `season_reminder` |
+| Rütbe yükselme | `score-calculator` → `notification-sender` | ✅ | `type: rank_up`, `force: true` |
 
 ### Uygulanan Teknik Detaylar
-- **JSON Payload:** `{"type":"checkin","spot_id":"..."}` — yerel bildirim ve FCM hem `type` hem `spot_id` taşır
-- **Deep-link:** `_navigateFromPayload` → `router.go(AppRoutes.map, extra: spotId)` → `MapScreen(initialSpotId)`
-- **Favori bildirimi:** `FavoriteRepository.getUsersWhoFavorited(spotId)` → loop → `NotificationRepository.sendNotification`
-
-### Kalan Kurallar
-- Kullanıcı başına günlük maksimum **5 push** (spam engeli) *(ileriye ertelendi)*
-- Gece 23:00 – sabah 07:00 arası bildirim gönderilmez *(ileriye ertelendi)*
-- Kullanıcı ayarlar ekranından her tür ayrı ayrı kapatılabilir *(UI hazır, backend henüz bağlı değil)*
+- **JSON Payload:** `{"type":"checkin","spot_id":"..."}` (ve diğer türler)
+- **Deep-link:** `NotificationService` → `router.go(AppRoutes.home, extra: spotId)` → `MapScreen(initialSpotId)` *( **`AppRoutes.map` shell rotası kullanılmaz** )*
+- **FCM token:** `NotificationService.syncFcmToken` / `UserRepository` → `users.fcm_token`
+- **Günlük limit:** `notification-sender` — 5 push / gün, `force` ile muafiyet
+- **Sessiz saat:** `notification-sender` — 23:00–07:00 push atlama, in-app kayıt
+- **Ayarlar:** `notification_settings_screen` — tür bazlı açık/kapalı (Supabase ile entegre; ayrıntı repository’de)
