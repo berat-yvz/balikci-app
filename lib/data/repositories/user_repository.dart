@@ -16,7 +16,7 @@ class WeeklyRankEntry {
   const WeeklyRankEntry({
     required this.userId,
     required this.username,
-    required this.avatarUrl,
+    this.avatarUrl,
     required this.rank,
     required this.checkinCount,
   });
