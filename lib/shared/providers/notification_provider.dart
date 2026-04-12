@@ -32,6 +32,7 @@ final myNotificationsProvider =
             .map(
               (row) => NotificationModel.fromJson(row as Map<String, dynamic>),
             )
+            .where((n) => !n.read)
             .toList();
         list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         return list;

@@ -19,6 +19,7 @@ class NotificationRepository {
           .from('notifications')
           .select('id, user_id, type, title, body, data_json, read, created_at')
           .eq('user_id', currentUserId)
+          .eq('read', false)
           .order('created_at', ascending: false)
           .limit(limit);
       return (response as List)
@@ -31,6 +32,7 @@ class NotificationRepository {
     }
   }
 
+  /// Okundu kabul edilir ve satır silinir (bildirim panelinde görünmez).
   Future<void> markAsRead(String notificationId) async {
     final currentUserId = SupabaseService.auth.currentUser?.id;
     if (currentUserId == null) {
@@ -40,13 +42,13 @@ class NotificationRepository {
     try {
       await _db
           .from('notifications')
-          .update({'read': true})
+          .delete()
           .eq('id', notificationId)
           .eq('user_id', currentUserId);
     } on PostgrestException catch (e) {
-      throw Exception('Bildirim okundu işareti güncellenemedi: ${e.message}');
+      throw Exception('Bildirim kaldırılamadı: ${e.message}');
     } catch (e) {
-      throw Exception('Bildirim okundu işareti güncellenemedi: $e');
+      throw Exception('Bildirim kaldırılamadı: $e');
     }
   }
 
@@ -57,16 +59,15 @@ class NotificationRepository {
     }
 
     try {
-      // Tek sorguda tüm okunmamışları işaretle (limit 200’lük döngü eski kayıtları atlıyordu).
       await _db
           .from('notifications')
-          .update({'read': true})
+          .delete()
           .eq('user_id', currentUserId)
           .eq('read', false);
     } on PostgrestException catch (e) {
-      throw Exception('Tüm bildirimler okunamadı: ${e.message}');
+      throw Exception('Tüm bildirimler kaldırılamadı: ${e.message}');
     } catch (e) {
-      throw Exception('Tüm bildirimler okunamadı: $e');
+      throw Exception('Tüm bildirimler kaldırılamadı: $e');
     }
   }
 

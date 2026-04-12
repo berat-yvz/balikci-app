@@ -32,7 +32,9 @@ class NotificationListScreen extends ConsumerWidget {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Tüm bildirimler okundu olarak işaretlendi'),
+                    content: Text(
+                      'Tüm okunmamış bildirimler okundu ve listeden kaldırıldı',
+                    ),
                     backgroundColor: AppColors.success,
                   ),
                 );
@@ -74,10 +76,8 @@ class NotificationListScreen extends ConsumerWidget {
                     final router = GoRouter.of(context);
                     final messenger = ScaffoldMessenger.of(context);
                     try {
-                      if (!n.read) {
-                        await repo.markAsRead(n.id);
-                        ref.invalidate(myNotificationsProvider);
-                      }
+                      await repo.markAsRead(n.id);
+                      ref.invalidate(myNotificationsProvider);
                       _navigateForNotification(router, n);
                     } catch (e) {
                       messenger.showSnackBar(
