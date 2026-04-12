@@ -35,6 +35,24 @@ final leaderboardProvider = FutureProvider.autoDispose<List<UserModel>>((
   return repo.getLeaderboard();
 });
 
+/// Rütbe filtresiyle liderlik (null = tümü).
+final leaderboardFilteredProvider = FutureProvider.autoDispose
+    .family<List<UserModel>, String?>((ref, rankFilter) async {
+      ref.watch(currentUserProvider);
+      final repo = ref.read(userRepositoryProvider);
+      return repo.getLeaderboard(rankFilter: rankFilter);
+    });
+
+/// Oturumdaki kullanıcının genel sıra numarası (1 tabanlı); giriş yoksa null.
+final myLeaderboardRankProvider = FutureProvider.autoDispose<int?>((
+  ref,
+) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return null;
+  final repo = ref.read(userRepositoryProvider);
+  return repo.getMyLeaderboardRankPosition(user.id);
+});
+
 /// Toplulukta tüm kayıtlı balıkçılar (sıra limiti yok, alfabetik).
 final allRegisteredAnglersProvider =
     FutureProvider.autoDispose<List<UserModel>>((ref) async {

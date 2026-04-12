@@ -20,6 +20,8 @@ class AppColors {
   static const background = Color(0xFF07101E); // dark scaffold
   static const backgroundLight = Color(0xFFF8F9FA); // açık yüzey (kartlar vb)
   static const surface = Color(0xFF0B1C33);
+  /// Sıralama ekranı — kullanıcı özeti kartı (açık tema listesi üzerinde).
+  static const leaderboardBanner = Color(0xFF132236);
   static const dark = Color(0xFF06101D);
   static const muted = Color(0xFF8EA0B5);
 

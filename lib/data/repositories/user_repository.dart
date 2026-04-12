@@ -76,8 +76,34 @@ class UserRepository {
 
   /// Toplam puana göre liderlik tablosu.
   ///
-  /// Önce `leaderboard_users` RPC (RLS baypas, güvenli kolonlar); yoksa doğrudan `users` sorgusu.
-  Future<List<UserModel>> getLeaderboard({int limit = 50}) async {
+  /// [rankFilter] null iken önce `leaderboard_users` RPC; filtre varsa doğrudan `users`.
+  Future<List<UserModel>> getLeaderboard({
+    int limit = 50,
+    String? rankFilter,
+  }) async {
+    final filter = rankFilter?.trim();
+    if (filter != null && filter.isNotEmpty) {
+      try {
+        final response = await _db
+            .from('users')
+            .select(
+              'id, email, username, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
+            )
+            .eq('rank', filter)
+            .order('total_score', ascending: false)
+            .limit(limit);
+        return (response as List)
+            .map((row) => UserModel.fromJson(row as Map<String, dynamic>))
+            .toList();
+      } on PostgrestException catch (e) {
+        throw Exception(
+          'Liderlik tablosu alınırken bir hata oluştu: ${e.message}',
+        );
+      } catch (e) {
+        throw Exception('Liderlik tablosu alınamadı: $e');
+      }
+    }
+
     try {
       final dynamic raw = await _db.rpc(
         'leaderboard_users',
@@ -111,6 +137,45 @@ class UserRepository {
       );
     } catch (e) {
       throw Exception('Liderlik tablosu alınamadı: $e');
+    }
+  }
+
+  /// Genel listede 1 tabanlı sıra (aynı puanda üstteki sayısı + 1).
+  Future<int?> getMyLeaderboardRankPosition(String userId) async {
+    try {
+      final dynamic raw = await _db.rpc(
+        'my_leaderboard_rank',
+        params: {'check_user_id': userId},
+      );
+      if (raw is int) {
+        return raw;
+      }
+      if (raw is num) {
+        return raw.toInt();
+      }
+    } on PostgrestException catch (_) {
+      // RPC yoksa: profil puanı ile yaklaşık sıra
+    }
+
+    try {
+      final row = await _db
+          .from('users')
+          .select('total_score')
+          .eq('id', userId)
+          .maybeSingle();
+      if (row == null) {
+        return null;
+      }
+      final myScore = UserModel.coerceToInt(row['total_score']);
+      final higher = await _db
+          .from('users')
+          .select('id')
+          .gt('total_score', myScore);
+      return (higher as List).length + 1;
+    } on PostgrestException catch (e) {
+      throw Exception('Sıra numarası alınamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Sıra numarası alınamadı: $e');
     }
   }
 

@@ -59,20 +59,25 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final id = json['id'] as String;
+    final resolvedName = _resolveUsername(
+      json['username'] as String?,
+      json['email'] as String? ?? '',
+      id,
+    );
+    final createdRaw = json['created_at'] as String?;
     return UserModel(
       id: id,
       email: json['email'] as String? ?? '',
-      username: _resolveUsername(
-        json['username'] as String?,
-        json['email'] as String? ?? '',
-        id,
-      ),
+      username: resolvedName.trim().isEmpty ? 'Balıkçı' : resolvedName,
       avatarUrl: json['avatar_url'] as String?,
       rank: json['rank'] as String? ?? 'acemi',
       totalScore: coerceToInt(json['total_score']),
       sustainabilityScore: coerceToInt(json['sustainability_score']),
       fcmToken: json['fcm_token'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: createdRaw != null
+          ? DateTime.tryParse(createdRaw) ??
+              DateTime.fromMillisecondsSinceEpoch(0, isUtc: true)
+          : DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
     );
   }
 
