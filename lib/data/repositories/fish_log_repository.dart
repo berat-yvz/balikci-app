@@ -20,7 +20,7 @@ class FishLogRepository {
       final response = await _remote
           .from('fish_logs')
           .select(
-            'id, user_id, spot_id, species, weight, length, photo_url, exif_verified, weather_snapshot, is_private, released, created_at',
+            'id, user_id, spot_id, species, weight, length, photo_url, weather_snapshot, is_private, released, created_at',
           )
           .eq('user_id', userId)
           .order('created_at', ascending: false);
@@ -45,27 +45,30 @@ class FishLogRepository {
     bool isPrivate = false,
     bool released = false,
   }) async {
+    Map<String, dynamic>? mergedWeather = weatherSnapshot;
+    if (notes != null && notes.trim().isNotEmpty) {
+      mergedWeather = Map<String, dynamic>.from(weatherSnapshot ?? {});
+      mergedWeather['notes'] = notes.trim();
+    }
+
     final data = <String, dynamic>{
       'user_id': userId,
       'species': species,
       'weight': weightKg,
       'length': lengthCm,
       'photo_url': photoUrl,
-      'weather_snapshot': weatherSnapshot,
+      'weather_snapshot': mergedWeather,
       'is_private': isPrivate,
       'released': released,
     };
     if (spotId != null) data['spot_id'] = spotId;
-    if (notes != null && notes.trim().isNotEmpty) {
-      data['notes'] = notes.trim();
-    }
 
     try {
       final response = await _remote
           .from('fish_logs')
           .insert(data)
           .select(
-            'id, user_id, spot_id, species, weight, length, photo_url, exif_verified, weather_snapshot, is_private, released, created_at',
+            'id, user_id, spot_id, species, weight, length, photo_url, weather_snapshot, is_private, released, created_at',
           )
           .single();
       return FishLogModel.fromJson(response);
@@ -112,11 +115,20 @@ class FishLogRepository {
       final response = await _remote
           .from('fish_logs')
           .select(
-            'id, user_id, spot_id, species, weight, length, photo_url, notes, is_private, released, created_at',
+            'id, user_id, spot_id, species, weight, length, photo_url, weather_snapshot, is_private, released, created_at',
           )
           .eq('user_id', userId)
           .order('created_at', ascending: false);
       for (final row in response) {
+        final rawWs = row['weather_snapshot'];
+        Map<String, dynamic>? wsMap;
+        if (rawWs is Map) {
+          wsMap = Map<String, dynamic>.from(rawWs);
+        }
+        String? notesFromWs;
+        if (wsMap != null && wsMap['notes'] != null) {
+          notesFromWs = wsMap['notes'].toString();
+        }
         await _db.into(_db.fishLogs).insertOnConflictUpdate(
               FishLogsCompanion(
                 id: Value(row['id'] as String),
@@ -126,10 +138,12 @@ class FishLogRepository {
                 weightKg: Value((row['weight'] as num?)?.toDouble()),
                 lengthCm: Value((row['length'] as num?)?.toDouble()),
                 photoUrl: Value(row['photo_url'] as String?),
-                notes: Value(row['notes'] as String?),
+                notes: Value(notesFromWs),
                 isPrivate: Value(row['is_private'] as bool? ?? false),
                 isReleased: Value(row['released'] as bool? ?? false),
-                weatherSnapshot: const Value(null),
+                weatherSnapshot: Value(
+                  wsMap != null ? jsonEncode(wsMap) : null,
+                ),
                 caughtAt: Value(
                   row['created_at'] != null
                       ? DateTime.parse(row['created_at'] as String)

@@ -92,7 +92,6 @@ void main() {
       'weight': 1.5,
       'length': 35.0,
       'photo_url': null,
-      'exif_verified': false,
       'weather_snapshot': null,
       'is_private': false,
       'released': false,
