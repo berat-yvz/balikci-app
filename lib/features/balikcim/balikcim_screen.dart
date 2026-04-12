@@ -6,12 +6,7 @@ import 'package:balikci_app/features/balikcim/daily_forecast/daily_forecast_scre
 import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_screen.dart';
 import 'package:balikci_app/features/knots/knots_screen.dart';
 
-// TODO(Balıkçım Faz 1): KnotsScreen, düğüm ve takım Balıkçım’da iki ayrı sekmede
-// [KnotsScreenLayout.knotsOnly] / [tackleOnly] ile gömülü; her örnek kendi state’inde
-// veriyi yüklüyor. İleride tek yükleme için paylaşımlı provider veya üst seviye
-// [KnotsScreen] + [IndexedStack] ile birleştirilebilir.
-
-/// Balıkçım — rehber sekmeleri (balık bilgisi, tahmin, düğümler, takım, ipuçları).
+/// Balıkçım — rehber sekmeleri (balık bilgisi, tahmin, düğümler & takım, ipuçları).
 class BalikcimScreen extends ConsumerStatefulWidget {
   const BalikcimScreen({super.key});
 
@@ -26,7 +21,7 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -40,7 +35,14 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
     return Scaffold(
       backgroundColor: AppColors.navy,
       appBar: AppBar(
-        title: const Text('Balıkçım'),
+        title: Text(
+          'Balıkçım 🎣',
+          style: AppTextStyles.h3.copyWith(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
         backgroundColor: AppColors.navy,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -67,17 +69,17 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
                   unselectedLabelColor: Colors.white54,
                   labelStyle: AppTextStyles.caption.copyWith(
                     fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.bold,
                   ),
                   unselectedLabelStyle: AppTextStyles.caption.copyWith(
                     fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.bold,
                   ),
                   tabs: const [
                     Tab(
                       height: 56,
                       iconMargin: EdgeInsets.zero,
-                      icon: Icon(Icons.set_meal, size: 28),
+                      icon: Icon(Icons.set_meal_outlined, size: 28),
                       text: 'Balık Bilgisi',
                     ),
                     Tab(
@@ -89,14 +91,8 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
                     Tab(
                       height: 56,
                       iconMargin: EdgeInsets.zero,
-                      icon: Icon(Icons.link, size: 28),
+                      icon: Icon(Icons.link_outlined, size: 28),
                       text: 'Düğümler',
-                    ),
-                    Tab(
-                      height: 56,
-                      iconMargin: EdgeInsets.zero,
-                      icon: Icon(Icons.kitchen_outlined, size: 28),
-                      text: 'Takım & Yem',
                     ),
                     Tab(
                       height: 56,
@@ -115,14 +111,13 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
               children: [
                 const FishEncyclopediaScreen(),
                 const DailyForecastScreen(),
-                const KnotsScreen(layout: KnotsScreenLayout.knotsOnly),
-                const KnotsScreen(layout: KnotsScreenLayout.tackleOnly),
+                const KnotsScreen(),
                 const _PlaceholderTab(
-                  icon: Icons.lightbulb,
-                  title: 'İpucu & Sözlük',
+                  icon: Icons.lightbulb_outline,
+                  title: 'İpuçları',
                   subtitle:
-                      'Av mevzuatı, teknik terimler\nve mevsim kuralları yakında!',
-                  color: AppColors.secondary,
+                      'Av mevzuatı, teknik terimler ve mevsim kuralları\nyakında burada!',
+                  color: AppColors.accent,
                 ),
               ],
             ),
@@ -154,24 +149,26 @@ class _PlaceholderTab extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 72, color: color),
+            Icon(icon, size: 64, color: color),
             const SizedBox(height: 16),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: AppTextStyles.h2.copyWith(
+              style: AppTextStyles.h3.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 22,
+                fontSize: 20,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: AppTextStyles.body.copyWith(
-                fontSize: 15,
-                color: Colors.white70,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.caption.copyWith(
+                fontSize: 14,
+                color: Colors.white60,
               ),
             ),
           ],
