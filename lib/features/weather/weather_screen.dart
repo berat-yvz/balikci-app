@@ -734,7 +734,6 @@ class _WeatherHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final summary = FishingWeatherUtils.getSummary(weather);
     final icon = _weatherIcon(weather.weatherCode ?? 0);
 
     return Container(
@@ -755,17 +754,6 @@ class _WeatherHeroCard extends StatelessWidget {
             '${weather.tempCelsius.round()}°C',
             style: AppTextStyles.h1.copyWith(color: Colors.white),
           ),
-          const SizedBox(height: 4),
-          Text(
-            summary,
-            style: AppTextStyles.body.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          _FishingTips(weather: weather),
         ],
       ),
     );
@@ -902,58 +890,6 @@ class _DetailTile extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Anlık hava verisinden balıkçı tüyolarını anlık hava kartının içinde gösterir.
-class _FishingTips extends StatelessWidget {
-  final WeatherModel weather;
-  const _FishingTips({required this.weather});
-
-  @override
-  Widget build(BuildContext context) {
-    final wind = weather.windKmh;
-    final temp = weather.tempCelsius;
-
-    final tips = <String>[];
-    if (wind < 15) tips.add('✓ Rüzgar ideal seviyede');
-    if (wind > 25) tips.add('⚠️ Rüzgar yüksek, dikkatli ol');
-    if (temp >= 16 && temp <= 24) tips.add('✓ Su sıcaklığı balık için ideal');
-    if (temp > 28) tips.add('⚠️ Çok sıcak, derin sulara bak');
-    if (temp < 10) tips.add('⚠️ Soğuk su, yavaş balıklar');
-    if (tips.isEmpty) tips.add('Koşullar ortalama, denemeye değer');
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Divider(color: Colors.white12, height: 1),
-        const SizedBox(height: 10),
-        Text(
-          'Balıkçı Tüyoları',
-          style: AppTextStyles.caption.copyWith(
-            fontWeight: FontWeight.w700,
-            color: AppColors.muted,
-          ),
-        ),
-        const SizedBox(height: 8),
-        ...tips.map(
-          (tip) => Padding(
-            padding: const EdgeInsets.only(bottom: 5),
-            child: Text(
-              tip,
-              style: AppTextStyles.body.copyWith(
-                fontSize: 14,
-                color: tip.startsWith('✓')
-                    ? AppColors.primary
-                    : tip.startsWith('⚠️')
-                    ? AppColors.accent
-                    : Colors.white70,
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
