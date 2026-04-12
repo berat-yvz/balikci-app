@@ -23,7 +23,7 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   int _indexFromPath(String path) {
     if (path.startsWith(AppRoutes.weather)) return 0;
-    if (path.startsWith(AppRoutes.rank)) return 1;
+    if (path.startsWith(AppRoutes.balikcim)) return 1;
     if (path == AppRoutes.home) return 2;
     if (path.startsWith(AppRoutes.social)) return 3;
     if (path.startsWith(AppRoutes.fishLog)) return -1;

@@ -10,8 +10,14 @@ import 'package:balikci_app/data/models/knot_model.dart';
 import 'package:balikci_app/data/models/tackle_model.dart';
 import 'package:balikci_app/data/repositories/knot_repository.dart';
 
+/// Tam ekran: AppBar + Düğümler/Takımlar sekmeleri.
+/// [knotsOnly] / [tackleOnly]: Balıkçım içi gömülü panel (tek yükleme, ayrı Scaffold yok).
+enum KnotsScreenLayout { full, knotsOnly, tackleOnly }
+
 class KnotsScreen extends StatefulWidget {
-  const KnotsScreen({super.key});
+  const KnotsScreen({super.key, this.layout = KnotsScreenLayout.full});
+
+  final KnotsScreenLayout layout;
 
   @override
   State<KnotsScreen> createState() => _KnotsScreenState();
@@ -38,6 +44,11 @@ class _KnotsScreenState extends State<KnotsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    if (widget.layout == KnotsScreenLayout.knotsOnly) {
+      _tabController.index = 0;
+    } else if (widget.layout == KnotsScreenLayout.tackleOnly) {
+      _tabController.index = 1;
+    }
     _loadAll();
   }
 
@@ -98,8 +109,36 @@ class _KnotsScreenState extends State<KnotsScreen>
     return _allKnots.where((k) => k.category == _knotCategory).toList();
   }
 
+  Widget _buildBodyContent() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Text(
+          'Veriler yüklenemedi: $_error',
+          style: AppTextStyles.body.copyWith(color: Colors.white70),
+        ),
+      );
+    }
+    switch (widget.layout) {
+      case KnotsScreenLayout.full:
+        return TabBarView(
+          controller: _tabController,
+          children: [_buildKnotsTab(), _buildTackleTab()],
+        );
+      case KnotsScreenLayout.knotsOnly:
+        return _buildKnotsTab();
+      case KnotsScreenLayout.tackleOnly:
+        return _buildTackleTab();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (widget.layout != KnotsScreenLayout.full) {
+      return _buildBodyContent();
+    }
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
@@ -112,19 +151,7 @@ class _KnotsScreenState extends State<KnotsScreen>
           ],
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(
-              child: Text(
-                'Veriler yüklenemedi: $_error',
-                style: AppTextStyles.body.copyWith(color: Colors.white70),
-              ),
-            )
-          : TabBarView(
-              controller: _tabController,
-              children: [_buildKnotsTab(), _buildTackleTab()],
-            ),
+      body: _buildBodyContent(),
     );
   }
 
@@ -150,8 +177,12 @@ class _KnotsScreenState extends State<KnotsScreen>
         const SizedBox(height: 12),
         Expanded(
           child: _filteredKnots.isEmpty
-              ? const Center(
-                  child: Text('Bu filtrede düğüm bulunamadı.'),
+              ? Center(
+                  child: Text(
+                    'Bu filtrede düğüm bulunamadı.',
+                    style: AppTextStyles.body.copyWith(color: Colors.white70),
+                    textAlign: TextAlign.center,
+                  ),
                 )
               : GridView.builder(
                   padding: const EdgeInsets.all(16),
@@ -179,8 +210,12 @@ class _KnotsScreenState extends State<KnotsScreen>
 
   Widget _buildTackleTab() {
     if (_allTackle.isEmpty) {
-      return const Center(
-        child: Text('Takım önerileri bulunamadı.'),
+      return Center(
+        child: Text(
+          'Takım önerileri bulunamadı.',
+          style: AppTextStyles.body.copyWith(color: Colors.white70),
+          textAlign: TextAlign.center,
+        ),
       );
     }
     return ListView.separated(
