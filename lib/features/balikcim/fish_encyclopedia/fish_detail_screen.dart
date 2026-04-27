@@ -18,7 +18,44 @@ String _mevsimTurkce(String s) {
   }
 }
 
-/// [Navigator.push] ile açılan sade balık detayı.
+String _ayAdiTr(int month) {
+  const names = [
+    '',
+    'Ocak',
+    'Şubat',
+    'Mart',
+    'Nisan',
+    'Mayıs',
+    'Haziran',
+    'Temmuz',
+    'Ağustos',
+    'Eylül',
+    'Ekim',
+    'Kasım',
+    'Aralık',
+  ];
+  if (month < 1 || month > 12) return '$month';
+  return names[month];
+}
+
+String _zorlukEtiket(String d) {
+  return switch (d) {
+    'kolay' => 'Kolay',
+    'orta' => 'Orta',
+    'zor' => 'Zor',
+    _ => d,
+  };
+}
+
+Color _zorlukRenk(String d) {
+  return switch (d) {
+    'kolay' => AppColors.success,
+    'zor' => AppColors.danger,
+    _ => AppColors.warning,
+  };
+}
+
+/// [Navigator.push] ile açılan balık detayı — bölüm sırası İstanbul Olta El Kitabı akışına göre.
 class FishDetailScreen extends StatelessWidget {
   final FishEncyclopediaEntry fish;
 
@@ -28,11 +65,21 @@ class FishDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final mevsimMetni =
         fish.seasons.map(_mevsimTurkce).join('  •  ');
+    final aylarMetni = fish.bestMonths.isEmpty
+        ? '—'
+        : fish.bestMonths.map(_ayAdiTr).join(', ');
 
     return Scaffold(
       backgroundColor: AppColors.navy,
       appBar: AppBar(
-        title: Text(fish.name),
+        title: Text(
+          '${fish.emoji} ${fish.name}',
+          style: AppTextStyles.h3.copyWith(
+            color: Colors.white,
+            fontSize: 19,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         backgroundColor: AppColors.navy,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -43,7 +90,7 @@ class FishDetailScreen extends StatelessWidget {
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 24),
+              padding: const EdgeInsets.symmetric(vertical: 20),
               color: AppColors.encyclopediaCard,
               child: Column(
                 children: [
@@ -61,7 +108,7 @@ class FishDetailScreen extends StatelessWidget {
                     style: AppTextStyles.h2.copyWith(
                       color: Colors.white,
                       fontSize: 22,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -70,16 +117,120 @@ class FishDetailScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: AppTextStyles.caption.copyWith(
                       color: Colors.white54,
-                      fontSize: 13,
+                      fontSize: 15,
                       fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    fishCategoryDisplayLabel(fish.category),
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.primary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+              child: Center(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _zorlukRenk(fish.difficulty).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: _zorlukRenk(fish.difficulty).withValues(alpha: 0.65),
+                    ),
+                  ),
+                  child: Text(
+                    'Zorluk: ${_zorlukEtiket(fish.difficulty)}',
+                    style: AppTextStyles.body.copyWith(
+                      color: _zorlukRenk(fish.difficulty),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ),
             _Section(
-              title: '🪝 Hangi Yemlere Gelir?',
+              title: '🌤️ Hangi mevsimde tutulur?',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    mevsimMetni.isEmpty ? '—' : mevsimMetni,
+                    style: AppTextStyles.body.copyWith(
+                      color: Colors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'En iyi aylar',
+                    style: AppTextStyles.caption.copyWith(
+                      color: Colors.white60,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    aylarMetni,
+                    style: AppTextStyles.body.copyWith(
+                      color: AppColors.foam,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (fish.habitats.isNotEmpty) ...[
+                    const SizedBox(height: 14),
+                    Text(
+                      'Öne çıkan yerler',
+                      style: AppTextStyles.caption.copyWith(
+                        color: Colors.white60,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    ...fish.habitats.map((h) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '• ',
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.accent,
+                                fontSize: 17,
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                h,
+                                style: AppTextStyles.body.copyWith(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ],
+              ),
+            ),
+            _Section(
+              title: '🪱 Hangi yemlere gelir?',
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -87,18 +238,7 @@ class FishDetailScreen extends StatelessWidget {
               ),
             ),
             _Section(
-              title: '📅 Hangi Mevsimde Tutulur?',
-              child: Text(
-                mevsimMetni.isEmpty ? '—' : mevsimMetni,
-                style: AppTextStyles.body.copyWith(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            _Section(
-              title: '🎣 Nasıl Avlanır?',
+              title: '🎣 Nasıl avlanır?',
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -111,7 +251,7 @@ class FishDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: fish.tips.map((tip) {
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(bottom: 10),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -119,7 +259,7 @@ class FishDetailScreen extends StatelessWidget {
                           '• ',
                           style: AppTextStyles.body.copyWith(
                             color: AppColors.accent,
-                            fontSize: 16,
+                            fontSize: 17,
                           ),
                         ),
                         Expanded(
@@ -127,7 +267,7 @@ class FishDetailScreen extends StatelessWidget {
                             tip,
                             style: AppTextStyles.body.copyWith(
                               color: Colors.white70,
-                              fontSize: 15,
+                              fontSize: 16,
                             ),
                           ),
                         ),
@@ -139,24 +279,50 @@ class FishDetailScreen extends StatelessWidget {
             ),
             if (fish.minLegalSizeCm != null)
               _Section(
-                title: '📏 Minimum Boy (Av Mevzuatı)',
+                title: '📏 Minimum boy (av mevzuatı)',
                 child: Text(
                   '${fish.minLegalSizeCm} cm',
                   style: AppTextStyles.h3.copyWith(
                     color: AppColors.accent,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-            _Section(
-              title: '💬 İlginç Bilgi',
-              child: Text(
-                fish.funFact,
-                style: AppTextStyles.body.copyWith(
-                  color: Colors.white70,
-                  fontSize: 15,
-                  fontStyle: FontStyle.italic,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.45),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '💬 İlginç bilgi',
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.foam,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      fish.funFact,
+                      style: AppTextStyles.body.copyWith(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontStyle: FontStyle.italic,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -178,7 +344,7 @@ class _Section extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.encyclopediaCard,
         borderRadius: BorderRadius.circular(12),
@@ -190,11 +356,11 @@ class _Section extends StatelessWidget {
             title,
             style: AppTextStyles.body.copyWith(
               color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           child,
         ],
       ),
@@ -210,7 +376,7 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
@@ -223,7 +389,7 @@ class _Chip extends StatelessWidget {
         label,
         style: AppTextStyles.body.copyWith(
           color: Colors.white,
-          fontSize: 14,
+          fontSize: 16,
         ),
       ),
     );

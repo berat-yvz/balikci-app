@@ -5,6 +5,7 @@ import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedi
 
 final fishEncyclopediaProvider =
     FutureProvider<List<FishEncyclopediaEntry>>((ref) async {
+  ref.keepAlive();
   final repo = FishEncyclopediaRepository();
   return repo.loadAll();
 });

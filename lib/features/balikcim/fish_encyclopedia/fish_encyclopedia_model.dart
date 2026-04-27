@@ -1,3 +1,15 @@
+/// Ansiklopedi kategori kodu → Türkçe etiket.
+String fishCategoryDisplayLabel(String category) {
+  return switch (category) {
+    'goc' => 'Göçmen Balık',
+    'kiyi' => 'Kıyı Balığı',
+    'dip' => 'Dip Balığı',
+    'acik_deniz' => 'Açık Deniz',
+    'tatli_su' => 'Tatlısu Balığı',
+    _ => category,
+  };
+}
+
 /// Balık ansiklopedisi — tek kayıt (JSON `fish` öğesi).
 class FishEncyclopediaEntry {
   final String id;

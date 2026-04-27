@@ -68,11 +68,11 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
                   labelColor: AppColors.primary,
                   unselectedLabelColor: Colors.white54,
                   labelStyle: AppTextStyles.caption.copyWith(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                   unselectedLabelStyle: AppTextStyles.caption.copyWith(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                   tabs: const [
@@ -149,26 +149,27 @@ class _PlaceholderTab extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 64, color: color),
-            const SizedBox(height: 16),
+            Icon(icon, size: 80, color: color),
+            const SizedBox(height: 20),
             Text(
               title,
               textAlign: TextAlign.center,
               style: AppTextStyles.h3.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 20,
+                fontSize: 22,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              maxLines: 2,
+              maxLines: 4,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.caption.copyWith(
-                fontSize: 14,
-                color: Colors.white60,
+              style: AppTextStyles.body.copyWith(
+                fontSize: 17,
+                color: Colors.white70,
+                height: 1.35,
               ),
             ),
           ],

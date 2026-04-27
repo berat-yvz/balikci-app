@@ -3,10 +3,161 @@
     {
       "id": "lufer",
       "name": "Lüfer",
-      "active_months": [4, 5, 6, 7, 8, 9, 10, 11],
+      "active_months": [
+        9,
+        10,
+        11,
+        12,
+        1
+      ],
+      "optimal_wind_max": 26,
+      "optimal_wave_max": 1.4,
+      "tip": "Göç döneminde akıntı burunları ve lodosa karşı dikkat.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "palamut",
+      "name": "Palamut",
+      "active_months": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "optimal_wind_max": 30,
+      "optimal_wave_max": 1.6,
+      "tip": "Sürü yüzeydeyken çapari ve at-çek.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "uskumru",
+      "name": "Uskumru",
+      "active_months": [
+        10,
+        11,
+        12,
+        1
+      ],
+      "optimal_wind_max": 32,
+      "optimal_wave_max": 1.8,
+      "tip": "Sırtı kaşık; kış lezzeti.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "hamsi",
+      "name": "Hamsi",
+      "active_months": [
+        11,
+        12,
+        1,
+        2
+      ],
+      "optimal_wind_max": 28,
+      "optimal_wave_max": 1.2,
+      "tip": "Beyaz tüy çapari; yağlı dönem kış.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "kolyoz",
+      "name": "Kolyoz",
+      "active_months": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "optimal_wind_max": 30,
+      "optimal_wave_max": 1.6,
+      "tip": "Siyah-kırçıllı çapari, at-çek.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "istanvrit",
+      "name": "İstavrit",
+      "active_months": [
+        1,
+        2,
+        3,
+        4,
+        10,
+        11,
+        12
+      ],
       "optimal_wind_max": 28,
       "optimal_wave_max": 1.4,
-      "tip": "Hafif rüzgâr ve gel-git değişiminde yüzey yakını dene.",
+      "tip": "Gece iskele ışığı altında verim artar.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "kefal",
+      "name": "Kefal",
+      "active_months": [
+        1,
+        2,
+        3,
+        10,
+        11,
+        12
+      ],
+      "optimal_wind_max": 22,
+      "optimal_wave_max": 1.0,
+      "tip": "Hamur ve kepçe; sabah erken.",
       "moon_phase_bonus": {
         "new_moon": 2,
         "waxing_crescent": 4,
@@ -21,92 +172,722 @@
     {
       "id": "levrek",
       "name": "Levrek",
-      "active_months": [3, 4, 5, 6, 7, 8, 9, 10, 11],
+      "active_months": [
+        3,
+        4,
+        5,
+        10,
+        11
+      ],
       "optimal_wind_max": 32,
       "optimal_wave_max": 1.8,
-      "tip": "Yapı ve kaya kırığı dibinde yavaş suni yem iyi sonuç verir.",
+      "tip": "Mart lezzeti; rapala ve canlı yem.",
       "moon_phase_bonus": {
-        "new_moon": 3,
+        "new_moon": 2,
         "waxing_crescent": 4,
         "first_quarter": 5,
-        "waxing_gibbous": 5,
-        "full_moon": 6,
-        "waning_gibbous": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
         "last_quarter": 4,
-        "waning_crescent": 3
+        "waning_crescent": 2
       }
     },
     {
       "id": "cipura",
       "name": "Çipura",
-      "active_months": [1, 2, 3, 4, 5, 9, 10, 11, 12],
+      "active_months": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
       "optimal_wind_max": 24,
       "optimal_wave_max": 1.2,
-      "tip": "Sakin günlerde midye/ solucan ile dip veya yarı-dip.",
-      "moon_phase_bonus": {
-        "new_moon": 4,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 5,
-        "full_moon": 5,
-        "waning_gibbous": 4,
-        "last_quarter": 5,
-        "waning_crescent": 4
-      }
-    },
-    {
-      "id": "istanbullu",
-      "name": "İstanbullu",
-      "active_months": [5, 6, 7, 8, 9],
-      "optimal_wind_max": 22,
-      "optimal_wave_max": 1.0,
-      "tip": "Temiz akıntı kenarı ve küçük silikon yem deneyin.",
+      "tip": "Yengeç ve dip sürütmesi.",
       "moon_phase_bonus": {
         "new_moon": 2,
-        "waxing_crescent": 5,
-        "first_quarter": 6,
-        "waxing_gibbous": 7,
-        "full_moon": 7,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
         "waning_gibbous": 6,
-        "last_quarter": 5,
-        "waning_crescent": 3
+        "last_quarter": 4,
+        "waning_crescent": 2
       }
     },
     {
       "id": "mezgit",
       "name": "Mezgit",
-      "active_months": [1, 2, 3, 4, 10, 11, 12],
+      "active_months": [
+        10,
+        11,
+        12,
+        1,
+        2
+      ],
       "optimal_wind_max": 35,
       "optimal_wave_max": 2.2,
-      "tip": "Soğuk aylarda derin ve yavaş jig hareketi.",
-      "moon_phase_bonus": {
-        "new_moon": 3,
-        "waxing_crescent": 3,
-        "first_quarter": 4,
-        "waxing_gibbous": 4,
-        "full_moon": 5,
-        "waning_gibbous": 4,
-        "last_quarter": 4,
-        "waning_crescent": 3
-      }
-    },
-    {
-      "id": "kolyoz",
-      "name": "Kolyoz",
-      "active_months": [4, 5, 6, 7, 8, 9],
-      "optimal_wind_max": 30,
-      "optimal_wave_max": 1.6,
-      "tip": "Sürü halindeyken küçük kaşık ve hızlı çekim.",
+      "tip": "Kış kıyı dipleri; dip takımı.",
       "moon_phase_bonus": {
         "new_moon": 2,
         "waxing_crescent": 4,
         "first_quarter": 5,
-        "waxing_gibbous": 5,
-        "full_moon": 6,
-        "waning_gibbous": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "barbunya",
+      "name": "Barbunya",
+      "active_months": [
+        4,
+        5,
+        9,
+        10,
+        11,
+        12
+      ],
+      "optimal_wind_max": 28,
+      "optimal_wave_max": 1.5,
+      "tip": "Kurt yemi; telli altı köstek.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "tekir",
+      "name": "Tekir",
+      "active_months": [
+        2,
+        3,
+        4,
+        9,
+        10,
+        11,
+        12
+      ],
+      "optimal_wind_max": 28,
+      "optimal_wave_max": 1.5,
+      "tip": "Şubat bolluğu; dip.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "karagoz",
+      "name": "Karagöz",
+      "active_months": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "optimal_wind_max": 24,
+      "optimal_wave_max": 1.2,
+      "tip": "Midye; küçük kanca.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "mercan",
+      "name": "Mercan",
+      "active_months": [
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "optimal_wind_max": 26,
+      "optimal_wave_max": 1.4,
+      "tip": "Derin dip; Nisan sonrası.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "sinarit",
+      "name": "Sinarit",
+      "active_months": [
+        7,
+        8,
+        9,
+        10
+      ],
+      "optimal_wind_max": 24,
+      "optimal_wave_max": 1.3,
+      "tip": "Ağustos lezzeti; canlı yem.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "izmarit",
+      "name": "İzmarit",
+      "active_months": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "optimal_wind_max": 26,
+      "optimal_wave_max": 1.3,
+      "tip": "Kısa köstek; küçük iğne.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "zargana",
+      "name": "Zargana",
+      "active_months": [
+        6,
+        7,
+        8
+      ],
+      "optimal_wind_max": 22,
+      "optimal_wave_max": 1.0,
+      "tip": "Yüzey; ince ip ile floş.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "sardalya",
+      "name": "Sardalya",
+      "active_months": [
+        7,
+        8,
+        9,
+        10
+      ],
+      "optimal_wind_max": 26,
+      "optimal_wave_max": 1.3,
+      "tip": "Beyaz tüy çapari.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "gumus_baligi",
+      "name": "Gümüş balığı",
+      "active_months": [
+        10,
+        11,
+        12,
+        1,
+        2
+      ],
+      "optimal_wind_max": 24,
+      "optimal_wave_max": 1.1,
+      "tip": "Taş ve kepçe; Nakkaştepe.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "torik",
+      "name": "Torik",
+      "active_months": [
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "optimal_wind_max": 20,
+      "optimal_wave_max": 1.2,
+      "tip": "Tekne ve güvenlik; Kasım yoğunluğu.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "cinekop",
+      "name": "Çinekop",
+      "active_months": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "optimal_wind_max": 30,
+      "optimal_wave_max": 1.6,
+      "tip": "Küçük kaşık; boy sınırı.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "kalkan",
+      "name": "Kalkan",
+      "active_months": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "optimal_wind_max": 26,
+      "optimal_wave_max": 1.3,
+      "tip": "Şubat–Mayıs; akyem ve dip.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "iskorpit",
+      "name": "İskorpit",
+      "active_months": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "optimal_wind_max": 24,
+      "optimal_wave_max": 1.2,
+      "tip": "Zehirli diken; eldiven.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "dil_baligi",
+      "name": "Dil balığı",
+      "active_months": [
+        3,
+        4,
+        10,
+        11,
+        12
+      ],
+      "optimal_wind_max": 28,
+      "optimal_wave_max": 1.4,
+      "tip": "Hafif isırık; kum zeminde.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "orfoz",
+      "name": "Orfoz",
+      "active_months": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "optimal_wind_max": 18,
+      "optimal_wave_max": 1.0,
+      "tip": "Mağara dipleri; güçlü takım.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "akya",
+      "name": "Akya",
+      "active_months": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "optimal_wind_max": 18,
+      "optimal_wave_max": 1.0,
+      "tip": "Büyük dip; mevzuata uy.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "minekop",
+      "name": "Minekop",
+      "active_months": [
+        11,
+        12,
+        1,
+        2,
+        3
+      ],
+      "optimal_wind_max": 32,
+      "optimal_wave_max": 2.0,
+      "tip": "Kış dip balığı.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "kirlangic",
+      "name": "Kırlangıç",
+      "active_months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        9,
+        10,
+        11,
+        12
+      ],
+      "optimal_wind_max": 30,
+      "optimal_wave_max": 1.6,
+      "tip": "Çok mevsimli dip sürütme.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "kofana",
+      "name": "Kofana",
+      "active_months": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "optimal_wind_max": 28,
+      "optimal_wave_max": 1.5,
+      "tip": "Kumlu dip; yaz–sonbahar.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "sazan",
+      "name": "Sazan",
+      "active_months": [
+        3,
+        4,
+        5,
+        6,
+        9,
+        10
+      ],
+      "optimal_wind_max": 20,
+      "optimal_wave_max": 0.8,
+      "tip": "Büyükçekmece; sakin rüzgâr.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "yayinbaligi",
+      "name": "Yayın balığı",
+      "active_months": [
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "optimal_wind_max": 18,
+      "optimal_wave_max": 0.8,
+      "tip": "Göl dipi; büyük yem.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
+        "last_quarter": 4,
+        "waning_crescent": 2
+      }
+    },
+    {
+      "id": "turna",
+      "name": "Turna",
+      "active_months": [
+        3,
+        4,
+        5,
+        9,
+        10,
+        11
+      ],
+      "optimal_wind_max": 22,
+      "optimal_wave_max": 1.0,
+      "tip": "Yapay yem; Büyükçekmece.",
+      "moon_phase_bonus": {
+        "new_moon": 2,
+        "waxing_crescent": 4,
+        "first_quarter": 5,
+        "waxing_gibbous": 6,
+        "full_moon": 8,
+        "waning_gibbous": 6,
         "last_quarter": 4,
         "waning_crescent": 2
       }
     }
-  ]
+  ],
+  "istanbul_monthly_highlights": {
+    "1": [
+      "uskumru",
+      "lufer",
+      "palamut",
+      "istanvrit",
+      "kefal",
+      "hamsi",
+      "kofana",
+      "minekop",
+      "tekir",
+      "kirlangic",
+      "torik"
+    ],
+    "2": [
+      "kalkan",
+      "tekir",
+      "gumus_baligi",
+      "kefal",
+      "hamsi",
+      "minekop"
+    ],
+    "3": [
+      "kefal",
+      "levrek",
+      "kalkan",
+      "mezgit",
+      "kirlangic",
+      "minekop"
+    ],
+    "4": [
+      "kalkan",
+      "mercan",
+      "levrek",
+      "kirlangic",
+      "mezgit",
+      "iskorpit"
+    ],
+    "5": [
+      "barbunya",
+      "levrek",
+      "dil_baligi",
+      "tekir",
+      "kirlangic",
+      "iskorpit",
+      "mercan"
+    ],
+    "6": [
+      "sardalya",
+      "tekir",
+      "barbunya",
+      "zargana",
+      "sinarit",
+      "kolyoz"
+    ],
+    "7": [
+      "palamut",
+      "sardalya",
+      "mercan",
+      "sinarit",
+      "zargana",
+      "lufer"
+    ],
+    "8": [
+      "palamut",
+      "lufer",
+      "kolyoz",
+      "izmarit",
+      "kirlangic",
+      "sinarit",
+      "torik"
+    ],
+    "9": [
+      "palamut",
+      "lufer",
+      "kolyoz",
+      "izmarit",
+      "kirlangic",
+      "levrek",
+      "mercan"
+    ],
+    "10": [
+      "lufer",
+      "palamut",
+      "istanvrit",
+      "mezgit",
+      "sardalya",
+      "barbunya",
+      "tekir",
+      "hamsi",
+      "kirlangic",
+      "torik",
+      "cinekop"
+    ],
+    "11": [
+      "hamsi",
+      "tekir",
+      "uskumru",
+      "torik",
+      "lufer",
+      "palamut",
+      "minekop"
+    ],
+    "12": [
+      "hamsi",
+      "tekir",
+      "uskumru",
+      "torik",
+      "lufer",
+      "minekop",
+      "mezgit"
+    ]
+  }
 }
