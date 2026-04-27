@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/services/proximity_vote_service.dart';
+import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/shared/providers/connectivity_provider.dart';
 
 /// Ana shell — 5 sekme, harita ortada vurgulu.
@@ -20,6 +22,18 @@ class MainShell extends ConsumerStatefulWidget {
 
 class _MainShellState extends ConsumerState<MainShell> {
   int _currentIndex = 2; // harita varsayılan
+  bool _scheduledProximityVote = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _scheduledProximityVote) return;
+      if (SupabaseService.auth.currentUser == null) return;
+      _scheduledProximityVote = true;
+      ProximityVoteService.instance.checkAndShowVoteDialog(context);
+    });
+  }
 
   int _indexFromPath(String path) {
     if (path.startsWith(AppRoutes.weather)) return 0;

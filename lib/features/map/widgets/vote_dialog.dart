@@ -25,6 +25,7 @@ class VoteDialog extends StatefulWidget {
   }) async {
     var hidden = false;
     try {
+      if (!context.mounted) return false;
       hidden = await showDialog<bool>(
             context: context,
             barrierDismissible: true,

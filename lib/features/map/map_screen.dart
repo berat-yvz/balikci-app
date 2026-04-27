@@ -23,7 +23,6 @@ import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/data/models/shop_model.dart';
 import 'package:balikci_app/features/map/widgets/spot_marker.dart';
-import 'package:balikci_app/features/map/widgets/vote_dialog.dart';
 import 'package:balikci_app/features/map/widgets/weather_card.dart';
 import 'package:balikci_app/data/repositories/shop_repository.dart';
 import 'package:balikci_app/data/repositories/user_repository.dart';
@@ -1259,10 +1258,7 @@ class _MapScreenState extends State<MapScreen> {
                                   if (sheetDescriptionTrimmed != null &&
                                       sheetDescriptionTrimmed.isNotEmpty)
                                     const SizedBox(height: 12),
-                                  _RecentCheckinsRow(
-                                    checkins: sheetCheckins,
-                                    onVoteRefresh: _refreshActiveCheckins,
-                                  ),
+                                  _RecentCheckinsRow(checkins: sheetCheckins),
                                 ],
                               ),
                             ),
@@ -1863,16 +1859,11 @@ class _SheetSecondaryButton extends StatelessWidget {
   }
 }
 
-/// Son bildirimleri dikey kart listesi olarak gösterir.
-/// Her kart; zaman, balık yoğunluğu, kalabalık ve "Doğru mu?" butonunu içerir.
+/// Son bildirimleri dikey kart listesi olarak gösterir (oylama yalnızca konum pop-up).
 class _RecentCheckinsRow extends StatelessWidget {
   final List<CheckinModel> checkins;
-  final Future<void> Function()? onVoteRefresh;
 
-  const _RecentCheckinsRow({
-    required this.checkins,
-    this.onVoteRefresh,
-  });
+  const _RecentCheckinsRow({required this.checkins});
 
   @override
   Widget build(BuildContext context) {
@@ -1912,14 +1903,7 @@ class _RecentCheckinsRow extends StatelessWidget {
             .map(
               (c) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: _CheckinCard(
-                  checkin: c,
-                  onVoteTap: () => VoteDialog.show(
-                    context,
-                    checkin: c,
-                    onClosed: onVoteRefresh,
-                  ),
-                ),
+                child: _CheckinCard(checkin: c),
               ),
             ),
       ],
@@ -1927,12 +1911,11 @@ class _RecentCheckinsRow extends StatelessWidget {
   }
 }
 
-/// Tek check-in kartı — zaman, balık, kalabalık + "Doğru mu?" butonu.
+/// Tek check-in kartı — zaman, balık, kalabalık özeti (oylama yalnızca konum pop-up).
 class _CheckinCard extends StatelessWidget {
   final CheckinModel checkin;
-  final VoidCallback onVoteTap;
 
-  const _CheckinCard({required this.checkin, required this.onVoteTap});
+  const _CheckinCard({required this.checkin});
 
   String _fishLabel(String? d) => switch (d) {
     'yoğun' => '🐟🐟🐟 Çok Balık',
@@ -2078,35 +2061,6 @@ class _CheckinCard extends StatelessWidget {
                   ),
                 ],
               ],
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          // Sağ: "Doğru mu?" butonu — minimum 56dp dokunma hedefi
-          SizedBox(
-            width: 72,
-            height: 56,
-            child: OutlinedButton(
-              onPressed: onVoteTap,
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                foregroundColor: AppColors.foam,
-                side: BorderSide(
-                  color: AppColors.foam.withValues(alpha: 0.22),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text(
-                'Doğru\nmu?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.foam,
-                ),
-              ),
             ),
           ),
         ],

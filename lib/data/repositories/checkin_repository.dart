@@ -39,6 +39,34 @@ class CheckinRepository {
     }
   }
 
+  /// Aktif, gizlenmemiş check-in'leri getirir (kendi kayıtları hariç).
+  ///
+  /// Sunucu RLS (`is_active`, `is_hidden`) ile uyumlu satırlar döner.
+  /// [CheckinModel.isActive] ile süre / oy baskısı istemci tarafında doğrulanır.
+  /// Limit: 50
+  Future<List<CheckinModel>> getActiveCheckinsNearby() async {
+    final uid = SupabaseService.auth.currentUser?.id;
+    if (uid == null) return [];
+    try {
+      final response = await _db
+          .from('checkins')
+          .select(
+            'id, user_id, spot_id, crowd_level, fish_density, fish_species, photo_url, exif_verified, is_hidden, true_votes, false_votes, created_at, expires_at',
+          )
+          .eq('is_hidden', false)
+          .neq('user_id', uid)
+          .order('created_at', ascending: false)
+          .range(0, 49);
+
+      final list = response.map<CheckinModel>(CheckinModel.fromJson).toList();
+      return list.where((c) => c.isActive).toList();
+    } on PostgrestException catch (e) {
+      throw Exception('Aktif check-in listesi alınamadı: ${e.message}');
+    } catch (e) {
+      throw Exception('Aktif check-in listesi alınamadı: $e');
+    }
+  }
+
   /// Yeni bir check-in kaydı oluşturur.
   Future<CheckinModel?> addCheckin(Map<String, dynamic> data) async {
     try {
