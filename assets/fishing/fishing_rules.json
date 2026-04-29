@@ -213,6 +213,54 @@
         "message": "ℹ️ Yaz: göçmen balıklar Karadeniz'de, kıyı türleri aktif.",
         "priority": 28,
         "_note": "Yaz aylarında büyük göç bitti, yerli kıyı türleri (levrek, kefal, çipura) dominant."
+      },
+      {
+        "when": { "wind_direction_deg_min": 180, "wind_direction_deg_max": 220, "windspeed_kmh_min": 20 },
+        "score_delta": -25,
+        "message": "⚠️ Lodos (180–220°, >20 km/s): Boğaz'da türbülans, av imkânsız.",
+        "priority": 72,
+        "_note": "Güney-güneybatı rüzgarı; Marmara'dan Boğaz'a giren dalgaları şiddetlendirir."
+      },
+      {
+        "when": { "wind_direction_deg_min": 200, "wind_direction_deg_max": 230, "windspeed_kmh_min": 12 },
+        "score_delta": -18,
+        "message": "⚠️ Kıble (200–230°, >12 km/s): Güney rüzgarı akıntıyı karıştırıyor.",
+        "priority": 60,
+        "_note": "Güney-güneybatı rüzgarı; Boğaz yüzey akıntısını bozar."
+      },
+      {
+        "when": { "wind_direction_deg_min": 240, "wind_direction_deg_max": 270, "windspeed_kmh_min": 18 },
+        "score_delta": -20,
+        "message": "⚠️ Keşişleme (240–270°, >18 km/s): Batı rüzgarı Boğaz geçişini kapatıyor.",
+        "priority": 65,
+        "_note": "Batı-güneybatı rüzgarı; Boğaz girişinde dalga ve akıntı çakışması."
+      },
+      {
+        "when": { "wind_direction_deg_min": 30, "wind_direction_deg_max": 60, "windspeed_kmh_min": 10 },
+        "score_delta": 12,
+        "message": "✓ Poyraz (30–60°, >10 km/s): Boğaz akıntısı güçlendi, göçmen balıklar aktif!",
+        "priority": 66,
+        "_note": "Kuzey-kuzeydoğu rüzgarı; Karadeniz'den yüzey akıntısını kuvvetlendirir."
+      }
+    ],
+    "istanbul_migration_rules": [
+      {
+        "when": { "month_in": [9, 10, 11, 12] },
+        "score_delta": 15,
+        "message": "✓ Göç mevsimi — Boğaz kaynıyor!",
+        "priority": 70
+      },
+      {
+        "when": { "month_in": [4, 5] },
+        "score_delta": -10,
+        "message": "ℹ️ Tersine göç — büyük balıklar Karadeniz'e çıkıyor.",
+        "priority": 55
+      },
+      {
+        "when": { "month_in": [6] },
+        "score_delta": -8,
+        "message": "ℹ️ Zayıf ay — balıklar Karadeniz'de.",
+        "priority": 48
       }
     ]
   },

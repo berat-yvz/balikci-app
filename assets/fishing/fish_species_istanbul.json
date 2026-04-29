@@ -3,891 +3,688 @@
     {
       "id": "lufer",
       "name": "Lüfer",
-      "active_months": [
-        9,
-        10,
-        11,
-        12,
-        1
-      ],
+      "active_months": [9, 10, 11, 12, 1],
       "optimal_wind_max": 26,
       "optimal_wave_max": 1.4,
+      "optimal_sst_min": 16,
+      "optimal_sst_max": 22,
+      "gear_map": {
+        "tackle": "Rapala 9cm",
+        "technique": "At-çek",
+        "hook_size": "2/0",
+        "weight_gr": 20
+      },
       "tip": "Göç döneminde akıntı burunları ve lodosa karşı dikkat.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "palamut",
       "name": "Palamut",
-      "active_months": [
-        8,
-        9,
-        10,
-        11
-      ],
+      "active_months": [8, 9, 10, 11],
       "optimal_wind_max": 30,
       "optimal_wave_max": 1.6,
+      "optimal_sst_min": 18,
+      "optimal_sst_max": 24,
+      "gear_map": {
+        "tackle": "Kırmızı tüy çapari",
+        "technique": "Sırtı çekme",
+        "hook_size": "1/0",
+        "weight_gr": 15
+      },
       "tip": "Sürü yüzeydeyken çapari ve at-çek.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "uskumru",
       "name": "Uskumru",
-      "active_months": [
-        10,
-        11,
-        12,
-        1
-      ],
+      "active_months": [10, 11, 12, 1],
       "optimal_wind_max": 32,
       "optimal_wave_max": 1.8,
+      "optimal_sst_min": 14,
+      "optimal_sst_max": 22,
+      "gear_map": {
+        "tackle": "Çapari",
+        "technique": "Sırtı çekme",
+        "hook_size": "4",
+        "weight_gr": 10
+      },
       "tip": "Sırtı kaşık; kış lezzeti.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "hamsi",
       "name": "Hamsi",
-      "active_months": [
-        11,
-        12,
-        1,
-        2
-      ],
+      "active_months": [11, 12, 1, 2],
       "optimal_wind_max": 28,
       "optimal_wave_max": 1.2,
+      "optimal_sst_min": 8,
+      "optimal_sst_max": 18,
+      "gear_map": {
+        "tackle": "Küçük beyaz çapari",
+        "technique": "At-çek",
+        "hook_size": "8",
+        "weight_gr": 5
+      },
       "tip": "Beyaz tüy çapari; yağlı dönem kış.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "kolyoz",
       "name": "Kolyoz",
-      "active_months": [
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
+      "active_months": [4, 5, 6, 7, 8, 9],
       "optimal_wind_max": 30,
       "optimal_wave_max": 1.6,
+      "optimal_sst_min": 16,
+      "optimal_sst_max": 26,
+      "gear_map": {
+        "tackle": "Siyah-kırçıllı çapari",
+        "technique": "At-çek",
+        "hook_size": "2",
+        "weight_gr": 12
+      },
       "tip": "Siyah-kırçıllı çapari, at-çek.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "istanvrit",
       "name": "İstavrit",
-      "active_months": [
-        1,
-        2,
-        3,
-        4,
-        10,
-        11,
-        12
-      ],
+      "active_months": [1, 2, 3, 4, 10, 11, 12],
       "optimal_wind_max": 28,
       "optimal_wave_max": 1.4,
+      "optimal_sst_min": 8,
+      "optimal_sst_max": 24,
+      "gear_map": {
+        "tackle": "Beyaz tüy çapari",
+        "technique": "At-çek",
+        "hook_size": "6",
+        "weight_gr": 8
+      },
       "tip": "Gece iskele ışığı altında verim artar.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "kefal",
       "name": "Kefal",
-      "active_months": [
-        1,
-        2,
-        3,
-        10,
-        11,
-        12
-      ],
+      "active_months": [1, 2, 3, 10, 11, 12],
       "optimal_wind_max": 22,
       "optimal_wave_max": 1.0,
+      "optimal_sst_min": 8,
+      "optimal_sst_max": 22,
+      "gear_map": {
+        "tackle": "Hamur/kepçe",
+        "technique": "Dip sürütme",
+        "hook_size": "4",
+        "weight_gr": 15
+      },
       "tip": "Hamur ve kepçe; sabah erken.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "levrek",
       "name": "Levrek",
-      "active_months": [
-        3,
-        4,
-        5,
-        10,
-        11
-      ],
+      "active_months": [3, 4, 5, 10, 11],
       "optimal_wind_max": 32,
       "optimal_wave_max": 1.8,
+      "optimal_sst_min": 12,
+      "optimal_sst_max": 22,
+      "gear_map": {
+        "tackle": "Spin rapala",
+        "technique": "Sırtı kaşık",
+        "hook_size": "1/0",
+        "weight_gr": 18
+      },
       "tip": "Mart lezzeti; rapala ve canlı yem.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "cipura",
       "name": "Çipura",
-      "active_months": [
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
+      "active_months": [4, 5, 6, 7, 8, 9],
       "optimal_wind_max": 24,
       "optimal_wave_max": 1.2,
+      "optimal_sst_min": 14,
+      "optimal_sst_max": 24,
+      "gear_map": {
+        "tackle": "Yengeç/midye",
+        "technique": "Dip sürütme",
+        "hook_size": "2",
+        "weight_gr": 20
+      },
       "tip": "Yengeç ve dip sürütmesi.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "mezgit",
       "name": "Mezgit",
-      "active_months": [
-        10,
-        11,
-        12,
-        1,
-        2
-      ],
+      "active_months": [10, 11, 12, 1, 2],
       "optimal_wind_max": 35,
       "optimal_wave_max": 2.2,
+      "optimal_sst_min": 6,
+      "optimal_sst_max": 16,
+      "gear_map": {
+        "tackle": "Dip takımı",
+        "technique": "Dip sürütme",
+        "hook_size": "4",
+        "weight_gr": 30
+      },
       "tip": "Kış kıyı dipleri; dip takımı.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "barbunya",
       "name": "Barbunya",
-      "active_months": [
-        4,
-        5,
-        9,
-        10,
-        11,
-        12
-      ],
+      "active_months": [4, 5, 9, 10, 11, 12],
       "optimal_wind_max": 28,
       "optimal_wave_max": 1.5,
+      "optimal_sst_min": 12,
+      "optimal_sst_max": 22,
+      "gear_map": {
+        "tackle": "Kurt yemi",
+        "technique": "Telli altı köstek",
+        "hook_size": "6",
+        "weight_gr": 15
+      },
       "tip": "Kurt yemi; telli altı köstek.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "tekir",
       "name": "Tekir",
-      "active_months": [
-        2,
-        3,
-        4,
-        9,
-        10,
-        11,
-        12
-      ],
+      "active_months": [2, 3, 4, 9, 10, 11, 12],
       "optimal_wind_max": 28,
       "optimal_wave_max": 1.5,
+      "optimal_sst_min": 10,
+      "optimal_sst_max": 22,
+      "gear_map": {
+        "tackle": "Kurt yemi",
+        "technique": "Dip sürütme",
+        "hook_size": "6",
+        "weight_gr": 15
+      },
       "tip": "Şubat bolluğu; dip.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "karagoz",
       "name": "Karagöz",
-      "active_months": [
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
+      "active_months": [5, 6, 7, 8, 9],
       "optimal_wind_max": 24,
       "optimal_wave_max": 1.2,
+      "optimal_sst_min": 16,
+      "optimal_sst_max": 26,
+      "gear_map": {
+        "tackle": "Midye",
+        "technique": "Dip sürütme",
+        "hook_size": "4",
+        "weight_gr": 12
+      },
       "tip": "Midye; küçük kanca.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "mercan",
       "name": "Mercan",
-      "active_months": [
-        4,
-        5,
-        6,
-        7,
-        8
-      ],
+      "active_months": [4, 5, 6, 7, 8],
       "optimal_wind_max": 26,
       "optimal_wave_max": 1.4,
+      "optimal_sst_min": 16,
+      "optimal_sst_max": 26,
+      "gear_map": {
+        "tackle": "Karides/midye",
+        "technique": "Derin dip",
+        "hook_size": "2",
+        "weight_gr": 25
+      },
       "tip": "Derin dip; Nisan sonrası.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "sinarit",
       "name": "Sinarit",
-      "active_months": [
-        7,
-        8,
-        9,
-        10
-      ],
+      "active_months": [7, 8, 9, 10],
       "optimal_wind_max": 24,
       "optimal_wave_max": 1.3,
+      "optimal_sst_min": 18,
+      "optimal_sst_max": 28,
+      "gear_map": {
+        "tackle": "Canlı yem",
+        "technique": "Derin dip",
+        "hook_size": "1/0",
+        "weight_gr": 30
+      },
       "tip": "Ağustos lezzeti; canlı yem.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "izmarit",
       "name": "İzmarit",
-      "active_months": [
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
+      "active_months": [4, 5, 6, 7, 8, 9],
       "optimal_wind_max": 26,
       "optimal_wave_max": 1.3,
+      "optimal_sst_min": 14,
+      "optimal_sst_max": 24,
+      "gear_map": {
+        "tackle": "Küçük çapari",
+        "technique": "Orta su",
+        "hook_size": "8",
+        "weight_gr": 5
+      },
       "tip": "Kısa köstek; küçük iğne.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "zargana",
       "name": "Zargana",
-      "active_months": [
-        6,
-        7,
-        8
-      ],
+      "active_months": [6, 7, 8],
       "optimal_wind_max": 22,
       "optimal_wave_max": 1.0,
+      "optimal_sst_min": 18,
+      "optimal_sst_max": 26,
+      "gear_map": {
+        "tackle": "Floş yem",
+        "technique": "Yüzey",
+        "hook_size": "4",
+        "weight_gr": 0
+      },
       "tip": "Yüzey; ince ip ile floş.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "sardalya",
       "name": "Sardalya",
-      "active_months": [
-        7,
-        8,
-        9,
-        10
-      ],
+      "active_months": [7, 8, 9, 10],
       "optimal_wind_max": 26,
       "optimal_wave_max": 1.3,
+      "optimal_sst_min": 16,
+      "optimal_sst_max": 26,
+      "gear_map": {
+        "tackle": "Beyaz tüy çapari",
+        "technique": "Orta su",
+        "hook_size": "6",
+        "weight_gr": 8
+      },
       "tip": "Beyaz tüy çapari.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "gumus_baligi",
       "name": "Gümüş balığı",
-      "active_months": [
-        10,
-        11,
-        12,
-        1,
-        2
-      ],
+      "active_months": [10, 11, 12, 1, 2],
       "optimal_wind_max": 24,
       "optimal_wave_max": 1.1,
+      "optimal_sst_min": 10,
+      "optimal_sst_max": 20,
+      "gear_map": {
+        "tackle": "Taş ve kepçe",
+        "technique": "Kıyı dip",
+        "hook_size": "8",
+        "weight_gr": 5
+      },
       "tip": "Taş ve kepçe; Nakkaştepe.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "torik",
       "name": "Torik",
-      "active_months": [
-        7,
-        8,
-        9,
-        10,
-        11
-      ],
+      "active_months": [7, 8, 9, 10, 11],
       "optimal_wind_max": 20,
       "optimal_wave_max": 1.2,
+      "optimal_sst_min": 16,
+      "optimal_sst_max": 24,
+      "gear_map": {
+        "tackle": "Büyük çapari/canlı yem",
+        "technique": "Tekne",
+        "hook_size": "3/0",
+        "weight_gr": 40
+      },
       "tip": "Tekne ve güvenlik; Kasım yoğunluğu.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "cinekop",
       "name": "Çinekop",
-      "active_months": [
-        6,
-        7,
-        8,
-        9,
-        10
-      ],
+      "active_months": [6, 7, 8, 9, 10],
       "optimal_wind_max": 30,
       "optimal_wave_max": 1.6,
+      "optimal_sst_min": 16,
+      "optimal_sst_max": 24,
+      "gear_map": {
+        "tackle": "Küçük kaşık",
+        "technique": "At-çek",
+        "hook_size": "2",
+        "weight_gr": 10
+      },
       "tip": "Küçük kaşık; boy sınırı.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "kalkan",
       "name": "Kalkan",
-      "active_months": [
-        2,
-        3,
-        4,
-        5
-      ],
+      "active_months": [2, 3, 4, 5],
       "optimal_wind_max": 26,
       "optimal_wave_max": 1.3,
+      "optimal_sst_min": 6,
+      "optimal_sst_max": 14,
+      "gear_map": {
+        "tackle": "Akyem",
+        "technique": "Dip sürütme",
+        "hook_size": "1/0",
+        "weight_gr": 30
+      },
       "tip": "Şubat–Mayıs; akyem ve dip.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "iskorpit",
       "name": "İskorpit",
-      "active_months": [
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
+      "active_months": [4, 5, 6, 7, 8, 9],
       "optimal_wind_max": 24,
       "optimal_wave_max": 1.2,
+      "optimal_sst_min": 14,
+      "optimal_sst_max": 24,
+      "gear_map": {
+        "tackle": "Canlı yem/kurt",
+        "technique": "Taş dip",
+        "hook_size": "2",
+        "weight_gr": 20
+      },
       "tip": "Zehirli diken; eldiven.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "dil_baligi",
       "name": "Dil balığı",
-      "active_months": [
-        3,
-        4,
-        10,
-        11,
-        12
-      ],
+      "active_months": [3, 4, 10, 11, 12],
       "optimal_wind_max": 28,
       "optimal_wave_max": 1.4,
+      "optimal_sst_min": 10,
+      "optimal_sst_max": 20,
+      "gear_map": {
+        "tackle": "Kurt yemi",
+        "technique": "Kum dip sürütme",
+        "hook_size": "4",
+        "weight_gr": 15
+      },
       "tip": "Hafif isırık; kum zeminde.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "orfoz",
       "name": "Orfoz",
-      "active_months": [
-        6,
-        7,
-        8,
-        9,
-        10
-      ],
+      "active_months": [6, 7, 8, 9, 10],
       "optimal_wind_max": 18,
       "optimal_wave_max": 1.0,
+      "optimal_sst_min": 16,
+      "optimal_sst_max": 26,
+      "gear_map": {
+        "tackle": "Canlı yem",
+        "technique": "Mağara dip",
+        "hook_size": "2/0",
+        "weight_gr": 35
+      },
       "tip": "Mağara dipleri; güçlü takım.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "akya",
       "name": "Akya",
-      "active_months": [
-        6,
-        7,
-        8,
-        9,
-        10
-      ],
+      "active_months": [6, 7, 8, 9, 10],
       "optimal_wind_max": 18,
       "optimal_wave_max": 1.0,
+      "optimal_sst_min": 18,
+      "optimal_sst_max": 28,
+      "gear_map": {
+        "tackle": "Büyük canlı yem",
+        "technique": "Derin dip",
+        "hook_size": "3/0",
+        "weight_gr": 40
+      },
       "tip": "Büyük dip; mevzuata uy.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "minekop",
       "name": "Minekop",
-      "active_months": [
-        11,
-        12,
-        1,
-        2,
-        3
-      ],
+      "active_months": [11, 12, 1, 2, 3],
       "optimal_wind_max": 32,
       "optimal_wave_max": 2.0,
+      "optimal_sst_min": 6,
+      "optimal_sst_max": 16,
+      "gear_map": {
+        "tackle": "Dip takımı",
+        "technique": "Kış dip",
+        "hook_size": "2",
+        "weight_gr": 30
+      },
       "tip": "Kış dip balığı.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "kirlangic",
       "name": "Kırlangıç",
-      "active_months": [
-        1,
-        2,
-        3,
-        4,
-        5,
-        9,
-        10,
-        11,
-        12
-      ],
+      "active_months": [1, 2, 3, 4, 5, 9, 10, 11, 12],
       "optimal_wind_max": 30,
       "optimal_wave_max": 1.6,
+      "optimal_sst_min": 8,
+      "optimal_sst_max": 20,
+      "gear_map": {
+        "tackle": "Dip takımı",
+        "technique": "Dip sürütme",
+        "hook_size": "4",
+        "weight_gr": 20
+      },
       "tip": "Çok mevsimli dip sürütme.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "kofana",
       "name": "Kofana",
-      "active_months": [
-        6,
-        7,
-        8,
-        9,
-        10
-      ],
+      "active_months": [6, 7, 8, 9, 10],
       "optimal_wind_max": 28,
       "optimal_wave_max": 1.5,
+      "optimal_sst_min": 16,
+      "optimal_sst_max": 26,
+      "gear_map": {
+        "tackle": "Kum dip takımı",
+        "technique": "Yaz dip",
+        "hook_size": "2",
+        "weight_gr": 20
+      },
       "tip": "Kumlu dip; yaz–sonbahar.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "sazan",
       "name": "Sazan",
-      "active_months": [
-        3,
-        4,
-        5,
-        6,
-        9,
-        10
-      ],
+      "active_months": [3, 4, 5, 6, 9, 10],
       "optimal_wind_max": 20,
       "optimal_wave_max": 0.8,
+      "optimal_sst_min": 14,
+      "optimal_sst_max": 24,
+      "gear_map": {
+        "tackle": "Mısır/hamur",
+        "technique": "Göl dibi",
+        "hook_size": "4",
+        "weight_gr": 15
+      },
       "tip": "Büyükçekmece; sakin rüzgâr.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "yayinbaligi",
       "name": "Yayın balığı",
-      "active_months": [
-        4,
-        5,
-        6,
-        7,
-        8
-      ],
+      "active_months": [4, 5, 6, 7, 8],
       "optimal_wind_max": 18,
       "optimal_wave_max": 0.8,
+      "optimal_sst_min": 18,
+      "optimal_sst_max": 28,
+      "gear_map": {
+        "tackle": "Büyük yem",
+        "technique": "Göl dibi",
+        "hook_size": "3/0",
+        "weight_gr": 50
+      },
       "tip": "Göl dipi; büyük yem.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     },
     {
       "id": "turna",
       "name": "Turna",
-      "active_months": [
-        3,
-        4,
-        5,
-        9,
-        10,
-        11
-      ],
+      "active_months": [3, 4, 5, 9, 10, 11],
       "optimal_wind_max": 22,
       "optimal_wave_max": 1.0,
+      "optimal_sst_min": 10,
+      "optimal_sst_max": 20,
+      "gear_map": {
+        "tackle": "Yapay yem/kaşık",
+        "technique": "Göl yüzey",
+        "hook_size": "1/0",
+        "weight_gr": 15
+      },
       "tip": "Yapay yem; Büyükçekmece.",
       "moon_phase_bonus": {
-        "new_moon": 2,
-        "waxing_crescent": 4,
-        "first_quarter": 5,
-        "waxing_gibbous": 6,
-        "full_moon": 8,
-        "waning_gibbous": 6,
-        "last_quarter": 4,
-        "waning_crescent": 2
+        "new_moon": 2, "waxing_crescent": 4, "first_quarter": 5,
+        "waxing_gibbous": 6, "full_moon": 8, "waning_gibbous": 6,
+        "last_quarter": 4, "waning_crescent": 2
       }
     }
   ],
   "istanbul_monthly_highlights": {
-    "1": [
-      "uskumru",
-      "lufer",
-      "palamut",
-      "istanvrit",
-      "kefal",
-      "hamsi",
-      "kofana",
-      "minekop",
-      "tekir",
-      "kirlangic",
-      "torik"
-    ],
-    "2": [
-      "kalkan",
-      "tekir",
-      "gumus_baligi",
-      "kefal",
-      "hamsi",
-      "minekop"
-    ],
-    "3": [
-      "kefal",
-      "levrek",
-      "kalkan",
-      "mezgit",
-      "kirlangic",
-      "minekop"
-    ],
-    "4": [
-      "kalkan",
-      "mercan",
-      "levrek",
-      "kirlangic",
-      "mezgit",
-      "iskorpit"
-    ],
-    "5": [
-      "barbunya",
-      "levrek",
-      "dil_baligi",
-      "tekir",
-      "kirlangic",
-      "iskorpit",
-      "mercan"
-    ],
-    "6": [
-      "sardalya",
-      "tekir",
-      "barbunya",
-      "zargana",
-      "sinarit",
-      "kolyoz"
-    ],
-    "7": [
-      "palamut",
-      "sardalya",
-      "mercan",
-      "sinarit",
-      "zargana",
-      "lufer"
-    ],
-    "8": [
-      "palamut",
-      "lufer",
-      "kolyoz",
-      "izmarit",
-      "kirlangic",
-      "sinarit",
-      "torik"
-    ],
-    "9": [
-      "palamut",
-      "lufer",
-      "kolyoz",
-      "izmarit",
-      "kirlangic",
-      "levrek",
-      "mercan"
-    ],
-    "10": [
-      "lufer",
-      "palamut",
-      "istanvrit",
-      "mezgit",
-      "sardalya",
-      "barbunya",
-      "tekir",
-      "hamsi",
-      "kirlangic",
-      "torik",
-      "cinekop"
-    ],
-    "11": [
-      "hamsi",
-      "tekir",
-      "uskumru",
-      "torik",
-      "lufer",
-      "palamut",
-      "minekop"
-    ],
-    "12": [
-      "hamsi",
-      "tekir",
-      "uskumru",
-      "torik",
-      "lufer",
-      "minekop",
-      "mezgit"
-    ]
+    "1": ["uskumru", "lufer", "palamut", "istanvrit", "kefal", "hamsi", "kofana", "minekop", "tekir", "kirlangic", "torik"],
+    "2": ["kalkan", "tekir", "gumus_baligi", "kefal", "hamsi", "minekop"],
+    "3": ["kefal", "levrek", "kalkan", "mezgit", "kirlangic", "minekop"],
+    "4": ["kalkan", "mercan", "levrek", "kirlangic", "mezgit", "iskorpit"],
+    "5": ["barbunya", "levrek", "dil_baligi", "tekir", "kirlangic", "iskorpit", "mercan"],
+    "6": ["sardalya", "tekir", "barbunya", "zargana", "sinarit", "kolyoz"],
+    "7": ["palamut", "sardalya", "mercan", "sinarit", "zargana", "lufer"],
+    "8": ["palamut", "lufer", "kolyoz", "izmarit", "kirlangic", "sinarit", "torik"],
+    "9": ["palamut", "lufer", "kolyoz", "izmarit", "kirlangic", "levrek", "mercan"],
+    "10": ["lufer", "palamut", "istanvrit", "mezgit", "sardalya", "barbunya", "tekir", "hamsi", "kirlangic", "torik", "cinekop"],
+    "11": ["hamsi", "tekir", "uskumru", "torik", "lufer", "palamut", "minekop"],
+    "12": ["hamsi", "tekir", "uskumru", "torik", "lufer", "minekop", "mezgit"]
   }
 }

@@ -1,0 +1,89 @@
+{
+  "_comment": "İstanbul aylık balık takvimi. Boğaz dinamikleri ve mevsimsel göç verilerine dayanır.",
+  "months": {
+    "1": {
+      "name": "Ocak",
+      "bol_baliklar": ["mezgit", "kefal", "istanvrit", "hamsi", "minekop", "kirlangic"],
+      "lezzetli_baliklar": ["uskumru", "lufer", "hamsi"],
+      "mevsim_notu": "Kış zirvesi — dip balıkları ön planda, hamsi yağlı dönem",
+      "ruzgar_tercihi": "Poyraz (K-KD) hafif"
+    },
+    "2": {
+      "name": "Şubat",
+      "bol_baliklar": ["kalkan", "tekir", "mezgit", "hamsi", "minekop", "gumus_baligi"],
+      "lezzetli_baliklar": ["kalkan", "tekir", "hamsi"],
+      "mevsim_notu": "Kalkan sezonu açılıyor — Şubat lezzeti",
+      "ruzgar_tercihi": "Yıldız (KD) ya da sakin"
+    },
+    "3": {
+      "name": "Mart",
+      "bol_baliklar": ["kefal", "levrek", "kalkan", "kirlangic", "minekop"],
+      "lezzetli_baliklar": ["levrek", "kalkan"],
+      "mevsim_notu": "İlkbahar habercisi — levrek mevsimi açılıyor",
+      "ruzgar_tercihi": "Poyraz (KD)"
+    },
+    "4": {
+      "name": "Nisan",
+      "bol_baliklar": ["levrek", "barbunya", "mercan", "kalkan", "iskorpit", "kirlangic"],
+      "lezzetli_baliklar": ["levrek", "barbunya", "kalkan"],
+      "mevsim_notu": "İlkbahar göçü — Karadeniz balıkları Marmara'ya iniyor",
+      "ruzgar_tercihi": "Poyraz (KD) hafif"
+    },
+    "5": {
+      "name": "Mayıs",
+      "bol_baliklar": ["barbunya", "levrek", "tekir", "dil_baligi", "iskorpit", "mercan"],
+      "lezzetli_baliklar": ["barbunya", "levrek"],
+      "mevsim_notu": "Tersine göç — büyük balıklar Karadeniz'e çıkıyor",
+      "ruzgar_tercihi": "Güneyden kaçın; poyraz tercih et"
+    },
+    "6": {
+      "name": "Haziran",
+      "bol_baliklar": ["sardalya", "kolyoz", "zargana", "karagoz", "izmarit"],
+      "lezzetli_baliklar": ["sardalya"],
+      "mevsim_notu": "ZAYIF AY — balıklar Karadeniz'de",
+      "ruzgar_tercihi": "Poyraz (sakin deniz)"
+    },
+    "7": {
+      "name": "Temmuz",
+      "bol_baliklar": ["palamut", "sardalya", "mercan", "sinarit", "zargana", "karagoz"],
+      "lezzetli_baliklar": ["palamut", "mercan", "sinarit"],
+      "mevsim_notu": "Yaz ortası — kıyı türleri aktif, palamut erken göçü",
+      "ruzgar_tercihi": "Meltem (BK)"
+    },
+    "8": {
+      "name": "Ağustos",
+      "bol_baliklar": ["palamut", "lufer", "kolyoz", "istanvrit", "torik", "sinarit"],
+      "lezzetli_baliklar": ["palamut", "lufer"],
+      "mevsim_notu": "Yaz sonu — ilk göç işaretleri, torik ve palamut yoğunluğu",
+      "ruzgar_tercihi": "Meltem (hafif)"
+    },
+    "9": {
+      "name": "Eylül",
+      "bol_baliklar": ["palamut", "lufer", "kolyoz", "istanvrit", "levrek", "mercan"],
+      "lezzetli_baliklar": ["palamut", "lufer"],
+      "mevsim_notu": "Göç başlıyor — Boğaz kıpırdanıyor",
+      "ruzgar_tercihi": "Poyraz (KD) — akıntıyı güçlendirir"
+    },
+    "10": {
+      "name": "Ekim",
+      "bol_baliklar": ["lufer", "palamut", "istanvrit", "kolyoz", "hamsi", "barbunya", "tekir"],
+      "lezzetli_baliklar": ["lufer", "palamut", "uskumru"],
+      "mevsim_notu": "YIL'IN EN İYİ AYI — tüm göçmen türler Boğaz'da",
+      "ruzgar_tercihi": "Poyraz (KD) — akıntı dorukta"
+    },
+    "11": {
+      "name": "Kasım",
+      "bol_baliklar": ["hamsi", "tekir", "uskumru", "torik", "lufer", "palamut", "minekop"],
+      "lezzetli_baliklar": ["hamsi", "uskumru", "lufer"],
+      "mevsim_notu": "Göç zirvesi — hamsi ve uskumru akını başlıyor",
+      "ruzgar_tercihi": "Poyraz (K-KD)"
+    },
+    "12": {
+      "name": "Aralık",
+      "bol_baliklar": ["hamsi", "uskumru", "mezgit", "minekop", "tekir"],
+      "lezzetli_baliklar": ["hamsi", "uskumru"],
+      "mevsim_notu": "Kış başı — dip balıkları öne çıkıyor, hamsi yağlı dönem",
+      "ruzgar_tercihi": "Yıldız (KD) hafif"
+    }
+  }
+}
