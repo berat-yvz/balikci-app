@@ -145,7 +145,7 @@ class NotificationListScreen extends ConsumerWidget {
       } else {
         router.go(AppRoutes.profile);
       }
-    } else if (type.contains('season')) {
+    } else if (type.contains('season') || type.contains('weather')) {
       router.go(AppRoutes.weather);
     } else if (type.contains('checkin') || type.contains('vote')) {
       final spotId = n.data['spot_id'] as String?;
