@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/router.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
@@ -142,6 +143,13 @@ class NotificationService {
 
     // Token yenileme
     _messaging.onTokenRefresh.listen(_saveTokenToSupabase);
+
+    // Oturum kapanınca FCM token'ı temizle
+    SupabaseService.client.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.signedOut) {
+        _clearFcmToken();
+      }
+    });
   }
 
   static Future<String?> getFcmToken() => _messaging.getToken();
@@ -244,6 +252,20 @@ class NotificationService {
       debugPrint('FCM Token kaydedildi.');
     } catch (e) {
       debugPrint('FCM Token Supabase kayıt hatası: $e');
+    }
+  }
+
+  static Future<void> _clearFcmToken() async {
+    try {
+      final userId = SupabaseService.client.auth.currentUser?.id;
+      if (userId == null) return;
+      await SupabaseService.client
+          .from('users')
+          .update({'fcm_token': null})
+          .eq('id', userId);
+      debugPrint('FCM Token temizlendi.');
+    } catch (e) {
+      debugPrint('FCM Token temizleme hatası: $e');
     }
   }
 }

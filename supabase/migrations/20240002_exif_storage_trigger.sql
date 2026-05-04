@@ -21,8 +21,11 @@ BEGIN
       PERFORM net.http_post(
         url     := 'https://bcsihxgekoqwbovbmlog.supabase.co/functions/v1/exif-verify',
         headers := jsonb_build_object(
-          'Content-Type',  'application/json',
-          'Authorization', 'Bearer BURAYA_SERVICE_ROLE_KEY_YAZ'
+          'Content-Type',  'application/json'
+          -- GÜVENLİK NOTU: Service role key buraya YAZILMAZ.
+          -- Bu trigger artık check-in akışında kullanılmıyor (ARCHITECTURE.md).
+          -- Eğer yeniden aktif edilecekse key Supabase Vault veya
+          -- Dashboard > Edge Functions > Secrets üzerinden inject edilmeli.
         ),
         body    := jsonb_build_object(
           'checkinId',   checkin_id,
