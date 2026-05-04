@@ -7,6 +7,18 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // Her kullanıcı için weather_cache tablosundan güncel özet alınır.
 
 serve(async (req: Request) => {
+  // Webhook secret doğrulaması
+  const webhookSecret = Deno.env.get('WEBHOOK_SECRET')
+  if (webhookSecret) {
+    const authHeader = req.headers.get('x-webhook-secret')
+    if (authHeader !== webhookSecret) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+  }
+
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,

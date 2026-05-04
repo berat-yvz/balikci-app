@@ -88,6 +88,18 @@ serve(async (req: Request) => {
       return new Response(null, { status: 204 })
     }
 
+    // Webhook secret doğrulaması
+    const webhookSecret = Deno.env.get('WEBHOOK_SECRET')
+    if (webhookSecret) {
+      const authHeader = req.headers.get('x-webhook-secret')
+      if (authHeader !== webhookSecret) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+    }
+
     const supabaseUrl = requireEnv('SUPABASE_URL')
     const serviceKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY')
     if (!supabaseUrl || !serviceKey) {

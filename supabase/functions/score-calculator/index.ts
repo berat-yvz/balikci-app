@@ -65,10 +65,29 @@ function sendRankUpNotification(
 
 serve(async (req: Request) => {
   try {
+    // Authorization header kontrolü — kimliği doğrulanmamış istekleri reddet
+    const authorizationHeader = req.headers.get('Authorization')
+    if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    const token = authorizationHeader.slice('Bearer '.length)
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
+
+    // JWT doğrulama — token geçersizse isteği reddet
+    const { data: { user: callerUser }, error: authErr } = await supabase.auth.getUser(token)
+    if (authErr || !callerUser) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
 
     const { source_type, user_id } = await req.json()
     const delta = POINTS[source_type] ?? 0
