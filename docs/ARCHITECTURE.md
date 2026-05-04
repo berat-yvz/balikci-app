@@ -5,6 +5,8 @@
 
 > **Anlık uygulama özeti (onboarding, izinler, harita H3):** [PROJECT_STATUS.md](PROJECT_STATUS.md)
 
+> **⚠️ CANLI DURUM NOTU (Mayıs 2026):** Bu dosya `docs/Report-04.05.2026/` analizleriyle çapraz doğrulanmıştır. Bilinen kısıtlar ve açıklar ilgili başlıklarda `⚠️` ile işaretlenmiştir. Sistemi olduğu gibi belgeler; planlandığı gibi değil.
+
 ---
 
 ## Teknoloji Stack
@@ -67,7 +69,8 @@
 │  └───────────────────────────────────┘ │
 │  ┌───────────────────────────────────┐ │
 │  │      Supabase Storage             │ │
-│  │  fish-photos bucket (max 2MB)     │ │
+│  │  fish-photos (2MB; ⚠️ MIME=NULL)  │ │
+│  │  users-avatars (2MB; MIME ✅)     │ │
 │  └───────────────────────────────────┘ │
 └─────────────────────────────────────────┘
         │
@@ -138,12 +141,20 @@ CREATE TABLE checkins (
   spot_id UUID REFERENCES fishing_spots(id) ON DELETE CASCADE,
   crowd_level TEXT CHECK (crowd_level IN ('yoğun','normal','az','boş')),
   fish_density TEXT CHECK (fish_density IN ('yoğun','normal','az','yok')),
-  photo_url TEXT,        -- uygulama tarafında artık kullanılmıyor (DB'de saklanıyor)
-  exif_verified BOOLEAN DEFAULT FALSE, -- uygulama tarafında artık kullanılmıyor
+  fish_species TEXT[],   -- migration 20260413_checkins_fish_species.sql ile eklendi
+  photo_url TEXT,        -- check-in akışında artık kullanılmıyor (UI kaldırıldı)
+  exif_verified BOOLEAN DEFAULT FALSE, -- check-in akışında kullanılmıyor; balık günlüğü için saklanıyor
   is_active BOOLEAN DEFAULT TRUE,
+  -- Aşağıdaki kolonlar migration 20260413_vote_rls_and_schema_fix.sql ile eklendi:
+  is_hidden BOOLEAN NOT NULL DEFAULT false,  -- topluluk oylamasıyla otomatik gizleme
+  true_votes INTEGER NOT NULL DEFAULT 0,     -- trigger ile senkronize
+  false_votes INTEGER NOT NULL DEFAULT 0,    -- trigger ile senkronize
+  expires_at TIMESTAMPTZ,                    -- geçerlilik süresi (opsiyonel)
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
+
+> **Moderasyon notu:** `is_hidden` alanı `trg_checkin_votes_aggregate` trigger'ı (SECURITY DEFINER) tarafından güncellenir. Eşik: ≥3 oy ve ≥%70 "yanlış" oyu. `SELECT` politikası `is_hidden = false` olanları filtreler. İstemci bu alanı doğrudan güncelleyemez.
 
 ### checkin_votes
 ```sql
@@ -186,6 +197,8 @@ CREATE TABLE shadow_points (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
+
+> **⚠️ BİLİNEN KISİT:** `shadow_points` tablosunda `ROW LEVEL SECURITY` etkin değil. Herhangi bir authenticated kullanıcı bu tablodaki tüm satırları okuyabilir. Ayrıca gölge puanı hesaplayan Edge Function (`shadow-point-calculator`) henüz yazılmamış — tablo şeması var ama puan dağıtım mekanizması yok.
 
 ### weather_cache
 ```sql
@@ -507,11 +520,13 @@ lib/
 - **Görev:** GPS + timestamp doğrula, fish_log kaydını güncelle
 - **Not:** Check-in fotoğraf yükleme akışından kaldırıldı; yalnızca balık günlüğü için aktif
 - **Dosya:** `supabase/functions/exif-verify/index.ts`
+- **⚠️ BİLİNEN HATA:** `supabase/migrations/20240002_exif_storage_trigger.sql` içinde `'Bearer BURAYA_SERVICE_ROLE_KEY_YAZ'` placeholder key bırakılmış. Storage trigger bu haliyle çalışmıyor. Vault/Secret yönetimine taşınmalı.
 
 ### score-calculator
-- **Tetikleyici:** DB trigger (checkin, vote, fish_log insert/update)
+- **Tetikleyici:** Flutter istemcisi tarafından HTTP POST ile çağrılır (fire-and-forget, `unawaited`)
 - **Görev:** Puan hesapla, users tablosunu güncelle, rütbe kontrol et
 - **Dosya:** `supabase/functions/score-calculator/index.ts`
+- **⚠️ BİLİNEN GÜVENLİK AÇIĞI:** Fonksiyon gelen request body'deki `user_id` parametresini JWT ile doğrulamadan kullanıyor. Saldırgan başka kullanıcı adına puan kazandırabilir. JWT'den `auth.uid()` okunarak body'deki `user_id` yoksayılmalı.
 
 ### nearby-checkin-notifier / morning-weather-push / season-reminder-push
 - **Dosyalar:** `supabase/functions/nearby-checkin-notifier`, `morning-weather-push`, `season-reminder-push` — bildirim tetikleme ve zamanlama (cron SQL dosyaları repo kökünde / `supabase/` altında).
@@ -588,11 +603,21 @@ Ayrıntılı akış: [M-01_AUTH_ONBOARDING.md](M-01_AUTH_ONBOARDING.md).
 ### Zorunlu
 - Tüm API istekleri HTTPS (Supabase varsayılan)
 - JWT: 1 saat access token, 30 gün refresh token
-- Tüm tablolarda RLS aktif, varsayılan DENY
-- Fotoğraflar signed URL ile servis edilir
-- API key ve secret asla client koduna yazılmaz → Edge Function secret
+- Tüm tablolarda RLS aktif, varsayılan DENY *(istisna: `shadow_points` — ⚠️ RLS eksik)*
+- Fotoğraflar **public URL** ile servis edilir (`getPublicUrl`) — signed URL kullanılmıyor
+- API key ve secret asla client koduna yazılmaz → `.env` dosyası (gitignore'da)
 
-### .gitignore'a Eklenecekler
+### Bilinen Aktif Güvenlik Açıkları (Mayıs 2026)
+| # | Açık | Konum | Aciliyet |
+|---|------|-------|----------|
+| 1 | `score-calculator` JWT doğrulaması yok | `functions/score-calculator/index.ts` | 🔴 Kritik |
+| 2 | `fish-photos` bucket MIME kısıtlaması yok (`NULL`) | `migrations/20260415_storage_fish_photos_bucket.sql` | 🔴 Kritik |
+| 3 | `exif-verify` trigger'da hardcoded placeholder key | `migrations/20240002_exif_storage_trigger.sql` | 🔴 Kritik |
+| 4 | `shadow_points` tablosunda RLS yok | DB şeması | 🟠 Yüksek |
+| 5 | Edge Functions JWT doğrulaması yok (`weather-cache`, `morning-weather-push`) | `functions/` | 🟠 Yüksek |
+| 6 | `friends` mera politikası tek yönlü follow'a izin veriyor | `fishing_spots` RLS | 🟡 Orta |
+
+### .gitignore (Eklenmeli)
 ```
 .env
 *.env
@@ -605,31 +630,125 @@ supabase/.env
 
 ## Tema & Tasarım Sabitleri
 
+> **Not:** Aşağıdaki değerler `lib/app/theme.dart` ile eşleşecek şekilde güncellenmiştir (Mayıs 2026). Önceki versiyonda yer alan bazı renk değerleri (ör. `danger: 0xFFA32D2D`, `background: 0xFFF5F5F3`) gerçek kodla uyumsuzdu.
+
 ```dart
-// lib/app/theme.dart
+// lib/app/theme.dart — DARK-FIRST tema (koyu mod)
 
 class AppColors {
-  static const primary     = Color(0xFF0F6E56);  // teal
-  static const primaryLight= Color(0xFFE1F5EE);
-  static const secondary   = Color(0xFF185FA5);  // blue
-  static const accent      = Color(0xFFEF9F27);  // amber
-  static const danger      = Color(0xFFA32D2D);  // red
-  static const dark        = Color(0xFF1A1A1A);
-  static const muted       = Color(0xFF888780);
-  static const background  = Color(0xFFF5F5F3);
+  // Okyanus paleti
+  static const navy       = Color(0xFF0A1628); // derin arka plan
+  static const teal       = Color(0xFF0D7E8A); // mera pin (public), vurgular
+  static const sand       = Color(0xFFC9A84C); // VIP/Deniz Reisi, altın
+  static const foam       = Color(0xFFF0F8FF); // açık metin, buton yazısı
 
-  // Pin renkleri
-  static const pinPublic   = Color(0xFF1D9E75);
-  static const pinFriends  = Color(0xFF378ADD);
-  static const pinPrivate  = Color(0xFF888780);
-  static const pinVip      = Color(0xFFEF9F27);
+  // Semantik renkler
+  static const primary    = Color(0xFF0F6E56); // ana buton, FAB
+  static const secondary  = Color(0xFF185FA5); // mavi vurgu
+  static const accent     = Color(0xFFEF9F27); // amber
+  static const background = Color(0xFF07101E); // scaffold arka planı
+  static const surface    = Color(0xFF0B1C33); // kart yüzeyi
+  static const danger     = Color(0xFFE63946); // hata, silme
+  static const success    = Color(0xFF2FBF71); // başarı
+  static const muted      = Color(0xFF8EA0B5); // ikincil metin
+
+  // Pin renkleri (privacy_level)
+  static const pinPublic  = Color(0xFF0D7E8A); // teal
+  static const pinFriends = Color(0xFF185FA5); // secondary blue
+  static const pinPrivate = Color(0xFF7B8794); // gri, dikkat çekmez
+  static const pinVip     = Color(0xFFC9A84C); // altın
+
+  // Rütbe renkleri
+  static const rankAcemi      = Color(0xFF7B8794);
+  static const rankOltaKurdu  = Color(0xFF185FA5);
+  static const rankUsta       = Color(0xFF0D7E8A);
+  static const rankDenizReisi = Color(0xFFC9A84C);
 }
 
+// Font ailesi: Poppins (display) — sistem fontuna fallback
 class AppTextStyles {
-  static const h1 = TextStyle(fontSize: 28, fontWeight: FontWeight.w700);
-  static const h2 = TextStyle(fontSize: 22, fontWeight: FontWeight.w600);
-  static const h3 = TextStyle(fontSize: 18, fontWeight: FontWeight.w600);
-  static const body = TextStyle(fontSize: 15, fontWeight: FontWeight.w400);
-  static const caption = TextStyle(fontSize: 13, fontWeight: FontWeight.w400);
+  // 45+ yaş hedef kitle: minimum 16sp gövde, 20sp başlık
+  static const h1      = TextStyle(fontSize: 28, fontWeight: FontWeight.w800, fontFamily: 'Poppins');
+  static const h2      = TextStyle(fontSize: 22, fontWeight: FontWeight.w800, fontFamily: 'Poppins');
+  static const h3      = TextStyle(fontSize: 18, fontWeight: FontWeight.w700, fontFamily: 'Poppins');
+  static const body    = TextStyle(fontSize: 16, fontWeight: FontWeight.w500); // min 16sp zorunlu
+  static const caption = TextStyle(fontSize: 14, fontWeight: FontWeight.w500);
 }
+
+// Buton: minimumSize = Size.fromHeight(56) — büyük dokunma alanı
+// AppBar: toolbarHeight = 60, titleTextStyle.fontSize = 20
 ```
+
+---
+
+## Offline Senkronizasyon (SyncQueue)
+
+`SyncService` (`lib/core/services/sync_service.dart`) internet yokken yazma işlemlerini `sync_queue` SQLite tablosuna alır.
+
+- **Tetiklenme:** `connectivity_plus` stream (offline→online anlık) + uygulama açılış kontrolü + 30 sn periyodik poll
+- **Sıra:** `createdAt ASC` — ilk gelen ilk işlenir
+- **Retry:** Max 5 deneme; 5'te kalıcı hata olarak silinir
+- **⚠️ Eksik:** Retry aralarında exponential backoff yok; geçici ağ hatasında 5 deneme hızla tüketilebilir
+- **Desteklenen operasyonlar:** `insert`, `update`, `delete`
+- **Kapsam:** Yalnızca yazma işlemleri; okumalar Drift cache'ten yapılır
+
+---
+
+## Medya Yükleme ve Sıkıştırma
+
+### İstemci Tarafı Sıkıştırma (`lib/core/utils/avatar_image_prepare.dart`)
+
+Tüm fotoğraflar (balık günlüğü + profil avatarı) yüklenmeden önce `prepareAvatarUploadBytes()` fonksiyonundan geçer:
+
+1. **Katman 1 (native):** `flutter_image_compress` — maks. 1024px, quality 88'den 38'e adım adım azalır
+2. **Katman 2 (pure Dart, web fallback):** `image` paketi — 1024→768→512→384→320px basamakları, her biri quality 86'dan 32'ye
+3. **Son çare:** 256px @ quality 28
+4. **2MB aşılırsa:** Exception fırlatılır, kullanıcı bilgilendirilir
+
+`ImagePicker` ayrıca galeri seçiminde `imageQuality: 85, maxWidth: 1600` uygular (balık günlüğü).
+
+### Storage Bucket Güvenliği
+
+| Bucket | Public | Boyut Limiti | MIME Kısıtlaması |
+|--------|--------|--------------|------------------|
+| `users-avatars` | ✅ | 2 MB | ✅ jpeg, png, webp |
+| `fish-photos` | ✅ | 2 MB | ❌ **NULL — hiç kısıtlama yok** |
+
+> **⚠️ KRİTİK:** `fish-photos` bucket'ında MIME kısıtlaması olmadığından `.sh`, `.exe`, `.html` gibi zararlı dosyalar yüklenebilir. Düzeltme: `UPDATE storage.buckets SET allowed_mime_types = ARRAY['image/jpeg','image/png','image/webp']::text[] WHERE id = 'fish-photos';`
+
+### Öksüz Dosyalar
+
+`FishLogRepository.deleteLog()` DB kaydını siler ancak `fish-photos` Storage nesnesini silmiyor — çöp dosya birikimi oluşur.
+
+---
+
+## Topluluk Moderasyonu (Check-in Oylama)
+
+- **Oylama:** `checkin_votes(checkin_id, voter_id UNIQUE)` — hesap başına tek oy
+- **Otomatik gizleme:** `trg_checkin_votes_aggregate` trigger (SECURITY DEFINER): ≥3 oy ve ≥%70 yanlış oyu → `is_hidden = true`
+- **RLS:** `checkins SELECT` politikası `is_hidden = false` filtreliyor — gizlenen içerik haritadan anında kayboluyor
+- **⚠️ Troll Koruması:** Sahte hesap açma koruması yok; 3 hesap eşiği aşar. Hesap yaşı/rütbe filtresi planlanmamış
+- **⚠️ Fotoğraf moderasyonu:** `fish_logs` tablosunda `is_hidden` alanı yok; AI içerik kontrolü yok
+- **Admin arayüzü:** Yok; moderasyon manuel Supabase Dashboard'dan yapılıyor
+
+---
+
+## GPS ve Pil Optimizasyonu
+
+- **Mevcut strateji:** Tüm konum sorguları `LocationAccuracy.high` (en yüksek hassasiyet)
+- **Check-in doğrulama:** 500 metre yarıçapı (`AppConstants.checkinRadiusMeters`)
+- **⚠️ Optimizasyon eksik:** Arama/göz atma senaryolarında da `high` accuracy kullanılıyor — `low` veya `medium` yeterli olur; pil tüketimini azaltır
+- **Tile cache:** Yalnızca RAM (`keepBuffer: 8`, `panBuffer: 3`); disk cache veya offline harita yok
+- **Cluster:** `maxClusterRadius: 58px`; tüm zoom seviyelerinde aktif (`clusterZoomThreshold = 12.0` sabiti tanımlı ama henüz bağlanmamış)
+
+---
+
+## Bildirim Anti-Spam Kuralları
+
+`notification-sender` Edge Function içinde uygulanan kurallar:
+
+- **Günlük limit:** Kullanıcı başına max 5 push/gün (`force: true` olan bildirimler sayılmaz)
+- **Sessiz mod:** 23:00–07:00 İstanbul (push atlanır, in-app kaydedilir)
+- **Çift gönderim önleme:** `fish_season_push_log(user_id, calendar_id, season_year) UNIQUE`
+- **⚠️ Bilinen hata:** `weather_morning` bildirim tipi `/weather` yerine `/home`'a düşüyor (`_routeForType` switch eksik)
+- **⚠️ Bilinen hata:** `morning-weather-push` `.limit(1000)` ile kullanıcı atlıyor; yüksek kullanıcı sayısında tüm kullanıcılara ulaşılamaz

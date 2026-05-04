@@ -117,12 +117,12 @@ class WeatherModel {
           dataJson: dataJson,
           temperature: (cur['temperature'] as num?)?.toDouble(),
           windspeed: (cur['windspeed'] as num?)?.toDouble(),
-          windDirection: null,
+          windDirection: (cur['wind_direction'] as num?)?.toInt(),
           waveHeight: (cur['wave_height'] as num?)?.toDouble(),
           seaSurfaceTemperature:
               (cur['sea_surface_temperature'] as num?)?.toDouble(),
           precipitation: (cur['precipitation'] as num?)?.toDouble(),
-          humidity: null,
+          humidity: (cur['humidity'] as num?)?.toDouble(),
           visibilityKm: (cur['visibility_m'] as num?) != null
               ? (cur['visibility_m'] as num).toDouble() / 1000
               : null,
