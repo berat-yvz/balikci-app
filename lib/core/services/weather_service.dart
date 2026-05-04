@@ -186,6 +186,7 @@ class WeatherService {
             currentVelocity: (m['ocean_current_velocity'] as num?)?.toDouble(),
             currentDirection: (m['ocean_current_direction'] as num?)?.toDouble(),
             visibilityMeters: (m['visibility_m'] as num?)?.toDouble(),
+            windDirection: (m['wind_direction'] as num?)?.toInt(),
           ),
         );
       } catch (_) {

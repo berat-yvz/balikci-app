@@ -12,6 +12,7 @@ class HourlyWeatherModel {
   final double? currentDirection;      // derece, 0=kuzey (marine-api)
   /// Open-Meteo forecast `visibility` — metre cinsinden.
   final double? visibilityMeters;
+  final int? windDirection; // derece, 0=Kuzey (Open-Meteo winddirection_10m)
 
   const HourlyWeatherModel({
     required this.time,
@@ -25,6 +26,7 @@ class HourlyWeatherModel {
     this.currentVelocity,
     this.currentDirection,
     this.visibilityMeters,
+    this.windDirection,
   });
 
   /// Görüş mesafesi (km); cache/OW ile aynı birimde kullanım için.
@@ -63,6 +65,7 @@ class HourlyWeatherModel {
     double? currentVelocity,
     double? currentDirection,
     double? visibilityMeters,
+    int? windDirection,
   }) {
     return HourlyWeatherModel(
       time: DateTime.parse(timeStr),
@@ -76,6 +79,7 @@ class HourlyWeatherModel {
       currentVelocity: currentVelocity,
       currentDirection: currentDirection,
       visibilityMeters: visibilityMeters,
+      windDirection: windDirection,
     );
   }
 }

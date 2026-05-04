@@ -450,6 +450,17 @@ class FishingScoreEngine {
         pts += 12;
       }
 
+      final optSstMin = (s['optimal_sst_min'] as num?)?.toDouble();
+      final optSstMax = (s['optimal_sst_max'] as num?)?.toDouble();
+      final sst = weather.seaSurfaceTemperature;
+      if (sst != null && optSstMin != null && optSstMax != null) {
+        if (sst >= optSstMin && sst <= optSstMax) {
+          pts += 15;
+        } else if (sst < optSstMin - 4 || sst > optSstMax + 4) {
+          pts -= 20;
+        }
+      }
+
       ranked.add(
         MapEntry(
           pts,

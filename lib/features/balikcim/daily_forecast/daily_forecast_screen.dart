@@ -91,8 +91,15 @@ class DailyForecastScreen extends ConsumerWidget {
 
     return ColoredBox(
       color: AppColors.navy,
-      child: SingleChildScrollView(
-        child: Column(
+      child: RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: () async {
+          ref.invalidate(istanbulWeatherProvider);
+          ref.invalidate(fishingScoreEngineProvider);
+          await ref.read(istanbulWeatherProvider.future);
+        },
+        child: SingleChildScrollView(
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
@@ -248,6 +255,7 @@ class DailyForecastScreen extends ConsumerWidget {
             ],
             const SizedBox(height: 32),
           ],
+        ),
         ),
       ),
     );

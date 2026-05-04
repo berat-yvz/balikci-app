@@ -43,7 +43,14 @@ class WeatherScreen extends ConsumerWidget {
           final hoursFromNow = _next24Hours(data.hourly);
           final currentHour =
               hoursFromNow.isNotEmpty ? hoursFromNow.first : null;
-          return ListView(
+          return RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () async {
+              ref.invalidate(istanbulWeatherProvider);
+              ref.invalidate(fishingScoreEngineProvider);
+              await ref.read(istanbulWeatherProvider.future);
+            },
+            child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
               children: [
                 Row(
@@ -66,7 +73,25 @@ class WeatherScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
 
                 _WeatherHeroCard(weather: data.current),
-                const SizedBox(height: 10),
+                const SizedBox(height: 6),
+                Builder(builder: (context) {
+                  final diff = DateTime.now().difference(data.current.fetchedAt);
+                  final mins = diff.inMinutes;
+                  final label = mins < 2
+                      ? 'Az önce güncellendi'
+                      : '$mins dakika önce güncellendi';
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      '🕐 $label',
+                      style: AppTextStyles.caption.copyWith(
+                        fontSize: 13,
+                        color: Colors.white38,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+                }),
                 _FishingScoreCard(weather: data.current, compact: true),
                 const SizedBox(height: 12),
                 _WeatherDetailGrid(
@@ -113,7 +138,8 @@ class WeatherScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
 
               ],
-            );
+            ),
+          );
         },
       ),
     );
@@ -981,6 +1007,18 @@ class _WeatherDetailGrid extends StatelessWidget {
     return '${km.round()} km';
   }
 
+  String _windDirLabel(int? deg) {
+    if (deg == null) return '—';
+    if (deg >= 30 && deg < 60) return 'Poyraz ↗';
+    if (deg >= 60 && deg < 90) return 'Gündoğusu →';
+    if (deg >= 180 && deg < 220) return 'Lodos ↙ ⚠️';
+    if (deg >= 200 && deg < 230) return 'Kıble ↓ ⚠️';
+    if (deg >= 240 && deg < 270) return 'Keşişleme ↙ ⚠️';
+    if (deg >= 300 && deg < 330) return 'Karayel ↖';
+    if (deg >= 345 || deg < 15) return 'Yıldız ↑';
+    return '$deg°';
+  }
+
   @override
   Widget build(BuildContext context) {
     return GridView.count(
@@ -1044,6 +1082,13 @@ class _WeatherDetailGrid extends StatelessWidget {
             label: 'Akıntı',
             value: '${(currentHour!.currentVelocity! * 100).round()} cm/s',
           ),
+        _DetailTile(
+          icon: '🧭',
+          label: 'Rüzgar Yönü',
+          value: _windDirLabel(
+            currentHour?.windDirection ?? weather.windDirection,
+          ),
+        ),
       ],
     );
   }
@@ -1080,14 +1125,14 @@ class _DetailTile extends StatelessWidget {
               Text(
                 label,
                 style: AppTextStyles.caption.copyWith(
-                  fontSize: 13,
+                  fontSize: 16,
                   color: AppColors.muted,
                 ),
               ),
               Text(
                 value,
                 style: AppTextStyles.caption.copyWith(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),

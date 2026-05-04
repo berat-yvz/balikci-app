@@ -38,16 +38,18 @@ class FishingWeatherUtils {
       score -= 15;
     }
 
-    // Hava kodu etkisi (nullable)
+    // Hava kodu etkisi — Open-Meteo WMO kodları (0-99)
     final code = weather.weatherCode ?? 0;
-    if (code >= 200 && code < 300) {
-      score -= 30; // gök gürültüsü
-    } else if (code >= 500 && code < 600) {
-      score -= 10; // yağmur
-    } else if (code >= 700 && code < 800) {
-      score -= 15; // sis/duman
-    } else if (code == 800) {
-      score += 10; // açık
+    if (code >= 95 && code <= 99) {
+      score -= 30; // gök gürültüsü / şiddetli fırtına
+    } else if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) {
+      score -= 10; // yağmur / sağanak
+    } else if (code >= 45 && code <= 48) {
+      score -= 15; // sis / kırağı
+    } else if (code == 0) {
+      score += 10; // tamamen açık
+    } else if (code >= 1 && code <= 3) {
+      score += 5; // az-orta bulutlu
     }
 
     return score.clamp(0, 100);
@@ -76,11 +78,11 @@ class FishingWeatherUtils {
 
     // Tehlikeli koşullar
     if (wind > 40) return 'Deniz patlak, çıkma ⚠️';
-    if (code >= 200 && code < 300) return 'Fırtına var, bugün balık yok ⛈️';
-    if (code >= 700 && code < 800) return 'Sis var, tekneyle dikkatli ol 🌫️';
+    if (code >= 95 && code <= 99) return 'Fırtına var, bugün balık yok ⛈️';
+    if (code >= 45 && code <= 48) return 'Sis var, tekneyle dikkatli ol 🌫️';
 
-    // Yağmur koşulları
-    if (code >= 500 && code < 600) {
+    // Yağmur koşulları (WMO: hafif/orta yağmur 61-67, sağanak 80-82)
+    if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) {
       if (temp < 15) return 'Soğuk ve yağışlı, istavrit günü 🌧️';
       return 'Hafif yağmur, kıyıdan oltaya çık 🎣';
     }
@@ -95,7 +97,7 @@ class FishingWeatherUtils {
     }
 
     // Genel değerlendirme
-    if (wind < 20 && code == 800) return 'Açık hava, balıkçılık için uygun ✓';
+    if (wind < 20 && code == 0) return 'Açık hava, balıkçılık için uygun ✓';
     if (wind >= 20 && wind <= 35) return 'Rüzgarlı, kıyıda kalmak daha iyi ⚠️';
 
     return 'Hava verisi güncellendi, koşulları değerlendir';
