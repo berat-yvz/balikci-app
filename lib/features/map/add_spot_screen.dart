@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
@@ -93,7 +94,9 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
   bool get _isEdit => widget.spotToEdit != null;
 
   Future<void> _useGps() async {
-    final pos = await LocationService.getCurrentPosition();
+    final pos = await LocationService.getCurrentPosition(
+      accuracy: LocationAccuracy.high,
+    );
     if (!mounted) return;
     if (pos == null) {
       ScaffoldMessenger.of(context).showSnackBar(

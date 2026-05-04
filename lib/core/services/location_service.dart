@@ -7,8 +7,11 @@ class LocationService {
   LocationService._();
 
   /// Konum iznini kontrol eder; gerekirse ister.
-  /// İzin reddedilirse null döner.
-  static Future<Position?> getCurrentPosition() async {
+  /// [accuracy] senaryoya göre verilir — varsayılan medium (bölge düzeyi).
+  /// Kritik senaryolar (check-in, mera koordinatı) için high/best kullanın.
+  static Future<Position?> getCurrentPosition({
+    LocationAccuracy accuracy = LocationAccuracy.medium,
+  }) async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return null;
 
@@ -20,7 +23,7 @@ class LocationService {
     if (permission == LocationPermission.deniedForever) return null;
 
     return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      locationSettings: LocationSettings(accuracy: accuracy),
     );
   }
 

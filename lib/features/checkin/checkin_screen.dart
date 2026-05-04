@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:geolocator/geolocator.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -226,7 +228,9 @@ class _CheckinScreenState extends State<CheckinScreen>
 
     setState(() => _submitting = true);
     try {
-      final pos = await LocationService.getCurrentPosition();
+      final pos = await LocationService.getCurrentPosition(
+        accuracy: LocationAccuracy.high,
+      );
       if (!mounted) return;
 
       if (pos == null) {

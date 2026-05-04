@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
@@ -80,6 +81,14 @@ class _MapScreenState extends State<MapScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   List<SpotModel> _searchResults = const [];
+
+  /// Arama konumu cache — 60 s içinde GPS'i tekrar uyandırmaz.
+  Position? _cachedSearchPos;
+  DateTime? _cachedSearchPosTime;
+
+  /// Marker cache — _spots veya _activeCheckinsBySpotId değişince geçersizleşir.
+  List<Marker>? _cachedMarkers;
+  Object? _markersCacheKey;
 
   MeraWeatherSnapshot? _meraWeather;
   bool _weatherLoading = false;
@@ -345,7 +354,9 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _goToMyLocation() async {
-    final pos = await LocationService.getCurrentPosition();
+    final pos = await LocationService.getCurrentPosition(
+      accuracy: LocationAccuracy.medium,
+    );
     if (!mounted) return;
     if (pos == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -460,7 +471,21 @@ class _MapScreenState extends State<MapScreen> {
     double refLat = _fallbackSearchLat;
     double refLng = _fallbackSearchLng;
     try {
-      final pos = await LocationService.getCurrentPosition();
+      final now = DateTime.now();
+      final cached = _cachedSearchPos;
+      final cachedAt = _cachedSearchPosTime;
+      final isFresh = cached != null &&
+          cachedAt != null &&
+          now.difference(cachedAt) < const Duration(seconds: 60);
+      final pos = isFresh
+          ? cached
+          : await LocationService.getCurrentPosition(
+              accuracy: LocationAccuracy.low,
+            );
+      if (!isFresh && pos != null) {
+        _cachedSearchPos = pos;
+        _cachedSearchPosTime = now;
+      }
       if (pos != null) {
         refLat = pos.latitude;
         refLng = pos.longitude;
@@ -502,6 +527,18 @@ class _MapScreenState extends State<MapScreen> {
   static const double _spotPinTipY =
       _spotPinTop + _spotPinSize * 0.92; // spot_marker teardrop ile uyumlu
   static const double _spotPinLeft = (_spotMarkerW - _spotPinSize) / 2;
+
+  /// Cache key: (_spots, _activeCheckinsBySpotId, zoom≥13) üçlüsü.
+  /// Her biri yeni instance atandığında referans eşitliği bozulur → cache geçersizleşir.
+  Object _markersKey() => (_spots, _activeCheckinsBySpotId, _currentZoom >= 13);
+
+  List<Marker> get _markers {
+    final key = _markersKey();
+    if (_cachedMarkers != null && _markersCacheKey == key) return _cachedMarkers!;
+    _cachedMarkers = _buildMarkers();
+    _markersCacheKey = key;
+    return _cachedMarkers!;
+  }
 
   List<Marker> _buildMarkers() {
     final tipAlignment = Marker.computePixelAlignment(
@@ -745,7 +782,7 @@ class _MapScreenState extends State<MapScreen> {
                     tileProvider: _mapTileProvider,
                     // Geniş tampon: zoom sırasında üst katman karo yüklenene kadar
                     // önceki zoom karoları tutulur; boşluk riski azalır.
-                    keepBuffer: 8,
+                    keepBuffer: 4,
                     panBuffer: 3,
                     // fadeIn başlangıç opaklığı 0 → yüklenene kadar arka plan görünür;
                     // anında gösterim + koyu arka plan birleşimi daha akıcı.
@@ -760,7 +797,7 @@ class _MapScreenState extends State<MapScreen> {
                     maxNativeZoom: 19,
                     tileSize: 256,
                     tileProvider: _mapTileProvider,
-                    keepBuffer: 8,
+                    keepBuffer: 4,
                     panBuffer: 3,
                     tileDisplay: const TileDisplay.instantaneous(),
                     evictErrorTileStrategy: EvictErrorTileStrategy.none,
@@ -769,7 +806,7 @@ class _MapScreenState extends State<MapScreen> {
                   if (_showSpots)
                     MarkerClusterLayerWidget(
                       options: MarkerClusterLayerOptions(
-                        markers: _buildMarkers(),
+                        markers: _markers,
                         maxClusterRadius: 58,
                         size: const Size(42, 42),
                         builder: (context, markers) {

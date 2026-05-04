@@ -37,7 +37,7 @@ class ProximityVoteService {
 
       final pos = await Geolocator.getCurrentPosition(
         locationSettings:
-            const LocationSettings(accuracy: LocationAccuracy.high),
+            const LocationSettings(accuracy: LocationAccuracy.medium),
       );
 
       if (!context.mounted) return;
