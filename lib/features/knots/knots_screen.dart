@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/data/models/knot_model.dart';
 import 'package:balikci_app/data/models/tackle_model.dart';
@@ -199,7 +198,7 @@ class _KnotsScreenState extends State<KnotsScreen>
                     return _KnotCard(
                       knot: knot,
                       onTap: () =>
-                          context.push(AppRoutes.knotsDetail, extra: knot),
+                          context.push('/knots/detail', extra: knot),
                     );
                   },
                 ),

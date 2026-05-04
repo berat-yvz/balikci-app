@@ -42,11 +42,6 @@ import 'package:balikci_app/features/social/friend_requests_screen.dart';
 import 'package:balikci_app/features/social/friends_list_screen.dart';
 import 'package:balikci_app/features/social/social_screen.dart';
 
-// Features — Knots
-import 'package:balikci_app/features/knots/knots_screen.dart';
-import 'package:balikci_app/features/knots/knot_detail_screen.dart';
-import 'package:balikci_app/data/models/knot_model.dart';
-
 // Features — Weather
 import 'package:balikci_app/features/weather/weather_screen.dart';
 
@@ -340,27 +335,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
-      // Knots
-      GoRoute(
-        path: AppRoutes.knots,
-        pageBuilder: (context, state) =>
-            _fadeSlidePage(state: state, child: const KnotsScreen()),
-      ),
-      GoRoute(
-        path: AppRoutes.knotsDetail,
-        pageBuilder: (_, state) {
-          final extra = state.extra;
-          if (extra is! KnotModel) {
-            return _fadeSlidePage(
-              state: state,
-              child: const Scaffold(
-                body: Center(child: Text('Geçersiz düğüm detayı')),
-              ),
-            );
-          }
-          return _fadeSlidePage(state: state, child: KnotDetailScreen(knot: extra));
-        },
-      ),
     ],
     errorBuilder: (_, state) =>
         Scaffold(body: Center(child: Text('Sayfa bulunamadı: ${state.uri}'))),

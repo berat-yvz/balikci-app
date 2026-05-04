@@ -4,9 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/features/balikcim/daily_forecast/daily_forecast_screen.dart';
 import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_screen.dart';
-import 'package:balikci_app/features/knots/knots_screen.dart';
 
-/// Balıkçım — rehber sekmeleri (balık bilgisi, tahmin, düğümler & takım, ipuçları).
+/// Balıkçım — rehber sekmeleri (balık bilgisi, tahmin, ipuçları).
 class BalikcimScreen extends ConsumerStatefulWidget {
   const BalikcimScreen({super.key});
 
@@ -21,7 +20,7 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -57,7 +56,7 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
                 height: 56,
                 child: TabBar(
                   controller: _tabController,
-                  isScrollable: true,
+                  isScrollable: false,
                   indicator: const UnderlineTabIndicator(
                     borderSide: BorderSide(
                       color: AppColors.accent,
@@ -68,11 +67,11 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
                   labelColor: AppColors.primary,
                   unselectedLabelColor: Colors.white54,
                   labelStyle: AppTextStyles.caption.copyWith(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
                   unselectedLabelStyle: AppTextStyles.caption.copyWith(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
                   tabs: const [
@@ -91,12 +90,6 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
                     Tab(
                       height: 56,
                       iconMargin: EdgeInsets.zero,
-                      icon: Icon(Icons.link_outlined, size: 28),
-                      text: 'Düğümler',
-                    ),
-                    Tab(
-                      height: 56,
-                      iconMargin: EdgeInsets.zero,
                       icon: Icon(Icons.lightbulb_outline, size: 28),
                       text: 'İpuçları',
                     ),
@@ -111,12 +104,11 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
               children: [
                 const FishEncyclopediaScreen(),
                 const DailyForecastScreen(),
-                const KnotsScreen(),
                 const _PlaceholderTab(
                   icon: Icons.lightbulb_outline,
-                  title: 'İpuçları',
+                  title: 'İpuçları & Mevzuat',
                   subtitle:
-                      'Av mevzuatı, teknik terimler ve mevsim kuralları\nyakında burada!',
+                      'Av mevzuatı, tür bazlı minimum boy\nkuralları ve mevsim yasakları çok yakında!',
                   color: AppColors.accent,
                 ),
               ],

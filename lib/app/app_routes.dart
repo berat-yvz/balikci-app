@@ -35,10 +35,6 @@ class AppRoutes {
   static const fishLogAdd = '/fish-log/add';
   static const fishLogStats = '/fish-log/stats';
 
-  // Knots
-  static const knots = '/knots';
-  static const knotsDetail = '/knots/detail';
-
   // Notifications
   static const notifications = '/notifications';
   static const notificationsSettings = '/notifications/settings';
