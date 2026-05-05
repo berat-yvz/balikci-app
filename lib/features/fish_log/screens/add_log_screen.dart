@@ -41,6 +41,7 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
   bool _isPrivate = false;
   bool _isReleased = false;
   bool _isLoading = false;
+  bool _isCompressing = false;
   bool _showExtra = false; // "Daha Fazla Bilgi Ekle" açık mı?
   XFile? _pickedImage;
   /// Web önizleme (path dosya yolu değil).
@@ -114,7 +115,13 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
     final userId = SupabaseService.auth.currentUser?.id ?? 'unknown';
     final fileName =
         'fish_logs/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
-    final bytes = await prepareAvatarUploadBytes(picked);
+    setState(() => _isCompressing = true);
+    final Uint8List bytes;
+    try {
+      bytes = await prepareAvatarUploadBytes(picked);
+    } finally {
+      if (mounted) setState(() => _isCompressing = false);
+    }
     await SupabaseService.storage.from(AppConstants.photoBucket).uploadBinary(
           fileName,
           bytes,
@@ -560,10 +567,36 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: SizedBox(
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: _isLoading ? null : _save,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_isCompressing) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '📸 Fotoğraf hazırlanıyor...',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.muted,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+              SizedBox(
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: _isLoading ? null : _save,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -585,6 +618,8 @@ class _AddLogScreenState extends ConsumerState<AddLogScreen> {
                     fontSize: 17, fontWeight: FontWeight.w800),
               ),
             ),
+          ),
+            ],
           ),
         ),
       ),

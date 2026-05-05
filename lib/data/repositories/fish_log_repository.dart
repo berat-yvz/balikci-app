@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/services/supabase_service.dart';
@@ -93,8 +94,22 @@ class FishLogRepository {
     }
   }
 
-  /// Kayıt siler (remote + local).
+  /// Kayıt siler (remote + local + Storage fotoğraf).
   Future<void> deleteLog(String id) async {
+    // Adım 1: Silmeden önce photo_url'yi çek
+    String? photoUrl;
+    try {
+      final row = await _remote
+          .from('fish_logs')
+          .select('photo_url')
+          .eq('id', id)
+          .maybeSingle();
+      photoUrl = row?['photo_url'] as String?;
+    } catch (_) {
+      // photo_url alınamazsa Storage silmeyi atlayacağız
+    }
+
+    // Adım 2: DB kaydını sil
     try {
       await _remote.from('fish_logs').delete().eq('id', id);
     } on PostgrestException catch (e) {
@@ -104,6 +119,31 @@ class FishLogRepository {
     }
     await (_db.delete(_db.localFishLogs)..where((t) => t.id.equals(id))).go();
     await (_db.delete(_db.fishLogs)..where((t) => t.id.equals(id))).go();
+
+    // Adım 3: Storage'dan fotoğrafı sil (DB silme başarılıysa)
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      final path = _extractStoragePath(photoUrl);
+      if (path != null) {
+        try {
+          await SupabaseService.client.storage
+              .from('fish-photos')
+              .remove([path]);
+        } catch (e) {
+          debugPrint('Storage fotoğraf silme hatası (görmezden gelindi): $e');
+        }
+      }
+    }
+  }
+
+  /// URL'den Storage path'ini çıkarır.
+  /// Örnek URL: .../storage/v1/object/public/fish-photos/fish_logs/{uid}/...
+  /// Döner: fish_logs/{uid}/dosyaadi.jpg
+  String? _extractStoragePath(String url) {
+    const marker = '/fish-photos/';
+    final idx = url.indexOf(marker);
+    if (idx == -1) return null;
+    final path = url.substring(idx + marker.length);
+    return path.isEmpty ? null : path;
   }
 
   /// Kullanıcının toplam av kaydı sayısı.
