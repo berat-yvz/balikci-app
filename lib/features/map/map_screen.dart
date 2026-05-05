@@ -61,6 +61,9 @@ class _MapScreenState extends State<MapScreen> {
   bool _isLoading = true;
   String? _error;
 
+  /// GPS aranırken true — buton devre dışı kalır ve spinner gösterilir.
+  bool _isLocating = false;
+
   bool _showShops = false;
   bool _showSpots = true;
 
@@ -347,23 +350,43 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _goToMyLocation() async {
-    final pos = await LocationService.getCurrentPosition(
-      purpose: LocationPurpose.mapCenter,
-    );
-    if (!mounted) return;
-    if (pos == null) {
+    if (_isLocating) return;
+    setState(() => _isLocating = true);
+    try {
+      final pos = await LocationService.getCurrentPosition(
+        purpose: LocationPurpose.mapCenter,
+      );
+      if (!mounted) return;
+      if (pos == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Konumunuz bulunamadı. Lütfen telefonunuzun konum (GPS) özelliğinin açık olduğundan ve uygulamaya konum izni verildiğinden emin olun.',
+            ),
+            backgroundColor: AppColors.danger,
+            duration: Duration(seconds: 5),
+          ),
+        );
+        return;
+      }
+      try {
+        _mapController.move(LatLng(pos.latitude, pos.longitude), 15);
+      } catch (e) {
+        debugPrint('Harita konuma taşınamadı: $e');
+      }
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Konum alınamadı. İzin veya GPS açık mı kontrol edin.'),
+          content: Text(
+            'Konum alınırken bir sorun oluştu. Lütfen telefonunuzun konum (GPS) özelliğinin açık olduğundan emin olun ve tekrar deneyin.',
+          ),
           backgroundColor: AppColors.danger,
+          duration: Duration(seconds: 5),
         ),
       );
-      return;
-    }
-    try {
-      _mapController.move(LatLng(pos.latitude, pos.longitude), 15);
-    } catch (e) {
-      debugPrint('Harita konuma taşınamadı: $e');
+    } finally {
+      if (mounted) setState(() => _isLocating = false);
     }
   }
 
@@ -1033,9 +1056,11 @@ class _MapScreenState extends State<MapScreen> {
             right: 16,
             bottom: mapFabBottom,
             child: _MapActionButton(
-              icon: Icons.my_location,
-              tooltip: 'Konumum',
-              onPressed: _goToMyLocation,
+              tooltip: 'Konumumu Bul',
+              // GPS aranırken butonu devre dışı bırak (spam engeli).
+              onPressed: _isLocating ? null : _goToMyLocation,
+              icon: _isLocating ? null : Icons.my_location,
+              isLoading: _isLocating,
             ),
           ),
 
@@ -1337,14 +1362,18 @@ class _MapScreenState extends State<MapScreen> {
 }
 
 class _MapActionButton extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final String tooltip;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+
+  /// GPS/loading durumunda true — ikon yerine spinner gösterilir.
+  final bool isLoading;
 
   const _MapActionButton({
-    required this.icon,
     required this.tooltip,
-    required this.onPressed,
+    this.icon,
+    this.onPressed,
+    this.isLoading = false,
   });
 
   @override
@@ -1354,8 +1383,18 @@ class _MapActionButton extends StatelessWidget {
       shape: const CircleBorder(),
       child: IconButton(
         tooltip: tooltip,
+        // onPressed null olunca Flutter butonu otomatik disable eder.
         onPressed: onPressed,
-        icon: Icon(icon, color: Colors.white),
+        icon: isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
+              )
+            : Icon(icon, color: Colors.white),
       ),
     );
   }
