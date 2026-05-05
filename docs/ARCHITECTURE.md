@@ -1,5 +1,11 @@
 # Balıkçı Super App — Teknik Mimari
 
+
+//  05.05.2026 KRİTİK GÜNCELLEME HARİTA ENTEGRASYONU DEĞİŞTİRME ÖNCESİ COMMİT
+
+
+
+
 > Tüm mimari kararlar bu dosyada tanımlanmıştır.
 > Yeni bir özellik eklerken bu dosyayı referans al.
 
