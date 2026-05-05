@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
@@ -71,7 +72,20 @@ class FishLogRepository {
             'id, user_id, spot_id, species, weight, length, photo_url, weather_snapshot, is_private, released, created_at',
           )
           .single();
-      return FishLogModel.fromJson(response);
+      final newLog = FishLogModel.fromJson(response);
+      // Gölge puan hesapla (fire-and-forget, UX'i engelleme)
+      if (newLog.spotId != null) {
+        unawaited(
+          _remote.functions.invoke(
+            'shadow-point-calculator',
+            body: {
+              'fish_log_id': newLog.id,
+              'user_id': _remote.auth.currentUser!.id,
+            },
+          ),
+        );
+      }
+      return newLog;
     } on PostgrestException catch (e) {
       throw Exception('Günlük kaydı oluşturulamadı: ${e.message}');
     } catch (e) {
