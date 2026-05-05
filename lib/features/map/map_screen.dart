@@ -876,6 +876,7 @@ class _MapScreenState extends State<MapScreen> {
                         'https://{s}.basemaps.cartocdn.com'
                         '/dark_all/{z}/{x}/{y}{r}.png',
                     subdomains: const ['a', 'b', 'c', 'd'],
+                    retinaMode: RetinaMode.isHighDensity(context),
                     userAgentPackageName: 'com.balikci.app',
                     maxNativeZoom: 19,
                     keepBuffer: 4,
