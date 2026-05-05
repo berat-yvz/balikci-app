@@ -15,6 +15,13 @@ import 'package:balikci_app/shared/providers/fishing_score_provider.dart';
 class WeatherScreen extends ConsumerWidget {
   const WeatherScreen({super.key});
 
+  static String _formatFetchedAt(DateTime fetchedAt) {
+    final diff = DateTime.now().difference(fetchedAt);
+    if (diff.inHours < 1) return '${diff.inMinutes} dakika önce';
+    if (diff.inHours < 24) return '${diff.inHours} saat önce';
+    return 'Dün güncellendi';
+  }
+
   static List<HourlyWeatherModel> _next24Hours(
     List<HourlyWeatherModel> source,
   ) {
@@ -74,24 +81,14 @@ class WeatherScreen extends ConsumerWidget {
 
                 _WeatherHeroCard(weather: data.current),
                 const SizedBox(height: 6),
-                Builder(builder: (context) {
-                  final diff = DateTime.now().difference(data.current.fetchedAt);
-                  final mins = diff.inMinutes;
-                  final label = mins < 2
-                      ? 'Az önce güncellendi'
-                      : '$mins dakika önce güncellendi';
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      '🕐 $label',
-                      style: AppTextStyles.caption.copyWith(
-                        fontSize: 13,
-                        color: Colors.white38,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                }),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'Son güncelleme: ${_formatFetchedAt(data.current.fetchedAt)}',
+                    style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
                 _FishingScoreCard(weather: data.current, compact: true),
                 const SizedBox(height: 12),
                 _WeatherDetailGrid(
