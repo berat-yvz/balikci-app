@@ -26,18 +26,22 @@ serve(async (req: Request) => {
     )
 
     // ── Son 30 günde aktif kullanıcılar (bildirim izni verilmiş) ─────────────
-    const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-    const { data: activeUsers } = await supabase
+    const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    const { data: checkinRows, error } = await supabase
       .from('checkins')
       .select('user_id')
-      .gte('created_at', since30d)
-      .limit(1000)
+      .gte('created_at', since30d.toISOString())
 
-    const uniqueUserIds = [...new Set(
-      (activeUsers ?? []).map((r: { user_id: string }) => r.user_id),
+    if (error) {
+      console.error('checkins (aktif kullanıcılar):', error.message)
+    }
+
+    // Benzersiz kullanıcı ID'lerini çıkar
+    const activeUserIds = [...new Set(
+      (checkinRows ?? []).map((r: { user_id: string }) => r.user_id),
     )]
 
-    if (uniqueUserIds.length === 0) {
+    if (activeUserIds.length === 0) {
       return new Response(
         JSON.stringify({ success: true, sent: 0, reason: 'no_active_users' }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
@@ -48,14 +52,14 @@ serve(async (req: Request) => {
     const { data: notifSettings } = await supabase
       .from('notification_settings')
       .select('user_id, weather_morning')
-      .in('user_id', uniqueUserIds)
+      .in('user_id', activeUserIds)
 
     const disabledSet = new Set<string>(
       (notifSettings ?? [])
         .filter((s: { user_id: string; weather_morning: boolean }) => s.weather_morning === false)
         .map((s: { user_id: string }) => s.user_id),
     )
-    const eligibleUserIds = uniqueUserIds.filter((id) => !disabledSet.has(id))
+    const eligibleUserIds = activeUserIds.filter((id) => !disabledSet.has(id))
 
     if (eligibleUserIds.length === 0) {
       return new Response(

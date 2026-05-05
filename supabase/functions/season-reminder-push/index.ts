@@ -148,7 +148,6 @@ serve(async (req: Request) => {
       .select('user_id')
       .gte('created_at', since30d)
       .eq('is_hidden', false)
-      .limit(2000)
 
     if (checkinsErr) {
       console.error('checkins (aktif kullanıcılar):', checkinsErr.message)
