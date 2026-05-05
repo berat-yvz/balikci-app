@@ -64,6 +64,10 @@ class _MapScreenState extends State<MapScreen> {
   /// GPS aranırken true — buton devre dışı kalır ve spinner gösterilir.
   bool _isLocating = false;
 
+  /// Bildirim deep-link'inden gelen mera Supabase'den çekilirken true.
+  /// Haritanın üstünde geçici bir yükleme banner'ı gösterir.
+  bool _isDeepLinkLoading = false;
+
   bool _showShops = false;
   bool _showSpots = true;
 
@@ -132,7 +136,9 @@ class _MapScreenState extends State<MapScreen> {
     await _loadSpots();
     await _loadShops();
     _startCheckinsRealtime();
-    _openInitialSpotIfNeeded();
+    // await ile çağırıyoruz: _openInitialSpotIfNeeded artık async ve
+    // deep-link yüklemesini kendisi yönetiyor.
+    await _openInitialSpotIfNeeded();
   }
 
   Future<void> _fetchCurrentUserRank() async {
@@ -151,17 +157,75 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  /// Bildirimden gelen initialSpotId varsa ilk frame'den sonra o mera seçilir.
-  void _openInitialSpotIfNeeded() {
+  /// Bildirim deep-link'inden gelen [initialSpotId] varsa merayı açar.
+  ///
+  /// Akış:
+  ///   1. Önce bellek içi [_spots] listesine bakar — varsa anında seçer.
+  ///   2. Yoksa Supabase'den tekil olarak çeker, [_spotMap]'e ekler,
+  ///      haritayı konuma kaydırır ve BottomSheet'i açar.
+  ///   3. Mera silinmiş/gizlenmişse kullanıcıya anlaşılır bir SnackBar gösterir.
+  Future<void> _openInitialSpotIfNeeded() async {
     final targetId = widget.initialSpotId;
-    if (targetId == null || _spots.isEmpty) return;
-    try {
-      final spot = _spots.firstWhere((s) => s.id == targetId);
+    if (targetId == null) return;
+
+    // --- 1. Önce mevcut bellek listesini kontrol et ---
+    final cached = _spots.where((s) => s.id == targetId).firstOrNull;
+    if (cached != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _selectSpot(spot);
+        if (mounted) _selectSpot(cached);
       });
-    } catch (_) {
-      // Mera bulunamadıysa sessizce devam et
+      return;
+    }
+
+    // --- 2. Cache miss: Supabase'den çek ---
+    if (!mounted) return;
+    setState(() => _isDeepLinkLoading = true);
+
+    try {
+      final spot = await _repository.getSpotById(targetId);
+      if (!mounted) return;
+
+      if (spot == null) {
+        // Mera Supabase'de de yok — silinmiş veya gizlenmiş.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Bu mera artık mevcut değil veya gizlenmiş olabilir. '  
+              'Başka bir mera seçebilirsin.',
+            ),
+            duration: Duration(seconds: 5),
+          ),
+        );
+        return;
+      }
+
+      // --- 3. Yeni merayı harita state'ine dahil et ---
+      _spotMap[spot.id] = spot;
+      setState(() => _spots = _spotMap.values.toList());
+
+      // --- 4. Haritayı konuma kaydır ve sheet'i aç ---
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        try {
+          _mapController.move(LatLng(spot.lat, spot.lng), 15);
+        } catch (_) {
+          // Harita henüz hazır değilse görmezden gel.
+        }
+        _selectSpot(spot);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Mera bilgisi yüklenirken bir sorun oluştu. '  
+            'İnternet bağlantını kontrol edip tekrar dene.',
+          ),
+          duration: Duration(seconds: 5),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isDeepLinkLoading = false);
     }
   }
 
@@ -1351,6 +1415,45 @@ class _MapScreenState extends State<MapScreen> {
                     _error!,
                     style: const TextStyle(color: Colors.white),
                     textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+
+          // Deep-link yükleme banner'ı — bildirimden gelen mera çekilirken gösterilir.
+          if (_isDeepLinkLoading)
+            Positioned(
+              left: 24,
+              right: 24,
+              top: MediaQuery.of(context).padding.top + 70,
+              child: Material(
+                color: Colors.black.withValues(alpha: 0.78),
+                borderRadius: BorderRadius.circular(14),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          'Mera yükleniyor...',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
