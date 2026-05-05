@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'package:balikci_app/core/constants/app_constants.dart';
+import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/geo_utils.dart';
 import 'package:balikci_app/data/models/checkin_model.dart';
@@ -18,8 +19,15 @@ class ProximityVoteService {
   final Set<String> _shownCheckinIds = {};
   final CheckinRepository _checkins = CheckinRepository();
   final SpotRepository _spots = SpotRepository();
+  DateTime? _lastProximityCheck;
 
   Future<void> checkAndShowVoteDialog(BuildContext context) async {
+    if (_lastProximityCheck != null &&
+        DateTime.now().difference(_lastProximityCheck!) <
+            const Duration(minutes: 5)) {
+      return;
+    }
+    _lastProximityCheck = DateTime.now();
     try {
       final uid = SupabaseService.auth.currentUser?.id;
       if (uid == null) return;
@@ -35,10 +43,10 @@ class ProximityVoteService {
         return;
       }
 
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings:
-            const LocationSettings(accuracy: LocationAccuracy.medium),
+      final pos = await LocationService.getCurrentPosition(
+        purpose: LocationPurpose.proximity,
       );
+      if (pos == null) return;
 
       if (!context.mounted) return;
 

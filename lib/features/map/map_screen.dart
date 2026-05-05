@@ -355,7 +355,7 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _goToMyLocation() async {
     final pos = await LocationService.getCurrentPosition(
-      accuracy: LocationAccuracy.medium,
+      purpose: LocationPurpose.mapCenter,
     );
     if (!mounted) return;
     if (pos == null) {
@@ -480,7 +480,7 @@ class _MapScreenState extends State<MapScreen> {
       final pos = isFresh
           ? cached
           : await LocationService.getCurrentPosition(
-              accuracy: LocationAccuracy.low,
+              purpose: LocationPurpose.search,
             );
       if (!isFresh && pos != null) {
         _cachedSearchPos = pos;

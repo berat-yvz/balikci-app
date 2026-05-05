@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
@@ -95,7 +94,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
 
   Future<void> _useGps() async {
     final pos = await LocationService.getCurrentPosition(
-      accuracy: LocationAccuracy.high,
+      purpose: LocationPurpose.spotAdd,
     );
     if (!mounted) return;
     if (pos == null) {
