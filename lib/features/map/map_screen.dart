@@ -99,6 +99,9 @@ class _MapScreenState extends State<MapScreen> {
   /// 'acemi' | 'olta_kurdu' | 'usta' | 'deniz_reisi'
   String _currentUserRank = 'acemi';
 
+  /// Geçerli kullanıcının toplam puanı — VIP kilitli sheet'te ilerleme çubuğu için.
+  int _currentUserScore = 0;
+
   bool get _isUstaOrAbove =>
       _currentUserRank == 'usta' || _currentUserRank == 'deniz_reisi';
 
@@ -135,7 +138,10 @@ class _MapScreenState extends State<MapScreen> {
     try {
       final profile = await UserRepository().getProfile(uid);
       if (mounted && profile != null) {
-        setState(() => _currentUserRank = profile.rank);
+        setState(() {
+          _currentUserRank = profile.rank;
+          _currentUserScore = profile.totalScore;
+        });
       }
     } catch (_) {
       // Rütbe alınamazsa 'acemi' varsayılanı kalır — VIP pinler kilitli görünür.
@@ -274,19 +280,6 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _selectSpot(SpotModel spot) {
-    // VIP mera: Usta veya üzeri rütbe gerektirir.
-    if (spot.privacyLevel == 'vip' && !_isUstaOrAbove) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            '🔒 Bu VIP mera Usta rütbesi ve üzeri için erişilebilir.',
-          ),
-          duration: Duration(seconds: 3),
-        ),
-      );
-      return;
-    }
-
     setState(() {
       _sheetSpot = spot;
       _searchResults = const [];
@@ -1244,58 +1237,69 @@ class _MapScreenState extends State<MapScreen> {
                                     hasMuhtar: sheetSpot.muhtarId != null,
                                   ),
                                   const SizedBox(height: 10),
-                                  if (mostRecent != null)
-                                    _LatestCheckinBanner(checkin: mostRecent),
-                                  if (mostRecent != null)
-                                    const SizedBox(height: 10),
-                                  _MeraWeatherSection(
-                                    loading: _weatherLoading,
-                                    snap: _meraWeather,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  SizedBox(
-                                    height: 48,
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        Expanded(
-                                          child: _SheetPrimaryButton(
-                                            onPressed: () =>
-                                                _openCheckinForSpot(sheetSpot),
-                                            icon: Icons.check_circle_outline,
-                                            label: 'Balık Var!',
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: _SheetSecondaryButton(
-                                            onPressed: () =>
-                                                _openDirectionsForSpot(
-                                                  sheetSpot,
-                                                ),
-                                            icon: Icons.directions,
-                                            label: 'Yol Tarifi',
-                                          ),
-                                        ),
-                                      ],
+                                  if (sheetSpot.privacyLevel == 'vip' &&
+                                      !_isUstaOrAbove)
+                                    _VipLockedWidget(
+                                      userScore: _currentUserScore,
+                                    )
+                                  else ...[
+                                    if (mostRecent != null)
+                                      _LatestCheckinBanner(
+                                        checkin: mostRecent,
+                                      ),
+                                    if (mostRecent != null)
+                                      const SizedBox(height: 10),
+                                    _MeraWeatherSection(
+                                      loading: _weatherLoading,
+                                      snap: _meraWeather,
                                     ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  if (sheetDescriptionTrimmed != null &&
-                                      sheetDescriptionTrimmed.isNotEmpty)
-                                    Text(
-                                      sheetDescriptionTrimmed,
-                                      style: AppTextStyles.body.copyWith(
-                                        color: AppColors.foam.withValues(
-                                          alpha: 0.78,
-                                        ),
+                                    const SizedBox(height: 10),
+                                    SizedBox(
+                                      height: 48,
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Expanded(
+                                            child: _SheetPrimaryButton(
+                                              onPressed: () =>
+                                                  _openCheckinForSpot(
+                                                    sheetSpot,
+                                                  ),
+                                              icon: Icons.check_circle_outline,
+                                              label: 'Balık Var!',
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: _SheetSecondaryButton(
+                                              onPressed: () =>
+                                                  _openDirectionsForSpot(
+                                                    sheetSpot,
+                                                  ),
+                                              icon: Icons.directions,
+                                              label: 'Yol Tarifi',
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  if (sheetDescriptionTrimmed != null &&
-                                      sheetDescriptionTrimmed.isNotEmpty)
                                     const SizedBox(height: 12),
-                                  _RecentCheckinsRow(checkins: sheetCheckins),
+                                    if (sheetDescriptionTrimmed != null &&
+                                        sheetDescriptionTrimmed.isNotEmpty)
+                                      Text(
+                                        sheetDescriptionTrimmed,
+                                        style: AppTextStyles.body.copyWith(
+                                          color: AppColors.foam.withValues(
+                                            alpha: 0.78,
+                                          ),
+                                        ),
+                                      ),
+                                    if (sheetDescriptionTrimmed != null &&
+                                        sheetDescriptionTrimmed.isNotEmpty)
+                                      const SizedBox(height: 12),
+                                    _RecentCheckinsRow(checkins: sheetCheckins),
+                                  ],
                                 ],
                               ),
                             ),
@@ -2373,6 +2377,55 @@ class _ShopDetailSheet extends StatelessWidget {
               'İletişim bilgisi henüz eklenmedi.',
               style: AppTextStyles.caption.copyWith(color: AppColors.muted),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VipLockedWidget extends StatelessWidget {
+  final int userScore;
+  const _VipLockedWidget({required this.userScore});
+
+  @override
+  Widget build(BuildContext context) {
+    const ustaThreshold = 2000;
+    final remaining = (ustaThreshold - userScore).clamp(0, ustaThreshold);
+    final progress = (userScore / ustaThreshold).clamp(0.0, 1.0);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.lock_outline, size: 48, color: AppColors.accent),
+          const SizedBox(height: 12),
+          const Text(
+            'Bu Gizli Mera Kilitli 🔒',
+            style: AppTextStyles.h3,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Usta Balıkçı olmana $remaining puan kaldı.\nMera paylaşarak veya balık bildirimi yaparak puan kazanabilirsin.',
+            style: AppTextStyles.body.copyWith(color: AppColors.muted),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: AppColors.surface,
+              color: AppColors.primary,
+              minHeight: 8,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Bir mera paylaşırsan +50 puan kazanırsın! 🎣',
+            style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

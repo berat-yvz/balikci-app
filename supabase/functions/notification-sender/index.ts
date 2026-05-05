@@ -115,6 +115,36 @@ serve(async (req: Request) => {
       )
     }
 
+    // ── notification_settings kontrolü ─────────────────────────────────────
+    // Her tür için kullanıcının bildirim tercihini kontrol et.
+    // Satır yoksa veya sütun true ise bildirime izin ver (default = açık).
+    const notifType: string = (data as Record<string, unknown>)?.type?.toString() ?? 'general'
+    const settingsColumnMap: Record<string, string> = {
+      checkin_spot_owner: 'checkin_spot_owner',
+      checkin_favorite: 'checkin_favorite',
+      checkin_nearby: 'checkin_nearby',
+      vote_received: 'vote_received',
+      rank_up: 'rank_up',
+      weather_morning: 'weather_morning',
+      morning_weather: 'weather_morning',
+      season_reminder: 'season_reminder',
+    }
+    const settingsCol = settingsColumnMap[notifType]
+    if (settingsCol) {
+      const { data: notifSettings } = await supabase
+        .from('notification_settings')
+        .select(`user_id, ${settingsCol}`)
+        .eq('user_id', user_id)
+        .maybeSingle()
+      // Satır varsa ve sütun açıkça false ise bildirimi engelle
+      if (notifSettings !== null && notifSettings[settingsCol] === false) {
+        return new Response(
+          JSON.stringify({ success: false, reason: 'user_preference_disabled' }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+    }
+
     // ── Force bildirimler için ayrı günlük sınır (2/gün) ───────────────────
     if (force) {
       const todayStart = new Date()
