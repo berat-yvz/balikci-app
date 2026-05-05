@@ -9,10 +9,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
+import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/constants/app_constants.dart';
 import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/geo_utils.dart';
@@ -51,6 +53,9 @@ class _MapScreenState extends State<MapScreen> {
   /// Hızlı zoom’da gereksiz indirmeleri iptal eder; beyaz kareleri azaltır.
   final CancellableNetworkTileProvider _mapTileProvider =
       CancellableNetworkTileProvider();
+
+  /// FMTC tile cache başarıyla başlatıldıysa true; yoksa fallback provider kullanılır.
+  bool _fmtcReady = false;
 
   List<SpotModel> _spots = const [];
 
@@ -117,6 +122,17 @@ class _MapScreenState extends State<MapScreen> {
     super.initState();
     _initializeCacheAndLoad();
     _fetchCurrentUserRank();
+    _checkFmtcReady();
+  }
+
+  Future<void> _checkFmtcReady() async {
+    try {
+      final ready =
+          await FMTCStore(AppConstants.fmtcStoreName).manage.ready;
+      if (mounted && ready) setState(() => _fmtcReady = true);
+    } catch (_) {
+      // FMTC başlatılmadıysa sessizce fallback provider'a geçilir.
+    }
   }
 
   @override
@@ -855,33 +871,26 @@ class _MapScreenState extends State<MapScreen> {
                 children: [
                   TileLayer(
                     urlTemplate:
-                        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                    maxZoom: 19,
-                    maxNativeZoom: 19,
-                    tileSize: 256,
-                    tileProvider: _mapTileProvider,
-                    // Geniş tampon: zoom sırasında üst katman karo yüklenene kadar
-                    // önceki zoom karoları tutulur; boşluk riski azalır.
-                    keepBuffer: 4,
-                    panBuffer: 3,
-                    // fadeIn başlangıç opaklığı 0 → yüklenene kadar arka plan görünür;
-                    // anında gösterim + koyu arka plan birleşimi daha akıcı.
-                    tileDisplay: const TileDisplay.instantaneous(),
-                    evictErrorTileStrategy: EvictErrorTileStrategy.none,
+                        'https://{s}.basemaps.cartocdn.com'
+                        '/dark_all/{z}/{x}/{y}{r}.png',
+                    subdomains: const ['a', 'b', 'c', 'd'],
                     userAgentPackageName: 'com.balikci.app',
-                  ),
-                  TileLayer(
-                    urlTemplate:
-                        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-                    maxZoom: 19,
                     maxNativeZoom: 19,
-                    tileSize: 256,
-                    tileProvider: _mapTileProvider,
                     keepBuffer: 4,
                     panBuffer: 3,
                     tileDisplay: const TileDisplay.instantaneous(),
                     evictErrorTileStrategy: EvictErrorTileStrategy.none,
-                    userAgentPackageName: 'com.balikci.app',
+                    tileProvider: _fmtcReady
+                        ? FMTCStore(AppConstants.fmtcStoreName)
+                            .getTileProvider(
+                              settings: FMTCTileProviderSettings(
+                                behavior: CacheBehavior.cacheFirst,
+                                cachedValidDuration: Duration(
+                                  days: AppConstants.fmtcMaxCacheDays,
+                                ),
+                              ),
+                            )
+                        : _mapTileProvider,
                   ),
                   if (_showSpots)
                     MarkerClusterLayerWidget(
