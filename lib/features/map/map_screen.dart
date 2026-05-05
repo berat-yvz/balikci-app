@@ -851,7 +851,7 @@ class _MapScreenState extends State<MapScreen> {
                   minZoom: 5.0,
                   maxZoom: 19.0,
                   // Varsayılan açık gri; karo boşluklarında “beyaz kare” hissi verir.
-                  backgroundColor: const Color(0xFF1A2E42),
+                  backgroundColor: AppColors.background,
                   onPositionChanged: (camera, _) {
                     final z = camera.zoom;
                     // Marker boyutları yalnızca zoom 13 eşiğini geçince değişir.
@@ -871,32 +871,28 @@ class _MapScreenState extends State<MapScreen> {
                   },
                 ),
                 children: [
-                  Opacity(
-                    opacity: 0.75,
-                    child: TileLayer(
-                      urlTemplate:
-                          'https://{s}.basemaps.cartocdn.com'
-                          '/dark_all/{z}/{x}/{y}{r}.png',
-                      subdomains: const ['a', 'b', 'c', 'd'],
-                      retinaMode: RetinaMode.isHighDensity(context),
-                      userAgentPackageName: 'com.balikci.app',
-                      maxNativeZoom: 19,
-                      keepBuffer: 4,
-                      panBuffer: 3,
-                      tileDisplay: const TileDisplay.instantaneous(),
-                      evictErrorTileStrategy: EvictErrorTileStrategy.none,
-                      tileProvider: _fmtcReady
-                          ? FMTCStore(AppConstants.fmtcStoreName)
-                              .getTileProvider(
-                                settings: FMTCTileProviderSettings(
-                                  behavior: CacheBehavior.cacheFirst,
-                                  cachedValidDuration: Duration(
-                                    days: AppConstants.fmtcMaxCacheDays,
-                                  ),
+                  TileLayer(
+                    urlTemplate:
+                        'https://tiles.stadiamaps.com/tiles'
+                        '/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
+                    retinaMode: RetinaMode.isHighDensity(context),
+                    userAgentPackageName: 'com.balikci.app',
+                    maxNativeZoom: 20,
+                    keepBuffer: 4,
+                    panBuffer: 3,
+                    tileDisplay: const TileDisplay.instantaneous(),
+                    evictErrorTileStrategy: EvictErrorTileStrategy.none,
+                    tileProvider: _fmtcReady
+                        ? FMTCStore(AppConstants.fmtcStoreName)
+                            .getTileProvider(
+                              settings: FMTCTileProviderSettings(
+                                behavior: CacheBehavior.cacheFirst,
+                                cachedValidDuration: Duration(
+                                  days: AppConstants.fmtcMaxCacheDays,
                                 ),
-                              )
-                          : _mapTileProvider,
-                    ),
+                              ),
+                            )
+                        : _mapTileProvider,
                   ),
                   if (_showSpots)
                     MarkerClusterLayerWidget(
