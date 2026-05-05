@@ -15,6 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/app_constants.dart';
+import 'package:balikci_app/core/services/map_cache_service.dart';
 import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/geo_utils.dart';
@@ -123,6 +124,7 @@ class _MapScreenState extends State<MapScreen> {
     _initializeCacheAndLoad();
     _fetchCurrentUserRank();
     _checkFmtcReady();
+    unawaited(MapCacheService.evictOldTiles());
   }
 
   Future<void> _checkFmtcReady() async {

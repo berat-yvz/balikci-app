@@ -12,6 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/router.dart';
+import 'package:balikci_app/core/services/map_cache_service.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/notification_service.dart';
 import 'package:balikci_app/core/services/sync_service.dart';
@@ -100,6 +101,7 @@ Future<void> main() async {
     if (!isReady) {
       await store.manage.create();
     }
+    await MapCacheService.applyLimits();
   } catch (e) {
     // Cache başlatılamazsa uygulama cache olmadan çalışmaya devam eder.
     debugPrint('FMTC tile cache başlatılamadı (cache devre dışı): $e');
