@@ -136,7 +136,9 @@ class NotificationListScreen extends ConsumerWidget {
   /// doğrudan ilgili meraya yönlendirilir.
   void _navigateForNotification(GoRouter router, NotificationModel n) {
     final type = n.type.toLowerCase();
-    if (type.contains('rank')) {
+    if (type == 'rank_up') {
+      router.go(AppRoutes.profile);
+    } else if (type.contains('rank')) {
       router.go(AppRoutes.rank);
     } else if (notificationTypeOpensFollowProfile(n.type)) {
       final profileId = profileUserIdFromNotificationData(n.data);

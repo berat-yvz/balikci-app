@@ -20,7 +20,7 @@ String _routeForType(String? type) => switch (type?.toLowerCase()) {
   'checkin' => AppRoutes.home,
   'vote' => AppRoutes.home,
   'rank' => AppRoutes.rank,
-  'rank_up' => AppRoutes.rank,
+  'rank_up' => AppRoutes.profile,
   // Takip: hedef kullanıcı id yoksa kendi profil sekmesi (geriye dönük)
   'follow' => AppRoutes.profile,
   'fish_log' => AppRoutes.fishLog,

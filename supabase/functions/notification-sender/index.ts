@@ -115,6 +115,25 @@ serve(async (req: Request) => {
       )
     }
 
+    // ── Force bildirimler için ayrı günlük sınır (2/gün) ───────────────────
+    if (force) {
+      const todayStart = new Date()
+      todayStart.setUTCHours(0, 0, 0, 0)
+      const { count: forceCount } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user_id)
+        .in('type', ['rank_up', 'weather_morning', 'season_reminder'])
+        .gte('created_at', todayStart.toISOString())
+
+      if ((forceCount ?? 0) >= 2) {
+        return new Response(
+          JSON.stringify({ success: false, reason: 'force_daily_limit_reached' }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+    }
+
     // ── Günlük 5 bildirim limiti ────────────────────────────────────────────
     if (!force) {
       const todayStart = new Date()

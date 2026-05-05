@@ -38,6 +38,19 @@ function rankLabelTr(rank: string): string {
   }
 }
 
+function rankBodyTr(rank: string): string {
+  switch (rank) {
+    case 'olta_kurdu':
+      return 'Tebrikler Reis! Artık OLTA KURDUSU\'sun! 🎣\nArkadaşlarının gizli meralarını artık görebilirsin.'
+    case 'usta':
+      return 'Bravo! USTA BALIKÇI oldun! ⚓\nVIP meralar artık senin için açık.'
+    case 'deniz_reisi':
+      return 'Efsane! DENİZ REİSİ oldun! 🌊\nUygulamanın en seçkin balıkçısısın.'
+    default:
+      return `Yeni rütben: ${rankLabelTr(rank)}`
+  }
+}
+
 function sendRankUpNotification(
   userId: string,
   newRank: string,
@@ -52,7 +65,7 @@ function sendRankUpNotification(
     body: JSON.stringify({
       user_id: userId,
       title: '🏆 Tebrikler!',
-      body: `Yeni rütben: ${rankLabelTr(newRank)}`,
+      body: rankBodyTr(newRank),
       data: {
         type: 'rank_up',
         new_rank: newRank,
