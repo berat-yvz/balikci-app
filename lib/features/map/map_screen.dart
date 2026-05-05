@@ -137,6 +137,25 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  /// FMTC hazırsa cache provider, değilse CancellableNetworkTileProvider döner.
+  /// Exception build() metodunu kırmaz.
+  TileProvider _buildTileProvider() {
+    try {
+      if (_fmtcReady) {
+        return FMTCStore(AppConstants.fmtcStoreName).getTileProvider(
+          settings: FMTCTileProviderSettings(
+            behavior: CacheBehavior.cacheFirst,
+            cachedValidDuration:
+                Duration(days: AppConstants.fmtcMaxCacheDays),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('FMTC provider hatası: $e');
+    }
+    return _mapTileProvider;
+  }
+
   @override
   void dispose() {
     unawaited(_checkinsRealtimeChannel?.unsubscribe());
@@ -873,26 +892,20 @@ class _MapScreenState extends State<MapScreen> {
                 children: [
                   TileLayer(
                     urlTemplate:
-                        'https://tiles.stadiamaps.com/tiles'
-                        '/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
+                        'https://{s}.basemaps.cartocdn.com'
+                        '/dark_all/{z}/{x}/{y}{r}.png',
+                    subdomains: const ['a', 'b', 'c', 'd'],
                     retinaMode: RetinaMode.isHighDensity(context),
                     userAgentPackageName: 'com.balikci.app',
-                    maxNativeZoom: 20,
+                    maxNativeZoom: 19,
                     keepBuffer: 4,
                     panBuffer: 3,
                     tileDisplay: const TileDisplay.instantaneous(),
                     evictErrorTileStrategy: EvictErrorTileStrategy.none,
-                    tileProvider: _fmtcReady
-                        ? FMTCStore(AppConstants.fmtcStoreName)
-                            .getTileProvider(
-                              settings: FMTCTileProviderSettings(
-                                behavior: CacheBehavior.cacheFirst,
-                                cachedValidDuration: Duration(
-                                  days: AppConstants.fmtcMaxCacheDays,
-                                ),
-                              ),
-                            )
-                        : _mapTileProvider,
+                    tileProvider: _buildTileProvider(),
+                    errorTileCallback: (tile, error, stackTrace) {
+                      debugPrint('Tile yükleme hatası: $error');
+                    },
                   ),
                   if (_showSpots)
                     MarkerClusterLayerWidget(

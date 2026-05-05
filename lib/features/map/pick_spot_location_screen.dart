@@ -59,27 +59,15 @@ class _PickSpotLocationScreenState extends State<PickSpotLocationScreen> {
             children: [
               TileLayer(
                 urlTemplate:
-                    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                maxZoom: 19,
+                    'https://{s}.basemaps.cartocdn.com'
+                    '/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                subdomains: const ['a', 'b', 'c', 'd'],
+                userAgentPackageName: 'com.balikci.app',
                 maxNativeZoom: 19,
-                tileSize: 256,
                 keepBuffer: 4,
                 panBuffer: 2,
                 evictErrorTileStrategy:
                     EvictErrorTileStrategy.notVisibleRespectMargin,
-                userAgentPackageName: 'com.balikci.app',
-              ),
-              TileLayer(
-                urlTemplate:
-                    'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-                maxZoom: 19,
-                maxNativeZoom: 19,
-                tileSize: 256,
-                keepBuffer: 4,
-                panBuffer: 2,
-                evictErrorTileStrategy:
-                    EvictErrorTileStrategy.notVisibleRespectMargin,
-                userAgentPackageName: 'com.balikci.app',
               ),
               if (_picked != null)
                 MarkerLayer(
