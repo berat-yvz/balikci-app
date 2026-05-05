@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
@@ -89,6 +90,19 @@ Future<void> main() async {
       child: StartupErrorApp(errors: startupErrors),
     ));
     return;
+  }
+
+  // ── FMTC tile cache başlatma — hata uygulama başlatmayı durdurmamalı ──
+  try {
+    await FMTCObjectBoxBackend().initialise();
+    final store = FMTCStore('balikci_map_store');
+    final isReady = await store.manage.ready;
+    if (!isReady) {
+      await store.manage.create();
+    }
+  } catch (e) {
+    // Cache başlatılamazsa uygulama cache olmadan çalışmaya devam eder.
+    debugPrint('FMTC tile cache başlatılamadı (cache devre dışı): $e');
   }
 
   // ── Auth dinleyici + App Links ──────────────────────────────────────────

@@ -31,4 +31,9 @@ class AppConstants {
 
   // HTTP
   static const httpTimeoutSeconds = 15;
+
+  // Harita tile cache (FMTC)
+  static const String fmtcStoreName = 'balikci_map_store';
+  static const int fmtcMaxCacheMb = 100;
+  static const int fmtcMaxCacheDays = 30;
 }
