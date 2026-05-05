@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 
+import 'package:drift/drift.dart';
 import 'package:balikci_app/core/constants/weather_regions.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/istanbul_ilce_resolver.dart';
+import 'package:balikci_app/data/local/database.dart';
 import 'package:balikci_app/data/models/hourly_weather_model.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
 
@@ -12,11 +14,13 @@ class WeatherService {
   WeatherService._();
 
   static final _db = SupabaseService.client;
+  static final _driftDb = AppDatabase.instance;
 
   static const double _fallbackLat = 41.0082;
   static const double _fallbackLng = 28.9784;
 
   /// Bölge anahtarına göre cache satırı + saatlik liste.
+  /// Supabase başarısızsa Drift local cache'e düşer.
   static Future<RegionalWeatherData?> fetchRegionalWeatherFromSupabase(
     String regionKey,
   ) async {
@@ -29,12 +33,55 @@ class WeatherService {
       if (response == null) return null;
       final row = Map<String, dynamic>.from(response);
       final current = WeatherModel.fromJson(row);
+      try {
+        await _driftDb.into(_driftDb.localWeather).insertOnConflictUpdate(
+          LocalWeatherCompanion.insert(
+            regionKey: regionKey,
+            tempC: Value(current.temperature ?? 0.0),
+            windSpeedKmh: Value(current.windspeed ?? 0.0),
+            waveHeightM: Value(current.waveHeight ?? 0.0),
+            humidity: Value(current.humidity ?? 0.0),
+            cachedAt: DateTime.now(),
+          ),
+        );
+      } catch (_) {
+        // Drift write hatası yoksayılır
+      }
       final hourly = hourlyFromOpenMeteoV1Bundle(current.dataJson);
       if (hourly.isEmpty && current.dataJson?['source'] != 'open_meteo_v1') {
         return RegionalWeatherData(hourly: const [], current: current);
       }
       return RegionalWeatherData(hourly: hourly, current: current);
     } catch (_) {
+      try {
+        final cached = await (_driftDb.select(_driftDb.localWeather)
+              ..where((t) => t.regionKey.equals(regionKey)))
+            .getSingleOrNull();
+        if (cached != null) {
+          return RegionalWeatherData(
+            hourly: const [],
+            current: WeatherModel(
+              id: '',
+              lat: 0,
+              lng: 0,
+              temperature: cached.tempC,
+              windspeed: cached.windSpeedKmh,
+              windDirection: null,
+              waveHeight: cached.waveHeightM,
+              seaSurfaceTemperature: null,
+              precipitation: null,
+              humidity: cached.humidity,
+              visibilityKm: null,
+              cloudCover: null,
+              fishingSummary: null,
+              fetchedAt: cached.cachedAt,
+              regionKey: cached.regionKey,
+            ),
+          );
+        }
+      } catch (_) {
+        // Drift okuma da başarısız
+      }
       return null;
     }
   }
