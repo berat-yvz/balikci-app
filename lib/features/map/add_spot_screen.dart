@@ -48,10 +48,10 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
   ];
 
   static const _privacyOptions = [
-    ('public', 'Herkes', '+50 puan (public)'),
-    ('friends', 'Takipçiler', 'Arkadaş merası'),
-    ('private', 'Sadece ben', 'Konum gizli'),
-    ('vip', 'VIP (Usta+)', 'Rütbe gerekebilir'),
+    ('public', 'Herkes', '+50 puan (public)', 'Konumun haritada herkese görünür.'),
+    ('friends', 'Takipçiler', 'Arkadaş merası', 'Yalnızca arkadaşlık isteği kabul ettiğin kişiler görür.'),
+    ('private', 'Sadece ben', 'Konum gizli', 'Sadece sen görürsün. Kimseyle paylaşılmaz.'),
+    ('vip', 'VIP (Usta+)', 'Rütbe gerekebilir', 'Usta ve Deniz Reisi rütbesindeki balıkçılar görür.'),
   ];
 
   @override
@@ -280,9 +280,24 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
                   isExpanded: true,
                   items: _privacyOptions
                       .map(
-                        (e) => DropdownMenuItem(
+                        (e) => DropdownMenuItem<String>(
                           value: e.$1,
-                          child: Text('${e.$2} — ${e.$3}'),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('${e.$2} — ${e.$3}'),
+                              Text(
+                                e.$4,
+                                style: AppTextStyles.caption.copyWith(
+                                  fontSize: 12,
+                                  color: e.$1 == 'private'
+                                      ? AppColors.primary
+                                      : AppColors.muted,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       )
                       .toList(),
