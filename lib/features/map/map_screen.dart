@@ -864,10 +864,10 @@ class _MapScreenState extends State<MapScreen> {
             child: RepaintBoundary(
               child: ColorFiltered(
                 colorFilter: ColorFilter.matrix([
-                  1.2, 0,   0,   0, -20,
-                  0,   1.2, 0,   0, -20,
-                  0,   0,   1.3, 0, -10,
-                  0,   0,   0,   1,  0,
+                  0.85, 0,    0,    0, 0,
+                  0,    0.85, 0,    0, 0,
+                  0,    0,    0.90, 0, 0,
+                  0,    0,    0,    1, 0,
                 ]),
                 child: FlutterMap(
                 mapController: _mapController,
