@@ -862,7 +862,14 @@ class _MapScreenState extends State<MapScreen> {
         children: [
           Positioned.fill(
             child: RepaintBoundary(
-              child: FlutterMap(
+              child: ColorFiltered(
+                colorFilter: ColorFilter.matrix([
+                  1.2, 0,   0,   0, -20,
+                  0,   1.2, 0,   0, -20,
+                  0,   0,   1.3, 0, -10,
+                  0,   0,   0,   1,  0,
+                ]),
+                child: FlutterMap(
                 mapController: _mapController,
                 options: MapOptions(
                   initialCenter: const LatLng(41.0082, 28.9784),
@@ -949,6 +956,7 @@ class _MapScreenState extends State<MapScreen> {
                   // Mera kümesinin üstünde çiz — aksi halde işaretler görünmeyebilir.
                   if (_showShops) MarkerLayer(markers: _buildShopMarkers()),
                 ],
+              ),
               ),
             ),
           ),
