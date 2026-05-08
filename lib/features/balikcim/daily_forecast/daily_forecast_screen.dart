@@ -42,9 +42,8 @@ class DailyForecastScreen extends ConsumerWidget {
                   'Bağlantı hatası',
                   textAlign: TextAlign.center,
                   style: AppTextStyles.h2.copyWith(
-                    color: Colors.white,
+                    color: AppColors.foam,
                     fontSize: 22,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -58,7 +57,7 @@ class DailyForecastScreen extends ConsumerWidget {
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.foam,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -67,7 +66,7 @@ class DailyForecastScreen extends ConsumerWidget {
                       'Tekrar Dene',
                       style: AppTextStyles.body.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: AppColors.foam,
                       ),
                     ),
                   ),
@@ -100,162 +99,159 @@ class DailyForecastScreen extends ConsumerWidget {
         },
         child: SingleChildScrollView(
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    '${score.score}',
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.h1.copyWith(
-                      fontSize: 72,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      height: 1,
-                    ),
-                  ),
-                  Text(
-                    '/ 100',
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.body.copyWith(
-                      fontSize: 16,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    score.label,
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.h2.copyWith(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    score.summary,
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.body.copyWith(
-                      fontSize: 15,
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (score.suggestedSpecies.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Bu Havada Avlanacak Balıklar',
-                      style: AppTextStyles.h3.copyWith(
-                        fontSize: 18,
+                      '${score.score}',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.h1.copyWith(
+                        fontSize: 72,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppColors.foam,
+                        height: 1,
+                      ),
+                    ),
+                    Text(
+                      '/ 100',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.body.copyWith(
+                        fontSize: 16,
+                        color: AppColors.foam.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: score.suggestedSpecies.map((s) {
-                        return ConstrainedBox(
-                          constraints: const BoxConstraints(minHeight: 56),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.encyclopediaCard,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.primary,
-                                width: 1.5,
-                              ),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              s.name,
-                              style: AppTextStyles.body.copyWith(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-            if (score.activeMessages.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
                     Text(
-                      'Dikkat Et',
-                      style: AppTextStyles.h3.copyWith(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                      score.label,
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.h2.copyWith(
+                        fontSize: 22,
+                        color: AppColors.foam,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    ...score.activeMessages.map((m) {
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        constraints: const BoxConstraints(minHeight: 56),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppColors.encyclopediaCard,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.info_outline,
-                              color: AppColors.accent,
-                              size: 24,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                m,
-                                style: AppTextStyles.body.copyWith(
-                                  fontSize: 15,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
+                    Text(
+                      score.summary,
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.body.copyWith(
+                        fontSize: 15,
+                        color: AppColors.foam.withValues(alpha: 0.9),
+                      ),
+                    ),
                   ],
                 ),
               ),
+              if (score.suggestedSpecies.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Bu Havada Avlanacak Balıklar',
+                        style: AppTextStyles.h3.copyWith(
+                          fontSize: 18,
+                          color: AppColors.foam,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: score.suggestedSpecies.map((s) {
+                          return ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 56),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.encyclopediaCard,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.primary,
+                                  width: 1.5,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                s.name,
+                                style: AppTextStyles.body.copyWith(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.foam,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+              if (score.activeMessages.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Dikkat Et',
+                        style: AppTextStyles.h3.copyWith(
+                          fontSize: 18,
+                          color: AppColors.foam,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...score.activeMessages.map((m) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          constraints: const BoxConstraints(minHeight: 56),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.encyclopediaCard,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.info_outline,
+                                color: AppColors.accent,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  m,
+                                  style: AppTextStyles.body.copyWith(
+                                    fontSize: 15,
+                                    color: AppColors.muted,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 32),
             ],
-            const SizedBox(height: 32),
-          ],
-        ),
+          ),
         ),
       ),
     );

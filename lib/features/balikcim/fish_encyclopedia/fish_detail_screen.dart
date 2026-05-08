@@ -63,8 +63,7 @@ class FishDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mevsimMetni =
-        fish.seasons.map(_mevsimTurkce).join('  •  ');
+    final mevsimMetni = fish.seasons.map(_mevsimTurkce).join('  •  ');
     final aylarMetni = fish.bestMonths.isEmpty
         ? '—'
         : fish.bestMonths.map(_ayAdiTr).join(', ');
@@ -75,13 +74,12 @@ class FishDetailScreen extends StatelessWidget {
         title: Text(
           '${fish.emoji} ${fish.name}',
           style: AppTextStyles.h3.copyWith(
-            color: Colors.white,
+            color: AppColors.foam,
             fontSize: 19,
-            fontWeight: FontWeight.w800,
           ),
         ),
         backgroundColor: AppColors.navy,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.foam,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -106,9 +104,8 @@ class FishDetailScreen extends StatelessWidget {
                     fish.name,
                     textAlign: TextAlign.center,
                     style: AppTextStyles.h2.copyWith(
-                      color: Colors.white,
+                      color: AppColors.foam,
                       fontSize: 22,
-                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -116,7 +113,7 @@ class FishDetailScreen extends StatelessWidget {
                     fish.scientificName,
                     textAlign: TextAlign.center,
                     style: AppTextStyles.caption.copyWith(
-                      color: Colors.white54,
+                      color: AppColors.muted,
                       fontSize: 15,
                       fontStyle: FontStyle.italic,
                     ),
@@ -165,7 +162,7 @@ class FishDetailScreen extends StatelessWidget {
                   Text(
                     mevsimMetni.isEmpty ? '—' : mevsimMetni,
                     style: AppTextStyles.body.copyWith(
-                      color: Colors.white,
+                      color: AppColors.foam,
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
                     ),
@@ -174,7 +171,7 @@ class FishDetailScreen extends StatelessWidget {
                   Text(
                     'En iyi aylar',
                     style: AppTextStyles.caption.copyWith(
-                      color: Colors.white60,
+                      color: AppColors.muted,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                     ),
@@ -193,7 +190,7 @@ class FishDetailScreen extends StatelessWidget {
                     Text(
                       'Öne çıkan yerler',
                       style: AppTextStyles.caption.copyWith(
-                        color: Colors.white60,
+                        color: AppColors.muted,
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
@@ -216,7 +213,7 @@ class FishDetailScreen extends StatelessWidget {
                               child: Text(
                                 h,
                                 style: AppTextStyles.body.copyWith(
-                                  color: Colors.white70,
+                                  color: AppColors.muted,
                                   fontSize: 16,
                                 ),
                               ),
@@ -266,7 +263,7 @@ class FishDetailScreen extends StatelessWidget {
                           child: Text(
                             tip,
                             style: AppTextStyles.body.copyWith(
-                              color: Colors.white70,
+                              color: AppColors.muted,
                               fontSize: 16,
                             ),
                           ),
@@ -316,7 +313,7 @@ class FishDetailScreen extends StatelessWidget {
                     Text(
                       fish.funFact,
                       style: AppTextStyles.body.copyWith(
-                        color: Colors.white,
+                        color: AppColors.foam,
                         fontSize: 16,
                         fontStyle: FontStyle.italic,
                         height: 1.35,
@@ -355,7 +352,7 @@ class _Section extends StatelessWidget {
           Text(
             title,
             style: AppTextStyles.body.copyWith(
-              color: Colors.white,
+              color: AppColors.foam,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
@@ -388,7 +385,7 @@ class _Chip extends StatelessWidget {
       child: Text(
         label,
         style: AppTextStyles.body.copyWith(
-          color: Colors.white,
+          color: AppColors.foam,
           fontSize: 16,
         ),
       ),

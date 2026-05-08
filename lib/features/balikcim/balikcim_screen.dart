@@ -35,84 +35,67 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
       backgroundColor: AppColors.navy,
       appBar: AppBar(
         title: Text(
-          'Balıkçım 🎣',
+          'Balıkçım',
           style: AppTextStyles.h3.copyWith(
             fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            color: AppColors.foam,
           ),
         ),
         backgroundColor: AppColors.navy,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.foam,
         elevation: 0,
-      ),
-      body: Column(
-        children: [
-          ColoredBox(
-            color: AppColors.navy,
-            child: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
-              child: SizedBox(
-                height: 56,
-                child: TabBar(
-                  controller: _tabController,
-                  isScrollable: false,
-                  indicator: const UnderlineTabIndicator(
-                    borderSide: BorderSide(
-                      color: AppColors.accent,
-                      width: 3,
-                    ),
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  labelColor: AppColors.primary,
-                  unselectedLabelColor: Colors.white54,
-                  labelStyle: AppTextStyles.caption.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  unselectedLabelStyle: AppTextStyles.caption.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  tabs: const [
-                    Tab(
-                      height: 56,
-                      iconMargin: EdgeInsets.zero,
-                      icon: Icon(Icons.set_meal_outlined, size: 28),
-                      text: 'Balık Bilgisi',
-                    ),
-                    Tab(
-                      height: 56,
-                      iconMargin: EdgeInsets.zero,
-                      icon: Icon(Icons.wb_sunny_outlined, size: 28),
-                      text: 'Tahmin',
-                    ),
-                    Tab(
-                      height: 56,
-                      iconMargin: EdgeInsets.zero,
-                      icon: Icon(Icons.lightbulb_outline, size: 28),
-                      text: 'İpuçları',
-                    ),
-                  ],
-                ),
-              ),
-            ),
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: false,
+          dividerColor: AppColors.surface,
+          indicator: const UnderlineTabIndicator(
+            borderSide: BorderSide(color: AppColors.primary, width: 3),
           ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                const FishEncyclopediaScreen(),
-                const DailyForecastScreen(),
-                const _PlaceholderTab(
-                  icon: Icons.lightbulb_outline,
-                  title: 'İpuçları & Mevzuat',
-                  subtitle:
-                      'Av mevzuatı, tür bazlı minimum boy\nkuralları ve mevsim yasakları çok yakında!',
-                  color: AppColors.accent,
-                ),
-              ],
+          indicatorSize: TabBarIndicatorSize.tab,
+          labelColor: AppColors.foam,
+          unselectedLabelColor: AppColors.muted,
+          labelStyle: AppTextStyles.caption.copyWith(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+          unselectedLabelStyle: AppTextStyles.caption.copyWith(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+          tabs: const [
+            Tab(
+              height: 56,
+              iconMargin: EdgeInsets.zero,
+              icon: Icon(Icons.set_meal_outlined, size: 26),
+              text: 'Balık Bilgisi',
             ),
+            Tab(
+              height: 56,
+              iconMargin: EdgeInsets.zero,
+              icon: Icon(Icons.wb_sunny_outlined, size: 26),
+              text: 'Tahmin',
+            ),
+            Tab(
+              height: 56,
+              iconMargin: EdgeInsets.zero,
+              icon: Icon(Icons.lightbulb_outline, size: 26),
+              text: 'İpuçları',
+            ),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: const [
+          FishEncyclopediaScreen(),
+          DailyForecastScreen(),
+          _PlaceholderTab(
+            icon: Icons.lightbulb_outline,
+            title: 'İpuçları & Mevzuat',
+            subtitle:
+                'Av mevzuatı, tür bazlı minimum boy\nkuralları ve mevsim yasakları çok yakında!',
+            color: AppColors.accent,
           ),
         ],
       ),
@@ -135,36 +118,38 @@ class _PlaceholderTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 80, color: color),
-            const SizedBox(height: 20),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.h3.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
+    return ColoredBox(
+      color: AppColors.navy,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 72, color: color),
+              const SizedBox(height: 20),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.h2.copyWith(
+                  color: AppColors.foam,
+                  fontSize: 22,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.body.copyWith(
-                fontSize: 17,
-                color: Colors.white70,
-                height: 1.35,
+              const SizedBox(height: 12),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.body.copyWith(
+                  fontSize: 16,
+                  color: AppColors.muted,
+                  height: 1.4,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

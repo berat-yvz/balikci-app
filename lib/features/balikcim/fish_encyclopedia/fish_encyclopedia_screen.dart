@@ -78,20 +78,20 @@ class _FishEncyclopediaScreenState extends ConsumerState<FishEncyclopediaScreen>
             child: TextField(
               controller: _searchController,
               style: AppTextStyles.body.copyWith(
-                color: Colors.white,
+                color: AppColors.foam,
                 fontSize: 17,
               ),
               decoration: InputDecoration(
                 hintText: 'Balık ara (ad veya bilimsel ad)...',
                 hintStyle: AppTextStyles.caption.copyWith(
-                  color: Colors.white54,
+                  color: AppColors.muted,
                   fontSize: 16,
                 ),
-                prefixIcon: const Icon(Icons.search, color: Colors.white54, size: 26),
+                prefixIcon: const Icon(Icons.search, color: AppColors.muted, size: 26),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         tooltip: 'Temizle',
-                        icon: const Icon(Icons.close, color: Colors.white70),
+                        icon: const Icon(Icons.close, color: AppColors.muted),
                         onPressed: () {
                           _searchController.clear();
                           setState(() => _searchQuery = '');
@@ -154,9 +154,8 @@ class _FishEncyclopediaScreenState extends ConsumerState<FishEncyclopediaScreen>
                                 : 'Aramanıza uygun balık yok.',
                             textAlign: TextAlign.center,
                             style: AppTextStyles.h3.copyWith(
-                              color: Colors.white,
+                              color: AppColors.foam,
                               fontSize: 20,
-                              fontWeight: FontWeight.w800,
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -164,7 +163,7 @@ class _FishEncyclopediaScreenState extends ConsumerState<FishEncyclopediaScreen>
                             'Farklı bir kategori seçin veya aramayı değiştirin.',
                             textAlign: TextAlign.center,
                             style: AppTextStyles.body.copyWith(
-                              color: Colors.white70,
+                              color: AppColors.muted,
                               fontSize: 16,
                             ),
                           ),
@@ -192,7 +191,7 @@ class _FishEncyclopediaScreenState extends ConsumerState<FishEncyclopediaScreen>
                 );
               },
               loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.foam),
+                child: CircularProgressIndicator(color: AppColors.primary),
               ),
               error: (e, _) => Center(
                 child: Padding(
@@ -201,7 +200,7 @@ class _FishEncyclopediaScreenState extends ConsumerState<FishEncyclopediaScreen>
                     'Liste yüklenemedi: $e',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.body.copyWith(
-                      color: Colors.white70,
+                      color: AppColors.muted,
                       fontSize: 16,
                     ),
                   ),
@@ -251,7 +250,7 @@ class _CategoryFilterChip extends StatelessWidget {
               style: AppTextStyles.caption.copyWith(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
-                color: selected ? Colors.white : Colors.white54,
+                color: selected ? AppColors.foam : AppColors.muted,
               ),
             ),
           ),
@@ -290,7 +289,7 @@ class _FishCard extends StatelessWidget {
         title: Text(
           entry.name,
           style: AppTextStyles.body.copyWith(
-            color: Colors.white,
+            color: AppColors.foam,
             fontSize: 18,
             fontWeight: FontWeight.w800,
           ),
@@ -312,7 +311,7 @@ class _FishCard extends StatelessWidget {
               Text(
                 baitLine.isEmpty ? '—' : baitLine,
                 style: AppTextStyles.caption.copyWith(
-                  color: Colors.white70,
+                  color: AppColors.muted,
                   fontSize: 16,
                 ),
               ),
@@ -321,7 +320,7 @@ class _FishCard extends StatelessWidget {
         ),
         trailing: const Icon(
           Icons.chevron_right,
-          color: Colors.white38,
+          color: AppColors.muted,
           size: 28,
         ),
         onTap: onTap,
