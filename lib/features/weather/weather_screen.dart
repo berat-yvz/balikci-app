@@ -169,7 +169,9 @@ class WeatherScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  _HourlyScrollRow(hours: hoursFromNow),
+                  RepaintBoundary(
+                    child: _HourlyScrollRow(hours: hoursFromNow),
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     'Sıcaklık grafiği',
@@ -188,7 +190,9 @@ class WeatherScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _HourlyWeatherChart(hours: hoursFromNow),
+                  RepaintBoundary(
+                    child: _HourlyWeatherChart(hours: hoursFromNow),
+                  ),
                   const SizedBox(height: 12),
                 ],
 
@@ -630,12 +634,12 @@ class _HourlyScrollRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: hours.map((h) {
-          final isNow =
-              h.time.difference(DateTime.now()).abs().inMinutes <= 30;
+          final isNow = h.time.difference(now).abs().inMinutes <= 30;
           return Container(
             width: 72,
             margin: const EdgeInsets.only(right: 8),
@@ -839,16 +843,70 @@ class _LineChartPainter extends CustomPainter {
   final double colW;
   final double chartH;
 
-  const _LineChartPainter({
+  // ── Ön-hesaplanmış sabit Paint nesneleri ────────────────────────────────────
+  // paint() çağrısı başına nesne üretmek pahalıdır; bir kez oluştur, tekrar kullan.
+  late final Paint _gridPaint;
+  late final Paint _linePaint;
+  late final Paint _dotBgPaint;
+  late final Paint _dotNowPaint;
+  late final Paint _dotPaint;
+
+  // ── Ön-hesaplanmış TextPainter listesi ──────────────────────────────────────
+  // layout() çok pahalıdır; constructor'da bir kez çalıştırılır.
+  late final List<TextPainter> _tempPainters;
+  late final List<TextPainter> _emojiPainters;
+
+  // ── Gradient shader cache — size değişirse yeniden oluşturulur ───────────────
+  Rect? _cachedFillRect;
+  Paint? _cachedFillPaint;
+
+  _LineChartPainter({
     required this.hours,
     required this.minTemp,
     required this.maxTemp,
     required this.colW,
     required this.chartH,
-  });
+  }) {
+    _gridPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.09)
+      ..strokeWidth = 1;
+    _linePaint = Paint()
+      ..color = const Color(0xFF4CB2FF)
+      ..strokeWidth = 2.8
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    _dotBgPaint = Paint()..color = const Color(0xFF1A2F47);
+    _dotNowPaint = Paint()..color = Colors.white;
+    _dotPaint = Paint()..color = const Color(0xFF4CB2FF);
+
+    _tempPainters = [
+      for (int i = 0; i < hours.length; i++)
+        TextPainter(
+          text: TextSpan(
+            text: '${hours[i].temperature.round()}°',
+            style: TextStyle(
+              color: i == 0 ? Colors.white : Colors.white70,
+              fontSize: i == 0 ? 18 : 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout(),
+    ];
+    _emojiPainters = [
+      for (int i = 0; i < hours.length; i++)
+        TextPainter(
+          text: TextSpan(
+            text: hours[i].weatherEmoji,
+            style: const TextStyle(fontSize: 20),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout(),
+    ];
+  }
 
   // Sıcaklık değerini Y koordinatına dönüştür.
-  // topPad: sıcaklık etiketi + emoji için bırakılan boşluk.
   static const double _topPad = 52.0;
   static const double _botPad = 10.0;
 
@@ -891,22 +949,24 @@ class _LineChartPainter extends CustomPainter {
     final drawH = size.height - _topPad - _botPad;
 
     // ── Yatay grid çizgileri ──────────────────────────
-    final gridPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.09)
-      ..strokeWidth = 1;
     for (int i = 1; i <= 3; i++) {
       final y = _topPad + drawH * i / 4;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), _gridPaint);
     }
 
-    // ── Gradyan dolgu (çizginin altı) ────────────────
-    final fillPath = _smoothPath(pts)
+    // ── Bezier yolu tek seferlik hesapla ────────────
+    // fill için kopyasını çıkar (Path.from), stroke için orijinali kullan.
+    final strokePath = _smoothPath(pts);
+    final fillPath = Path.from(strokePath)
       ..lineTo(pts.last.dx, _topPad + drawH)
       ..lineTo(pts.first.dx, _topPad + drawH)
       ..close();
-    canvas.drawPath(
-      fillPath,
-      Paint()
+
+    // ── Gradient fill Paint — yalnızca size değiştiğinde yeniden oluştur ──────
+    final fillRect = Rect.fromLTWH(0, _topPad, size.width, drawH);
+    if (_cachedFillRect != fillRect) {
+      _cachedFillRect = fillRect;
+      _cachedFillPaint = Paint()
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -914,76 +974,33 @@ class _LineChartPainter extends CustomPainter {
             const Color(0xFF4CB2FF).withValues(alpha: 0.38),
             const Color(0xFF4CB2FF).withValues(alpha: 0.02),
           ],
-        ).createShader(
-          Rect.fromLTWH(0, _topPad, size.width, drawH),
-        )
-        ..style = PaintingStyle.fill,
-    );
+        ).createShader(fillRect)
+        ..style = PaintingStyle.fill;
+    }
 
-    // ── Çizgi ────────────────────────────────────────
-    canvas.drawPath(
-      _smoothPath(pts),
-      Paint()
-        ..color = const Color(0xFF4CB2FF)
-        ..strokeWidth = 2.8
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
+    canvas.drawPath(fillPath, _cachedFillPaint!);
+    canvas.drawPath(strokePath, _linePaint);
 
-    // ── Her nokta: halka + sıcaklık etiketi ──────────
+    // ── Her nokta: halka + ön-hesaplanmış etiketler ──
     for (int i = 0; i < pts.length; i++) {
       final isNow = i == 0;
       final dotR = isNow ? 6.5 : 5.0;
 
-      // Dış beyaz halka
-      canvas.drawCircle(
-        pts[i],
-        dotR + 2,
-        Paint()..color = const Color(0xFF1A2F47),
-      );
-      // Renkli nokta
-      canvas.drawCircle(
-        pts[i],
-        dotR,
-        Paint()..color = isNow ? Colors.white : const Color(0xFF4CB2FF),
+      canvas.drawCircle(pts[i], dotR + 2, _dotBgPaint);
+      canvas.drawCircle(pts[i], dotR, isNow ? _dotNowPaint : _dotPaint);
+
+      final tp = _tempPainters[i];
+      tp.paint(
+        canvas,
+        Offset(pts[i].dx - tp.width / 2, pts[i].dy - dotR - tp.height - 6),
       );
 
-      // Sıcaklık etiketi (noktanın üstünde)
-      final tempSpan = TextSpan(
-        text: '${hours[i].temperature.round()}°',
-        style: TextStyle(
-          color: isNow ? Colors.white : Colors.white70,
-          fontSize: isNow ? 18 : 15,
-          fontWeight: FontWeight.w800,
-        ),
-      );
-      final tempPainter = TextPainter(
-        text: tempSpan,
-        textDirection: TextDirection.ltr,
-      )..layout();
-      tempPainter.paint(
+      final ep = _emojiPainters[i];
+      ep.paint(
         canvas,
         Offset(
-          pts[i].dx - tempPainter.width / 2,
-          pts[i].dy - dotR - tempPainter.height - 6,
-        ),
-      );
-
-      // Hava emojisi (etiketin üstünde)
-      final emojiSpan = TextSpan(
-        text: hours[i].weatherEmoji,
-        style: const TextStyle(fontSize: 20),
-      );
-      final emojiPainter = TextPainter(
-        text: emojiSpan,
-        textDirection: TextDirection.ltr,
-      )..layout();
-      emojiPainter.paint(
-        canvas,
-        Offset(
-          pts[i].dx - emojiPainter.width / 2,
-          pts[i].dy - dotR - tempPainter.height - emojiPainter.height - 8,
+          pts[i].dx - ep.width / 2,
+          pts[i].dy - dotR - tp.height - ep.height - 8,
         ),
       );
     }
