@@ -6,9 +6,27 @@ import 'package:balikci_app/core/services/weather_service.dart';
 import 'package:balikci_app/data/models/hourly_weather_model.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
 
-/// Hava durumu sekmesi — tek kaynak: Supabase `weather_cache` (İstanbul bölgesi).
-/// Sunucu her saat başı Open-Meteo verisini yazar; istemci yenileme göstermez / çekmez.
-///
+/// Seçili hava bölgesi anahtarı — varsayılan İstanbul.
+final selectedWeatherRegionProvider =
+    StateProvider<String>((ref) => 'istanbul');
+
+/// Bölge anahtarı → Türkçe görünen ad (ekleme sırası korunur).
+const Map<String, String> weatherRegionDisplayNames = {
+  'istanbul':  'İstanbul',
+  'izmir':     'İzmir',
+  'antalya':   'Antalya',
+  'trabzon':   'Trabzon',
+  'canakkale': 'Çanakkale',
+  'bodrum':    'Bodrum',
+  'fethiye':   'Fethiye',
+  'sinop':     'Sinop',
+  'samsun':    'Samsun',
+  'mersin':    'Mersin',
+  'mugla':     'Muğla',
+  'balikesir': 'Balıkesir',
+};
+
+/// Hava durumu sekmesi — tek kaynak: Supabase `weather_cache`.
 /// Provider adı geriye uyumluluk için korunmuştur.
 final istanbulWeatherProvider =
     AsyncNotifierProvider<IstanbulWeatherNotifier, IstanbulWeatherData>(
@@ -30,43 +48,43 @@ class IstanbulWeatherData {
 }
 
 class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
-  static const String _regionKey = 'istanbul';
-
   Timer? _pollTimer;
 
   @override
   Future<IstanbulWeatherData> build() async {
-    final data = await _loadFromSupabase();
-    _scheduleHourlySupabasePoll();
+    final regionKey = ref.watch(selectedWeatherRegionProvider);
+    _pollTimer?.cancel();
+    final data = await _loadFromSupabase(regionKey);
+    _scheduleHourlyPoll(regionKey);
     ref.onDispose(() => _pollTimer?.cancel());
     return data;
   }
 
-  /// Bir sonraki tam saat başında yalnızca Supabase’ten tekrar oku (Open-Meteo yok).
-  void _scheduleHourlySupabasePoll() {
+  void _scheduleHourlyPoll(String regionKey) {
     _pollTimer?.cancel();
     final now = DateTime.now();
     final nextHour = DateTime(now.year, now.month, now.day, now.hour + 1);
     _pollTimer = Timer(nextHour.difference(now), () {
-      unawaited(_silentReload());
-      _scheduleHourlySupabasePoll();
+      unawaited(_silentReload(regionKey));
+      _scheduleHourlyPoll(regionKey);
     });
   }
 
-  Future<void> _silentReload() async {
+  Future<void> _silentReload(String regionKey) async {
     try {
-      final next = await _loadFromSupabase();
+      final next = await _loadFromSupabase(regionKey);
       state = AsyncData(next);
     } catch (_) {
       // Mevcut veriyi koru
     }
   }
 
-  Future<IstanbulWeatherData> _loadFromSupabase() async {
+  Future<IstanbulWeatherData> _loadFromSupabase(String regionKey) async {
     final snap =
-        await WeatherService.fetchRegionalWeatherFromSupabase(_regionKey);
+        await WeatherService.fetchRegionalWeatherFromSupabase(regionKey);
     if (snap == null) {
-      throw StateError('Hava önbelleği boş. Sunucu weather-cache cron kontrol edin.');
+      throw StateError(
+          'Hava önbelleği boş. Sunucu weather-cache cron kontrol edin.');
     }
     return IstanbulWeatherData(
       hourly: snap.hourly,

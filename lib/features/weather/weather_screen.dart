@@ -37,6 +37,9 @@ class WeatherScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final weatherAsync = ref.watch(istanbulWeatherProvider);
+    final selectedRegion = ref.watch(selectedWeatherRegionProvider);
+    final regionDisplayName =
+        weatherRegionDisplayNames[selectedRegion] ?? selectedRegion;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -60,16 +63,18 @@ class WeatherScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
               children: [
+                const _RegionSelector(),
+                const SizedBox(height: 14),
                 Row(
                   children: [
                     const Icon(
-                      Icons.location_city,
+                      Icons.location_on_outlined,
                       color: AppColors.muted,
                       size: 20,
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'İstanbul kıyı özeti',
+                      '$regionDisplayName kıyı özeti',
                       style: AppTextStyles.h3.copyWith(
                         color: AppColors.muted,
                         fontWeight: FontWeight.bold,
@@ -1245,6 +1250,59 @@ class _MoonPhaseCard extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Bölge seçici chip bar ────────────────────────────────────────────────────
+
+class _RegionSelector extends ConsumerWidget {
+  const _RegionSelector();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selected = ref.watch(selectedWeatherRegionProvider);
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: weatherRegionDisplayNames.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final entry = weatherRegionDisplayNames.entries.elementAt(i);
+          final isSelected = entry.key == selected;
+          return GestureDetector(
+            onTap: () => ref
+                .read(selectedWeatherRegionProvider.notifier)
+                .state = entry.key,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.muted.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Text(
+                entry.value,
+                style: AppTextStyles.caption.copyWith(
+                  fontSize: 13,
+                  color: isSelected ? AppColors.foam : AppColors.muted,
+                  fontWeight:
+                      isSelected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
