@@ -50,6 +50,7 @@ Color _tintColor(Color base, int? ageMinutes) {
 /// [spotName]          : zoom > 13'te marker'ın altında etiket olarak gösterilir.
 /// [isLocked]          : true → VIP mera, kullanıcı usta rütbesinin altında.
 ///   Kilit ikonu gösterilir; tıklanabilir ama check-in yapılamaz.
+/// [hasFishReport]     : true → aktif balık bildirimi var; yeşil ışıkla gösterilir.
 class SpotMarker extends StatefulWidget {
   final String privacyLevel;
   final int activeCheckinCount;
@@ -57,6 +58,7 @@ class SpotMarker extends StatefulWidget {
   final double zoom;
   final String spotName;
   final bool isLocked;
+  final bool hasFishReport;
 
   const SpotMarker({
     super.key,
@@ -66,6 +68,7 @@ class SpotMarker extends StatefulWidget {
     this.zoom = 10,
     this.spotName = '',
     this.isLocked = false,
+    this.hasFishReport = false,
   });
 
   @override
@@ -90,13 +93,17 @@ class _SpotMarkerState extends State<SpotMarker>
     return switch (state) {
       _AgeState.fresh => const Duration(milliseconds: 950),
       _AgeState.aging => const Duration(milliseconds: 2400),
-      _ => const Duration(milliseconds: 1200), // dummy; will be stopped
+      _ => widget.hasFishReport
+          ? const Duration(milliseconds: 1400)
+          : const Duration(milliseconds: 1200),
     };
   }
 
   void _startOrStopPulse() {
     final state = _calcAgeState(widget.checkinAgeMinutes);
-    if (state == _AgeState.fresh || state == _AgeState.aging) {
+    if (state == _AgeState.fresh ||
+        state == _AgeState.aging ||
+        widget.hasFishReport) {
       if (!_pulse.isAnimating) _pulse.repeat();
     } else {
       _pulse.stop();
@@ -109,7 +116,7 @@ class _SpotMarkerState extends State<SpotMarker>
     super.didUpdateWidget(oldWidget);
     final oldState = _calcAgeState(oldWidget.checkinAgeMinutes);
     final newState = _calcAgeState(widget.checkinAgeMinutes);
-    if (oldState != newState) {
+    if (oldState != newState || oldWidget.hasFishReport != widget.hasFishReport) {
       _pulse.duration = _pulseDuration();
     }
     _startOrStopPulse();
@@ -160,6 +167,7 @@ class _SpotMarkerState extends State<SpotMarker>
                     pulseT: t,
                     ageState: ageState,
                     vipGlow: isVip,
+                    fishReportGlow: widget.hasFishReport,
                   ),
                   child: Center(
                     child: Padding(
@@ -180,6 +188,14 @@ class _SpotMarkerState extends State<SpotMarker>
                   ),
                 ),
               ),
+
+              // ── Aktif balık bildirimi — sol üst yeşil ışık ───────────────
+              if (widget.hasFishReport)
+                Positioned(
+                  left: -10,
+                  top: -8,
+                  child: _FishReportBadge(pulseT: t),
+                ),
 
               // ── Yaş + sayı rozeti (sağ üst) ─────────────────────────────
               if (hasBadge)
@@ -224,6 +240,60 @@ class _SpotMarkerState extends State<SpotMarker>
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Aktif Balık Bildirimi Rozeti
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// Sol üst köşede yeşil pulsing nokta — aktif balık bildirimi göstergesi.
+class _FishReportBadge extends StatelessWidget {
+  final double pulseT; // 0..1 animation value
+
+  const _FishReportBadge({required this.pulseT});
+
+  @override
+  Widget build(BuildContext context) {
+    // Parlama yarıçapı: 0 → 10 px arası nefes alır
+    final glowRadius = 4.0 + 6.0 * pulseT;
+    final glowAlpha = (1.0 - pulseT) * 0.7;
+
+    return SizedBox(
+      width: 24,
+      height: 24,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Dış parlama halkası
+          Container(
+            width: glowRadius * 2 + 10,
+            height: glowRadius * 2 + 10,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.success.withValues(alpha: glowAlpha),
+            ),
+          ),
+          // İç nokta
+          Container(
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+              color: AppColors.success,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.navy, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.success.withValues(alpha: 0.6),
+                  blurRadius: 6,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -321,12 +391,14 @@ class _TeardropMarkerPainter extends CustomPainter {
   final double pulseT; // 0..1
   final _AgeState ageState;
   final bool vipGlow;
+  final bool fishReportGlow;
 
   const _TeardropMarkerPainter({
     required this.color,
     required this.pulseT,
     required this.ageState,
     required this.vipGlow,
+    this.fishReportGlow = false,
   });
 
   @override
@@ -341,6 +413,15 @@ class _TeardropMarkerPainter extends CustomPainter {
         ..color = AppColors.pinVip.withValues(alpha: 0.30)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
       canvas.drawCircle(center.translate(0, -4), 20, glow);
+    }
+
+    // Aktif balık bildirimi — teardrop etrafında yeşil ışıma halkası
+    if (fishReportGlow) {
+      final glowAlpha = 0.18 + 0.14 * pulseT;
+      final glow = Paint()
+        ..color = AppColors.success.withValues(alpha: glowAlpha)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
+      canvas.drawCircle(center.translate(0, -4), 22, glow);
     }
 
     // Pulse ring
@@ -391,6 +472,16 @@ class _TeardropMarkerPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center.translate(0, -7), 15, inner);
 
+    // Balık bildirimi var → iç dairenin kenarı yeşil vurgulu
+    if (fishReportGlow) {
+      final fishRingAlpha = 0.4 + 0.4 * pulseT;
+      final fishRing = Paint()
+        ..color = AppColors.success.withValues(alpha: fishRingAlpha)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0;
+      canvas.drawCircle(center.translate(0, -7), 15, fishRing);
+    }
+
     // Lens highlight
     final highlight = Paint()
       ..color = Colors.white.withValues(alpha: 0.18)
@@ -416,5 +507,6 @@ class _TeardropMarkerPainter extends CustomPainter {
       old.color != color ||
       old.pulseT != pulseT ||
       old.ageState != ageState ||
-      old.vipGlow != vipGlow;
+      old.vipGlow != vipGlow ||
+      old.fishReportGlow != fishReportGlow;
 }

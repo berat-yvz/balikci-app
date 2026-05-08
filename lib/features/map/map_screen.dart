@@ -678,6 +678,18 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   /// Her biri yeni instance atandığında referans eşitliği bozulur → cache geçersizleşir.
   Object _markersKey() => (_spots, _activeCheckinsBySpotId, _currentZoom >= 13);
 
+  /// Aktif balık bildirimi olan spot ID'leri — fishDensity ≠ 'yok' ve isActive.
+  Set<String> get _fishReportSpotIds {
+    final ids = <String>{};
+    for (final entry in _activeCheckinsBySpotId.entries) {
+      final hasReport = entry.value.any(
+        (c) => c.isActive && c.fishDensity != null && c.fishDensity != 'yok',
+      );
+      if (hasReport) ids.add(entry.key);
+    }
+    return ids;
+  }
+
   List<Marker> get _markers {
     final key = _markersKey();
     if (_cachedMarkers != null && _markersCacheKey == key) return _cachedMarkers!;
@@ -693,9 +705,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       left: _spotMarkerW / 2,
       top: _spotPinTipY,
     );
+    final fishIds = _fishReportSpotIds;
     return _spots
         .map(
           (spot) => Marker(
+            key: ValueKey(spot.id),
             point: LatLng(spot.lat, spot.lng),
             width: _spotMarkerW,
             height: _spotMarkerH,
@@ -712,7 +726,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                     Positioned(
                       left: _spotPinLeft,
                       top: _spotPinTop,
-                      child: _buildSpotMarker(spot),
+                      child: _buildSpotMarker(
+                        spot,
+                        hasFishReport: fishIds.contains(spot.id),
+                      ),
                     ),
                   ],
                 ),
@@ -759,7 +776,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     return age.inHours < AppConstants.checkinActiveTtlHours;
   }
 
-  Widget _buildSpotMarker(SpotModel spot) {
+  Widget _buildSpotMarker(SpotModel spot, {bool hasFishReport = false}) {
     final checkins = _activeCheckinsBySpotId[spot.id];
     final activeCount = checkins?.where((c) => !c.isStale).length ?? 0;
 
@@ -780,6 +797,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       zoom: _currentZoom,
       spotName: spot.name,
       isLocked: spot.privacyLevel == 'vip' && !_isUstaOrAbove,
+      hasFishReport: hasFishReport,
     );
   }
 
@@ -952,34 +970,94 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                         maxClusterRadius: 58,
                         size: const Size(42, 42),
                         builder: (context, markers) {
-                          return Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 2.5,
-                              ),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black45,
-                                  blurRadius: 6,
-                                  offset: Offset(0, 2),
+                          // Kümedeki herhangi bir merada aktif balık bildirimi var mı?
+                          final fishIds = _fishReportSpotIds;
+                          final hasActiveFish = markers.any((m) {
+                            final k = m.key;
+                            return k is ValueKey<String> &&
+                                fishIds.contains(k.value);
+                          });
+
+                          return Stack(
+                            clipBehavior: Clip.none,
+                            alignment: Alignment.center,
+                            children: [
+                              // Aktif balık bildirimi → yeşil dış halka
+                              if (hasActiveFish)
+                                Container(
+                                  width: 54,
+                                  height: 54,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppColors.success,
+                                      width: 2.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.success
+                                            .withValues(alpha: 0.45),
+                                        blurRadius: 10,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Text(
-                                markers.length.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2.5,
+                                  ),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black45,
+                                      blurRadius: 6,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    markers.length.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                              // Yeşil nokta badge — sağ üst köşe
+                              if (hasActiveFish)
+                                Positioned(
+                                  right: -2,
+                                  top: -2,
+                                  child: Container(
+                                    width: 14,
+                                    height: 14,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.success,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: AppColors.navy,
+                                        width: 2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.success
+                                              .withValues(alpha: 0.6),
+                                          blurRadius: 4,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            ],
                           );
                         },
                       ),
