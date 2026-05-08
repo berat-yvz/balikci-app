@@ -19,6 +19,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _confirmController = TextEditingController();
 
   bool _saving = false;
+  bool _cancelling = false;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   String? _error;
@@ -28,6 +29,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     _passwordController.dispose();
     _confirmController.dispose();
     super.dispose();
+  }
+
+  /// İptal: recovery session'ı temizle, giriş ekranına dön.
+  Future<void> _cancel() async {
+    if (_cancelling || _saving) return;
+    setState(() => _cancelling = true);
+    try {
+      await SupabaseService.client.auth.signOut();
+    } catch (_) {
+      // session zaten yoksa sorun değil
+    }
+    if (!mounted) return;
+    context.go(AppRoutes.login);
   }
 
   Future<void> _saveNewPassword() async {
@@ -62,9 +76,24 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) => _cancel(),
+      child: _buildScaffold(context),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(title: const Text('Şifre Sıfırla')),
+      appBar: AppBar(
+        title: const Text('Şifre Sıfırla'),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          tooltip: 'İptal',
+          onPressed: _cancelling ? null : _cancel,
+        ),
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
@@ -149,7 +178,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       ],
                       const SizedBox(height: 14),
                       ElevatedButton(
-                        onPressed: _saving ? null : _saveNewPassword,
+                        onPressed: _saving || _cancelling ? null : _saveNewPassword,
                         child: _saving
                             ? const SizedBox(
                                 width: 18,
@@ -160,6 +189,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                                 ),
                               )
                             : const Text('Şifreyi Güncelle'),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: _saving || _cancelling ? null : _cancel,
+                        child: const Text('İptal'),
                       ),
                     ],
                   ),
