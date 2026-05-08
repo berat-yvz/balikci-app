@@ -14,13 +14,22 @@ import 'package:balikci_app/data/repositories/notification_repository.dart';
 /// `show` → `true` sadece bildirim bu oturumda gizlendiyse (eşik + `wrongReport` tetikleme).
 class VoteDialog extends StatefulWidget {
   final CheckinModel checkin;
+  final String? spotName;
+  final String? spotType;
 
-  const VoteDialog({super.key, required this.checkin});
+  const VoteDialog({
+    super.key,
+    required this.checkin,
+    this.spotName,
+    this.spotType,
+  });
 
   /// `true`: check-in gizlendi. Liste yenileme için [onClosed] her kapanışta çağrılır.
   static Future<bool> show(
     BuildContext context, {
     required CheckinModel checkin,
+    String? spotName,
+    String? spotType,
     Future<void> Function()? onClosed,
   }) async {
     var hidden = false;
@@ -29,7 +38,11 @@ class VoteDialog extends StatefulWidget {
       hidden = await showDialog<bool>(
             context: context,
             barrierDismissible: true,
-            builder: (_) => VoteDialog(checkin: checkin),
+            builder: (_) => VoteDialog(
+              checkin: checkin,
+              spotName: spotName,
+              spotType: spotType,
+            ),
           ) ??
           false;
       return hidden;
@@ -222,6 +235,13 @@ class _VoteDialogState extends State<VoteDialog> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
+                if (widget.spotName != null) ...[
+                  _SpotInfoCard(
+                    spotName: widget.spotName!,
+                    spotType: widget.spotType,
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 _CheckinSummaryCard(checkin: widget.checkin),
                 const SizedBox(height: 14),
                 _TrustBar(
@@ -589,6 +609,55 @@ class _HiddenBanner extends StatelessWidget {
           fontWeight: FontWeight.w800,
         ),
         textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+class _SpotInfoCard extends StatelessWidget {
+  final String spotName;
+  final String? spotType;
+
+  const _SpotInfoCard({required this.spotName, this.spotType});
+
+  @override
+  Widget build(BuildContext context) {
+    final type = spotType;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.location_on, size: 20, color: AppColors.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  spotName,
+                  style: AppTextStyles.h3.copyWith(color: AppColors.foam),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (type != null)
+                  Text(
+                    type,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.muted,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/geo_utils.dart';
 import 'package:balikci_app/data/models/checkin_model.dart';
+import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
 import 'package:balikci_app/features/map/widgets/vote_dialog.dart';
@@ -20,6 +21,16 @@ class ProximityVoteService {
   final CheckinRepository _checkins = CheckinRepository();
   final SpotRepository _spots = SpotRepository();
   DateTime? _lastProximityCheck;
+
+  static String? _translateSpotType(String? type) => switch (type) {
+        'kıyı' => 'Kıyı Merası',
+        'kayalık' => 'Kayalık',
+        'iskele' => 'İskele',
+        'tekne' => 'Tekne',
+        'göl' => 'Göl',
+        'nehir' => 'Nehir',
+        _ => null,
+      };
 
   Future<void> checkAndShowVoteDialog(BuildContext context) async {
     if (_lastProximityCheck != null &&
@@ -55,6 +66,7 @@ class ProximityVoteService {
 
       /// null: mera yok; değer: lat/lng
       final spotCoords = <String, (double, double)?>{};
+      final spotModels = <String, SpotModel?>{};
 
       CheckinModel? closest;
       var bestMeters = double.infinity;
@@ -70,10 +82,12 @@ class ProximityVoteService {
           final spot = await _spots.getSpotById(c.spotId);
           if (spot == null) {
             spotCoords[c.spotId] = null;
+            spotModels[c.spotId] = null;
             pair = null;
           } else {
             pair = (spot.lat, spot.lng);
             spotCoords[c.spotId] = pair;
+            spotModels[c.spotId] = spot;
           }
         }
 
@@ -99,7 +113,13 @@ class ProximityVoteService {
       if (!context.mounted) return;
 
       _shownCheckinIds.add(closest.id);
-      await VoteDialog.show(context, checkin: closest);
+      final closestSpot = spotModels[closest.spotId];
+      await VoteDialog.show(
+        context,
+        checkin: closest,
+        spotName: closestSpot?.name,
+        spotType: _translateSpotType(closestSpot?.type),
+      );
     } catch (_) {
       // Sessiz: konum / ağ hatalarında kullanıcıya mesaj gösterme
     }
