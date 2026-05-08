@@ -131,7 +131,7 @@ class WeatherModel {
           pressureHpa3hAgo: pressure3h,
           weatherCode: (cur['weather_code'] as num?)?.toInt(),
           fishingSummary: json['fishing_summary'] as String?,
-          fetchedAt: DateTime.parse(json['fetched_at'] as String),
+          fetchedAt: _parseTimestampAsUtc(json['fetched_at'] as String),
           regionKey: json['region_key'] as String?,
         );
       }
@@ -148,8 +148,6 @@ class WeatherModel {
       lat:      (json['lat'] as num?)?.toDouble() ?? 0,
       lng:      (json['lng'] as num?)?.toDouble() ?? 0,
       dataJson: dataJson,
-      // Stored fields (getter'lar dataJson varken bunları kullanmaz,
-      // Drift cache path için yedek olarak tutulur)
       temperature:             (main?['temp']     as num?)?.toDouble(),
       windspeed:               windSpeedMs != null ? windSpeedMs * 3.6 : null,
       windDirection:           (wind?['deg']      as num?)?.toInt(),
@@ -163,11 +161,24 @@ class WeatherModel {
       cloudCover:              (clouds?['all']    as num?)?.toDouble(),
       pressureHpa:             null,
       pressureHpa3hAgo:        null,
-      weatherCode:             null, // getter dataJson'dan okur
+      weatherCode:             null,
       fishingSummary:          json['fishing_summary'] as String?,
-      fetchedAt:               DateTime.parse(json['fetched_at'] as String),
+      fetchedAt:               _parseTimestampAsUtc(json['fetched_at'] as String),
       regionKey:               json['region_key'] as String?,
     );
+  }
+
+  /// Supabase `TIMESTAMPTZ` kolonları edge function tarafından UTC olarak yazılır
+  /// (`new Date().toISOString()` → 'Z' sufixli). Ancak bazı PostgREST
+  /// konfigürasyonlarında suffix olmaksızın ("2026-05-08T10:00:00") döner.
+  /// Dart bu durumda yerel saat (UTC+3 İstanbul) olarak yorumlar → 3 saatlik
+  /// sapma. Timezone bilgisi yoksa UTC olduğunu varsayarak düzeltiyoruz.
+  static DateTime _parseTimestampAsUtc(String s) {
+    final hasTimezone = s.endsWith('Z') ||
+        s.contains('+') ||
+        (s.length > 19 && s[19] == '-');
+    final dt = DateTime.parse(hasTimezone ? s : '${s}Z');
+    return dt;
   }
 
   /// `hourly` içinde `current` ile aynı `time` satırını bulup 3 saat önceki `surface_pressure`.

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,13 +13,6 @@ import 'package:balikci_app/features/weather/providers/istanbul_weather_provider
 /// Veri yalnızca sunucu `weather_cache` üzerinden gelir; manuel yenileme yoktur.
 class WeatherScreen extends ConsumerWidget {
   const WeatherScreen({super.key});
-
-  static String _formatFetchedAt(DateTime fetchedAt) {
-    final diff = DateTime.now().difference(fetchedAt);
-    if (diff.inHours < 1) return '${diff.inMinutes} dakika önce';
-    if (diff.inHours < 24) return '${diff.inHours} saat önce';
-    return 'Dün güncellendi';
-  }
 
   static List<HourlyWeatherModel> _next24Hours(
     List<HourlyWeatherModel> source,
@@ -139,14 +134,7 @@ class WeatherScreen extends ConsumerWidget {
                     ),
                   ),
                 const SizedBox(height: 6),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    'Son güncelleme: ${_formatFetchedAt(data.current.fetchedAt)}',
-                    style: AppTextStyles.caption.copyWith(color: AppColors.muted),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
+                _FetchedAtLabel(fetchedAt: data.current.fetchedAt),
                 _WeatherDetailGrid(
                   weather: data.current,
                   currentHour: currentHour,
@@ -198,6 +186,55 @@ class WeatherScreen extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+// ── Son güncelleme etiketi — dakikada bir kendi kendine yenilenir ─────────────
+
+/// Her 60 saniyede rebuild eden küçük etiket.
+/// Saat başı poll'lar arasında "X dakika önce" metninin donup kalmasını önler.
+class _FetchedAtLabel extends StatefulWidget {
+  final DateTime fetchedAt;
+  const _FetchedAtLabel({required this.fetchedAt});
+
+  @override
+  State<_FetchedAtLabel> createState() => _FetchedAtLabelState();
+}
+
+class _FetchedAtLabelState extends State<_FetchedAtLabel> {
+  late Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  String _format() {
+    final diff = DateTime.now().difference(widget.fetchedAt);
+    if (diff.inHours < 1) return '${diff.inMinutes} dakika önce';
+    if (diff.inHours < 24) return '${diff.inHours} saat önce';
+    return 'Dün güncellendi';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        'Son güncelleme: ${_format()}',
+        style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+        textAlign: TextAlign.center,
       ),
     );
   }

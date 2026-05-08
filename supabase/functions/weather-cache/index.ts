@@ -103,6 +103,13 @@ function mergeOpenMeteo(
   const n = times.length
   const now = Date.now()
 
+  // Open-Meteo, timezone=Europe/Istanbul ile istendiğinde saatleri İstanbul
+  // yerel saatinde döner ("2026-05-08T13:00" gibi, UTC+3).
+  // Deno UTC ortamında çalıştığı için new Date("2026-05-08T13:00").getTime()
+  // bu değeri UTC 13:00 olarak yorumlar — oysa İstanbul 13:00 = UTC 10:00.
+  // Karşılaştırmayı doğru yapmak için İstanbul ofsetini (UTC+3) düşürüyoruz.
+  const ISTANBUL_OFFSET_MS = 3 * 60 * 60 * 1000 // UTC+3, Türkiye sabit ofseti (DST yok)
+
   for (let i = 0; i < n; i++) {
     hourly.push({
       time: times[i],
@@ -123,7 +130,9 @@ function mergeOpenMeteo(
   }
 
   let idx = hourly.findIndex((h) => {
-    const t = new Date(h.time).getTime()
+    // h.time İstanbul yerel saati; Deno UTC'de parse eder → 3 saat fazla görünür.
+    // ISTANBUL_OFFSET_MS çıkarınca gerçek UTC'ye dönerek Date.now() ile doğru kıyaslanır.
+    const t = new Date(h.time).getTime() - ISTANBUL_OFFSET_MS
     return t >= now - 30 * 60 * 1000
   })
   if (idx < 0) idx = 0
