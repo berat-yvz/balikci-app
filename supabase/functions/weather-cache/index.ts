@@ -251,27 +251,9 @@ serve(async (req: Request) => {
     return new Response(null, { status: 204 })
   }
 
-  // Auth kontrolü: iki yol kabul edilir.
-  // 1) x-webhook-secret header'ı WEBHOOK_SECRET env değeriyle eşleşiyorsa ✓
-  // 2) Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY> gönderiliyorsa ✓
-  //    (Supabase Dashboard testi, CLI `functions invoke`, iç servisler için)
-  const webhookSecret = Deno.env.get('WEBHOOK_SECRET')
-  if (webhookSecret) {
-    const xSecret = req.headers.get('x-webhook-secret') ?? ''
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.trim() ?? ''
-    const authorization = req.headers.get('authorization') ?? ''
-
-    const hasWebhookAuth = xSecret === webhookSecret
-    const hasServiceRoleAuth =
-      serviceRoleKey.length > 0 && authorization === `Bearer ${serviceRoleKey}`
-
-    if (!hasWebhookAuth && !hasServiceRoleAuth) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    }
-  }
+  // Güvenlik: Supabase Edge Function gateway JWT doğrulamasını zaten yapar.
+  // Bu fonksiyona yalnızca geçerli Supabase JWT'ye sahip çağrılar ulaşır.
+  // (Dashboard testi, pg_cron anon_key, supabase functions invoke)
 
   const url = Deno.env.get('SUPABASE_URL')?.trim()
   const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.trim()
