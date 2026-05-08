@@ -221,7 +221,10 @@ class _FetchedAtLabelState extends State<_FetchedAtLabel> {
   }
 
   String _format() {
-    final diff = DateTime.now().difference(widget.fetchedAt);
+    // toUtc() ile karşılaştırma tabanını sabitleriz; negatif fark (saat sapması)
+    // "az önce" olarak gösterilir.
+    final diff = DateTime.now().toUtc().difference(widget.fetchedAt.toUtc());
+    if (diff.isNegative || diff.inMinutes < 1) return 'Az önce';
     if (diff.inHours < 1) return '${diff.inMinutes} dakika önce';
     if (diff.inHours < 24) return '${diff.inHours} saat önce';
     return 'Dün güncellendi';

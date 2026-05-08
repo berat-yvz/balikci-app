@@ -83,11 +83,14 @@ class WeatherService {
           WeatherModel current;
           if (decodedDataJson != null) {
             try {
+              // cachedAt Drift'ten local-time olarak gelir; UTC'ye çevirerek
+              // toIso8601String()'in 'Z' suffix üretmesini sağlıyoruz.
+              // Aksi halde _parseTimestampAsUtc yanlış UTC saat oluşturur (+3 h sapma).
               current = WeatherModel.fromJson({
                 'id': '',
                 'lat': weatherRegions[cached.regionKey]?['lat'] ?? 0.0,
                 'lng': weatherRegions[cached.regionKey]?['lng'] ?? 0.0,
-                'fetched_at': cached.cachedAt.toIso8601String(),
+                'fetched_at': cached.cachedAt.toUtc().toIso8601String(),
                 'region_key': cached.regionKey,
                 'data_json': decodedDataJson,
                 'fishing_summary': null,
@@ -138,7 +141,7 @@ class WeatherService {
       pressureHpa: cached.pressureHpa as double?,
       weatherCode: null,
       fishingSummary: null,
-      fetchedAt: cached.cachedAt as DateTime,
+      fetchedAt: cached.cachedAt.toUtc(),
       regionKey: cached.regionKey as String?,
     );
   }
