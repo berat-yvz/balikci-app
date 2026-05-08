@@ -90,34 +90,38 @@ class _MainShellState extends ConsumerState<MainShell> {
         resizeToAvoidBottomInset: true,
         body: Column(
           children: [
-            // Offline banner
-            AnimatedContainer(
+            // Offline banner — AnimatedSize ile status bar yüksekliğini otomatik hesaplar
+            AnimatedSize(
               duration: const Duration(milliseconds: 300),
-              height: isOnline ? 0 : 40,
-              color: AppColors.warning,
+              curve: Curves.easeInOut,
               child: isOnline
-                  ? const SizedBox.shrink()
-                  : SafeArea(
-                      bottom: false,
-                      child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.wifi_off_rounded,
-                              size: 18,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Çevrimdışısın — bazı özellikler sınırlı',
-                              style: const TextStyle(
+                  ? const SizedBox(width: double.infinity, height: 0)
+                  : ColoredBox(
+                      color: AppColors.warning,
+                      child: SafeArea(
+                        bottom: false,
+                        child: SizedBox(
+                          height: 40,
+                          width: double.infinity,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.wifi_off_rounded,
+                                size: 18,
                                 color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Çevrimdışısın — bazı özellikler sınırlı',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
