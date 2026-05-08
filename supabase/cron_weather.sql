@@ -1,34 +1,40 @@
 -- Open-Meteo önbelleği — Edge Function: weather-cache (12 kıyı + İstanbul ilçe satırları)
--- Supabase Dashboard > SQL Editor’da çalıştırın.
--- Önkoşul: pg_cron + pg_net; Vault’ta çağrı için JWT (tercihen anon_key).
+-- Supabase Dashboard > SQL Editor'da çalıştırın.
 --
--- Barındırılan Supabase’te ALTER DATABASE ... SET app.service_role_key genelde
--- 42501 verir. Anahtarı Vault’a koyun:
---   SELECT vault.create_secret('eyJ..._ANON_KEY', 'anon_key');
--- Anon ile invoke yetmezse:
---   SELECT vault.create_secret('eyJ..._SERVICE_ROLE', 'service_role_key');
--- ve aşağıda decrypted_secrets sorgusunda name = 'service_role_key' kullanın.
+-- Önkoşul: pg_cron + pg_net etkin olmalı.
+-- Vault'a sırlar şöyle eklenir:
+--   SELECT vault.create_secret('eyJ..._ANON_KEY',      'anon_key');
+--   SELECT vault.create_secret('eyJ..._SERVICE_ROLE',  'service_role_key');
+--   SELECT vault.create_secret('gizli-deger',          'webhook_secret');
 --
--- Eski günde 2 kez çalışan job’ları kaldırmak için (bir kez, gerekirse):
+-- Eski cron job'ları kaldırmak için (gerekirse):
 --   SELECT cron.unschedule('weather-cache-morning');
 --   SELECT cron.unschedule('weather-cache-afternoon');
+--   SELECT cron.unschedule('weather-cache-hourly');
 --
 -- 1) Deploy:  supabase functions deploy weather-cache
--- 2) URL’yi proje Reference ID ile eşleştirin.
+-- 2) Bu dosyayı Dashboard > SQL Editor'da çalıştır.
+
+-- Mevcut job'u güncelle (INSERT OR UPDATE):
+SELECT cron.unschedule('weather-cache-hourly') WHERE EXISTS (
+  SELECT 1 FROM cron.job WHERE jobname = 'weather-cache-hourly'
+);
 
 SELECT cron.schedule(
   'weather-cache-hourly',
-  '0 * * * *',   -- her saat başı UTC (İstanbul saatiyle çakışmaz; saatlik taze veri)
+  '2 * * * *',   -- her saat 02:00'de (cron bitişinden 2dk sonra taze veri garantisi)
   $$
   SELECT net.http_post(
     url := 'https://bcsihxgekoqwbovbmlog.supabase.co/functions/v1/weather-cache',
     headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'anon_key')
+      'Content-Type',    'application/json',
+      'Authorization',   'Bearer ' || (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'anon_key'),
+      'x-webhook-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'webhook_secret')
     ),
     body := '{}'::jsonb
   );
   $$
 );
 
--- Doğrulama: SELECT * FROM cron.job WHERE jobname = 'weather-cache-hourly';
+-- Doğrulama:
+-- SELECT * FROM cron.job WHERE jobname = 'weather-cache-hourly';

@@ -251,11 +251,21 @@ serve(async (req: Request) => {
     return new Response(null, { status: 204 })
   }
 
-  // Webhook secret doğrulaması
+  // Auth kontrolü: iki yol kabul edilir.
+  // 1) x-webhook-secret header'ı WEBHOOK_SECRET env değeriyle eşleşiyorsa ✓
+  // 2) Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY> gönderiliyorsa ✓
+  //    (Supabase Dashboard testi, CLI `functions invoke`, iç servisler için)
   const webhookSecret = Deno.env.get('WEBHOOK_SECRET')
   if (webhookSecret) {
-    const authHeader = req.headers.get('x-webhook-secret')
-    if (authHeader !== webhookSecret) {
+    const xSecret = req.headers.get('x-webhook-secret') ?? ''
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.trim() ?? ''
+    const authorization = req.headers.get('authorization') ?? ''
+
+    const hasWebhookAuth = xSecret === webhookSecret
+    const hasServiceRoleAuth =
+      serviceRoleKey.length > 0 && authorization === `Bearer ${serviceRoleKey}`
+
+    if (!hasWebhookAuth && !hasServiceRoleAuth) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
