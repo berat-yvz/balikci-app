@@ -34,9 +34,9 @@ class StepWelcome extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
-                          Icons.anchor,
+                          Icons.phishing,
                           size: 44,
-                          color: AppColors.primary,
+                          color: AppColors.teal,
                         ),
                       ),
                       const SizedBox(height: 24),
