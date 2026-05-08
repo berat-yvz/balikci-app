@@ -9,6 +9,7 @@ import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:balikci_app/data/repositories/auth_repository.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/preferences_provider.dart';
 
@@ -93,140 +94,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   Future<void> _showForgotPasswordDialog() async {
-    final dialogFormKey = GlobalKey<FormState>();
-    final forgotEmailController = TextEditingController(
-      text: _emailController.text.trim(),
-    );
-    String? dialogError;
-    bool sending = false;
+    // AuthRepository'yi burada (mounted context'te) al; dialog widget'ına geç.
+    final repo = ref.read(authRepositoryProvider);
 
-    await showDialog<void>(
+    final sent = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (_, setDialogState) {
-            return AlertDialog(
-              title: Row(
-                children: [
-                  const Icon(Icons.lock_reset, color: AppColors.primary),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Şifremi Unuttum',
-                    style: AppTextStyles.h3.copyWith(color: Colors.white),
-                  ),
-                ],
-              ),
-              content: Form(
-                key: dialogFormKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'E-posta adresini gir, şifre sıfırlama bağlantısı gönderelim.',
-                      style: AppTextStyles.body.copyWith(color: Colors.white70),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: forgotEmailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'E-posta',
-                        prefixIcon: Icon(Icons.email_outlined),
-                      ),
-                      validator: (value) {
-                        final text = value?.trim() ?? '';
-                        if (text.isEmpty) {
-                          return 'E-posta boş bırakılamaz';
-                        }
-                        if (!text.contains('@')) {
-                          return 'Geçerli bir e-posta girin';
-                        }
-                        return null;
-                      },
-                    ),
-                    if (dialogError != null) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        dialogError!,
-                        style: const TextStyle(
-                          color: AppColors.danger,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              actions: [
-                OutlinedButton(
-                  onPressed: sending
-                      ? null
-                      : () => Navigator.of(dialogContext).pop(),
-                  child: const Text('İptal'),
-                ),
-                ElevatedButton(
-                  onPressed: sending
-                      ? null
-                      : () async {
-                          if (!(dialogFormKey.currentState?.validate() ??
-                              false)) {
-                            return;
-                          }
-                          setDialogState(() {
-                            sending = true;
-                            dialogError = null;
-                          });
-                          try {
-                            await ref
-                                .read(authRepositoryProvider)
-                                .resetPassword(
-                                  forgotEmailController.text.trim(),
-                                );
-                            if (!mounted) return;
-                            if (dialogContext.mounted) {
-                              Navigator.of(dialogContext).pop();
-                            }
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Şifre sıfırlama bağlantısı e-postana gönderildi. Spam klasörünü de kontrol et.',
-                                ),
-                                backgroundColor: AppColors.success,
-                              ),
-                            );
-                          } catch (e) {
-                            setDialogState(() {
-                              dialogError = e.toString().replaceFirst(
-                                'Exception: ',
-                                '',
-                              );
-                              sending = false;
-                            });
-                          }
-                        },
-                  child: sending
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Gönder'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (_) => _ForgotPasswordDialog(
+        initialEmail: _emailController.text.trim(),
+        authRepository: repo,
+      ),
     );
 
-    forgotEmailController.dispose();
+    // Dialog kapandıktan sonra başarılı gönderim SnackBar'ı.
+    if (sent == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Şifre sıfırlama bağlantısı e-postana gönderildi. Spam klasörünü de kontrol et.',
+          ),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
   }
 
   @override
@@ -713,6 +603,137 @@ class _GoogleOutlineButton extends StatelessWidget {
                 ],
               ),
       ),
+    );
+  }
+}
+
+// ── Şifremi Unuttum Dialog ────────────────────────────────────────────────────
+/// Controller'ı kendi lifecycle'ında yönetir; çıkış animasyonu bitmeden
+/// dispose edilmez — StatefulBuilder + dışarıda dispose() yaklaşımının
+/// neden olduğu "disposed controller" hatasını önler.
+class _ForgotPasswordDialog extends StatefulWidget {
+  final String initialEmail;
+  final AuthRepository authRepository;
+
+  const _ForgotPasswordDialog({
+    required this.initialEmail,
+    required this.authRepository,
+  });
+
+  @override
+  State<_ForgotPasswordDialog> createState() => _ForgotPasswordDialogState();
+}
+
+class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _emailCtrl;
+  String? _error;
+  bool _sending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailCtrl = TextEditingController(text: widget.initialEmail);
+  }
+
+  @override
+  void dispose() {
+    _emailCtrl.dispose(); // dialog animasyonu bittikten sonra Flutter çağırır
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() {
+      _sending = true;
+      _error = null;
+    });
+    try {
+      await widget.authRepository.resetPassword(_emailCtrl.text.trim());
+      if (!mounted) return;
+      Navigator.of(context).pop(true); // başarı: true döndür
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString().replaceFirst('Exception: ', '');
+        _sending = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Row(
+        children: [
+          const Icon(Icons.lock_reset, color: AppColors.primary),
+          const SizedBox(width: 8),
+          Text(
+            'Şifremi Unuttum',
+            style: AppTextStyles.h3.copyWith(color: Colors.white),
+          ),
+        ],
+      ),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'E-posta adresini gir, şifre sıfırlama bağlantısı gönderelim.',
+              style: AppTextStyles.body.copyWith(color: Colors.white70),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'E-posta',
+                prefixIcon: Icon(Icons.email_outlined),
+              ),
+              onFieldSubmitted: (_) => _submit(),
+              validator: (value) {
+                final text = value?.trim() ?? '';
+                if (text.isEmpty) return 'E-posta boş bırakılamaz';
+                if (!text.contains('@')) return 'Geçerli bir e-posta girin';
+                return null;
+              },
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _error!,
+                style: const TextStyle(
+                  color: AppColors.danger,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        OutlinedButton(
+          onPressed: _sending ? null : () => Navigator.of(context).pop(),
+          child: const Text('İptal'),
+        ),
+        ElevatedButton(
+          onPressed: _sending ? null : _submit,
+          child: _sending
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Gönder'),
+        ),
+      ],
     );
   }
 }
