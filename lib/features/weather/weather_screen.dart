@@ -64,6 +64,42 @@ class WeatherScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
               children: [
                 const _RegionSelector(),
+                if (data.isFromCache) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.warning.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.wifi_off_outlined,
+                          color: AppColors.warning,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Çevrimdışı mod — son önbellekten gösteriliyor. '
+                            'Saatlik tahmin mevcut değil.',
+                            style: AppTextStyles.caption.copyWith(
+                              fontSize: 12,
+                              color: AppColors.warning,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 14),
                 Row(
                   children: [
@@ -592,18 +628,6 @@ class _HourlyScrollRow extends StatelessWidget {
   final List<HourlyWeatherModel> hours;
   const _HourlyScrollRow({required this.hours});
 
-  String _weatherEmoji(int? code) {
-    if (code == null) return '🌤️';
-    if (code == 800) return '☀️';
-    if (code > 800) return '⛅';
-    if (code >= 700) return '🌫️';
-    if (code >= 600) return '❄️';
-    if (code >= 500) return '🌧️';
-    if (code >= 300) return '🌦️';
-    if (code >= 200) return '⛈️';
-    return '🌤️';
-  }
-
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -641,7 +665,7 @@ class _HourlyScrollRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  _weatherEmoji(h.weatherCode),
+                  h.weatherEmoji,
                   style: const TextStyle(fontSize: 22),
                 ),
                 const SizedBox(height: 6),
@@ -976,20 +1000,22 @@ class _WeatherHeroCard extends StatelessWidget {
   final WeatherModel weather;
   const _WeatherHeroCard({required this.weather});
 
-  String _weatherIcon(int code) {
-    if (code == 800) return '☀️';
-    if (code > 800) return '⛅';
-    if (code >= 700) return '🌫️';
-    if (code >= 600) return '❄️';
-    if (code >= 500) return '🌧️';
-    if (code >= 300) return '🌦️';
-    if (code >= 200) return '⛈️';
+  // Open-Meteo WMO kodlarına göre emoji (OWM kodları değil).
+  String _weatherIcon(int? code) {
+    if (code == null) return '🌤️';
+    if (code == 0) return '☀️';     // Açık gökyüzü
+    if (code <= 3) return '⛅';     // Parçalı bulutlu
+    if (code <= 49) return '🌫️';  // Sis / pus
+    if (code <= 69) return '🌧️';  // Çisenti / yağmur
+    if (code <= 79) return '❄️';   // Kar
+    if (code <= 82) return '🌦️';  // Sağanak yağış
+    if (code <= 99) return '⛈️';  // Gök gürültülü fırtına
     return '🌤️';
   }
 
   @override
   Widget build(BuildContext context) {
-    final icon = _weatherIcon(weather.weatherCode ?? 0);
+    final icon = _weatherIcon(weather.weatherCode);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1062,13 +1088,14 @@ class _WeatherDetailGrid extends StatelessWidget {
           label: 'Sıcaklık',
           value: '${weather.tempCelsius.round()}°C',
         ),
-        // Dalga yüksekliği — saatlik tahmin verisinden
+        // Dalga yüksekliği — saatlik veriden, yoksa WeatherModel alanına düş
         _DetailTile(
           icon: '🌊',
           label: 'Dalga',
-          value: currentHour?.waveHeight != null
-              ? '${currentHour!.waveHeight!.toStringAsFixed(1)} m'
-              : 'Veri yok',
+          value: () {
+            final h = currentHour?.waveHeight ?? weather.waveHeight;
+            return h != null ? '${h.toStringAsFixed(1)} m' : 'Veri yok';
+          }(),
           valueColor:
               currentHour?.waveHeight == null ? AppColors.muted : null,
         ),
@@ -1093,13 +1120,15 @@ class _WeatherDetailGrid extends StatelessWidget {
                   ? '%${weather.cloudCover!.toStringAsFixed(0)}'
                   : 'Veri yok',
         ),
-        // Deniz yüzey sıcaklığı — saatlik tahmin verisinden
+        // Deniz yüzey sıcaklığı — saatlik veriden, yoksa WeatherModel alanına düş
         _DetailTile(
           icon: '🌡',
           label: 'Deniz Sıcaklığı',
-          value: currentHour?.seaSurfaceTemperature != null
-              ? '${currentHour!.seaSurfaceTemperature!.round()}°C'
-              : 'Veri yok',
+          value: () {
+            final sst =
+                currentHour?.seaSurfaceTemperature ?? weather.seaSurfaceTemperature;
+            return sst != null ? '${sst.round()}°C' : 'Veri yok';
+          }(),
           valueColor: currentHour?.seaSurfaceTemperature == null
               ? AppColors.muted
               : null,

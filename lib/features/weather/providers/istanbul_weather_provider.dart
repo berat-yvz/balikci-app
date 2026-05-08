@@ -39,11 +39,16 @@ class IstanbulWeatherData {
   final double lat;
   final double lng;
 
+  /// true ise Supabase erişilemedi, Drift local cache'ten yüklendi.
+  /// Saatlik veri boş, saatlik tahmin gösterilemez.
+  final bool isFromCache;
+
   const IstanbulWeatherData({
     required this.hourly,
     required this.current,
     required this.lat,
     required this.lng,
+    this.isFromCache = false,
   });
 }
 
@@ -101,6 +106,7 @@ class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
       current: snap.current,
       lat: snap.lat,
       lng: snap.lng,
+      isFromCache: snap.isFromCache,
     );
   }
 }
