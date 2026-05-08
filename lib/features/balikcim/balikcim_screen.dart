@@ -5,8 +5,7 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/features/balikcim/daily_forecast/daily_forecast_screen.dart';
 import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_screen.dart';
 
-/// Balıkçım — rehber sekmeleri (uzman tahmini, balık bilgisi, ipuçları).
-/// Uzman tahmini (Balıkçım) ilk sekme olarak açılır.
+/// Balıkçım — uzman tahmini ve balık bilgisi sekmeleri.
 class BalikcimScreen extends ConsumerStatefulWidget {
   const BalikcimScreen({super.key});
 
@@ -21,7 +20,7 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -77,12 +76,6 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
               icon: Icon(Icons.set_meal_outlined, size: 26),
               text: 'Balık Bilgisi',
             ),
-            Tab(
-              height: 56,
-              iconMargin: EdgeInsets.zero,
-              icon: Icon(Icons.lightbulb_outline, size: 26),
-              text: 'İpuçları',
-            ),
           ],
         ),
       ),
@@ -91,67 +84,7 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
         children: const [
           DailyForecastScreen(),
           FishEncyclopediaScreen(),
-          _PlaceholderTab(
-            icon: Icons.lightbulb_outline,
-            title: 'İpuçları & Mevzuat',
-            subtitle:
-                'Av mevzuatı, tür bazlı minimum boy\nkuralları ve mevsim yasakları çok yakında!',
-            color: AppColors.accent,
-          ),
         ],
-      ),
-    );
-  }
-}
-
-class _PlaceholderTab extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-
-  const _PlaceholderTab({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      color: AppColors.navy,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 72, color: color),
-              const SizedBox(height: 20),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: AppTextStyles.h2.copyWith(
-                  color: AppColors.foam,
-                  fontSize: 22,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.body.copyWith(
-                  fontSize: 16,
-                  color: AppColors.muted,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
