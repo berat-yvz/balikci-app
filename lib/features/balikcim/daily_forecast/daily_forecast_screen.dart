@@ -132,6 +132,8 @@ class DailyForecastScreen extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 32),
           children: [
             _ExpertHeader(regionName: regionName),
+            const SizedBox(height: 10),
+            const _ForecastRegionSelector(),
             const SizedBox(height: 16),
             _DayForecastCard(
               dayLabel: 'BUGÜN',
@@ -626,6 +628,61 @@ class _WeatherConditionsRow extends StatelessWidget {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+// ── Bölge Seçici ─────────────────────────────────────────────────────────────
+
+/// Balıkçım uzman sayfasındaki yatay kaydırmalı şehir seçici.
+/// [selectedWeatherRegionProvider] değişince tüm skor providerları otomatik güncellenir.
+class _ForecastRegionSelector extends ConsumerWidget {
+  const _ForecastRegionSelector();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selected = ref.watch(selectedWeatherRegionProvider);
+    return SizedBox(
+      height: 34,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: weatherRegionDisplayNames.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final entry = weatherRegionDisplayNames.entries.elementAt(i);
+          final isSelected = entry.key == selected;
+          return GestureDetector(
+            onTap: () =>
+                ref.read(selectedWeatherRegionProvider.notifier).state =
+                    entry.key,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.muted.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Text(
+                entry.value,
+                style: AppTextStyles.caption.copyWith(
+                  fontSize: 13,
+                  color: isSelected ? AppColors.foam : AppColors.muted,
+                  fontWeight:
+                      isSelected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
