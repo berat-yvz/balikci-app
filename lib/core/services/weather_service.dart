@@ -41,7 +41,7 @@ class WeatherService {
             windSpeedKmh: Value(current.windspeed ?? 0.0),
             waveHeightM: Value(current.waveHeight ?? 0.0),
             humidity: Value(current.humidity ?? 0.0),
-            cachedAt: DateTime.now(),
+            cachedAt: current.fetchedAt,
           ),
         );
       } catch (_) {

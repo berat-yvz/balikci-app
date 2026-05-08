@@ -80,6 +80,27 @@ class WeatherScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
 
                 _WeatherHeroCard(weather: data.current),
+                if (data.current.fishingSummary != null &&
+                    data.current.fishingSummary!.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      data.current.fishingSummary!,
+                      style:
+                          AppTextStyles.body.copyWith(color: AppColors.foam),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 const SizedBox(height: 6),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -1037,12 +1058,15 @@ class _WeatherDetailGrid extends StatelessWidget {
           value: '${weather.tempCelsius.round()}°C',
         ),
         // Dalga yüksekliği — saatlik tahmin verisinden
-        if (currentHour?.waveHeight != null)
-          _DetailTile(
-            icon: '🌊',
-            label: 'Dalga',
-            value: '${currentHour!.waveHeight!.toStringAsFixed(1)} m',
-          ),
+        _DetailTile(
+          icon: '🌊',
+          label: 'Dalga',
+          value: currentHour?.waveHeight != null
+              ? '${currentHour!.waveHeight!.toStringAsFixed(1)} m'
+              : 'Veri yok',
+          valueColor:
+              currentHour?.waveHeight == null ? AppColors.muted : null,
+        ),
         _DetailTile(
           icon: '💧',
           label: 'Nem',
@@ -1065,20 +1089,28 @@ class _WeatherDetailGrid extends StatelessWidget {
                   : 'Veri yok',
         ),
         // Deniz yüzey sıcaklığı — saatlik tahmin verisinden
-        if (currentHour?.seaSurfaceTemperature != null)
-          _DetailTile(
-            icon: '🌡',
-            label: 'Deniz Sıcaklığı',
-            value:
-                '${currentHour!.seaSurfaceTemperature!.round()}°C',
-          ),
+        _DetailTile(
+          icon: '🌡',
+          label: 'Deniz Sıcaklığı',
+          value: currentHour?.seaSurfaceTemperature != null
+              ? '${currentHour!.seaSurfaceTemperature!.round()}°C'
+              : 'Veri yok',
+          valueColor: currentHour?.seaSurfaceTemperature == null
+              ? AppColors.muted
+              : null,
+        ),
         // Akıntı hızı ve yönü — saatlik tahmin verisinden
-        if (currentHour?.currentVelocity != null)
-          _DetailTile(
-            icon: currentHour!.currentDirectionArrow ?? '→',
-            label: 'Akıntı',
-            value: '${(currentHour!.currentVelocity! * 100).round()} cm/s',
-          ),
+        _DetailTile(
+          icon: currentHour?.currentVelocity != null
+              ? (currentHour!.currentDirectionArrow ?? '→')
+              : '→',
+          label: 'Akıntı',
+          value: currentHour?.currentVelocity != null
+              ? '${(currentHour!.currentVelocity! * 100).round()} cm/s'
+              : 'Veri yok',
+          valueColor:
+              currentHour?.currentVelocity == null ? AppColors.muted : null,
+        ),
         _DetailTile(
           icon: '🧭',
           label: 'Rüzgar Yönü',
@@ -1093,10 +1125,12 @@ class _WeatherDetailGrid extends StatelessWidget {
 
 class _DetailTile extends StatelessWidget {
   final String icon, label, value;
+  final Color? valueColor;
   const _DetailTile({
     required this.icon,
     required this.label,
     required this.value,
+    this.valueColor,
   });
 
   @override
@@ -1131,7 +1165,7 @@ class _DetailTile extends StatelessWidget {
                 style: AppTextStyles.caption.copyWith(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: valueColor ?? Colors.white,
                 ),
               ),
             ],
