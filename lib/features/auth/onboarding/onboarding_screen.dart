@@ -21,7 +21,7 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
@@ -43,6 +43,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       _notifStatus == AuthorizationStatus.authorized ||
       _notifStatus == AuthorizationStatus.provisional;
 
+  bool get _isBusy => _busyLocation || _busyNotif;
+
   @override
   void initState() {
     super.initState();
@@ -61,14 +63,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       duration: const Duration(milliseconds: 1600),
     )..repeat();
 
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_refreshLocationStatus());
       unawaited(_refreshNotificationStatus());
     });
   }
 
+  /// Kullanıcı konum/bildirim ayarlarından uygulamaya döndüğünde izin
+  /// durumunu otomatik yenile.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_refreshLocationStatus());
+      unawaited(_refreshNotificationStatus());
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     _bgParallaxController.dispose();
     _pinDropController.dispose();
@@ -223,7 +237,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                             ? 'Bildirimler Açık ✓'
                             : 'Balık Tutulurken Haberdar Ol',
                         subtitle: _notifAllowed
-                            ? 'Harika! Favori meranızda yoğunluk artınca seni haber vereceğiz.'
+                            ? 'Harika! Favori meranda yoğunluk artınca seni haberdar edeceğiz.'
                             : 'Favori merana yeni bildirim gelince, yakında yoğunluk artınca veya sabah hava ideale dönünce seni bilgilendireyim.',
                         illustration: AnimatedBuilder(
                           animation: _bellRippleController,
@@ -282,8 +296,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         width: double.infinity,
                         height: 52,
                         child: ElevatedButton(
-                          onPressed: _primaryAction,
-                          child: Text(_bottomLabel),
+                          onPressed: _isBusy ? null : _primaryAction,
+                          child: _isBusy
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(_bottomLabel),
                         ),
                       ),
                     ],
@@ -292,22 +315,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               ],
             ),
           ),
-          // En üstte: SafeArea PageView dokunuşlarını kesmesin diye Atla son sırada.
-          Positioned(
-            right: 12,
-            top: safeTop + 6,
-            child: Material(
-              type: MaterialType.transparency,
-              child: TextButton(
-                onPressed: () => unawaited(_finishOnboarding()),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.muted,
-                  minimumSize: const Size(48, 48),
+          // "Atla" — son sayfada (sayfa 3) ve yükleme sırasında gizlenir.
+          if (_currentPage < 3)
+            Positioned(
+              right: 12,
+              top: safeTop + 6,
+              child: Material(
+                type: MaterialType.transparency,
+                child: TextButton(
+                  onPressed: _isBusy ? null : () => unawaited(_finishOnboarding()),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.muted,
+                    minimumSize: const Size(48, 48),
+                  ),
+                  child: const Text('Atla'),
                 ),
-                child: const Text('Atla'),
               ),
             ),
-          ),
         ],
       ),
     );
