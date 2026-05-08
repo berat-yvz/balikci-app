@@ -2751,6 +2751,83 @@ class $LocalWeatherTable extends LocalWeather
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _windDirectionMeta = const VerificationMeta(
+    'windDirection',
+  );
+  @override
+  late final GeneratedColumn<int> windDirection = GeneratedColumn<int>(
+    'wind_direction',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cloudCoverMeta = const VerificationMeta(
+    'cloudCover',
+  );
+  @override
+  late final GeneratedColumn<double> cloudCover = GeneratedColumn<double>(
+    'cloud_cover',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _visibilityKmMeta = const VerificationMeta(
+    'visibilityKm',
+  );
+  @override
+  late final GeneratedColumn<double> visibilityKm = GeneratedColumn<double>(
+    'visibility_km',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _precipitationMeta = const VerificationMeta(
+    'precipitation',
+  );
+  @override
+  late final GeneratedColumn<double> precipitation = GeneratedColumn<double>(
+    'precipitation',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _seaSurfaceTemperatureMeta =
+      const VerificationMeta('seaSurfaceTemperature');
+  @override
+  late final GeneratedColumn<double> seaSurfaceTemperature =
+      GeneratedColumn<double>(
+        'sea_surface_temperature',
+        aliasedName,
+        true,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _pressureHpaMeta = const VerificationMeta(
+    'pressureHpa',
+  );
+  @override
+  late final GeneratedColumn<double> pressureHpa = GeneratedColumn<double>(
+    'pressure_hpa',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dataJsonMeta = const VerificationMeta(
+    'dataJson',
+  );
+  @override
+  late final GeneratedColumn<String> dataJson = GeneratedColumn<String>(
+    'data_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     regionKey,
@@ -2759,6 +2836,13 @@ class $LocalWeatherTable extends LocalWeather
     waveHeightM,
     humidity,
     cachedAt,
+    windDirection,
+    cloudCover,
+    visibilityKm,
+    precipitation,
+    seaSurfaceTemperature,
+    pressureHpa,
+    dataJson,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2818,6 +2902,63 @@ class $LocalWeatherTable extends LocalWeather
     } else if (isInserting) {
       context.missing(_cachedAtMeta);
     }
+    if (data.containsKey('wind_direction')) {
+      context.handle(
+        _windDirectionMeta,
+        windDirection.isAcceptableOrUnknown(
+          data['wind_direction']!,
+          _windDirectionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cloud_cover')) {
+      context.handle(
+        _cloudCoverMeta,
+        cloudCover.isAcceptableOrUnknown(data['cloud_cover']!, _cloudCoverMeta),
+      );
+    }
+    if (data.containsKey('visibility_km')) {
+      context.handle(
+        _visibilityKmMeta,
+        visibilityKm.isAcceptableOrUnknown(
+          data['visibility_km']!,
+          _visibilityKmMeta,
+        ),
+      );
+    }
+    if (data.containsKey('precipitation')) {
+      context.handle(
+        _precipitationMeta,
+        precipitation.isAcceptableOrUnknown(
+          data['precipitation']!,
+          _precipitationMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sea_surface_temperature')) {
+      context.handle(
+        _seaSurfaceTemperatureMeta,
+        seaSurfaceTemperature.isAcceptableOrUnknown(
+          data['sea_surface_temperature']!,
+          _seaSurfaceTemperatureMeta,
+        ),
+      );
+    }
+    if (data.containsKey('pressure_hpa')) {
+      context.handle(
+        _pressureHpaMeta,
+        pressureHpa.isAcceptableOrUnknown(
+          data['pressure_hpa']!,
+          _pressureHpaMeta,
+        ),
+      );
+    }
+    if (data.containsKey('data_json')) {
+      context.handle(
+        _dataJsonMeta,
+        dataJson.isAcceptableOrUnknown(data['data_json']!, _dataJsonMeta),
+      );
+    }
     return context;
   }
 
@@ -2851,6 +2992,34 @@ class $LocalWeatherTable extends LocalWeather
         DriftSqlType.dateTime,
         data['${effectivePrefix}cached_at'],
       )!,
+      windDirection: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}wind_direction'],
+      ),
+      cloudCover: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}cloud_cover'],
+      ),
+      visibilityKm: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}visibility_km'],
+      ),
+      precipitation: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}precipitation'],
+      ),
+      seaSurfaceTemperature: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}sea_surface_temperature'],
+      ),
+      pressureHpa: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}pressure_hpa'],
+      ),
+      dataJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}data_json'],
+      ),
     );
   }
 
@@ -2868,6 +3037,13 @@ class LocalWeatherData extends DataClass
   final double? waveHeightM;
   final double? humidity;
   final DateTime cachedAt;
+  final int? windDirection;
+  final double? cloudCover;
+  final double? visibilityKm;
+  final double? precipitation;
+  final double? seaSurfaceTemperature;
+  final double? pressureHpa;
+  final String? dataJson;
   const LocalWeatherData({
     required this.regionKey,
     this.tempC,
@@ -2875,6 +3051,13 @@ class LocalWeatherData extends DataClass
     this.waveHeightM,
     this.humidity,
     required this.cachedAt,
+    this.windDirection,
+    this.cloudCover,
+    this.visibilityKm,
+    this.precipitation,
+    this.seaSurfaceTemperature,
+    this.pressureHpa,
+    this.dataJson,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2893,6 +3076,27 @@ class LocalWeatherData extends DataClass
       map['humidity'] = Variable<double>(humidity);
     }
     map['cached_at'] = Variable<DateTime>(cachedAt);
+    if (!nullToAbsent || windDirection != null) {
+      map['wind_direction'] = Variable<int>(windDirection);
+    }
+    if (!nullToAbsent || cloudCover != null) {
+      map['cloud_cover'] = Variable<double>(cloudCover);
+    }
+    if (!nullToAbsent || visibilityKm != null) {
+      map['visibility_km'] = Variable<double>(visibilityKm);
+    }
+    if (!nullToAbsent || precipitation != null) {
+      map['precipitation'] = Variable<double>(precipitation);
+    }
+    if (!nullToAbsent || seaSurfaceTemperature != null) {
+      map['sea_surface_temperature'] = Variable<double>(seaSurfaceTemperature);
+    }
+    if (!nullToAbsent || pressureHpa != null) {
+      map['pressure_hpa'] = Variable<double>(pressureHpa);
+    }
+    if (!nullToAbsent || dataJson != null) {
+      map['data_json'] = Variable<String>(dataJson);
+    }
     return map;
   }
 
@@ -2912,6 +3116,27 @@ class LocalWeatherData extends DataClass
           ? const Value.absent()
           : Value(humidity),
       cachedAt: Value(cachedAt),
+      windDirection: windDirection == null && nullToAbsent
+          ? const Value.absent()
+          : Value(windDirection),
+      cloudCover: cloudCover == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cloudCover),
+      visibilityKm: visibilityKm == null && nullToAbsent
+          ? const Value.absent()
+          : Value(visibilityKm),
+      precipitation: precipitation == null && nullToAbsent
+          ? const Value.absent()
+          : Value(precipitation),
+      seaSurfaceTemperature: seaSurfaceTemperature == null && nullToAbsent
+          ? const Value.absent()
+          : Value(seaSurfaceTemperature),
+      pressureHpa: pressureHpa == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pressureHpa),
+      dataJson: dataJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dataJson),
     );
   }
 
@@ -2927,6 +3152,15 @@ class LocalWeatherData extends DataClass
       waveHeightM: serializer.fromJson<double?>(json['waveHeightM']),
       humidity: serializer.fromJson<double?>(json['humidity']),
       cachedAt: serializer.fromJson<DateTime>(json['cachedAt']),
+      windDirection: serializer.fromJson<int?>(json['windDirection']),
+      cloudCover: serializer.fromJson<double?>(json['cloudCover']),
+      visibilityKm: serializer.fromJson<double?>(json['visibilityKm']),
+      precipitation: serializer.fromJson<double?>(json['precipitation']),
+      seaSurfaceTemperature: serializer.fromJson<double?>(
+        json['seaSurfaceTemperature'],
+      ),
+      pressureHpa: serializer.fromJson<double?>(json['pressureHpa']),
+      dataJson: serializer.fromJson<String?>(json['dataJson']),
     );
   }
   @override
@@ -2939,6 +3173,15 @@ class LocalWeatherData extends DataClass
       'waveHeightM': serializer.toJson<double?>(waveHeightM),
       'humidity': serializer.toJson<double?>(humidity),
       'cachedAt': serializer.toJson<DateTime>(cachedAt),
+      'windDirection': serializer.toJson<int?>(windDirection),
+      'cloudCover': serializer.toJson<double?>(cloudCover),
+      'visibilityKm': serializer.toJson<double?>(visibilityKm),
+      'precipitation': serializer.toJson<double?>(precipitation),
+      'seaSurfaceTemperature': serializer.toJson<double?>(
+        seaSurfaceTemperature,
+      ),
+      'pressureHpa': serializer.toJson<double?>(pressureHpa),
+      'dataJson': serializer.toJson<String?>(dataJson),
     };
   }
 
@@ -2949,6 +3192,13 @@ class LocalWeatherData extends DataClass
     Value<double?> waveHeightM = const Value.absent(),
     Value<double?> humidity = const Value.absent(),
     DateTime? cachedAt,
+    Value<int?> windDirection = const Value.absent(),
+    Value<double?> cloudCover = const Value.absent(),
+    Value<double?> visibilityKm = const Value.absent(),
+    Value<double?> precipitation = const Value.absent(),
+    Value<double?> seaSurfaceTemperature = const Value.absent(),
+    Value<double?> pressureHpa = const Value.absent(),
+    Value<String?> dataJson = const Value.absent(),
   }) => LocalWeatherData(
     regionKey: regionKey ?? this.regionKey,
     tempC: tempC.present ? tempC.value : this.tempC,
@@ -2956,6 +3206,19 @@ class LocalWeatherData extends DataClass
     waveHeightM: waveHeightM.present ? waveHeightM.value : this.waveHeightM,
     humidity: humidity.present ? humidity.value : this.humidity,
     cachedAt: cachedAt ?? this.cachedAt,
+    windDirection: windDirection.present
+        ? windDirection.value
+        : this.windDirection,
+    cloudCover: cloudCover.present ? cloudCover.value : this.cloudCover,
+    visibilityKm: visibilityKm.present ? visibilityKm.value : this.visibilityKm,
+    precipitation: precipitation.present
+        ? precipitation.value
+        : this.precipitation,
+    seaSurfaceTemperature: seaSurfaceTemperature.present
+        ? seaSurfaceTemperature.value
+        : this.seaSurfaceTemperature,
+    pressureHpa: pressureHpa.present ? pressureHpa.value : this.pressureHpa,
+    dataJson: dataJson.present ? dataJson.value : this.dataJson,
   );
   LocalWeatherData copyWithCompanion(LocalWeatherCompanion data) {
     return LocalWeatherData(
@@ -2969,6 +3232,25 @@ class LocalWeatherData extends DataClass
           : this.waveHeightM,
       humidity: data.humidity.present ? data.humidity.value : this.humidity,
       cachedAt: data.cachedAt.present ? data.cachedAt.value : this.cachedAt,
+      windDirection: data.windDirection.present
+          ? data.windDirection.value
+          : this.windDirection,
+      cloudCover: data.cloudCover.present
+          ? data.cloudCover.value
+          : this.cloudCover,
+      visibilityKm: data.visibilityKm.present
+          ? data.visibilityKm.value
+          : this.visibilityKm,
+      precipitation: data.precipitation.present
+          ? data.precipitation.value
+          : this.precipitation,
+      seaSurfaceTemperature: data.seaSurfaceTemperature.present
+          ? data.seaSurfaceTemperature.value
+          : this.seaSurfaceTemperature,
+      pressureHpa: data.pressureHpa.present
+          ? data.pressureHpa.value
+          : this.pressureHpa,
+      dataJson: data.dataJson.present ? data.dataJson.value : this.dataJson,
     );
   }
 
@@ -2980,7 +3262,14 @@ class LocalWeatherData extends DataClass
           ..write('windSpeedKmh: $windSpeedKmh, ')
           ..write('waveHeightM: $waveHeightM, ')
           ..write('humidity: $humidity, ')
-          ..write('cachedAt: $cachedAt')
+          ..write('cachedAt: $cachedAt, ')
+          ..write('windDirection: $windDirection, ')
+          ..write('cloudCover: $cloudCover, ')
+          ..write('visibilityKm: $visibilityKm, ')
+          ..write('precipitation: $precipitation, ')
+          ..write('seaSurfaceTemperature: $seaSurfaceTemperature, ')
+          ..write('pressureHpa: $pressureHpa, ')
+          ..write('dataJson: $dataJson')
           ..write(')'))
         .toString();
   }
@@ -2993,6 +3282,13 @@ class LocalWeatherData extends DataClass
     waveHeightM,
     humidity,
     cachedAt,
+    windDirection,
+    cloudCover,
+    visibilityKm,
+    precipitation,
+    seaSurfaceTemperature,
+    pressureHpa,
+    dataJson,
   );
   @override
   bool operator ==(Object other) =>
@@ -3003,7 +3299,14 @@ class LocalWeatherData extends DataClass
           other.windSpeedKmh == this.windSpeedKmh &&
           other.waveHeightM == this.waveHeightM &&
           other.humidity == this.humidity &&
-          other.cachedAt == this.cachedAt);
+          other.cachedAt == this.cachedAt &&
+          other.windDirection == this.windDirection &&
+          other.cloudCover == this.cloudCover &&
+          other.visibilityKm == this.visibilityKm &&
+          other.precipitation == this.precipitation &&
+          other.seaSurfaceTemperature == this.seaSurfaceTemperature &&
+          other.pressureHpa == this.pressureHpa &&
+          other.dataJson == this.dataJson);
 }
 
 class LocalWeatherCompanion extends UpdateCompanion<LocalWeatherData> {
@@ -3013,6 +3316,13 @@ class LocalWeatherCompanion extends UpdateCompanion<LocalWeatherData> {
   final Value<double?> waveHeightM;
   final Value<double?> humidity;
   final Value<DateTime> cachedAt;
+  final Value<int?> windDirection;
+  final Value<double?> cloudCover;
+  final Value<double?> visibilityKm;
+  final Value<double?> precipitation;
+  final Value<double?> seaSurfaceTemperature;
+  final Value<double?> pressureHpa;
+  final Value<String?> dataJson;
   final Value<int> rowid;
   const LocalWeatherCompanion({
     this.regionKey = const Value.absent(),
@@ -3021,6 +3331,13 @@ class LocalWeatherCompanion extends UpdateCompanion<LocalWeatherData> {
     this.waveHeightM = const Value.absent(),
     this.humidity = const Value.absent(),
     this.cachedAt = const Value.absent(),
+    this.windDirection = const Value.absent(),
+    this.cloudCover = const Value.absent(),
+    this.visibilityKm = const Value.absent(),
+    this.precipitation = const Value.absent(),
+    this.seaSurfaceTemperature = const Value.absent(),
+    this.pressureHpa = const Value.absent(),
+    this.dataJson = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LocalWeatherCompanion.insert({
@@ -3030,6 +3347,13 @@ class LocalWeatherCompanion extends UpdateCompanion<LocalWeatherData> {
     this.waveHeightM = const Value.absent(),
     this.humidity = const Value.absent(),
     required DateTime cachedAt,
+    this.windDirection = const Value.absent(),
+    this.cloudCover = const Value.absent(),
+    this.visibilityKm = const Value.absent(),
+    this.precipitation = const Value.absent(),
+    this.seaSurfaceTemperature = const Value.absent(),
+    this.pressureHpa = const Value.absent(),
+    this.dataJson = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : regionKey = Value(regionKey),
        cachedAt = Value(cachedAt);
@@ -3040,6 +3364,13 @@ class LocalWeatherCompanion extends UpdateCompanion<LocalWeatherData> {
     Expression<double>? waveHeightM,
     Expression<double>? humidity,
     Expression<DateTime>? cachedAt,
+    Expression<int>? windDirection,
+    Expression<double>? cloudCover,
+    Expression<double>? visibilityKm,
+    Expression<double>? precipitation,
+    Expression<double>? seaSurfaceTemperature,
+    Expression<double>? pressureHpa,
+    Expression<String>? dataJson,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3049,6 +3380,14 @@ class LocalWeatherCompanion extends UpdateCompanion<LocalWeatherData> {
       if (waveHeightM != null) 'wave_height_m': waveHeightM,
       if (humidity != null) 'humidity': humidity,
       if (cachedAt != null) 'cached_at': cachedAt,
+      if (windDirection != null) 'wind_direction': windDirection,
+      if (cloudCover != null) 'cloud_cover': cloudCover,
+      if (visibilityKm != null) 'visibility_km': visibilityKm,
+      if (precipitation != null) 'precipitation': precipitation,
+      if (seaSurfaceTemperature != null)
+        'sea_surface_temperature': seaSurfaceTemperature,
+      if (pressureHpa != null) 'pressure_hpa': pressureHpa,
+      if (dataJson != null) 'data_json': dataJson,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3060,6 +3399,13 @@ class LocalWeatherCompanion extends UpdateCompanion<LocalWeatherData> {
     Value<double?>? waveHeightM,
     Value<double?>? humidity,
     Value<DateTime>? cachedAt,
+    Value<int?>? windDirection,
+    Value<double?>? cloudCover,
+    Value<double?>? visibilityKm,
+    Value<double?>? precipitation,
+    Value<double?>? seaSurfaceTemperature,
+    Value<double?>? pressureHpa,
+    Value<String?>? dataJson,
     Value<int>? rowid,
   }) {
     return LocalWeatherCompanion(
@@ -3069,6 +3415,14 @@ class LocalWeatherCompanion extends UpdateCompanion<LocalWeatherData> {
       waveHeightM: waveHeightM ?? this.waveHeightM,
       humidity: humidity ?? this.humidity,
       cachedAt: cachedAt ?? this.cachedAt,
+      windDirection: windDirection ?? this.windDirection,
+      cloudCover: cloudCover ?? this.cloudCover,
+      visibilityKm: visibilityKm ?? this.visibilityKm,
+      precipitation: precipitation ?? this.precipitation,
+      seaSurfaceTemperature:
+          seaSurfaceTemperature ?? this.seaSurfaceTemperature,
+      pressureHpa: pressureHpa ?? this.pressureHpa,
+      dataJson: dataJson ?? this.dataJson,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3094,6 +3448,29 @@ class LocalWeatherCompanion extends UpdateCompanion<LocalWeatherData> {
     if (cachedAt.present) {
       map['cached_at'] = Variable<DateTime>(cachedAt.value);
     }
+    if (windDirection.present) {
+      map['wind_direction'] = Variable<int>(windDirection.value);
+    }
+    if (cloudCover.present) {
+      map['cloud_cover'] = Variable<double>(cloudCover.value);
+    }
+    if (visibilityKm.present) {
+      map['visibility_km'] = Variable<double>(visibilityKm.value);
+    }
+    if (precipitation.present) {
+      map['precipitation'] = Variable<double>(precipitation.value);
+    }
+    if (seaSurfaceTemperature.present) {
+      map['sea_surface_temperature'] = Variable<double>(
+        seaSurfaceTemperature.value,
+      );
+    }
+    if (pressureHpa.present) {
+      map['pressure_hpa'] = Variable<double>(pressureHpa.value);
+    }
+    if (dataJson.present) {
+      map['data_json'] = Variable<String>(dataJson.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3109,6 +3486,13 @@ class LocalWeatherCompanion extends UpdateCompanion<LocalWeatherData> {
           ..write('waveHeightM: $waveHeightM, ')
           ..write('humidity: $humidity, ')
           ..write('cachedAt: $cachedAt, ')
+          ..write('windDirection: $windDirection, ')
+          ..write('cloudCover: $cloudCover, ')
+          ..write('visibilityKm: $visibilityKm, ')
+          ..write('precipitation: $precipitation, ')
+          ..write('seaSurfaceTemperature: $seaSurfaceTemperature, ')
+          ..write('pressureHpa: $pressureHpa, ')
+          ..write('dataJson: $dataJson, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4418,6 +4802,13 @@ typedef $$LocalWeatherTableCreateCompanionBuilder =
       Value<double?> waveHeightM,
       Value<double?> humidity,
       required DateTime cachedAt,
+      Value<int?> windDirection,
+      Value<double?> cloudCover,
+      Value<double?> visibilityKm,
+      Value<double?> precipitation,
+      Value<double?> seaSurfaceTemperature,
+      Value<double?> pressureHpa,
+      Value<String?> dataJson,
       Value<int> rowid,
     });
 typedef $$LocalWeatherTableUpdateCompanionBuilder =
@@ -4428,6 +4819,13 @@ typedef $$LocalWeatherTableUpdateCompanionBuilder =
       Value<double?> waveHeightM,
       Value<double?> humidity,
       Value<DateTime> cachedAt,
+      Value<int?> windDirection,
+      Value<double?> cloudCover,
+      Value<double?> visibilityKm,
+      Value<double?> precipitation,
+      Value<double?> seaSurfaceTemperature,
+      Value<double?> pressureHpa,
+      Value<String?> dataJson,
       Value<int> rowid,
     });
 
@@ -4467,6 +4865,41 @@ class $$LocalWeatherTableFilterComposer
 
   ColumnFilters<DateTime> get cachedAt => $composableBuilder(
     column: $table.cachedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get windDirection => $composableBuilder(
+    column: $table.windDirection,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get cloudCover => $composableBuilder(
+    column: $table.cloudCover,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get visibilityKm => $composableBuilder(
+    column: $table.visibilityKm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get precipitation => $composableBuilder(
+    column: $table.precipitation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get seaSurfaceTemperature => $composableBuilder(
+    column: $table.seaSurfaceTemperature,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get pressureHpa => $composableBuilder(
+    column: $table.pressureHpa,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dataJson => $composableBuilder(
+    column: $table.dataJson,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4509,6 +4942,41 @@ class $$LocalWeatherTableOrderingComposer
     column: $table.cachedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get windDirection => $composableBuilder(
+    column: $table.windDirection,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get cloudCover => $composableBuilder(
+    column: $table.cloudCover,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get visibilityKm => $composableBuilder(
+    column: $table.visibilityKm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get precipitation => $composableBuilder(
+    column: $table.precipitation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get seaSurfaceTemperature => $composableBuilder(
+    column: $table.seaSurfaceTemperature,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get pressureHpa => $composableBuilder(
+    column: $table.pressureHpa,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dataJson => $composableBuilder(
+    column: $table.dataJson,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$LocalWeatherTableAnnotationComposer
@@ -4541,6 +5009,39 @@ class $$LocalWeatherTableAnnotationComposer
 
   GeneratedColumn<DateTime> get cachedAt =>
       $composableBuilder(column: $table.cachedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get windDirection => $composableBuilder(
+    column: $table.windDirection,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get cloudCover => $composableBuilder(
+    column: $table.cloudCover,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get visibilityKm => $composableBuilder(
+    column: $table.visibilityKm,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get precipitation => $composableBuilder(
+    column: $table.precipitation,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get seaSurfaceTemperature => $composableBuilder(
+    column: $table.seaSurfaceTemperature,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get pressureHpa => $composableBuilder(
+    column: $table.pressureHpa,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get dataJson =>
+      $composableBuilder(column: $table.dataJson, builder: (column) => column);
 }
 
 class $$LocalWeatherTableTableManager
@@ -4580,6 +5081,13 @@ class $$LocalWeatherTableTableManager
                 Value<double?> waveHeightM = const Value.absent(),
                 Value<double?> humidity = const Value.absent(),
                 Value<DateTime> cachedAt = const Value.absent(),
+                Value<int?> windDirection = const Value.absent(),
+                Value<double?> cloudCover = const Value.absent(),
+                Value<double?> visibilityKm = const Value.absent(),
+                Value<double?> precipitation = const Value.absent(),
+                Value<double?> seaSurfaceTemperature = const Value.absent(),
+                Value<double?> pressureHpa = const Value.absent(),
+                Value<String?> dataJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalWeatherCompanion(
                 regionKey: regionKey,
@@ -4588,6 +5096,13 @@ class $$LocalWeatherTableTableManager
                 waveHeightM: waveHeightM,
                 humidity: humidity,
                 cachedAt: cachedAt,
+                windDirection: windDirection,
+                cloudCover: cloudCover,
+                visibilityKm: visibilityKm,
+                precipitation: precipitation,
+                seaSurfaceTemperature: seaSurfaceTemperature,
+                pressureHpa: pressureHpa,
+                dataJson: dataJson,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4598,6 +5113,13 @@ class $$LocalWeatherTableTableManager
                 Value<double?> waveHeightM = const Value.absent(),
                 Value<double?> humidity = const Value.absent(),
                 required DateTime cachedAt,
+                Value<int?> windDirection = const Value.absent(),
+                Value<double?> cloudCover = const Value.absent(),
+                Value<double?> visibilityKm = const Value.absent(),
+                Value<double?> precipitation = const Value.absent(),
+                Value<double?> seaSurfaceTemperature = const Value.absent(),
+                Value<double?> pressureHpa = const Value.absent(),
+                Value<String?> dataJson = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalWeatherCompanion.insert(
                 regionKey: regionKey,
@@ -4606,6 +5128,13 @@ class $$LocalWeatherTableTableManager
                 waveHeightM: waveHeightM,
                 humidity: humidity,
                 cachedAt: cachedAt,
+                windDirection: windDirection,
+                cloudCover: cloudCover,
+                visibilityKm: visibilityKm,
+                precipitation: precipitation,
+                seaSurfaceTemperature: seaSurfaceTemperature,
+                pressureHpa: pressureHpa,
+                dataJson: dataJson,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

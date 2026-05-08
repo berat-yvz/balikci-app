@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:drift/drift.dart';
@@ -42,6 +43,17 @@ class WeatherService {
             waveHeightM: Value(current.waveHeight ?? 0.0),
             humidity: Value(current.humidity ?? 0.0),
             cachedAt: current.fetchedAt,
+            windDirection: Value(current.windDirection),
+            cloudCover: Value(current.cloudCover),
+            visibilityKm: Value(current.visibilityKm),
+            precipitation: Value(current.precipitation),
+            seaSurfaceTemperature: Value(current.seaSurfaceTemperature),
+            pressureHpa: Value(current.pressureHpa),
+            dataJson: Value(
+              current.dataJson != null
+                  ? jsonEncode(current.dataJson)
+                  : null,
+            ),
           ),
         );
       } catch (_) {
@@ -58,21 +70,32 @@ class WeatherService {
               ..where((t) => t.regionKey.equals(regionKey)))
             .getSingleOrNull();
         if (cached != null) {
+          final decodedDataJson = (() {
+            try {
+              return cached.dataJson != null
+                  ? jsonDecode(cached.dataJson!) as Map<String, dynamic>
+                  : null;
+            } catch (_) {
+              return null;
+            }
+          })();
           return RegionalWeatherData(
             hourly: const [],
             current: WeatherModel(
               id: '',
               lat: 0,
               lng: 0,
+              dataJson: decodedDataJson,
               temperature: cached.tempC,
               windspeed: cached.windSpeedKmh,
-              windDirection: null,
+              windDirection: cached.windDirection,
               waveHeight: cached.waveHeightM,
-              seaSurfaceTemperature: null,
-              precipitation: null,
+              seaSurfaceTemperature: cached.seaSurfaceTemperature,
+              precipitation: cached.precipitation,
               humidity: cached.humidity,
-              visibilityKm: null,
-              cloudCover: null,
+              visibilityKm: cached.visibilityKm,
+              cloudCover: cached.cloudCover,
+              pressureHpa: cached.pressureHpa,
               fishingSummary: null,
               fetchedAt: cached.cachedAt,
               regionKey: cached.regionKey,

@@ -36,7 +36,7 @@ class AppDatabase extends _$AppDatabase {
   static final AppDatabase instance = AppDatabase._();
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,6 +63,22 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 6) {
         await m.createTable(fishLogs);
+      }
+      if (from < 7) {
+        await m.addColumn(localWeather,
+            localWeather.windDirection as GeneratedColumn<Object>);
+        await m.addColumn(localWeather,
+            localWeather.cloudCover as GeneratedColumn<Object>);
+        await m.addColumn(localWeather,
+            localWeather.visibilityKm as GeneratedColumn<Object>);
+        await m.addColumn(localWeather,
+            localWeather.precipitation as GeneratedColumn<Object>);
+        await m.addColumn(localWeather,
+            localWeather.seaSurfaceTemperature as GeneratedColumn<Object>);
+        await m.addColumn(localWeather,
+            localWeather.pressureHpa as GeneratedColumn<Object>);
+        await m.addColumn(localWeather,
+            localWeather.dataJson as GeneratedColumn<Object>);
       }
     },
   );
