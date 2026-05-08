@@ -72,8 +72,18 @@ class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
 
   Future<void> _silentReload(String regionKey) async {
     try {
-      final next = await _loadFromSupabase(regionKey);
-      state = AsyncData(next);
+      final snap =
+          await WeatherService.fetchRegionalWeatherFromSupabase(regionKey);
+      // Drift cache verisiyle (isFromCache=true) iyi online veriyi ezme.
+      // Internet kesilince Drift fallback devreye girer ama eski doğru
+      // skoru bozmaması için state güncellenmez; mevcut veri korunur.
+      if (snap == null || snap.isFromCache) return;
+      state = AsyncData(IstanbulWeatherData(
+        hourly: snap.hourly,
+        current: snap.current,
+        lat: snap.lat,
+        lng: snap.lng,
+      ));
     } catch (_) {
       // Mevcut veriyi koru
     }

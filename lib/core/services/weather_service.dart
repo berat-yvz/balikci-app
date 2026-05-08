@@ -79,27 +79,33 @@ class WeatherService {
               return null;
             }
           })();
+
+          // dataJson mevcutsa fromJson ile tüm alanları doğru çıkar:
+          // weatherCode ve pressureHpa3hAgo constructor'a tek tek geçilmediği için
+          // manuel yapıcı kullanıldığında null kalıyordu; fromJson bunları parse eder.
+          WeatherModel current;
+          if (decodedDataJson != null) {
+            try {
+              current = WeatherModel.fromJson({
+                'id': '',
+                'lat': cached.regionKey == 'istanbul' ? 41.0082 : 0.0,
+                'lng': cached.regionKey == 'istanbul' ? 28.9784 : 0.0,
+                'fetched_at': cached.cachedAt.toIso8601String(),
+                'region_key': cached.regionKey,
+                'data_json': decodedDataJson,
+                'fishing_summary': null,
+              });
+            } catch (_) {
+              current = _buildModelFromCachedFields(cached, decodedDataJson);
+            }
+          } else {
+            current = _buildModelFromCachedFields(cached, null);
+          }
+
           return RegionalWeatherData(
             hourly: const [],
-            current: WeatherModel(
-              id: '',
-              lat: 0,
-              lng: 0,
-              dataJson: decodedDataJson,
-              temperature: cached.tempC,
-              windspeed: cached.windSpeedKmh,
-              windDirection: cached.windDirection,
-              waveHeight: cached.waveHeightM,
-              seaSurfaceTemperature: cached.seaSurfaceTemperature,
-              precipitation: cached.precipitation,
-              humidity: cached.humidity,
-              visibilityKm: cached.visibilityKm,
-              cloudCover: cached.cloudCover,
-              pressureHpa: cached.pressureHpa,
-              fishingSummary: null,
-              fetchedAt: cached.cachedAt,
-              regionKey: cached.regionKey,
-            ),
+            current: current,
+            isFromCache: true,
           );
         }
       } catch (_) {
@@ -107,6 +113,33 @@ class WeatherService {
       }
       return null;
     }
+  }
+
+  /// Drift alanlarından manuel WeatherModel — dataJson yoksa ya da fromJson başarısız olursa.
+  static WeatherModel _buildModelFromCachedFields(
+    dynamic cached,
+    Map<String, dynamic>? dataJson,
+  ) {
+    return WeatherModel(
+      id: '',
+      lat: 0,
+      lng: 0,
+      dataJson: dataJson,
+      temperature: cached.tempC as double?,
+      windspeed: cached.windSpeedKmh as double?,
+      windDirection: cached.windDirection as int?,
+      waveHeight: cached.waveHeightM as double?,
+      seaSurfaceTemperature: cached.seaSurfaceTemperature as double?,
+      precipitation: cached.precipitation as double?,
+      humidity: cached.humidity as double?,
+      visibilityKm: cached.visibilityKm as double?,
+      cloudCover: cached.cloudCover as double?,
+      pressureHpa: cached.pressureHpa as double?,
+      weatherCode: null,
+      fishingSummary: null,
+      fetchedAt: cached.cachedAt as DateTime,
+      regionKey: cached.regionKey as String?,
+    );
   }
 
   /// [lat],[lng]’e en yakın tanımlı kıyı bölgesi.
@@ -306,13 +339,19 @@ class MeraWeatherSnapshot {
 }
 
 /// Supabase `weather_cache` satırından üretilen anlık + saatlik paket.
+/// [isFromCache] — true ise Supabase başarısız oldu, Drift local cache'ten geldi.
 class RegionalWeatherData {
   final List<HourlyWeatherModel> hourly;
   final WeatherModel current;
 
+  /// Supabase yerine Drift local cache'ten yüklendiğini belirtir.
+  /// Bu durumda saatlik veri boş, bazı alanlar stale olabilir.
+  final bool isFromCache;
+
   const RegionalWeatherData({
     required this.hourly,
     required this.current,
+    this.isFromCache = false,
   });
 
   double get lat => current.lat;
