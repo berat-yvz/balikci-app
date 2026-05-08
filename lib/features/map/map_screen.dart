@@ -30,7 +30,6 @@ import 'package:balikci_app/features/map/widgets/spot_marker.dart';
 import 'package:balikci_app/features/map/widgets/weather_card.dart';
 import 'package:balikci_app/data/repositories/shop_repository.dart';
 import 'package:balikci_app/data/repositories/user_repository.dart';
-import 'package:balikci_app/shared/providers/connectivity_provider.dart';
 import 'package:balikci_app/shared/providers/favorite_provider.dart';
 import 'package:balikci_app/shared/providers/notification_provider.dart';
 
@@ -1304,8 +1303,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 Consumer(
                   builder: (context, ref, _) {
                     final count = ref.watch(unreadCountProvider);
-                    final onlineAsync = ref.watch(connectivityProvider);
-                    final online = onlineAsync.asData?.value ?? true;
 
                     Widget buildButton(int count) {
                       return Tooltip(
@@ -1331,25 +1328,24 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                     size: 26,
                                   ),
                                 ),
-                                // Çevrimiçi/çevrimdışı nokta
-                                Positioned(
-                                  right: 9,
-                                  top: 9,
-                                  child: Container(
-                                    width: 9,
-                                    height: 9,
-                                    decoration: BoxDecoration(
-                                      color: online
-                                          ? AppColors.success
-                                          : AppColors.warning,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.black,
-                                        width: 1.5,
+                                // Okunmamış bildirim nokta göstergesi
+                                if (count > 0)
+                                  Positioned(
+                                    right: 9,
+                                    top: 9,
+                                    child: Container(
+                                      width: 9,
+                                      height: 9,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.success,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.black,
+                                          width: 1.5,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
                                 // Okunmamış sayı rozeti
                                 if (count > 0)
                                   Positioned(
