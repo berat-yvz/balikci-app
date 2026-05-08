@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:balikci_app/app/theme.dart';
-import 'package:balikci_app/core/utils/error_message_helper.dart';
+import 'package:balikci_app/core/widgets/network_error_widget.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
@@ -114,8 +114,8 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
             loading: () => Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             ),
-            error: (e, stackTrace) => _LeaderboardError(
-              message: _errorMessage(e),
+            error: (e, stackTrace) => NetworkErrorWidget(
+              title: 'Sıralama yüklenemedi',
               onRetry: _reloadLeaderboard,
             ),
           ),
@@ -154,9 +154,6 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
     );
   }
 }
-
-String _errorMessage(Object e) =>
-    ErrorMessageHelper.toUserMessage(e, fallback: 'Sıralama yüklenemedi.\nBağlantını kontrol edip tekrar dene.');
 
 class _RankFilterRow extends StatelessWidget {
   final String? selected;
@@ -595,60 +592,3 @@ class _EmptyLeaderboard extends StatelessWidget {
   }
 }
 
-class _LeaderboardError extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _LeaderboardError({
-    required this.message,
-    required this.onRetry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.cloud_off_outlined,
-              size: 64,
-              color: AppColors.danger.withValues(alpha: 0.9),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.body.copyWith(
-                color: AppColors.muted,
-                fontSize: 16,
-                height: 1.35,
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: FilledButton(
-                onPressed: onRetry,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.foam,
-                ),
-                child: Text(
-                  'Tekrar Dene',
-                  style: AppTextStyles.body.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.foam,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
