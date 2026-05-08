@@ -1183,26 +1183,30 @@ class _DetailTile extends StatelessWidget {
         children: [
           Text(icon, style: const TextStyle(fontSize: 20)),
           const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                label,
-                style: AppTextStyles.caption.copyWith(
-                  fontSize: 16,
-                  color: AppColors.muted,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: AppTextStyles.caption.copyWith(
+                    fontSize: 16,
+                    color: AppColors.muted,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              Text(
-                value,
-                style: AppTextStyles.caption.copyWith(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: valueColor ?? Colors.white,
+                Text(
+                  value,
+                  style: AppTextStyles.caption.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: valueColor ?? Colors.white,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

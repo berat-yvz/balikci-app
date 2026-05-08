@@ -102,8 +102,16 @@ class WeatherService {
             current = _buildModelFromCachedFields(cached, null);
           }
 
+          // Depolanan dataJson'dan saatlik veriyi yeniden oluştur.
+          // Bu sayede currentHour bilgisi (rüzgar yönü, akıntı vb.)
+          // online davranışıyla tutarlı hale gelir.
+          // Saatlik zaman damgaları geçmişe düşmüşse (cache eski) filtreleme
+          // yapılacağından yanlış veri gösterilmez.
+          final cachedHourly = hourlyFromOpenMeteoV1Bundle(
+            decodedDataJson,
+          );
           return RegionalWeatherData(
-            hourly: const [],
+            hourly: cachedHourly,
             current: current,
             isFromCache: true,
           );
