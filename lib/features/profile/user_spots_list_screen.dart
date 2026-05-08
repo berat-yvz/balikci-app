@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/widgets/network_error_widget.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
@@ -108,15 +109,9 @@ class _UserSpotsListScreenState extends ConsumerState<UserSpotsListScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'Liste yüklenemedi: ${snapshot.error}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.danger),
-                ),
-              ),
+            return NetworkErrorWidget(
+              title: 'Meralar yüklenemedi',
+              onRetry: _reload,
             );
           }
           final spots = snapshot.data ?? [];

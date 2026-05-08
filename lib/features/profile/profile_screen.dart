@@ -292,10 +292,20 @@ class _ProfileContent extends ConsumerWidget {
                     ),
                     error: (e, _) => SizedBox(
                       width: double.infinity,
-                      child: Text(
-                        'Durum yüklenemedi: $e',
-                        style: const TextStyle(color: AppColors.danger),
-                        textAlign: TextAlign.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.wifi_off_rounded,
+                            size: 16,
+                            color: AppColors.muted,
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Arkadaşlık durumu alınamadı',
+                            style: TextStyle(color: AppColors.muted),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -1069,9 +1079,15 @@ class _FavoriteSpotsSection extends ConsumerWidget {
 
     return spotsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Text(
-        'Favoriler yüklenemedi: $e',
-        style: const TextStyle(color: AppColors.danger, fontSize: 14),
+      error: (e, _) => Row(
+        children: [
+          const Icon(Icons.wifi_off_rounded, size: 16, color: AppColors.muted),
+          const SizedBox(width: 6),
+          const Text(
+            'Favoriler yüklenemedi',
+            style: TextStyle(color: AppColors.muted, fontSize: 14),
+          ),
+        ],
       ),
       data: (spots) {
         if (spots.isEmpty) {

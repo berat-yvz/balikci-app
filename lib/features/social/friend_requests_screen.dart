@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/widgets/network_error_widget.dart';
 import 'package:balikci_app/core/constants/storage_buckets.dart';
 import 'package:balikci_app/shared/providers/friend_request_provider.dart';
 
@@ -161,15 +162,12 @@ class FriendRequestsScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              'Yüklenemedi: $e',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.danger),
-            ),
-          ),
+        error: (e, _) => NetworkErrorWidget(
+          title: 'İstekler yüklenemedi',
+          onRetry: () {
+            ref.invalidate(incomingRequestsWithProfilesProvider);
+            ref.invalidate(incomingFriendRequestsProvider);
+          },
         ),
       ),
     );

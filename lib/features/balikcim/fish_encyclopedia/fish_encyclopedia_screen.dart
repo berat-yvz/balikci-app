@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/widgets/network_error_widget.dart';
 import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_detail_screen.dart';
 import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_model.dart';
 import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_provider.dart';
@@ -193,18 +194,9 @@ class _FishEncyclopediaScreenState extends ConsumerState<FishEncyclopediaScreen>
               loading: () => const Center(
                 child: CircularProgressIndicator(color: AppColors.primary),
               ),
-              error: (e, _) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'Liste yüklenemedi: $e',
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.muted,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
+              error: (e, _) => NetworkErrorWidget(
+                title: 'Balık listesi yüklenemedi',
+                onRetry: () => ref.invalidate(filteredFishProvider),
               ),
             ),
           ),
