@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/core/utils/error_message_helper.dart';
 import 'package:balikci_app/data/models/friend_request_model.dart';
 
 /// Arkadaşlık isteği — `friend_requests` tablosu.
@@ -22,7 +23,7 @@ class FriendRequestRepository {
           .maybeSingle();
       return row != null;
     } on PostgrestException catch (e) {
-      throw Exception('İstek durumu alınamadı: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'İstek durumu alınamadı.'));
     }
   }
 
@@ -39,7 +40,7 @@ class FriendRequestRepository {
           .maybeSingle();
       return row?['id'] as String?;
     } on PostgrestException catch (e) {
-      throw Exception('İstek bilgisi alınamadı: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'İstek bilgisi alınamadı.'));
     }
   }
 
@@ -56,7 +57,7 @@ class FriendRequestRepository {
           .maybeSingle();
       return row != null;
     } on PostgrestException catch (e) {
-      throw Exception('İstek durumu alınamadı: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'İstek durumu alınamadı.'));
     }
   }
 
@@ -75,7 +76,7 @@ class FriendRequestRepository {
           .map((row) => FriendRequestModel.fromJson(row as Map<String, dynamic>))
           .toList();
     } on PostgrestException catch (e) {
-      throw Exception('İstekler alınamadı: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'İstekler alınamadı.'));
     }
   }
 
@@ -95,7 +96,7 @@ class FriendRequestRepository {
         onConflict: 'from_user_id,to_user_id',
       );
     } on PostgrestException catch (e) {
-      throw Exception('İstek gönderilemedi: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'İstek gönderilemedi.'));
     }
   }
 
@@ -111,7 +112,7 @@ class FriendRequestRepository {
           .eq('to_user_id', toUserId)
           .eq('status', 'pending');
     } on PostgrestException catch (e) {
-      throw Exception('İstek iptal edilemedi: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'İstek iptal edilemedi.'));
     }
   }
 
@@ -126,7 +127,7 @@ class FriendRequestRepository {
           .eq('to_user_id', me)
           .eq('status', 'pending');
     } on PostgrestException catch (e) {
-      throw Exception('İstek reddedilemedi: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'İstek reddedilemedi.'));
     }
   }
 
@@ -141,7 +142,7 @@ class FriendRequestRepository {
         params: {'request_id': requestId},
       );
     } on PostgrestException catch (e) {
-      throw Exception('İstek kabul edilemedi: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'İstek kabul edilemedi.'));
     }
   }
 }

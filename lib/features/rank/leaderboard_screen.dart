@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/utils/error_message_helper.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
@@ -154,13 +155,8 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
   }
 }
 
-String _errorMessage(Object e) {
-  final s = e.toString();
-  if (s.contains('Exception:')) {
-    return s.replaceFirst('Exception:', '').trim();
-  }
-  return 'Sıralama yüklenemedi. Bağlantınızı kontrol edin.';
-}
+String _errorMessage(Object e) =>
+    ErrorMessageHelper.toUserMessage(e, fallback: 'Sıralama yüklenemedi.\nBağlantını kontrol edip tekrar dene.');
 
 class _RankFilterRow extends StatelessWidget {
   final String? selected;

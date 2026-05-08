@@ -1,4 +1,5 @@
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/core/utils/error_message_helper.dart';
 import 'package:balikci_app/data/local/database.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:drift/drift.dart';
@@ -23,9 +24,9 @@ class SpotRepository {
       await _cacheSpots(remote);
       return remote;
     } on PostgrestException catch (e) {
-      throw Exception('Meralar alınamadı: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Meralar alınamadı.'));
     } catch (e) {
-      throw Exception('Meralar alınamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Meralar alınamadı.'));
     }
   }
 
@@ -51,9 +52,9 @@ class SpotRepository {
       await _cacheSpots(remote);
       return remote;
     } on PostgrestException catch (e) {
-      throw Exception('Sınır içi meralar alınamadı: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Meralar alınamadı.'));
     } catch (e) {
-      throw Exception('Sınır içi meralar alınamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Meralar alınamadı.'));
     }
   }
 
@@ -77,9 +78,9 @@ class SpotRepository {
           )
           .toList();
     } on PostgrestException catch (e) {
-      throw Exception('Kullanıcı meraları alınamadı: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Meralar alınamadı.'));
     } catch (e) {
-      throw Exception('Kullanıcı meraları alınamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Meralar alınamadı.'));
     }
   }
 
@@ -109,9 +110,9 @@ class SpotRepository {
       await _cacheSpots([created]);
       return created;
     } on PostgrestException catch (e) {
-      throw Exception('Mera eklenemedi: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Mera kaydedilemedi.'));
     } catch (e) {
-      throw Exception('Mera eklenemedi: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Mera kaydedilemedi.'));
     }
   }
 
@@ -140,10 +141,10 @@ class SpotRepository {
         await _cacheSpots([fresh]);
       }
     } on PostgrestException catch (e) {
-      throw Exception('Mera güncellenemedi: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Mera güncellenemedi.'));
     } catch (e) {
       if (e is Exception) rethrow;
-      throw Exception('Mera güncellenemedi: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Mera güncellenemedi.'));
     }
   }
 
@@ -170,10 +171,10 @@ class SpotRepository {
         _localDb.localSpots,
       )..where((tbl) => tbl.id.equals(id))).go();
     } on PostgrestException catch (e) {
-      throw Exception('Mera silinemedi: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Mera silinemedi.'));
     } catch (e) {
       if (e is Exception) rethrow;
-      throw Exception('Mera silinemedi: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Mera silinemedi.'));
     }
   }
 

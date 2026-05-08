@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/core/utils/error_message_helper.dart';
 
 /// Takip (follow) repository — follows tablosu INSERT/DELETE/SELECT.
 class FollowRepository {
@@ -18,11 +19,9 @@ class FollowRepository {
         'following_id': targetUserId,
       });
     } on PostgrestException catch (e) {
-      throw Exception(
-        'Kullanıcı takip edilirken bir hata oluştu: ${e.message}',
-      );
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Takip işlemi başarısız.'));
     } catch (e) {
-      throw Exception('Kullanıcı takip edilemedi: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Takip işlemi başarısız.'));
     }
   }
 
@@ -39,9 +38,9 @@ class FollowRepository {
           .eq('follower_id', currentUserId)
           .eq('following_id', targetUserId);
     } on PostgrestException catch (e) {
-      throw Exception('Takipten çıkılırken bir hata oluştu: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Takipten çıkılamadı.'));
     } catch (e) {
-      throw Exception('Takipten çıkılamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Takipten çıkılamadı.'));
     }
   }
 
@@ -58,9 +57,9 @@ class FollowRepository {
           .limit(1);
       return (response as List).isNotEmpty;
     } on PostgrestException catch (e) {
-      throw Exception('Takip durumu alınırken bir hata oluştu: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Takip durumu alınamadı.'));
     } catch (e) {
-      throw Exception('Takip durumu alınamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Takip durumu alınamadı.'));
     }
   }
 
@@ -78,9 +77,9 @@ class FollowRepository {
           .limit(1);
       return (response as List).isNotEmpty;
     } on PostgrestException catch (e) {
-      throw Exception('Takip durumu alınırken bir hata oluştu: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Takip durumu alınamadı.'));
     } catch (e) {
-      throw Exception('Takip durumu alınamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Takip durumu alınamadı.'));
     }
   }
 
@@ -101,11 +100,9 @@ class FollowRepository {
           .map((row) => row['follower_id'] as String)
           .toList();
     } on PostgrestException catch (e) {
-      throw Exception(
-        'Takipçi listesi alınırken bir hata oluştu: ${e.message}',
-      );
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Takipçi listesi alınamadı.'));
     } catch (e) {
-      throw Exception('Takipçi listesi alınamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Takipçi listesi alınamadı.'));
     }
   }
 
@@ -127,11 +124,9 @@ class FollowRepository {
           .map((row) => row['following_id'] as String)
           .toList();
     } on PostgrestException catch (e) {
-      throw Exception(
-        'Takip edilenler listesi alınırken bir hata oluştu: ${e.message}',
-      );
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Takip listesi alınamadı.'));
     } catch (e) {
-      throw Exception('Takip edilenler listesi alınamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Takip listesi alınamadı.'));
     }
   }
 }

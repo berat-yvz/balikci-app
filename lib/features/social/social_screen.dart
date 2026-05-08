@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/utils/error_message_helper.dart';
+import 'package:balikci_app/core/widgets/network_error_widget.dart';
 import 'package:balikci_app/features/rank/leaderboard_screen.dart';
 import 'package:balikci_app/core/constants/storage_buckets.dart';
 import 'package:balikci_app/data/models/user_model.dart';
@@ -204,12 +206,10 @@ class _SocialScreenState extends ConsumerState<SocialScreen> {
                       ),
                     ),
                     error: (e, _) => SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          'Arama başarısız: $e',
-                          style: const TextStyle(color: AppColors.danger),
-                          textAlign: TextAlign.center,
+                      child: NetworkErrorWidget(
+                        title: 'Arama başarısız',
+                        onRetry: () => ref.invalidate(
+                          userSearchByUsernameProvider(_searchQuery),
                         ),
                       ),
                     ),
@@ -262,13 +262,10 @@ class _SocialScreenState extends ConsumerState<SocialScreen> {
                       ),
                     ),
                     error: (e, _) => SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          'Liste yüklenemedi: $e',
-                          style: const TextStyle(color: AppColors.danger),
-                          textAlign: TextAlign.center,
-                        ),
+                      child: NetworkErrorWidget(
+                        title: 'Balıkçı listesi yüklenemedi',
+                        onRetry: () =>
+                            ref.invalidate(allRegisteredAnglersProvider),
                       ),
                     ),
                   ),
@@ -413,7 +410,7 @@ class _DiscoverUserTile extends ConsumerWidget {
                         } catch (e) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('$e')),
+                              SnackBar(content: Text(ErrorMessageHelper.toUserMessage(e, fallback: 'İstek kabul edilemedi.'))),
                             );
                           }
                         }
@@ -441,7 +438,7 @@ class _DiscoverUserTile extends ConsumerWidget {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('$e'),
+                          content: Text(ErrorMessageHelper.toUserMessage(e, fallback: 'İstek gönderilemedi.')),
                           backgroundColor: AppColors.danger,
                         ),
                       );

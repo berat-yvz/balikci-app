@@ -3,6 +3,7 @@ import 'dart:math' show min;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/core/utils/error_message_helper.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 
 /// Haftalık sıralama için kullanıcı + aktivite girişi.
@@ -38,11 +39,9 @@ class UserRepository {
       if (data == null) return null;
       return UserModel.fromJson(data);
     } on PostgrestException catch (e) {
-      throw Exception(
-        'Kullanıcı profili alınırken bir hata oluştu: ${e.message}',
-      );
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Profil alınamadı.'));
     } catch (e) {
-      throw Exception('Kullanıcı profili alınamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Profil alınamadı.'));
     }
   }
 
@@ -61,9 +60,9 @@ class UserRepository {
     try {
       await _db.from('users').update(updates).eq('id', userId);
     } on PostgrestException catch (e) {
-      throw Exception('Profil güncellenirken bir hata oluştu: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Profil güncellenemedi.'));
     } catch (e) {
-      throw Exception('Profil güncellenemedi: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Profil güncellenemedi.'));
     }
   }
 
@@ -96,11 +95,9 @@ class UserRepository {
             .map((row) => UserModel.fromJson(row as Map<String, dynamic>))
             .toList();
       } on PostgrestException catch (e) {
-        throw Exception(
-          'Liderlik tablosu alınırken bir hata oluştu: ${e.message}',
-        );
+        throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Sıralama alınamadı.'));
       } catch (e) {
-        throw Exception('Liderlik tablosu alınamadı: $e');
+        throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Sıralama alınamadı.'));
       }
     }
 
@@ -132,11 +129,9 @@ class UserRepository {
           .limit(limit);
       return response.map<UserModel>(UserModel.fromJson).toList();
     } on PostgrestException catch (e) {
-      throw Exception(
-        'Liderlik tablosu alınırken bir hata oluştu: ${e.message}',
-      );
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Sıralama alınamadı.'));
     } catch (e) {
-      throw Exception('Liderlik tablosu alınamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Sıralama alınamadı.'));
     }
   }
 
@@ -173,9 +168,9 @@ class UserRepository {
           .gt('total_score', myScore);
       return (higher as List).length + 1;
     } on PostgrestException catch (e) {
-      throw Exception('Sıra numarası alınamadı: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Sıra numarası alınamadı.'));
     } catch (e) {
-      throw Exception('Sıra numarası alınamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Sıra numarası alınamadı.'));
     }
   }
 
@@ -205,9 +200,9 @@ class UserRepository {
           .limit(limit);
       return response.map<UserModel>(UserModel.fromJson).toList();
     } on PostgrestException catch (e) {
-      throw Exception('Balıkçı listesi alınırken bir hata oluştu: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Balıkçı listesi alınamadı.'));
     } catch (e) {
-      throw Exception('Balıkçı listesi alınamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Balıkçı listesi alınamadı.'));
     }
   }
 
@@ -238,9 +233,9 @@ class UserRepository {
       final byId = {for (final u in out) u.id: u};
       return unique.map((id) => byId[id]).whereType<UserModel>().toList();
     } on PostgrestException catch (e) {
-      throw Exception('Profiller alınamadı: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Profiller alınamadı.'));
     } catch (e) {
-      throw Exception('Profiller alınamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Profiller alınamadı.'));
     }
   }
 
@@ -274,9 +269,9 @@ class UserRepository {
       }
       return users;
     } on PostgrestException catch (e) {
-      throw Exception('Bölgesel sıralama alınamadı: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Bölgesel sıralama alınamadı.'));
     } catch (e) {
-      throw Exception('Bölgesel sıralama alınamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Bölgesel sıralama alınamadı.'));
     }
   }
 
@@ -352,9 +347,9 @@ class UserRepository {
         );
       }).toList();
     } on PostgrestException catch (e) {
-      throw Exception('Haftalık sıralama alınamadı: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Haftalık sıralama alınamadı.'));
     } catch (e) {
-      throw Exception('Haftalık sıralama alınamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Haftalık sıralama alınamadı.'));
     }
   }
 
@@ -381,9 +376,9 @@ class UserRepository {
           .map((row) => UserModel.fromJson(row as Map<String, dynamic>))
           .toList();
     } on PostgrestException catch (e) {
-      throw Exception('Arama yapılırken bir hata oluştu: ${e.message}');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Arama yapılamadı.'));
     } catch (e) {
-      throw Exception('Arama yapılamadı: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Arama yapılamadı.'));
     }
   }
 
@@ -392,11 +387,9 @@ class UserRepository {
     try {
       await _db.from('users').update({'fcm_token': token}).eq('id', userId);
     } on PostgrestException catch (e) {
-      throw Exception(
-        'Bildirim anahtarı güncellenirken bir hata oluştu: ${e.message}',
-      );
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Bildirim anahtarı güncellenemedi.'));
     } catch (e) {
-      throw Exception('Bildirim anahtarı güncellenemedi: $e');
+      throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Bildirim anahtarı güncellenemedi.'));
     }
   }
 }

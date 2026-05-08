@@ -11,6 +11,7 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/storage_buckets.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/avatar_image_prepare.dart';
+import 'package:balikci_app/core/widgets/network_error_widget.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/data/repositories/notification_repository.dart';
@@ -74,11 +75,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Text(
-            'Profil yüklenemedi: $e',
-            style: const TextStyle(color: AppColors.danger),
-          ),
+        error: (e, _) => NetworkErrorWidget(
+          title: 'Profil yüklenemedi',
+          onRetry: () {
+            if (isSelf) {
+              ref.invalidate(currentUserProfileProvider);
+            } else {
+              ref.invalidate(userProfileProvider(viewedUserId));
+            }
+          },
         ),
       ),
     );

@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/utils/error_message_helper.dart';
+import 'package:balikci_app/core/widgets/network_error_widget.dart';
 import 'package:balikci_app/core/utils/notification_routing.dart';
 import 'package:balikci_app/data/models/notification_model.dart';
 import 'package:balikci_app/shared/providers/notification_provider.dart';
@@ -42,7 +44,7 @@ class NotificationListScreen extends ConsumerWidget {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Tümünü okuma işlemi başarısız: $e'),
+                    content: Text(ErrorMessageHelper.toUserMessage(e, fallback: 'İşlem başarısız.')),
                     backgroundColor: AppColors.danger,
                   ),
                 );
@@ -82,7 +84,7 @@ class NotificationListScreen extends ConsumerWidget {
                     } catch (e) {
                       messenger.showSnackBar(
                         SnackBar(
-                          content: Text('Bildirim açılırken hata oluştu: $e'),
+                          content: Text(ErrorMessageHelper.toUserMessage(e, fallback: 'Bildirim açılamadı.')),
                           backgroundColor: AppColors.danger,
                         ),
                       );
@@ -94,38 +96,9 @@ class NotificationListScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.cloud_off_outlined,
-                    color: AppColors.danger, size: 48),
-                const SizedBox(height: 16),
-                const Text(
-                  'Bildirimler yüklenemedi',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'İnternet bağlantınızı kontrol edin.',
-                  style: TextStyle(color: AppColors.muted),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: () => ref.invalidate(myNotificationsProvider),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Tekrar Dene'),
-                ),
-              ],
-            ),
-          ),
+        error: (e, _) => NetworkErrorWidget(
+          title: 'Bildirimler yüklenemedi',
+          onRetry: () => ref.invalidate(myNotificationsProvider),
         ),
       ),
     );

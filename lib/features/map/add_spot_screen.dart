@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/location_service.dart';
+import 'package:balikci_app/core/utils/error_message_helper.dart';
 import 'package:balikci_app/core/services/score_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
@@ -209,7 +210,7 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Kayıt başarısız: $e'),
+          content: Text(ErrorMessageHelper.toUserMessage(e, fallback: 'Mera kaydedilemedi.\nBağlantını kontrol edip tekrar dene.')),
           backgroundColor: AppColors.danger,
         ),
       );
@@ -288,6 +289,8 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
                               Text('${e.$2} — ${e.$3}'),
                               Text(
                                 e.$4,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: AppTextStyles.caption.copyWith(
                                   fontSize: 12,
                                   color: e.$1 == 'private'
