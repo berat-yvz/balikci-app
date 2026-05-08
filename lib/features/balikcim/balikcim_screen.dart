@@ -5,7 +5,8 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/features/balikcim/daily_forecast/daily_forecast_screen.dart';
 import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_screen.dart';
 
-/// Balıkçım — rehber sekmeleri (balık bilgisi, tahmin, ipuçları).
+/// Balıkçım — rehber sekmeleri (uzman tahmini, balık bilgisi, ipuçları).
+/// Uzman tahmini (Balıkçım) ilk sekme olarak açılır.
 class BalikcimScreen extends ConsumerStatefulWidget {
   const BalikcimScreen({super.key});
 
@@ -67,14 +68,14 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
             Tab(
               height: 56,
               iconMargin: EdgeInsets.zero,
-              icon: Icon(Icons.set_meal_outlined, size: 26),
-              text: 'Balık Bilgisi',
+              icon: Icon(Icons.phishing, size: 26),
+              text: 'Balıkçım',
             ),
             Tab(
               height: 56,
               iconMargin: EdgeInsets.zero,
-              icon: Icon(Icons.phishing, size: 26),
-              text: 'Balıkçım',
+              icon: Icon(Icons.set_meal_outlined, size: 26),
+              text: 'Balık Bilgisi',
             ),
             Tab(
               height: 56,
@@ -88,8 +89,8 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
       body: TabBarView(
         controller: _tabController,
         children: const [
-          FishEncyclopediaScreen(),
           DailyForecastScreen(),
+          FishEncyclopediaScreen(),
           _PlaceholderTab(
             icon: Icons.lightbulb_outline,
             title: 'İpuçları & Mevzuat',
