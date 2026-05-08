@@ -17,9 +17,6 @@ class WeatherService {
   static final _db = SupabaseService.client;
   static final _driftDb = AppDatabase.instance;
 
-  static const double _fallbackLat = 41.0082;
-  static const double _fallbackLng = 28.9784;
-
   /// Bölge anahtarına göre cache satırı + saatlik liste.
   /// Supabase başarısızsa Drift local cache'e düşer.
   static Future<RegionalWeatherData?> fetchRegionalWeatherFromSupabase(
@@ -88,8 +85,8 @@ class WeatherService {
             try {
               current = WeatherModel.fromJson({
                 'id': '',
-                'lat': cached.regionKey == 'istanbul' ? 41.0082 : 0.0,
-                'lng': cached.regionKey == 'istanbul' ? 28.9784 : 0.0,
+                'lat': weatherRegions[cached.regionKey]?['lat'] ?? 0.0,
+                'lng': weatherRegions[cached.regionKey]?['lng'] ?? 0.0,
                 'fetched_at': cached.cachedAt.toIso8601String(),
                 'region_key': cached.regionKey,
                 'data_json': decodedDataJson,
@@ -105,11 +102,7 @@ class WeatherService {
           // Depolanan dataJson'dan saatlik veriyi yeniden oluştur.
           // Bu sayede currentHour bilgisi (rüzgar yönü, akıntı vb.)
           // online davranışıyla tutarlı hale gelir.
-          // Saatlik zaman damgaları geçmişe düşmüşse (cache eski) filtreleme
-          // yapılacağından yanlış veri gösterilmez.
-          final cachedHourly = hourlyFromOpenMeteoV1Bundle(
-            decodedDataJson,
-          );
+          final cachedHourly = hourlyFromOpenMeteoV1Bundle(decodedDataJson);
           return RegionalWeatherData(
             hourly: cachedHourly,
             current: current,
@@ -150,7 +143,7 @@ class WeatherService {
     );
   }
 
-  /// [lat],[lng]’e en yakın tanımlı kıyı bölgesi.
+  /// [lat],[lng]'e en yakın tanımlı kıyı bölgesi.
   static String nearestWeatherRegionKey(double lat, double lng) {
     var best = double.infinity;
     var key = 'istanbul';
@@ -162,15 +155,6 @@ class WeatherService {
       }
     });
     return key;
-  }
-
-  /// Mera / harita: en yakın bölgenin cache kaydı.
-  static Future<WeatherModel?> getWeatherForLocation({
-    required double lat,
-    required double lng,
-  }) async {
-    final regionKey = nearestWeatherRegionKey(lat, lng);
-    return getWeatherByRegionKey(regionKey);
   }
 
   /// Şu anki saat dilimine denk gelen saatlik satır (tahmin başlangıcı).
@@ -186,7 +170,7 @@ class WeatherService {
     return hourly.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
   }
 
-  /// Mera detay sheet: İstanbul’da ilçe bazlı `weather_cache`, aksi halde 12 kıyı bölgesi.
+  /// Mera detay sheet: İstanbul'da ilçe bazlı `weather_cache`, aksi halde 12 kıyı bölgesi.
   static Future<MeraWeatherSnapshot?> fetchMeraSheetWeather({
     required double lat,
     required double lng,
@@ -242,33 +226,6 @@ class WeatherService {
     };
     return names[regionKey] ?? regionKey;
   }
-
-  static Future<WeatherModel?> getWeatherByRegionKey(String regionKey) async {
-    try {
-      final response = await _db
-          .from('weather_cache')
-          .select()
-          .eq('region_key', regionKey)
-          .maybeSingle();
-      if (response == null) return null;
-      return WeatherModel.fromJson(Map<String, dynamic>.from(response));
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// Geriye dönük uyumluluk — artık doğrudan API yok; Supabase’ten okur.
-  static Future<List<HourlyWeatherModel>> fetchHourlyForecast({
-    double lat = _fallbackLat,
-    double lng = _fallbackLng,
-  }) async {
-    final key = nearestWeatherRegionKey(lat, lng);
-    final snap = await fetchRegionalWeatherFromSupabase(key);
-    return snap?.hourly ?? const [];
-  }
-
-  static Future<List<HourlyWeatherModel>> fetchIstanbulHourlyForecast() =>
-      fetchHourlyForecast(lat: _fallbackLat, lng: _fallbackLng);
 
   static List<HourlyWeatherModel> hourlyFromOpenMeteoV1Bundle(
     Map<String, dynamic>? dataJson,
@@ -332,6 +289,7 @@ class WeatherService {
 class MeraWeatherSnapshot {
   final WeatherModel weather;
   final HourlyWeatherModel? currentHour;
+
   /// İlçe veya kıyı bölgesi adı (kart başlığı).
   final String locationLabel;
   final String locationSubtitle;
@@ -353,7 +311,6 @@ class RegionalWeatherData {
   final WeatherModel current;
 
   /// Supabase yerine Drift local cache'ten yüklendiğini belirtir.
-  /// Bu durumda saatlik veri boş, bazı alanlar stale olabilir.
   final bool isFromCache;
 
   const RegionalWeatherData({
