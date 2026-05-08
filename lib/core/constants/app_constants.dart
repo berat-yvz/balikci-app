@@ -17,6 +17,7 @@ class AppConstants {
   static const checkinRadiusMeters = 500; // ±500m konum kontrolü
   static const checkinExpireHours = 2; // rapor "eski" olma süresi
   static const checkinRemoveHours = 6; // haritadan kalkma süresi
+  static const int checkinActiveTtlHours = 3; // glow efekti için aktiflik eşiği
 
   // Oylama
   static const voteThresholdPercent = 0.70; // %70 yanlış → gizle

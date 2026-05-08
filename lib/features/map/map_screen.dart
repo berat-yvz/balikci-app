@@ -45,7 +45,7 @@ class MapScreen extends StatefulWidget {
   State<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> {
+class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   final SpotRepository _repository = SpotRepository();
   final CheckinRepository _checkinRepository = CheckinRepository();
   final ShopRepository _shopRepository = ShopRepository();
@@ -64,6 +64,8 @@ class _MapScreenState extends State<MapScreen> {
   final Map<String, SpotModel> _spotMap = {};
   List<ShopModel> _shops = const [];
   Map<String, List<CheckinModel>> _activeCheckinsBySpotId = const {};
+  // ignore: unused_field
+  final Map<LatLng, bool> _activeSpotByLatLng = {};
   bool _isLoading = true;
   String? _error;
 
@@ -82,6 +84,7 @@ class _MapScreenState extends State<MapScreen> {
   Timer? _checkinPollTimer;
   Timer? _boundsDebounce;
   Timer? _checkinRealtimeDebounce;
+  Timer? _ttlCheckTimer;
   RealtimeChannel? _checkinsRealtimeChannel;
 
   SpotModel? _sheetSpot;
@@ -115,6 +118,10 @@ class _MapScreenState extends State<MapScreen> {
   /// Geçerli kullanıcının toplam puanı — VIP kilitli sheet'te ilerleme çubuğu için.
   int _currentUserScore = 0;
 
+  AnimationController? _pulseController;
+  // ignore: unused_field
+  Animation<double>? _pulseAnimation;
+
   bool get _isUstaOrAbove =>
       _currentUserRank == 'usta' || _currentUserRank == 'deniz_reisi';
 
@@ -125,6 +132,26 @@ class _MapScreenState extends State<MapScreen> {
     _fetchCurrentUserRank();
     _checkFmtcReady();
     unawaited(MapCacheService.evictOldTiles());
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+
+    _pulseAnimation = CurvedAnimation(
+      parent: _pulseController!,
+      curve: Curves.easeInOut,
+    );
+
+    _ttlCheckTimer = Timer.periodic(
+      const Duration(minutes: 15),
+      (_) {
+        if (mounted) {
+          _cachedMarkers = null;
+          setState(() {});
+        }
+      },
+    );
   }
 
   Future<void> _checkFmtcReady() async {
@@ -163,9 +190,11 @@ class _MapScreenState extends State<MapScreen> {
     _checkinPollTimer?.cancel();
     _boundsDebounce?.cancel();
     _checkinRealtimeDebounce?.cancel();
+    _ttlCheckTimer?.cancel();
     _sheetController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _pulseController?.dispose();
     super.dispose();
   }
 
@@ -719,6 +748,15 @@ class _MapScreenState extends State<MapScreen> {
       ),
       builder: (ctx) => _ShopDetailSheet(shop: shop),
     );
+  }
+
+  // ignore: unused_element
+  bool _isSpotActive(String spotId) {
+    final checkins = _activeCheckinsBySpotId[spotId];
+    if (checkins == null || checkins.isEmpty) return false;
+    final createdAt = checkins.first.createdAt;
+    final age = DateTime.now().difference(createdAt);
+    return age.inHours < AppConstants.checkinActiveTtlHours;
   }
 
   Widget _buildSpotMarker(SpotModel spot) {
