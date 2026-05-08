@@ -317,7 +317,8 @@ class _AgeBadge extends StatelessWidget {
   });
 
   Color get _bgColor => switch (ageState) {
-    _AgeState.fresh => AppColors.success,
+    // Teal — check-in bilgisi (sayı/süre). Yeşil artık yalnızca _FishReportBadge'e ayrılmış.
+    _AgeState.fresh => AppColors.teal,
     _AgeState.aging => const Color(0xFFF5A623),
     _ => AppColors.muted,
   };
