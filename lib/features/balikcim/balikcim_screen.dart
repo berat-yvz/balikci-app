@@ -73,8 +73,8 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
             Tab(
               height: 56,
               iconMargin: EdgeInsets.zero,
-              icon: Icon(Icons.wb_sunny_outlined, size: 26),
-              text: 'Tahmin',
+              icon: Icon(Icons.phishing, size: 26),
+              text: 'Balıkçım',
             ),
             Tab(
               height: 56,
