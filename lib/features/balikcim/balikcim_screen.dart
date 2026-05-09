@@ -5,7 +5,7 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/features/balikcim/daily_forecast/daily_forecast_screen.dart';
 import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_screen.dart';
 
-/// Balıkçım — uzman tahmini ve balık bilgisi sekmeleri.
+/// Balıkçım — günlük özet tahmin ve balık bilgisi sekmeleri.
 class BalikcimScreen extends ConsumerStatefulWidget {
   const BalikcimScreen({super.key});
 
@@ -68,7 +68,7 @@ class _BalikcimScreenState extends ConsumerState<BalikcimScreen>
               height: 56,
               iconMargin: EdgeInsets.zero,
               icon: Icon(Icons.phishing, size: 26),
-              text: 'Balıkçım',
+              text: 'Özet',
             ),
             Tab(
               height: 56,
