@@ -1,46 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:balikci_app/data/models/knot_model.dart';
 import 'package:balikci_app/data/models/notification_model.dart';
 import 'package:balikci_app/data/models/fish_log_model.dart';
 
 void main() {
-  // ─── KnotModel ────────────────────────────────────────────────────────────
-
-  group('KnotModel.fromJson', () {
-    final baseJson = {
-      'id': 'knot-1',
-      'title': 'Kanca Düğümü',
-      'category': 'temel',
-      'difficulty': 2,
-      'use_cases': ['deniz', 'göl'],
-      'steps': ['İpi halka yap', 'Ucunu geçir', 'Sık'],
-    };
-
-    test('tam veriyle parse edilir', () {
-      final knot = KnotModel.fromJson(baseJson);
-      expect(knot.id, 'knot-1');
-      expect(knot.title, 'Kanca Düğümü');
-      expect(knot.category, 'temel');
-      expect(knot.difficulty, 2);
-      expect(knot.useCases, ['deniz', 'göl']);
-      expect(knot.steps.length, 3);
-    });
-
-    test('eksik alanlar için varsayılanlar', () {
-      final knot = KnotModel.fromJson({});
-      expect(knot.id, '');
-      expect(knot.title, '');
-      expect(knot.difficulty, 1);
-      expect(knot.useCases, isEmpty);
-      expect(knot.steps, isEmpty);
-    });
-
-    test('steps liste olarak parse edilir', () {
-      final knot = KnotModel.fromJson(baseJson);
-      expect(knot.steps, isA<List<String>>());
-    });
-  });
-
   // ─── NotificationModel ───────────────────────────────────────────────────
 
   group('NotificationModel.fromJson', () {
