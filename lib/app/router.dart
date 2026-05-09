@@ -37,6 +37,12 @@ import 'package:balikci_app/features/fish_log/stats_screen.dart';
 // Features — Balıkçım
 import 'package:balikci_app/features/balikcim/balikcim_screen.dart';
 
+// Features — Feed (Sosyal Akış)
+import 'package:balikci_app/data/models/post_model.dart';
+import 'package:balikci_app/features/feed/screens/create_post_screen.dart';
+import 'package:balikci_app/features/feed/screens/feed_screen.dart';
+import 'package:balikci_app/features/feed/screens/post_detail_screen.dart';
+
 // Features — Social
 import 'package:balikci_app/features/social/friend_requests_screen.dart';
 import 'package:balikci_app/features/social/friends_list_screen.dart';
@@ -225,6 +231,38 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRoutes.weather,
             builder: (context, state) => const WeatherScreen(),
+          ),
+          // ── Sosyal Akış (Feed) ───────────────────────────────────────────
+          GoRoute(
+            path: AppRoutes.feed,
+            builder: (context, state) => const FeedScreen(),
+            routes: [
+              GoRoute(
+                path: 'create',
+                pageBuilder: (context, state) => MaterialPage<void>(
+                  fullscreenDialog: true,
+                  child: const CreatePostScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'post',
+                pageBuilder: (context, state) {
+                  final post = state.extra;
+                  if (post is! PostModel) {
+                    return _fadeSlidePage(
+                      state: state,
+                      child: const Scaffold(
+                        body: Center(child: Text('Gönderi bulunamadı')),
+                      ),
+                    );
+                  }
+                  return _fadeSlidePage(
+                    state: state,
+                    child: PostDetailScreen(post: post),
+                  );
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: AppRoutes.social,

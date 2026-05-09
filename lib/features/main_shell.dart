@@ -65,8 +65,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       case 2:
         context.go(AppRoutes.home);
       case 3:
-        // Feed rotası router.dart'a eklenene kadar /social'a git
-        context.go(AppRoutes.social);
+        context.go(AppRoutes.feed);
       case 4:
         context.go(AppRoutes.profile);
     }

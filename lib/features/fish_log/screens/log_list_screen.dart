@@ -1,3 +1,8 @@
+// DEPRECATED: Bu ekran FAZ 4 sosyal dönüşümüyle kullanım dışı bırakıldı.
+// Kullanıcıların geçmiş balık kayıtları fish_logs tablosunda korunmaktadır.
+// Sosyal paylaşım artık lib/features/feed/ üzerinden yürütülmektedir.
+// Bu dosya bir sonraki major release'te kaldırılacaktır.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

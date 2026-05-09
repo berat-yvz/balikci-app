@@ -86,11 +86,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
   Future<String> _uploadPhoto() async {
     final uid = SupabaseService.auth.currentUser?.id ?? 'unknown';
-    final fileName =
-        'fish-photos/$uid/${DateTime.now().millisecondsSinceEpoch}.webp';
+    final path = '$uid/posts/${DateTime.now().millisecondsSinceEpoch}.webp';
     final bytes = await prepareAvatarUploadBytes(_pickedImage!);
     await SupabaseService.storage.from(AppConstants.photoBucket).uploadBinary(
-          fileName,
+          path,
           bytes,
           fileOptions: const FileOptions(
             contentType: 'image/webp',
@@ -99,7 +98,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         );
     return SupabaseService.storage
         .from(AppConstants.photoBucket)
-        .getPublicUrl(fileName);
+        .getPublicUrl(path);
   }
 
   // ── Meralar ─────────────────────────────────────────────────────────────────

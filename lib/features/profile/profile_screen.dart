@@ -992,8 +992,8 @@ class _ProfileActionSection extends StatelessWidget {
       children: [
         _ActionTile(
           icon: Icons.menu_book_rounded,
-          label: 'Günlüğüm',
-          subtitle: 'Avladığın balıkları gör',
+          label: 'Geçmiş Kayıtlar',
+          subtitle: 'Eski balık günlüğü kayıtları',
           onTap: onGoToLog,
         ),
         const SizedBox(height: 8),

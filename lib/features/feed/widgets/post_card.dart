@@ -6,8 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/storage_buckets.dart';
-import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/core/utils/time_utils.dart';
 import 'package:balikci_app/data/models/post_model.dart';
+import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
 
@@ -23,8 +24,8 @@ class PostCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final myUid = SupabaseService.auth.currentUser?.id;
-    final isOwner = myUid == post.userId;
+    final myUid = ref.watch(currentUserProvider)?.id;
+    final isOwner = myUid != null && myUid == post.userId;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -366,7 +367,7 @@ class _ActionRowState extends ConsumerState<_ActionRow> {
         const Spacer(),
 
         Text(
-          _timeAgo(widget.post.createdAt),
+          timeAgo(widget.post.createdAt),
           style: const TextStyle(fontSize: 12, color: AppColors.muted),
         ),
       ],
@@ -378,7 +379,7 @@ class _ActionRowState extends ConsumerState<_ActionRow> {
     setState(() => _liking = true);
     try {
       final repo = ref.read(postRepositoryProvider);
-      final userMeta = SupabaseService.auth.currentUser?.userMetadata;
+      final userMeta = ref.read(currentUserProvider)?.userMetadata;
       final myUsername = userMeta?['username'] as String?;
       await repo.toggleLike(
         widget.post.id,
@@ -393,16 +394,6 @@ class _ActionRowState extends ConsumerState<_ActionRow> {
     } finally {
       if (mounted) setState(() => _liking = false);
     }
-  }
-
-  String _timeAgo(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'şimdi';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} dk önce';
-    if (diff.inHours < 24) return '${diff.inHours} saat önce';
-    if (diff.inDays < 7) return '${diff.inDays} gün önce';
-    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} hafta önce';
-    return '${(diff.inDays / 30).floor()} ay önce';
   }
 }
 

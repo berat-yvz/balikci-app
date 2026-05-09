@@ -353,6 +353,42 @@ CREATE POLICY "Private logs only for owner"
   ON fish_logs FOR SELECT
   USING (is_private = TRUE AND user_id = auth.uid());
 
+-- ── Sosyal Akış Tabloları (FAZ 1 — feed dönüşümü) ─────────────────────────
+
+CREATE TABLE posts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  photo_url TEXT NOT NULL,
+  caption TEXT CHECK (char_length(caption) <= 500),
+  fish_species TEXT[],
+  spot_id UUID REFERENCES fishing_spots(id) ON DELETE SET NULL,
+  spot_privacy_snapshot TEXT NOT NULL DEFAULT 'public'
+    CHECK (spot_privacy_snapshot IN ('public','friends','private','vip')),
+  spot_district TEXT,
+  likes_count INTEGER DEFAULT 0,
+  comments_count INTEGER DEFAULT 0,
+  migrated_from_log_id UUID REFERENCES fish_logs(id),
+  is_deleted BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- Gizlilik: public herkese açık; friends = takipçiler; private/vip = sadece sahibi.
+-- likes_count / comments_count: trigger ile denormalize (update_post_likes_count, update_post_comments_count).
+
+CREATE TABLE post_likes (
+  post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (post_id, user_id)
+);
+
+CREATE TABLE post_comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL CHECK (char_length(content) BETWEEN 1 AND 300),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- checkin_votes: bir kişi aynı check-in'e bir kez oy verir (UNIQUE constraint ile sağlandı)
 ALTER TABLE checkin_votes ENABLE ROW LEVEL SECURITY;
 

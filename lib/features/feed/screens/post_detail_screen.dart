@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/storage_buckets.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/core/utils/time_utils.dart';
 import 'package:balikci_app/data/models/post_model.dart';
 import 'package:balikci_app/features/feed/widgets/post_card.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
@@ -278,7 +279,7 @@ class _CommentTile extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      _timeAgo(comment.createdAt),
+                      timeAgo(comment.createdAt),
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.muted,
@@ -307,13 +308,6 @@ class _CommentTile extends StatelessWidget {
     );
   }
 
-  String _timeAgo(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'şimdi';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} dk';
-    if (diff.inHours < 24) return '${diff.inHours} sa';
-    return '${diff.inDays} gün';
-  }
 }
 
 // ── Yorum sil butonu ─────────────────────────────────────────────────────────
