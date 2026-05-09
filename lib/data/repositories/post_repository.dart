@@ -407,11 +407,18 @@ class PostRepository {
     if (uid == null) throw Exception('Silme işlemi için giriş yapmalısın.');
 
     try {
-      await _remote
+      final rows = await _remote
           .from('posts')
           .update({'is_deleted': true})
           .eq('id', postId)
-          .eq('user_id', uid); // istemci tarafı sahiplik kontrolü
+          .eq('user_id', uid)
+          .select('id');
+      final list = rows as List<dynamic>? ?? const [];
+      if (list.isEmpty) {
+        throw Exception(
+          'Gönderi silinemedi. Bağlantını kontrol et veya sayfayı yenile.',
+        );
+      }
     } on PostgrestException catch (e) {
       debugPrint('deletePost hatası: ${e.message}');
       rethrow;

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/storage_buckets.dart';
+import 'package:balikci_app/core/utils/error_message_helper.dart';
 import 'package:balikci_app/core/utils/time_utils.dart';
 import 'package:balikci_app/data/models/post_model.dart';
 import 'package:balikci_app/data/models/user_model.dart';
@@ -132,7 +133,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                   ),
                 ),
                 if (isOwner)
-                  _PostMenu(postId: widget.post.id)
+                  _PostMenu(post: widget.post)
                 else
                   const SizedBox(width: 8),
               ],
@@ -579,54 +580,94 @@ class _DetailActionRowState extends ConsumerState<_DetailActionRow> {
 // ── "..." menüsü ──────────────────────────────────────────────────────────────
 
 class _PostMenu extends ConsumerWidget {
-  final String postId;
+  final PostModel post;
 
-  const _PostMenu({required this.postId});
+  const _PostMenu({required this.post});
+
+  Future<void> _confirmAndDelete(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Gönderiyi Sil'),
+        content: const Text('Bu gönderiyi silmek istiyor musun?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'Sil',
+              style: TextStyle(color: AppColors.danger),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (!context.mounted || confirm != true) return;
+    try {
+      await ref.read(postRepositoryProvider).deletePost(post.id);
+      ref.invalidate(friendsFeedProvider);
+      ref.invalidate(globalFeedProvider);
+      ref.invalidate(userPostsProvider(post.userId));
+      ref.invalidate(likedPostsProvider(post.id));
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gönderi silindi')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            ErrorMessageHelper.toUserMessage(
+              e,
+              fallback: 'Gönderi silinemedi.',
+            ),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert, color: AppColors.muted),
-      itemBuilder: (_) => const [
-        PopupMenuItem(
-          value: 'delete',
-          child: Row(
-            children: [
-              Icon(Icons.delete_outline_rounded, color: AppColors.danger),
-              SizedBox(width: 8),
-              Text('Sil', style: TextStyle(color: AppColors.danger)),
-            ],
-          ),
-        ),
-      ],
-      onSelected: (value) async {
-        if (value != 'delete') return;
-        final confirm = await showDialog<bool>(
+    return IconButton(
+      tooltip: 'Gönderi seçenekleri',
+      icon: const Icon(Icons.more_vert_rounded, color: AppColors.muted),
+      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+      padding: EdgeInsets.zero,
+      onPressed: () async {
+        final choice = await showModalBottomSheet<String>(
           context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Gönderiyi Sil'),
-            content: const Text('Bu gönderiyi silmek istiyor musun?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('İptal'),
+          backgroundColor: AppColors.surface,
+          showDragHandle: true,
+          builder: (ctx) => SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: AppColors.danger,
+                    ),
+                    title: const Text(
+                      'Sil',
+                      style: TextStyle(color: AppColors.danger),
+                    ),
+                    onTap: () => Navigator.pop(ctx, 'delete'),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text(
-                  'Sil',
-                  style: TextStyle(color: AppColors.danger),
-                ),
-              ),
-            ],
+            ),
           ),
         );
-        if (confirm != true) return;
-        try {
-          await ref.read(postRepositoryProvider).deletePost(postId);
-          ref.invalidate(friendsFeedProvider);
-          ref.invalidate(globalFeedProvider);
-        } catch (_) {}
+        if (!context.mounted || choice != 'delete') return;
+        await _confirmAndDelete(context, ref);
       },
     );
   }
