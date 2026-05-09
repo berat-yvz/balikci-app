@@ -5,6 +5,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  * Open-Meteo → weather_cache (12 kıyı bölgesi + İstanbul ilçeleri saatlik).
  * pg_cron ile her saat başı tetiklenir; istemci doğrudan Open-Meteo çağırmaz.
  *
+ * forecast_days=7 — saatlik ~7 gün (hava sekmesi haftalık özet + saatlik tahmin).
+ *
  * data_json şeması: { source: 'open_meteo_v1', hourly: [...], current: {...} }
  * İlçe anahtarları: `lib/core/constants/istanbul_ilce_weather.dart` ile aynı olmalı.
  */
@@ -193,7 +195,7 @@ async function upsertWeatherRegion(
   lng: number,
   fetchedAt: string,
 ): Promise<void> {
-  const q = `latitude=${lat}&longitude=${lng}&timezone=Europe%2FIstanbul&forecast_days=2&temperature_unit=celsius&windspeed_unit=kmh&precipitation_unit=mm`
+  const q = `latitude=${lat}&longitude=${lng}&timezone=Europe%2FIstanbul&forecast_days=7&temperature_unit=celsius&windspeed_unit=kmh&precipitation_unit=mm`
 
   const forecastUrl =
     `https://api.open-meteo.com/v1/forecast?${q}&hourly=temperature_2m,windspeed_10m,winddirection_10m,relativehumidity_2m,precipitation,weathercode,cloudcover,visibility,surface_pressure`

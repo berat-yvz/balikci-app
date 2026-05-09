@@ -92,7 +92,7 @@ String _dayLabel(DateTime date, DateTime todayOnly) {
   return DateFormat.E('tr_TR').format(date);
 }
 
-/// Saatlik tahminden en fazla 8 günlük satır üretir (mümkünse dün + bugün + önümüzdeki 6 gün).
+/// Saatlik tahminden en fazla 8 günlük satır üretir (dün varsa + bugünden itibaren 7 gün; Open-Meteo `forecast_days=7` ile örtüşür).
 List<WeeklyForecastRow> buildWeeklyForecastRows(
   List<HourlyWeatherModel> hourly,
   DateTime now,
