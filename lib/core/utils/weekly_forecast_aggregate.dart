@@ -86,13 +86,14 @@ int? _precipChanceApprox(List<HourlyWeatherModel> hours) {
 
 String _dayLabel(DateTime date, DateTime todayOnly) {
   final d = _dateOnly(date);
-  final yesterday = todayOnly.subtract(const Duration(days: 1));
-  if (d == yesterday) return 'Dün';
   if (d == todayOnly) return 'Bugün';
+  final tomorrow = todayOnly.add(const Duration(days: 1));
+  if (d == tomorrow) return 'Yarın';
   return DateFormat.E('tr_TR').format(date);
 }
 
-/// Saatlik tahminden en fazla 8 günlük satır üretir (dün varsa + bugünden itibaren 7 gün; Open-Meteo `forecast_days=7` ile örtüşür).
+/// Saatlik tahminden en fazla **7 satır** üretir: **bugün + önümüzdeki 6 gün**
+/// (`forecast_days=7` ile uyumlu). Geçmiş günler (dün vb.) bu özet tabloya alınmaz.
 List<WeeklyForecastRow> buildWeeklyForecastRows(
   List<HourlyWeatherModel> hourly,
   DateTime now,
@@ -100,7 +101,6 @@ List<WeeklyForecastRow> buildWeeklyForecastRows(
   if (hourly.isEmpty) return [];
 
   final todayOnly = _dateOnly(now);
-  final yesterdayOnly = todayOnly.subtract(const Duration(days: 1));
 
   final byDay = <DateTime, List<HourlyWeatherModel>>{};
   for (final h in hourly) {
@@ -109,19 +109,18 @@ List<WeeklyForecastRow> buildWeeklyForecastRows(
   }
 
   final ordered = <DateTime>[];
-  if (byDay.containsKey(yesterdayOnly)) ordered.add(yesterdayOnly);
-
-  for (var i = 0; i < 7 && ordered.length < 8; i++) {
+  for (var i = 0; i < 7; i++) {
     final d = todayOnly.add(Duration(days: i));
-    if (byDay.containsKey(d) && !ordered.contains(d)) ordered.add(d);
+    if (byDay.containsKey(d)) ordered.add(d);
   }
 
-  if (ordered.length < 8) {
-    final rest = byDay.keys.where((k) => !ordered.contains(k)).toList()
+  if (ordered.length < 7) {
+    final rest = byDay.keys
+        .where((k) => !k.isBefore(todayOnly) && !ordered.contains(k))
+        .toList()
       ..sort();
     for (final k in rest) {
-      if (ordered.length >= 8) break;
-      if (k.isBefore(yesterdayOnly)) continue;
+      if (ordered.length >= 7) break;
       ordered.add(k);
     }
   }
@@ -137,8 +136,7 @@ List<WeeklyForecastRow> buildWeeklyForecastRows(
     final daySample = _nearestHour(hours, 13) ?? hours.first;
     final nightSample = _nearestHour(hours, 22) ?? hours.last;
 
-    final isYesterday = _dateOnly(date) == yesterdayOnly;
-    final precip = isYesterday ? null : _precipChanceApprox(hours);
+    final precip = _precipChanceApprox(hours);
 
     rows.add(
       WeeklyForecastRow(

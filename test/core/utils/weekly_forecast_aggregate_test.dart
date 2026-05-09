@@ -31,7 +31,7 @@ void main() {
     expect(buildWeeklyForecastRows([], DateTime(2026, 5, 9)), isEmpty);
   });
 
-  test('dün verisi varsa ilk satır Dün ve yağış yüzdesi yok', () {
+  test('dün verisi tabloya alınmaz; özet bugünden başlar', () {
     final now = DateTime(2026, 5, 9, 14);
     final yesterday = DateTime(2026, 5, 8, 13);
     final hourly = [
@@ -39,9 +39,10 @@ void main() {
       _h(DateTime(2026, 5, 9, 13), temp: 22, code: 0),
     ];
     final rows = buildWeeklyForecastRows(hourly, now);
-    expect(rows.first.dayLabel, 'Dün');
-    expect(rows.first.precipChancePercent, isNull);
-    expect(rows.first.highC, 14);
+    expect(rows.length, 1);
+    expect(rows.single.dayLabel, 'Bugün');
+    expect(rows.single.highC, 22);
+    expect(rows.single.precipChancePercent, isNotNull);
   });
 
   test('bugün ve yarın iki satır üretir', () {
@@ -56,7 +57,29 @@ void main() {
     final rows = buildWeeklyForecastRows(hourly, now);
     expect(rows.length, 2);
     expect(rows[0].dayLabel, 'Bugün');
-    expect(rows[1].dayLabel, 'Paz');
+    expect(rows[1].dayLabel, 'Yarın');
     expect(rows[0].precipChancePercent, isNotNull);
+  });
+
+  test('yedi günlük saatlik veriden yedi satır üretir', () {
+    final now = DateTime(2026, 5, 9, 12);
+    final hourly = <HourlyWeatherModel>[];
+    for (var day = 0; day < 7; day++) {
+      final base = DateTime(2026, 5, 9).add(Duration(days: day));
+      for (var hour = 0; hour < 24; hour++) {
+        hourly.add(
+          _h(
+            DateTime(base.year, base.month, base.day, hour),
+            temp: 15 + day.toDouble(),
+            code: 1,
+          ),
+        );
+      }
+    }
+    final rows = buildWeeklyForecastRows(hourly, now);
+    expect(rows.length, 7);
+    expect(rows.first.dayLabel, 'Bugün');
+    expect(rows[1].dayLabel, 'Yarın');
+    expect(rows.last.highC, 15 + 6);
   });
 }

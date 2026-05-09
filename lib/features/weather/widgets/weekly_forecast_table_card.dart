@@ -44,7 +44,7 @@ class WeeklyForecastTableCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Saatlik tahminden hesaplanır',
+                  'Bugün ve önümüzdeki 6 gün — sunucu saatlik verisinden',
                   style: AppTextStyles.caption.copyWith(
                     color: Colors.white.withValues(alpha: 0.55),
                     fontSize: 12,
