@@ -178,8 +178,8 @@ class _MainShellState extends ConsumerState<MainShell> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _NavItem(
-                        icon: Icons.waves_outlined,
-                        activeIcon: Icons.waves_rounded,
+                        icon: Icons.dynamic_feed_outlined,
+                        activeIcon: Icons.dynamic_feed_rounded,
                         label: 'Sosyal',
                         index: 3,
                         currentIndex: _currentIndex,
