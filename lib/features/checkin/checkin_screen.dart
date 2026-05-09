@@ -526,7 +526,7 @@ class _Page1 extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Buraya Balık Tutuldu!',
+                            'Bu merada balık var!',
                             style: AppTextStyles.h2.copyWith(
                               color: AppColors.foam,
                               fontSize: 24,
@@ -569,7 +569,7 @@ class _Page1 extends StatelessWidget {
                           ),
                           const SizedBox(height: 20),
                           Text(
-                            'Ne Balığı Tutuldu?',
+                            'Hangi balıkları gördün?',
                             style: AppTextStyles.caption.copyWith(
                               color: AppColors.muted,
                               fontWeight: FontWeight.w700,
