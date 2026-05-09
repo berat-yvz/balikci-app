@@ -23,7 +23,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(milliseconds: 1200));
+    // Bir kare göster (logo), sonra hemen rota — harita ilk ekranda hissedilsin.
+    await Future<void>.delayed(const Duration(milliseconds: 140));
     if (!mounted) return;
 
     final isLoggedIn = ref.read(isLoggedInProvider);

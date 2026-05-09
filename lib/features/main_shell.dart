@@ -91,10 +91,14 @@ class _MainShellState extends ConsumerState<MainShell> {
       final uid = sessionUid;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        unawaited(ref.read(currentUserProfileProvider.future));
-        unawaited(ref.read(favoriteSpotsProvider.future));
-        unawaited(ref.read(profileSummaryStatsProvider(uid).future));
-        ref.read(userPostsProvider(uid));
+        // Harita ilk açılışında ağ istekleri ve rebuild ile yarışmasın.
+        Future<void>.delayed(const Duration(milliseconds: 1400), () {
+          if (!mounted) return;
+          unawaited(ref.read(currentUserProfileProvider.future));
+          unawaited(ref.read(favoriteSpotsProvider.future));
+          unawaited(ref.read(profileSummaryStatsProvider(uid).future));
+          ref.read(userPostsProvider(uid));
+        });
       });
     }
 

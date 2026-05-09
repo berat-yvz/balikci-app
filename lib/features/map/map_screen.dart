@@ -27,7 +27,7 @@ import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/data/models/shop_model.dart';
 import 'package:balikci_app/features/map/widgets/spot_marker.dart';
-import 'package:balikci_app/features/map/widgets/weather_card.dart';
+import 'package:balikci_app/features/map/widgets/deferred_map_weather_card.dart';
 import 'package:balikci_app/data/repositories/shop_repository.dart';
 import 'package:balikci_app/data/repositories/user_repository.dart';
 import 'package:balikci_app/shared/providers/favorite_provider.dart';
@@ -56,6 +56,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   /// FMTC tile cache başarıyla başlatıldıysa true; yoksa fallback provider kullanılır.
   bool _fmtcReady = false;
+
+  /// İlk karelerde küme katmanı ve bildirim realtime’ı karolarla yarışmasın.
+  bool _mapSecondaryLayersReady = false;
 
   List<SpotModel> _spots = const [];
 
@@ -131,10 +134,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(_initializeCacheAndLoad());
+      Future<void>.delayed(const Duration(milliseconds: 200), () {
+        if (mounted) setState(() => _mapSecondaryLayersReady = true);
+      });
     });
-    _fetchCurrentUserRank();
+    Future<void>.delayed(const Duration(milliseconds: 380), () {
+      if (mounted) unawaited(_fetchCurrentUserRank());
+    });
     _checkFmtcReady();
-    unawaited(MapCacheService.evictOldTiles());
+    Future<void>.delayed(const Duration(seconds: 3), () {
+      unawaited(MapCacheService.evictOldTiles());
+    });
 
     _pulseController = AnimationController(
       vsync: this,
@@ -991,7 +1001,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                       debugPrint('Tile yükleme hatası: $error');
                     },
                   ),
-                  if (_showSpots)
+                  if (_mapSecondaryLayersReady && _showSpots)
                     MarkerClusterLayerWidget(
                       options: MarkerClusterLayerOptions(
                         markers: _markers,
@@ -1091,7 +1101,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                       ),
                     ),
                   // Mera kümesinin üstünde çiz — aksi halde işaretler görünmeyebilir.
-                  if (_showShops) MarkerLayer(markers: _buildShopMarkers()),
+                  if (_mapSecondaryLayersReady && _showShops)
+                    MarkerLayer(markers: _buildShopMarkers()),
                 ],
               ),
             ),
@@ -1103,7 +1114,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             top: MediaQuery.of(context).padding.top + 8 + 48 + 8,
             left: 12,
             right: 82,
-            child: const WeatherCard(),
+            child: const DeferredMapWeatherCard(),
           ),
 
           // Üst: Arama (floating)
@@ -1329,88 +1340,109 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Consumer(
-                  builder: (context, ref, _) {
-                    final count = ref.watch(unreadCountProvider);
+                if (!_mapSecondaryLayersReady)
+                  Tooltip(
+                    message: 'Bildirimler',
+                    child: GestureDetector(
+                      onTap: () => context.push(AppRoutes.notifications),
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.notifications_rounded,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final count = ref.watch(unreadCountProvider);
 
-                    Widget buildButton(int count) {
-                      return Tooltip(
-                        message: 'Bildirimler',
-                        child: GestureDetector(
-                          onTap: () => context.push(AppRoutes.notifications),
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.65),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                Center(
-                                  child: Icon(
-                                    Icons.notifications_rounded,
-                                    color: count > 0
-                                        ? AppColors.sand
-                                        : Colors.white,
-                                    size: 26,
+                      Widget buildButton(int count) {
+                        return Tooltip(
+                          message: 'Bildirimler',
+                          child: GestureDetector(
+                            onTap: () => context.push(AppRoutes.notifications),
+                            child: Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.65),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Center(
+                                    child: Icon(
+                                      Icons.notifications_rounded,
+                                      color: count > 0
+                                          ? AppColors.sand
+                                          : Colors.white,
+                                      size: 26,
+                                    ),
                                   ),
-                                ),
-                                // Okunmamış bildirim nokta göstergesi
-                                if (count > 0)
-                                  Positioned(
-                                    right: 9,
-                                    top: 9,
-                                    child: Container(
-                                      width: 9,
-                                      height: 9,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.success,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.black,
-                                          width: 1.5,
+                                  // Okunmamış bildirim nokta göstergesi
+                                  if (count > 0)
+                                    Positioned(
+                                      right: 9,
+                                      top: 9,
+                                      child: Container(
+                                        width: 9,
+                                        height: 9,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.success,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.black,
+                                            width: 1.5,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                // Okunmamış sayı rozeti
-                                if (count > 0)
-                                  Positioned(
-                                    right: 5,
-                                    bottom: 5,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 5,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.danger,
-                                        borderRadius: BorderRadius.circular(
-                                          999,
+                                  // Okunmamış sayı rozeti
+                                  if (count > 0)
+                                    Positioned(
+                                      right: 5,
+                                      bottom: 5,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 5,
+                                          vertical: 2,
                                         ),
-                                      ),
-                                      child: Text(
-                                        count > 99 ? '99+' : '$count',
-                                        style: const TextStyle(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w900,
-                                          color: Colors.white,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.danger,
+                                          borderRadius: BorderRadius.circular(
+                                            999,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          count > 99 ? '99+' : '$count',
+                                          style: const TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    }
+                        );
+                      }
 
-                    return buildButton(count);
-                  },
-                ),
+                      return buildButton(count);
+                    },
+                  ),
                 const SizedBox(height: 8),
                 _LayerToggleGroup(
                   showSpots: _showSpots,
