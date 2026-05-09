@@ -148,4 +148,19 @@ void main() {
       });
     }
   });
+
+  group('UserModel.provisionalSelf', () {
+    test('metadata username ile oluşturur', () {
+      final u = UserModel.provisionalSelf(
+        id: 'abc-uuid',
+        email: 'x@test.com',
+        userMetadata: const {'username': 'OltaUsta'},
+        createdAtIso: '2026-01-01T00:00:00.000Z',
+      );
+      expect(u.id, 'abc-uuid');
+      expect(u.username, 'OltaUsta');
+      expect(u.totalScore, 0);
+      expect(u.rank, 'acemi');
+    });
+  });
 }

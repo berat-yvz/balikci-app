@@ -16,9 +16,9 @@ final userRepositoryProvider = Provider<UserRepository>((ref) {
 });
 
 /// Geçerli oturumdaki kullanıcının profilini dönen FutureProvider.
-final currentUserProfileProvider = FutureProvider.autoDispose<UserModel?>((
-  ref,
-) async {
+/// autoDispose değil — profil sekmesine her dönüşte önbellekten anında gösterilir;
+/// yenileme için [currentUserProfileProvider] invalidate edilir.
+final currentUserProfileProvider = FutureProvider<UserModel?>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return null;
 
@@ -71,9 +71,9 @@ final userSearchByUsernameProvider =
   return repo.searchUsersByUsername(query: query);
 });
 
-/// Belirli bir kullanıcının profilini dönen provider.
-final userProfileProvider = FutureProvider.autoDispose
-    .family<UserModel?, String>((ref, userId) async {
+/// Belirli bir kullanıcının profilini dönen provider (önbellekli).
+final userProfileProvider =
+    FutureProvider.family<UserModel?, String>((ref, userId) async {
       final repo = ref.read(userRepositoryProvider);
       return repo.getProfile(userId);
     });

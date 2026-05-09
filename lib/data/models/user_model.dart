@@ -76,6 +76,34 @@ class UserModel {
   }) =>
       _resolveUsername(rawUsername, email, userId);
 
+  /// Sunucu profili gelene kadar (ör. oturum `User`) gösterilecek iskelet profil — puansız.
+  factory UserModel.provisionalSelf({
+    required String id,
+    required String email,
+    Map<String, dynamic>? userMetadata,
+    String? createdAtIso,
+  }) {
+    final metaUser = userMetadata?['username'] as String?;
+    final resolved = displayUsername(
+      rawUsername: metaUser,
+      email: email,
+      userId: id,
+    );
+    final created = createdAtIso != null ? DateTime.tryParse(createdAtIso) : null;
+    return UserModel(
+      id: id,
+      email: email,
+      username: resolved.trim().isEmpty ? 'Balıkçı' : resolved,
+      avatarUrl: null,
+      rank: 'acemi',
+      totalScore: 0,
+      sustainabilityScore: 0,
+      fcmToken: null,
+      createdAt:
+          created ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+    );
+  }
+
   /// JSON / PostgREST sayıları (int, double, büyük bigint string) için güvenli dönüşüm.
   static int coerceToInt(dynamic v) {
     if (v == null) return 0;

@@ -21,6 +21,7 @@ import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/favorite_provider.dart';
 import 'package:balikci_app/shared/providers/friend_request_provider.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
+import 'package:balikci_app/shared/providers/profile_summary_stats_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
 
@@ -52,42 +53,63 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ? ref.watch(currentUserProfileProvider)
         : ref.watch(userProfileProvider(viewedUserId));
 
+    UserModel? provisional;
+    if (isSelf) {
+      provisional = UserModel.provisionalSelf(
+        id: currentUser.id,
+        email: currentUser.email ?? '',
+        userMetadata: currentUser.userMetadata,
+        createdAtIso: currentUser.createdAt,
+      );
+    }
+
+    final loaded = profileAsync.asData?.value;
+    final resolvedUser = loaded ?? (profileAsync.isLoading ? provisional : null);
+
+    final needsBlockingSpinner =
+        resolvedUser == null && profileAsync.isLoading && provisional == null;
+    final showError =
+        profileAsync.hasError && resolvedUser == null && provisional == null;
+    final showMissing =
+        profileAsync.hasValue && loaded == null && provisional == null;
+
+    late final Widget body;
+    if (showError) {
+      body = NetworkErrorWidget(
+        title: 'Profil yüklenemedi',
+        onRetry: () {
+          if (isSelf) {
+            ref.invalidate(currentUserProfileProvider);
+          } else {
+            ref.invalidate(userProfileProvider(viewedUserId));
+          }
+        },
+      );
+    } else if (needsBlockingSpinner) {
+      body = const Center(child: CircularProgressIndicator());
+    } else if (showMissing) {
+      body = const Center(child: Text('Kullanıcı bulunamadı.'));
+    } else {
+      final displayUser = resolvedUser!;
+      body = _ProfileContent(
+        user: displayUser,
+        isSelf: isSelf,
+        isUploadingAvatar: _uploadingAvatar,
+        onPickAvatar:
+            isSelf ? () => _pickAndUploadAvatar(displayUser) : null,
+      );
+    }
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: profileAsync.when(
-          data: (u) => Text(
-            widget.userId != null && u != null ? u.username : 'Profil',
-          ),
-          loading: () => const Text('Profil'),
-          error: (error, stack) => const Text('Profil'),
+        title: Text(
+          widget.userId != null && resolvedUser != null
+              ? resolvedUser.username
+              : 'Profil',
         ),
       ),
-      body: profileAsync.when(
-        data: (user) {
-          if (user == null) {
-            return const Center(child: Text('Kullanıcı bulunamadı.'));
-          }
-
-          return _ProfileContent(
-            user: user,
-            isSelf: isSelf,
-            isUploadingAvatar: _uploadingAvatar,
-            onPickAvatar: isSelf ? () => _pickAndUploadAvatar(user) : null,
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => NetworkErrorWidget(
-          title: 'Profil yüklenemedi',
-          onRetry: () {
-            if (isSelf) {
-              ref.invalidate(currentUserProfileProvider);
-            } else {
-              ref.invalidate(userProfileProvider(viewedUserId));
-            }
-          },
-        ),
-      ),
+      body: body,
     );
   }
 
@@ -162,9 +184,17 @@ class _ProfileContent extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () async {
         HapticFeedback.lightImpact();
-        ref.invalidate(currentUserProfileProvider);
-        ref.invalidate(favoriteSpotsProvider);
-        ref.invalidate(mutualFriendCountForUserProvider(user.id));
+        final uid = user.id;
+        if (isSelf) {
+          ref.invalidate(currentUserProfileProvider);
+          ref.invalidate(favoriteSpotsProvider);
+        } else {
+          ref.invalidate(userProfileProvider(uid));
+          ref.invalidate(socialEdgeProvider(uid));
+        }
+        ref.invalidate(mutualFriendCountForUserProvider(uid));
+        ref.invalidate(profileSummaryStatsProvider(uid));
+        await ref.read(userPostsProvider(uid).notifier).refresh(uid);
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -288,9 +318,12 @@ class _ProfileContent extends ConsumerWidget {
               const SizedBox(height: 16),
               ref.watch(socialEdgeProvider(user.id)).when(
                     data: (edge) => _FriendshipActionBar(user: user, edge: edge),
-                    loading: () => const SizedBox(
-                      width: double.infinity,
-                      child: Center(child: CircularProgressIndicator()),
+                    loading: () => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: const LinearProgressIndicator(minHeight: 3),
+                      ),
                     ),
                     error: (e, _) => SizedBox(
                       width: double.infinity,
@@ -812,112 +845,90 @@ class _FriendsStatRow extends ConsumerWidget {
 
 // ── ADIM 9: Özet istatistik kartları 3'lü grid ───────────────────────────────
 
-class _SummaryStatsGrid extends ConsumerStatefulWidget {
+class _SummaryStatsGrid extends ConsumerWidget {
   final String userId;
   const _SummaryStatsGrid({required this.userId});
 
-  static Future<int> _getSpotCount(String userId) async {
-    try {
-      final rows = await SupabaseService.client
-          .from('fishing_spots')
-          .select('id')
-          .eq('user_id', userId);
-      return (rows as List).length;
-    } catch (_) {
-      return 0;
-    }
-  }
-
-  static Future<int> _getCheckinCount(String userId) async {
-    try {
-      final rows = await SupabaseService.client
-          .from('checkins')
-          .select('id')
-          .eq('user_id', userId);
-      return (rows as List).length;
-    } catch (_) {
-      return 0;
-    }
-  }
-
-  static Future<int> _getPostCount(String userId) async {
-    try {
-      final rows = await SupabaseService.client
-          .from('posts')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('is_deleted', false);
-      return (rows as List).length;
-    } catch (_) {
-      return 0;
-    }
-  }
-
   @override
-  ConsumerState<_SummaryStatsGrid> createState() => _SummaryStatsGridState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(profileSummaryStatsProvider(userId));
+    return async.when(
+      loading: () => _SummaryStatsPlaceholderRow(userId: userId),
+      error: (Object error, StackTrace stackTrace) => _SummaryStatsValuesRow(
+        userId: userId,
+        posts: '—',
+        spots: '—',
+        checkins: '—',
+      ),
+      data: (s) => _SummaryStatsValuesRow(
+        userId: userId,
+        posts: '${s.postCount}',
+        spots: '${s.spotCount}',
+        checkins: '${s.checkinCount}',
+      ),
+    );
+  }
 }
 
-class _SummaryStatsGridState extends ConsumerState<_SummaryStatsGrid> {
-  Future<List<int>>? _statsFuture;
-
-  @override
-  void didUpdateWidget(covariant _SummaryStatsGrid oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.userId != widget.userId) {
-      _statsFuture = null;
-    }
-  }
-
-  Future<List<int>> _loadStats() {
-    return Future.wait([
-      _SummaryStatsGrid._getPostCount(widget.userId),
-      _SummaryStatsGrid._getSpotCount(widget.userId),
-      _SummaryStatsGrid._getCheckinCount(widget.userId),
-    ]);
-  }
+class _SummaryStatsPlaceholderRow extends StatelessWidget {
+  final String userId;
+  const _SummaryStatsPlaceholderRow({required this.userId});
 
   @override
   Widget build(BuildContext context) {
-    _statsFuture ??= _loadStats();
+    return _SummaryStatsValuesRow(
+      userId: userId,
+      posts: '…',
+      spots: '…',
+      checkins: '…',
+    );
+  }
+}
 
-    return FutureBuilder<List<int>>(
-      future: _statsFuture,
-      builder: (context, snapshot) {
-        final postCount = snapshot.data?[0] ?? 0;
-        final spotCount = snapshot.data?[1] ?? 0;
-        final checkinCount = snapshot.data?[2] ?? 0;
+class _SummaryStatsValuesRow extends StatelessWidget {
+  final String userId;
+  final String posts;
+  final String spots;
+  final String checkins;
 
-        return Row(
-          children: [
-            Expanded(
-              child: _SummaryCard(
-                emoji: '📸',
-                value: '$postCount',
-                label: 'Gönderiler',
-              ),
+  const _SummaryStatsValuesRow({
+    required this.userId,
+    required this.posts,
+    required this.spots,
+    required this.checkins,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _SummaryCard(
+            emoji: '📸',
+            value: posts,
+            label: 'Gönderiler',
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _SummaryCard(
+            emoji: '📍',
+            value: spots,
+            label: 'Toplam Mera',
+            onTap: () => context.push(
+              AppRoutes.profileUserSpots(userId),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _SummaryCard(
-                emoji: '📍',
-                value: '$spotCount',
-                label: 'Toplam Mera',
-                onTap: () => context.push(
-                  AppRoutes.profileUserSpots(widget.userId),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _SummaryCard(
-                emoji: '🎣',
-                value: '$checkinCount',
-                label: 'Bildirimlerim',
-              ),
-            ),
-          ],
-        );
-      },
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _SummaryCard(
+            emoji: '🎣',
+            value: checkins,
+            label: 'Bildirimlerim',
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1055,7 +1066,16 @@ class _FavoriteSpotsSection extends ConsumerWidget {
     final spotsAsync = ref.watch(favoriteSpotsProvider);
 
     return spotsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(strokeWidth: 2.5),
+          ),
+        ),
+      ),
       error: (e, _) => Row(
         children: [
           const Icon(Icons.wifi_off_rounded, size: 16, color: AppColors.muted),

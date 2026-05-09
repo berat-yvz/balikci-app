@@ -31,7 +31,7 @@ class SocialEdge {
 }
 
 final socialEdgeProvider =
-    FutureProvider.autoDispose.family<SocialEdge, String>((ref, otherUserId) async {
+    FutureProvider.family<SocialEdge, String>((ref, otherUserId) async {
       final me = SupabaseService.auth.currentUser?.id;
       if (me == null) return const SocialEdge(SocialEdgeKind.stranger);
       if (me == otherUserId) return const SocialEdge(SocialEdgeKind.self);
@@ -79,7 +79,7 @@ final mutualFriendsForUserProvider =
 
 /// Profil kartı için arkadaş sayısı.
 final mutualFriendCountForUserProvider =
-    FutureProvider.autoDispose.family<int, String>((ref, userId) async {
+    FutureProvider.family<int, String>((ref, userId) async {
       final ids =
           await ref.read(followRepositoryProvider).getMutualFriendIds(userId);
       return ids.length;

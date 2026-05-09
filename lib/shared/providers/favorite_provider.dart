@@ -19,10 +19,8 @@ final isFavoritedProvider =
   return repo.isFavorited(spotId);
 });
 
-/// Giriş yapmış kullanıcının tüm favori meralarını döner.
-/// Profil sayfasındaki _FavoriteSpotsSection tarafından izlenir.
-final favoriteSpotsProvider =
-    FutureProvider.autoDispose<List<SpotModel>>((ref) async {
+/// Giriş yapmış kullanıcının tüm favori meralarını döner (profil için önbellekli).
+final favoriteSpotsProvider = FutureProvider<List<SpotModel>>((ref) async {
   ref.watch(currentUserProvider);
   final repo = ref.read(favoriteRepositoryProvider);
   return repo.getFavoriteSpots();

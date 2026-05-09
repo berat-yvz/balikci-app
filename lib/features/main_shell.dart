@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,7 +8,12 @@ import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/services/proximity_vote_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/connectivity_provider.dart';
+import 'package:balikci_app/shared/providers/favorite_provider.dart';
+import 'package:balikci_app/shared/providers/post_provider.dart';
+import 'package:balikci_app/shared/providers/profile_summary_stats_provider.dart';
+import 'package:balikci_app/shared/providers/user_provider.dart';
 
 // TODO: router.dart'a feed route'larını ekle — ayrı oturumda yapılacak
 
@@ -24,6 +31,8 @@ class MainShell extends ConsumerStatefulWidget {
 class _MainShellState extends ConsumerState<MainShell> {
   int _currentIndex = 2; // harita varsayılan
   bool _scheduledProximityVote = false;
+  /// Profil önbelleği bir kez ısıtıldı mı (oturum kullanıcısı başına).
+  String? _profileWarmupUid;
 
   @override
   void initState() {
@@ -73,6 +82,21 @@ class _MainShellState extends ConsumerState<MainShell> {
   Widget build(BuildContext context) {
     final path = GoRouterState.of(context).uri.path;
     _currentIndex = _indexFromPath(path);
+
+    final sessionUid = ref.watch(currentUserProvider)?.id;
+    if (sessionUid == null) {
+      _profileWarmupUid = null;
+    } else if (_profileWarmupUid != sessionUid) {
+      _profileWarmupUid = sessionUid;
+      final uid = sessionUid;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(ref.read(currentUserProfileProvider.future));
+        unawaited(ref.read(favoriteSpotsProvider.future));
+        unawaited(ref.read(profileSummaryStatsProvider(uid).future));
+        ref.read(userPostsProvider(uid));
+      });
+    }
 
     final isOnline = ref.watch(isOnlineProvider);
 
