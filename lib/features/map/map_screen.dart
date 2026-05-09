@@ -65,7 +65,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   Map<String, List<CheckinModel>> _activeCheckinsBySpotId = const {};
   // ignore: unused_field
   final Map<LatLng, bool> _activeSpotByLatLng = {};
-  bool _isLoading = true;
+  /// Uzak sunucudan mera listesi çekilirken — tam ekran spinner yok, ince çubuk.
+  bool _spotsRemoteRefreshing = false;
   String? _error;
 
   /// GPS aranırken true — buton devre dışı kalır ve spinner gösterilir.
@@ -127,7 +128,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _initializeCacheAndLoad();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_initializeCacheAndLoad());
+    });
     _fetchCurrentUserRank();
     _checkFmtcReady();
     unawaited(MapCacheService.evictOldTiles());
@@ -198,12 +202,32 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _initializeCacheAndLoad() async {
-    await _loadSpots();
-    await _loadShops();
+    await _hydrateSpotsFromLocalCache();
+    unawaited(_refreshSpotsFromRemote());
+    unawaited(_loadShops());
     _startCheckinsRealtime();
     // await ile çağırıyoruz: _openInitialSpotIfNeeded artık async ve
     // deep-link yüklemesini kendisi yönetiyor.
     await _openInitialSpotIfNeeded();
+  }
+
+  /// Drift önbelleği — ilk kareden hemen sonra pinleri gösterir.
+  Future<void> _hydrateSpotsFromLocalCache() async {
+    try {
+      final cached = await _repository.getCachedSpots();
+      if (!mounted || cached.isEmpty) return;
+      setState(() {
+        _spotMap
+          ..clear()
+          ..addEntries(cached.map((s) => MapEntry(s.id, s)));
+        _spots = _spotMap.values.toList();
+        _cachedMarkers = null;
+        _error = null;
+      });
+      await _refreshActiveCheckins();
+    } catch (_) {
+      // Önbellek okunamazsa uzak yükleme devreye girer.
+    }
   }
 
   Future<void> _fetchCurrentUserRank() async {
@@ -379,34 +403,39 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _loadSpots() async {
+  /// Sunucudan tam liste — arka planda; tam ekran bekletmez.
+  Future<void> _refreshSpotsFromRemote() async {
+    if (!mounted) return;
     setState(() {
-      _isLoading = true;
+      _spotsRemoteRefreshing = true;
       _error = null;
     });
     try {
       final spots = await _repository.getSpots(limit: 500);
+      if (!mounted) return;
       setState(() {
         _spotMap
           ..clear()
           ..addEntries(spots.map((s) => MapEntry(s.id, s)));
         _spots = _spotMap.values.toList();
+        _cachedMarkers = null;
       });
       await _refreshActiveCheckins();
     } catch (e) {
-      // Remote hata verirse local cache ile fallback.
       final cached = await _repository.getCachedSpots();
+      if (!mounted) return;
       setState(() {
         _spotMap
           ..clear()
           ..addEntries(cached.map((s) => MapEntry(s.id, s)));
         _spots = _spotMap.values.toList();
+        _cachedMarkers = null;
         _error = cached.isEmpty ? 'Meralar yüklenemedi.' : null;
       });
       await _refreshActiveCheckins();
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() => _spotsRemoteRefreshing = false);
       }
     }
   }
@@ -1276,7 +1305,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               onPressed: () async {
                 final ok = await context.push<bool>('/map/add-spot');
                 if (!mounted) return;
-                if (ok == true) unawaited(_loadSpots());
+                if (ok == true) unawaited(_refreshSpotsFromRemote());
               },
               backgroundColor: AppColors.mapSpotLayerActive,
               foregroundColor: AppColors.foam,
@@ -1393,7 +1422,18 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ),
           ),
 
-          if (_isLoading) const Center(child: CircularProgressIndicator()),
+          // Üst: uzak mera senkronu — harita kullanılabilir kalır.
+          if (_spotsRemoteRefreshing)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: MediaQuery.of(context).padding.top,
+              child: LinearProgressIndicator(
+                minHeight: 2,
+                backgroundColor: Colors.black.withValues(alpha: 0.15),
+                valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+              ),
+            ),
 
           // Alt: Draggable sheet — yalnızca mera seçilince görünür.
           // Align(bottomCenter) + Stack gevşek kısıtları bazen sheet’e 0 yükseklik verir;
@@ -1537,7 +1577,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               ),
             ),
 
-          if (_error != null && !_isLoading)
+          if (_error != null && !_spotsRemoteRefreshing)
             Positioned(
               left: 16,
               right: 16,

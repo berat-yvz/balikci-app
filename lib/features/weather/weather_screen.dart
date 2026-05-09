@@ -85,7 +85,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
       resizeToAvoidBottomInset: true,
       appBar: AppBar(title: const Text('Hava Durumu')),
       body: weatherAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const _WeatherLoadingSkeleton(),
         error: (error, stack) => const _EmptyWeather(),
         data: (data) {
           final hoursFromNow = WeatherScreen._next24Hours(data.hourly);
@@ -242,6 +242,37 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
           );
         },
       ),
+    );
+  }
+}
+
+/// İlk karede tam ekran spinner yerine yer tutucu — veri gelince liste ile değişir.
+class _WeatherLoadingSkeleton extends StatelessWidget {
+  const _WeatherLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget bar(double height) => Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: const Color(0xFF132236),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white10),
+        ),
+      ),
+    );
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      children: [
+        bar(52),
+        bar(152),
+        bar(88),
+        bar(240),
+        bar(112),
+      ],
     );
   }
 }
