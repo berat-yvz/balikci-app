@@ -21,17 +21,19 @@ class FeedScreen extends ConsumerWidget {
         backgroundColor: AppColors.background,
         appBar: AppBar(
           backgroundColor: AppColors.primary,
+          elevation: 0,
           title: const Text(
             'Sosyal 🎣',
             style: TextStyle(
               color: AppColors.foam,
               fontWeight: FontWeight.bold,
-              fontSize: 20,
+              fontSize: 22,
             ),
           ),
           actions: [
             IconButton(
               icon: const Icon(Icons.camera_alt_rounded, color: AppColors.foam),
+              iconSize: 28,
               tooltip: 'Gönderi Paylaş',
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
@@ -40,17 +42,31 @@ class FeedScreen extends ConsumerWidget {
                 ),
               ),
             ),
+            const SizedBox(width: 4),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             indicatorColor: AppColors.accent,
+            indicatorWeight: 3,
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicator: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.accent,
+                  width: 3,
+                ),
+              ),
+            ),
             labelColor: AppColors.foam,
-            unselectedLabelColor: AppColors.foam,
-            labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-            unselectedLabelStyle: TextStyle(
+            unselectedLabelColor: Colors.white70,
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
+            unselectedLabelStyle: const TextStyle(
               fontWeight: FontWeight.w500,
               fontSize: 15,
             ),
-            tabs: [
+            tabs: const [
               Tab(text: '👥 Arkadaşlar'),
               Tab(text: '🇹🇷 Türkiye'),
             ],
@@ -111,21 +127,36 @@ class _FriendsFeedList extends ConsumerWidget {
               }
               return false;
             },
-            child: ListView.builder(
+            child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(top: 8, bottom: 24),
-              itemCount: posts.length,
-              itemBuilder: (context, i) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: PostCard(
-                  post: posts[i],
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => PostDetailScreen(post: posts[i]),
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.only(top: 4),
+                  sliver: SliverList.builder(
+                    itemCount: posts.length,
+                    itemBuilder: (context, i) => Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        PostCard(
+                          post: posts[i],
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  PostDetailScreen(post: posts[i]),
+                            ),
+                          ),
+                        ),
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Colors.grey.shade800,
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              ],
             ),
           );
         },
@@ -183,21 +214,36 @@ class _GlobalFeedList extends ConsumerWidget {
               }
               return false;
             },
-            child: ListView.builder(
+            child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(top: 8, bottom: 24),
-              itemCount: posts.length,
-              itemBuilder: (context, i) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: PostCard(
-                  post: posts[i],
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => PostDetailScreen(post: posts[i]),
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.only(top: 4),
+                  sliver: SliverList.builder(
+                    itemCount: posts.length,
+                    itemBuilder: (context, i) => Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        PostCard(
+                          post: posts[i],
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  PostDetailScreen(post: posts[i]),
+                            ),
+                          ),
+                        ),
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Colors.grey.shade800,
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              ],
             ),
           );
         },
@@ -283,9 +329,13 @@ class _PostSkeletonList extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(top: 4),
       itemCount: 3,
-      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      separatorBuilder: (_, _) => Divider(
+        height: 1,
+        thickness: 1,
+        color: Colors.grey.shade800,
+      ),
       itemBuilder: (_, _) => const _PostSkeleton(),
     );
   }
@@ -307,8 +357,8 @@ class _PostSkeleton extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: AppColors.muted.withValues(alpha: 0.3),
@@ -328,7 +378,7 @@ class _PostSkeleton extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Container(
-                      width: 72,
+                      width: 80,
                       height: 10,
                       decoration: BoxDecoration(
                         color: AppColors.muted.withValues(alpha: 0.2),
@@ -342,7 +392,7 @@ class _PostSkeleton extends StatelessWidget {
           ),
           Container(
             width: double.infinity,
-            height: w * 0.75,
+            height: w * 0.85,
             color: AppColors.muted.withValues(alpha: 0.2),
           ),
           Padding(
@@ -384,25 +434,30 @@ class _EmptyFriendsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
+      color: AppColors.surface,
       padding: const EdgeInsets.all(32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('🎣', style: TextStyle(fontSize: 72)),
-          const SizedBox(height: 16),
+          const Icon(
+            Icons.people_outline_rounded,
+            size: 80,
+            color: AppColors.muted,
+          ),
+          const SizedBox(height: 20),
           const Text(
             'Arkadaşın yok henüz',
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               color: AppColors.foam,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           const Text(
-            'Balıkçıları takip etmeye başla,\nonların avlarını burada gör!',
+            'Balıkçıları takip et,\nonların avlarını burada gör!',
             style: TextStyle(
               fontSize: 16,
               color: AppColors.muted,
@@ -425,7 +480,7 @@ class _EmptyFriendsWidget extends StatelessWidget {
               ),
               icon: const Icon(Icons.search_rounded),
               label: const Text(
-                'Balıkçı Bul',
+                '🔍 Balıkçı Bul',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
               ),
             ),
@@ -445,7 +500,8 @@ class _EmptyGlobalWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
+      color: AppColors.surface,
       padding: const EdgeInsets.all(32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

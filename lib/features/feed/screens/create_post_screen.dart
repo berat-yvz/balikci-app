@@ -129,7 +129,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
   void _nextPage() {
     if (_currentPage == 0 && _pickedImage == null) return;
-    if (_currentPage == 1) _loadSpots();
+    // Sayfa 1'e geçerken meraları yükle (sayfa 1'den çıkarken değil)
+    if (_currentPage == 0) _loadSpots();
     _goToPage(_currentPage + 1);
   }
 
@@ -434,55 +435,104 @@ class _Page2Spot extends StatelessWidget {
               ? const Center(
                   child: CircularProgressIndicator(color: AppColors.primary),
                 )
-              : ListView.separated(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  itemCount: userSpots.length + 1,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    if (index == 0) {
-                      return ListTile(
-                        minTileHeight: 56,
-                        leading: const Icon(Icons.not_listed_location_outlined),
-                        title: const Text('Mera seçme'),
-                        selected: selectedSpot == null,
-                        selectedColor: AppColors.primary,
-                        onTap: () => onSpotSelected(null),
-                        trailing: selectedSpot == null
-                            ? const Icon(
-                                Icons.check_circle,
-                                color: AppColors.primary,
-                              )
-                            : null,
-                      );
-                    }
-                    final spot = userSpots[index - 1];
-                    final privIcon = _privacyIcon(spot.privacyLevel);
-                    return ListTile(
-                      minTileHeight: 56,
-                      leading: Icon(privIcon),
-                      title: Text(spot.name),
-                      subtitle: Text(
-                        spot.privacyLevel,
-                        style: TextStyle(
-                          color: AppColors.muted,
-                          fontSize: 13,
+              : userSpots.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Text(
+                          'Henüz mera eklemedin\n📍 Haritadan mera ekleyebilirsin',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppColors.muted,
+                            height: 1.5,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                      selected: selectedSpot?.id == spot.id,
-                      selectedColor: AppColors.primary,
-                      onTap: () => onSpotSelected(spot),
-                      trailing: selectedSpot?.id == spot.id
-                          ? const Icon(
-                              Icons.check_circle,
-                              color: AppColors.primary,
-                            )
-                          : null,
-                    );
-                  },
-                ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      itemCount: userSpots.length + 1,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return ListTile(
+                            minTileHeight: 64,
+                            leading: CircleAvatar(
+                              backgroundColor:
+                                  AppColors.muted.withValues(alpha: 0.25),
+                              child: const Icon(
+                                Icons.not_listed_location_outlined,
+                                color: AppColors.muted,
+                                size: 20,
+                              ),
+                            ),
+                            title: const Text(
+                              'Mera seçme',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.foam,
+                              ),
+                            ),
+                            subtitle: const Text(
+                              'Konumu paylaşma',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.muted,
+                              ),
+                            ),
+                            selected: selectedSpot == null,
+                            selectedColor: AppColors.primary,
+                            onTap: () => onSpotSelected(null),
+                            trailing: selectedSpot == null
+                                ? const Icon(
+                                    Icons.check_circle_rounded,
+                                    color: AppColors.primary,
+                                  )
+                                : null,
+                          );
+                        }
+                        final spot = userSpots[index - 1];
+                        final privColor = _privacyColor(spot.privacyLevel);
+                        final privIcon = _privacyIcon(spot.privacyLevel);
+                        final privLabel = _privacyLabel(spot.privacyLevel);
+                        return ListTile(
+                          minTileHeight: 64,
+                          leading: CircleAvatar(
+                            backgroundColor: privColor.withValues(alpha: 0.2),
+                            child: Icon(privIcon, color: privColor, size: 20),
+                          ),
+                          title: Text(
+                            spot.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.foam,
+                            ),
+                          ),
+                          subtitle: Text(
+                            privLabel,
+                            style: TextStyle(
+                              color: privColor,
+                              fontSize: 13,
+                            ),
+                          ),
+                          selected: selectedSpot?.id == spot.id,
+                          selectedColor: AppColors.primary,
+                          onTap: () => onSpotSelected(spot),
+                          trailing: selectedSpot?.id == spot.id
+                              ? const Icon(
+                                  Icons.check_circle_rounded,
+                                  color: AppColors.primary,
+                                )
+                              : null,
+                        );
+                      },
+                    ),
         ),
 
         // Navigasyon butonları
@@ -521,6 +571,20 @@ class _Page2Spot extends StatelessWidget {
         'vip' => Icons.workspace_premium_rounded,
         'friends' => Icons.group_outlined,
         _ => Icons.place_outlined,
+      };
+
+  Color _privacyColor(String level) => switch (level) {
+        'private' => AppColors.muted,
+        'vip' => AppColors.accent,
+        'friends' => AppColors.secondary,
+        _ => AppColors.primary,
+      };
+
+  String _privacyLabel(String level) => switch (level) {
+        'private' => 'Gizli',
+        'vip' => 'VIP',
+        'friends' => 'Arkadaşlar',
+        _ => 'Herkese Açık',
       };
 }
 

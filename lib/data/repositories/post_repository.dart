@@ -187,8 +187,11 @@ class PostRepository {
       }
 
       return response.map(PostModel.fromJson).toList();
+    } on PostgrestException catch (e) {
+      debugPrint('PostRepository hata (posts tablosu yok olabilir): ${e.message}');
+      return [];
     } catch (e, st) {
-      debugPrint('getFriendsFeed hatası: $e\n$st');
+      debugPrint('PostRepository beklenmedik hata (getFriendsFeed): $e\n$st');
       return [];
     }
   }
@@ -222,8 +225,11 @@ class PostRepository {
       }
 
       return response.map(PostModel.fromJson).toList();
+    } on PostgrestException catch (e) {
+      debugPrint('PostRepository hata (posts tablosu yok olabilir): ${e.message}');
+      return [];
     } catch (e, st) {
-      debugPrint('getGlobalFeed hatası: $e\n$st');
+      debugPrint('PostRepository beklenmedik hata (getGlobalFeed): $e\n$st');
       return [];
     }
   }
