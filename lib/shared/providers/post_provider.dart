@@ -27,7 +27,12 @@ class FriendsFeedNotifier extends AsyncNotifier<List<PostModel>> {
   @override
   Future<List<PostModel>> build() async {
     _repo = ref.watch(postRepositoryProvider);
-    return _repo.getFriendsFeed();
+    try {
+      return await _repo.getFriendsFeed();
+    } catch (e) {
+      debugPrint('FriendsFeedNotifier.build hatası: $e');
+      return [];
+    }
   }
 
   /// Mevcut listenin sonundaki cursor ile sonraki sayfayı ekler.
@@ -72,7 +77,12 @@ class GlobalFeedNotifier extends AsyncNotifier<List<PostModel>> {
   @override
   Future<List<PostModel>> build() async {
     _repo = ref.watch(postRepositoryProvider);
-    return _repo.getGlobalFeed();
+    try {
+      return await _repo.getGlobalFeed();
+    } catch (e) {
+      debugPrint('GlobalFeedNotifier.build hatası: $e');
+      return [];
+    }
   }
 
   Future<void> loadMore() async {
@@ -118,7 +128,12 @@ class UserPostsNotifier
   @override
   Future<List<PostModel>> build(String userId) async {
     _repo = ref.watch(postRepositoryProvider);
-    return _repo.getPostsByUser(userId);
+    try {
+      return await _repo.getPostsByUser(userId);
+    } catch (e) {
+      debugPrint('UserPostsNotifier.build hatası ($userId): $e');
+      return [];
+    }
   }
 
   Future<void> loadMore(String userId) async {

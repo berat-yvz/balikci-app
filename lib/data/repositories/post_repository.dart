@@ -187,9 +187,9 @@ class PostRepository {
       }
 
       return response.map(PostModel.fromJson).toList();
-    } on PostgrestException catch (e) {
-      debugPrint('getFriendsFeed hatası: ${e.message}');
-      rethrow;
+    } catch (e, st) {
+      debugPrint('getFriendsFeed hatası: $e\n$st');
+      return [];
     }
   }
 
@@ -222,9 +222,9 @@ class PostRepository {
       }
 
       return response.map(PostModel.fromJson).toList();
-    } on PostgrestException catch (e) {
-      debugPrint('getGlobalFeed hatası: ${e.message}');
-      rethrow;
+    } catch (e, st) {
+      debugPrint('getGlobalFeed hatası: $e\n$st');
+      return [];
     }
   }
 
@@ -260,9 +260,9 @@ class PostRepository {
       }
 
       return response.map(PostModel.fromJson).toList();
-    } on PostgrestException catch (e) {
-      debugPrint('getPostsByUser hatası: ${e.message}');
-      rethrow;
+    } catch (e, st) {
+      debugPrint('getPostsByUser hatası: $e\n$st');
+      return [];
     }
   }
 
@@ -346,9 +346,9 @@ class PostRepository {
       return (response as List)
           .map((r) => CommentModel.fromJson(r as Map<String, dynamic>))
           .toList();
-    } on PostgrestException catch (e) {
-      debugPrint('getComments hatası: ${e.message}');
-      rethrow;
+    } catch (e, st) {
+      debugPrint('getComments hatası: $e\n$st');
+      return [];
     }
   }
 

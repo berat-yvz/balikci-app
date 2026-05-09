@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
-import 'package:balikci_app/data/models/post_model.dart';
 import 'package:balikci_app/features/feed/screens/create_post_screen.dart';
 import 'package:balikci_app/features/feed/screens/post_detail_screen.dart';
 import 'package:balikci_app/features/feed/widgets/post_card.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
-import 'package:balikci_app/shared/widgets/empty_state_widget.dart';
-import 'package:balikci_app/shared/widgets/skeleton_widget.dart';
 
-/// Sosyal akış — Arkadaşlar ve Türkiye sekmeleri.
+/// Sosyal akış — "Arkadaşlar" ve "Türkiye" sekmeleri.
 class FeedScreen extends ConsumerWidget {
   const FeedScreen({super.key});
 
@@ -20,28 +18,42 @@ class FeedScreen extends ConsumerWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const Text('Akış 🎣'),
+          backgroundColor: AppColors.primary,
+          title: const Text(
+            'Sosyal 🎣',
+            style: TextStyle(
+              color: AppColors.foam,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+          ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.add_rounded, size: 28),
-              tooltip: 'Gönderi Oluştur',
+              icon: const Icon(Icons.camera_alt_rounded, color: AppColors.foam),
+              tooltip: 'Gönderi Paylaş',
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => const CreatePostScreen(),
+                  fullscreenDialog: true,
                 ),
               ),
             ),
           ],
           bottom: const TabBar(
+            indicatorColor: AppColors.accent,
+            labelColor: AppColors.foam,
+            unselectedLabelColor: AppColors.foam,
+            labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+            unselectedLabelStyle: TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 15,
+            ),
             tabs: [
               Tab(text: '👥 Arkadaşlar'),
               Tab(text: '🇹🇷 Türkiye'),
             ],
-            indicatorColor: AppColors.primary,
-            labelColor: AppColors.foam,
-            unselectedLabelColor: AppColors.muted,
-            labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
           ),
         ),
         body: const TabBarView(
@@ -57,166 +69,136 @@ class FeedScreen extends ConsumerWidget {
 
 // ── Arkadaşlar sekmesi ───────────────────────────────────────────────────────
 
-class _FriendsFeedList extends ConsumerStatefulWidget {
+class _FriendsFeedList extends ConsumerWidget {
   const _FriendsFeedList();
 
   @override
-  ConsumerState<_FriendsFeedList> createState() => _FriendsFeedListState();
-}
-
-class _FriendsFeedListState extends ConsumerState<_FriendsFeedList> {
-  late ScrollController _scroll;
-
-  @override
-  void initState() {
-    super.initState();
-    _scroll = ScrollController()..addListener(_onScroll);
-  }
-
-  @override
-  void dispose() {
-    _scroll
-      ..removeListener(_onScroll)
-      ..dispose();
-    super.dispose();
-  }
-
-  void _onScroll() {
-    final notifier = ref.read(friendsFeedProvider.notifier);
-    final posts = ref.read(friendsFeedProvider).valueOrNull ?? [];
-    if (posts.isEmpty) return;
-    if (_scroll.position.extentAfter < 300 && !notifier.isLoadingMore) {
-      notifier.loadMore();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final feedAsync = ref.watch(friendsFeedProvider);
+    final notifier = ref.read(friendsFeedProvider.notifier);
 
     return RefreshIndicator(
       color: AppColors.primary,
-      onRefresh: () => ref.read(friendsFeedProvider.notifier).refresh(),
+      onRefresh: notifier.refresh,
       child: feedAsync.when(
-        loading: () => _SkeletonFeed(),
-        error: (e, _) => _FeedError(
-          onRetry: () => ref.read(friendsFeedProvider.notifier).refresh(),
+        loading: () => const _PostSkeletonList(),
+        error: (_, _) => CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverFillRemaining(
+              child: _FeedErrorWidget(onRetry: notifier.refresh),
+            ),
+          ],
         ),
         data: (posts) {
           if (posts.isEmpty) {
-            return EmptyStateWidget(
-              title: 'Henüz arkadaşının gönderisi yok',
-              subtitle: 'İnsanları takip etmeye başla!',
-              icon: Icons.people_outline_rounded,
-              buttonLabel: 'Kişileri Keşfet',
-              onButtonPressed: () =>
-                  Navigator.of(context).pushNamed(AppRoutes.social),
+            return CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverFillRemaining(
+                  child: _EmptyFriendsWidget(
+                    onFindFriends: () => context.go(AppRoutes.social),
+                  ),
+                ),
+              ],
             );
           }
-          return ListView.separated(
-            controller: _scroll,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            itemCount: posts.length + 1,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              if (index == posts.length) {
-                return _LoadMoreIndicator(
-                  loading: ref.watch(friendsFeedProvider.notifier).isLoadingMore,
-                );
+          return NotificationListener<ScrollNotification>(
+            onNotification: (n) {
+              if (n is ScrollEndNotification &&
+                  n.metrics.extentAfter < 300) {
+                notifier.loadMore();
               }
-              return PostCard(
-                post: posts[index],
-                onTap: () => _openDetail(context, posts[index]),
-              );
+              return false;
             },
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.only(top: 8, bottom: 24),
+              itemCount: posts.length,
+              itemBuilder: (context, i) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: PostCard(
+                  post: posts[i],
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => PostDetailScreen(post: posts[i]),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           );
         },
       ),
-    );
-  }
-
-  void _openDetail(BuildContext context, PostModel post) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => PostDetailScreen(post: post)),
     );
   }
 }
 
 // ── Türkiye sekmesi ──────────────────────────────────────────────────────────
 
-class _GlobalFeedList extends ConsumerStatefulWidget {
+class _GlobalFeedList extends ConsumerWidget {
   const _GlobalFeedList();
 
   @override
-  ConsumerState<_GlobalFeedList> createState() => _GlobalFeedListState();
-}
-
-class _GlobalFeedListState extends ConsumerState<_GlobalFeedList> {
-  late ScrollController _scroll;
-
-  @override
-  void initState() {
-    super.initState();
-    _scroll = ScrollController()..addListener(_onScroll);
-  }
-
-  @override
-  void dispose() {
-    _scroll
-      ..removeListener(_onScroll)
-      ..dispose();
-    super.dispose();
-  }
-
-  void _onScroll() {
-    final notifier = ref.read(globalFeedProvider.notifier);
-    final posts = ref.read(globalFeedProvider).valueOrNull ?? [];
-    if (posts.isEmpty) return;
-    if (_scroll.position.extentAfter < 300 && !notifier.isLoadingMore) {
-      notifier.loadMore();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final feedAsync = ref.watch(globalFeedProvider);
+    final notifier = ref.read(globalFeedProvider.notifier);
 
     return RefreshIndicator(
       color: AppColors.primary,
-      onRefresh: () => ref.read(globalFeedProvider.notifier).refresh(),
+      onRefresh: notifier.refresh,
       child: feedAsync.when(
-        loading: () => _SkeletonFeed(),
-        error: (e, _) => _FeedError(
-          onRetry: () => ref.read(globalFeedProvider.notifier).refresh(),
+        loading: () => const _PostSkeletonList(),
+        error: (_, _) => CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverFillRemaining(
+              child: _FeedErrorWidget(onRetry: notifier.refresh),
+            ),
+          ],
         ),
         data: (posts) {
           if (posts.isEmpty) {
-            return const EmptyStateWidget(
-              title: 'Henüz hiç gönderi yok',
-              subtitle: 'İlk paylaşan sen ol!',
-              icon: Icons.public_rounded,
-            );
-          }
-          return ListView.separated(
-            controller: _scroll,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            itemCount: posts.length + 1,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              if (index == posts.length) {
-                return _LoadMoreIndicator(
-                  loading: ref.watch(globalFeedProvider.notifier).isLoadingMore,
-                );
-              }
-              return PostCard(
-                post: posts[index],
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => PostDetailScreen(post: posts[index]),
+            return CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverFillRemaining(
+                  child: _EmptyGlobalWidget(
+                    onShare: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const CreatePostScreen(),
+                        fullscreenDialog: true,
+                      ),
+                    ),
                   ),
                 ),
-              );
+              ],
+            );
+          }
+          return NotificationListener<ScrollNotification>(
+            onNotification: (n) {
+              if (n is ScrollEndNotification &&
+                  n.metrics.extentAfter < 300) {
+                notifier.loadMore();
+              }
+              return false;
             },
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.only(top: 8, bottom: 24),
+              itemCount: posts.length,
+              itemBuilder: (context, i) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: PostCard(
+                  post: posts[i],
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => PostDetailScreen(post: posts[i]),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           );
         },
       ),
@@ -224,44 +206,167 @@ class _GlobalFeedListState extends ConsumerState<_GlobalFeedList> {
   }
 }
 
-// ── Yardımcı widget'lar ───────────────────────────────────────────────────────
+// ── Hata widget'ı ─────────────────────────────────────────────────────────────
 
-class _SkeletonFeed extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: const EdgeInsets.all(12),
-      itemCount: 3,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (_, _) => const SkeletonListTile(hasLeadingCircle: true),
-    );
-  }
-}
+class _FeedErrorWidget extends StatelessWidget {
+  final Future<void> Function() onRetry;
 
-class _FeedError extends StatelessWidget {
-  final VoidCallback onRetry;
-
-  const _FeedError({required this.onRetry});
+  const _FeedErrorWidget({required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.muted),
-          const SizedBox(height: 12),
-          const Text(
-            'Bağlantı hatası',
-            style: TextStyle(fontSize: 16, color: AppColors.foam),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Yenile'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.wifi_off_rounded,
+                size: 64,
+                color: AppColors.muted,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'İnternet bağlantını kontrol et\nve sayfayı yenile 🎣',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.foam,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: onRetry,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.foam,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text(
+                    '🔄 Tekrar Dene',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Skeleton ─────────────────────────────────────────────────────────────────
+
+class _PostSkeletonList extends StatelessWidget {
+  const _PostSkeletonList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: 3,
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      itemBuilder: (_, _) => const _PostSkeleton(),
+    );
+  }
+}
+
+class _PostSkeleton extends StatelessWidget {
+  const _PostSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final w = MediaQuery.sizeOf(context).width;
+    return Container(
+      color: AppColors.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.muted.withValues(alpha: 0.3),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 120,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: AppColors.muted.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: 72,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: AppColors.muted.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: double.infinity,
+            height: w * 0.75,
+            color: AppColors.muted.withValues(alpha: 0.2),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Container(
+                  width: 64,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: AppColors.muted.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Container(
+                  width: 64,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: AppColors.muted.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -270,25 +375,122 @@ class _FeedError extends StatelessWidget {
   }
 }
 
-class _LoadMoreIndicator extends StatelessWidget {
-  final bool loading;
+// ── Boş durum — Arkadaşlar ───────────────────────────────────────────────────
 
-  const _LoadMoreIndicator({required this.loading});
+class _EmptyFriendsWidget extends StatelessWidget {
+  final VoidCallback onFindFriends;
+
+  const _EmptyFriendsWidget({required this.onFindFriends});
 
   @override
   Widget build(BuildContext context) {
-    if (!loading) return const SizedBox(height: 24);
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 16),
-      child: Center(
-        child: SizedBox(
-          width: 28,
-          height: 28,
-          child: CircularProgressIndicator(
-            color: AppColors.primary,
-            strokeWidth: 2.5,
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('🎣', style: TextStyle(fontSize: 72)),
+          const SizedBox(height: 16),
+          const Text(
+            'Arkadaşın yok henüz',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: AppColors.foam,
+            ),
+            textAlign: TextAlign.center,
           ),
-        ),
+          const SizedBox(height: 8),
+          const Text(
+            'Balıkçıları takip etmeye başla,\nonların avlarını burada gör!',
+            style: TextStyle(
+              fontSize: 16,
+              color: AppColors.muted,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton.icon(
+              onPressed: onFindFriends,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.foam,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.search_rounded),
+              label: const Text(
+                'Balıkçı Bul',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Boş durum — Türkiye ───────────────────────────────────────────────────────
+
+class _EmptyGlobalWidget extends StatelessWidget {
+  final VoidCallback onShare;
+
+  const _EmptyGlobalWidget({required this.onShare});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('📸', style: TextStyle(fontSize: 72)),
+          const SizedBox(height: 16),
+          const Text(
+            'Henüz gönderi yok',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: AppColors.foam,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'İlk paylaşan sen ol!',
+            style: TextStyle(
+              fontSize: 16,
+              color: AppColors.muted,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton.icon(
+              onPressed: onShare,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.foam,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.camera_alt_rounded),
+              label: const Text(
+                'Paylaş',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

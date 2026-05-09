@@ -180,9 +180,9 @@ class _MainShellState extends ConsumerState<MainShell> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _NavItem(
-                        icon: Icons.dynamic_feed_outlined,
-                        activeIcon: Icons.dynamic_feed_rounded,
-                        label: 'Akış',
+                        icon: Icons.waves_outlined,
+                        activeIcon: Icons.waves_rounded,
+                        label: 'Sosyal',
                         index: 3,
                         currentIndex: _currentIndex,
                         onTap: () => _onTabTapped(3),

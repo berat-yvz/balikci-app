@@ -12,7 +12,7 @@ import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
 
-/// Sosyal akış gönderi kartı.
+/// Sosyal akış gönderi kartı — border radius 0, Facebook tarzı.
 ///
 /// Ana bölümler: yazar başlığı → fotoğraf → mera etiketi →
 /// balık türleri → caption → aksiyon satırı.
@@ -26,22 +26,29 @@ class PostCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final myUid = ref.watch(currentUserProvider)?.id;
     final isOwner = myUid != null && myUid == post.userId;
+    final screenWidth = MediaQuery.sizeOf(context).width;
 
-    return Card(
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.symmetric(
+          horizontal: BorderSide(
+            color: AppColors.muted.withValues(alpha: 0.2),
+            width: 1,
+          ),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Üst başlık ───────────────────────────────────────────────────
+          // ── Üst başlık ─────────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 8, 8),
             child: Row(
               children: [
                 _AuthorAvatar(
                   avatarUrl: post.authorAvatarUrl,
-                  username: post.authorUsername ?? '',
+                  username: post.authorUsername ?? 'Balıkçı',
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -64,59 +71,131 @@ class PostCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                if (isOwner) _PostMenu(postId: post.id),
+                Text(
+                  timeAgo(post.createdAt),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.muted,
+                  ),
+                ),
+                if (isOwner) ...[
+                  const SizedBox(width: 4),
+                  _PostMenu(postId: post.id),
+                ],
               ],
             ),
           ),
 
-          // ── Fotoğraf ─────────────────────────────────────────────────────
-          InkWell(
+          // ── Fotoğraf ───────────────────────────────────────────────────────
+          GestureDetector(
             onTap: onTap,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 300),
-              child: SizedBox(
-                width: double.infinity,
-                child: Image.network(
-                  post.photoUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Container(
-                    height: 200,
-                    color: AppColors.surface,
-                    child: const Center(
-                      child: Icon(
-                        Icons.broken_image_outlined,
+            child: SizedBox(
+              width: double.infinity,
+              height: screenWidth * 0.75,
+              child: Image.network(
+                post.photoUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Container(
+                  color: AppColors.muted.withValues(alpha: 0.15),
+                  child: const Center(
+                    child: Text(
+                      '🐟 Fotoğraf yüklenemedi',
+                      style: TextStyle(
+                        fontSize: 15,
                         color: AppColors.muted,
-                        size: 48,
                       ),
                     ),
                   ),
-                  loadingBuilder: (ctx, child, progress) {
-                    if (progress == null) return child;
-                    return Container(
-                      height: 200,
-                      color: AppColors.surface,
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    );
-                  },
                 ),
+                loadingBuilder: (ctx, child, progress) {
+                  if (progress == null) return child;
+                  return Container(
+                    color: AppColors.muted.withValues(alpha: 0.15),
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                        strokeWidth: 2.5,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
 
-          // ── Alt bölüm ────────────────────────────────────────────────────
-          PostCardBottom(post: post, onCommentTap: onTap),
+          // ── Alt bölüm ──────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Mera
+                if (post.spotId != null || post.spotDistrict != null) ...[
+                  _SpotChip(post: post),
+                  const SizedBox(height: 8),
+                ],
+
+                // Balık türleri
+                if (post.fishSpecies != null &&
+                    post.fishSpecies!.isNotEmpty) ...[
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: post.fishSpecies!
+                        .map(
+                          (s) => Container(
+                            constraints: const BoxConstraints(minHeight: 40),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              s,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.foam,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                // Caption
+                if (post.caption != null && post.caption!.isNotEmpty) ...[
+                  Text(
+                    post.caption!,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: AppColors.foam,
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                // Aksiyon satırı
+                _ActionRow(post: post, onCommentTap: onTap),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-/// Kartın alt bölümü (mera, türler, caption, aksiyon).
-/// PostDetailScreen da bu widget'ı tekrar kullanabilir.
+/// Kartın alt bölümü — PostDetailScreen tarafından yeniden kullanılır.
 class PostCardBottom extends ConsumerWidget {
   final PostModel post;
   final VoidCallback? onCommentTap;
@@ -130,13 +209,11 @@ class PostCardBottom extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Mera etiketi
           if (post.spotId != null || post.spotDistrict != null) ...[
-            _buildSpotTag(context),
+            _SpotChip(post: post),
             const SizedBox(height: 8),
           ],
 
-          // Balık türleri
           if (post.fishSpecies != null && post.fishSpecies!.isNotEmpty) ...[
             Wrap(
               spacing: 6,
@@ -161,7 +238,6 @@ class PostCardBottom extends ConsumerWidget {
             const SizedBox(height: 8),
           ],
 
-          // Caption
           if (post.caption != null && post.caption!.isNotEmpty) ...[
             Text(
               post.caption!,
@@ -170,54 +246,18 @@ class PostCardBottom extends ConsumerWidget {
                 color: AppColors.foam,
                 height: 1.4,
               ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 8),
           ],
 
-          // Aksiyon satırı
           _ActionRow(post: post, onCommentTap: onCommentTap),
         ],
       ),
     );
   }
-
-  /// Mera etiketini gizlilik seviyesine göre render eder.
-  Widget _buildSpotTag(BuildContext context) {
-    switch (post.spotPrivacySnapshot) {
-      case SpotPrivacyLevel.public:
-      case SpotPrivacyLevel.friends:
-        final isPublic = post.spotPrivacySnapshot == SpotPrivacyLevel.public;
-        return GestureDetector(
-          onTap: post.spotId != null
-              ? () => context.go(AppRoutes.home, extra: post.spotId)
-              : null,
-          child: _SpotChip(
-            label: post.displaySpotName,
-            color: isPublic ? AppColors.primary : AppColors.secondary,
-            icon: Icons.place_rounded,
-          ),
-        );
-
-      case SpotPrivacyLevel.private:
-        return _SpotChip(
-          label: post.displaySpotName,
-          color: AppColors.muted,
-          icon: Icons.lock_outline_rounded,
-        );
-
-      case SpotPrivacyLevel.vip:
-        return _SpotChip(
-          label: post.displaySpotName,
-          color: AppColors.accent,
-          icon: Icons.workspace_premium_rounded,
-        );
-    }
-  }
 }
 
-// ── Yazar avatar ─────────────────────────────────────────────────────────────
+// ── Yazar avatar ──────────────────────────────────────────────────────────────
 
 class _AuthorAvatar extends StatelessWidget {
   final String? avatarUrl;
@@ -236,7 +276,7 @@ class _AuthorAvatar extends StatelessWidget {
       image = NetworkImage(url);
     }
     return CircleAvatar(
-      radius: 20,
+      radius: 22,
       backgroundColor: AppColors.primaryLight,
       backgroundImage: image,
       child: image == null
@@ -245,6 +285,7 @@ class _AuthorAvatar extends StatelessWidget {
               style: const TextStyle(
                 color: AppColors.foam,
                 fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
             )
           : null,
@@ -255,11 +296,53 @@ class _AuthorAvatar extends StatelessWidget {
 // ── Mera chip ─────────────────────────────────────────────────────────────────
 
 class _SpotChip extends StatelessWidget {
+  final PostModel post;
+
+  const _SpotChip({required this.post});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = post.displaySpotName;
+    if (label.isEmpty) return const SizedBox.shrink();
+
+    switch (post.spotPrivacySnapshot) {
+      case SpotPrivacyLevel.public:
+      case SpotPrivacyLevel.friends:
+        final isPublic = post.spotPrivacySnapshot == SpotPrivacyLevel.public;
+        return GestureDetector(
+          onTap: post.spotId != null
+              ? () => context.go(AppRoutes.home, extra: post.spotId)
+              : null,
+          child: _SpotChipContent(
+            label: label,
+            color: isPublic ? AppColors.primary : AppColors.secondary,
+            icon: Icons.place_rounded,
+          ),
+        );
+
+      case SpotPrivacyLevel.private:
+        return _SpotChipContent(
+          label: label,
+          color: AppColors.muted,
+          icon: Icons.lock_outline_rounded,
+        );
+
+      case SpotPrivacyLevel.vip:
+        return _SpotChipContent(
+          label: label,
+          color: AppColors.accent,
+          icon: Icons.workspace_premium_rounded,
+        );
+    }
+  }
+}
+
+class _SpotChipContent extends StatelessWidget {
   final String label;
   final Color color;
   final IconData icon;
 
-  const _SpotChip({
+  const _SpotChipContent({
     required this.label,
     required this.color,
     required this.icon,
@@ -337,7 +420,7 @@ class _ActionRowState extends ConsumerState<_ActionRow> {
               '${widget.post.likesCount}',
               style: TextStyle(
                 color: isLiked ? AppColors.danger : AppColors.muted,
-                fontSize: 14,
+                fontSize: 15,
               ),
             ),
           ),
@@ -359,17 +442,12 @@ class _ActionRowState extends ConsumerState<_ActionRow> {
             ),
             label: Text(
               '${widget.post.commentsCount}',
-              style: const TextStyle(color: AppColors.muted, fontSize: 14),
+              style: const TextStyle(color: AppColors.muted, fontSize: 15),
             ),
           ),
         ),
 
         const Spacer(),
-
-        Text(
-          timeAgo(widget.post.createdAt),
-          style: const TextStyle(fontSize: 12, color: AppColors.muted),
-        ),
       ],
     );
   }
