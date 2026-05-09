@@ -49,20 +49,70 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1080,
-      imageQuality: 75,
+    try {
+      final picked = await picker.pickImage(
+        source: source,
+        maxWidth: 1080,
+        imageQuality: 75,
+      );
+      if (picked == null || !mounted) return;
+      Uint8List? bytes;
+      if (kIsWeb) bytes = await picked.readAsBytes();
+      setState(() {
+        _pickedImage = picked;
+        _previewBytes = bytes;
+      });
+    } catch (e, st) {
+      debugPrint('pickImage ($source): $e\n$st');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            ErrorMessageHelper.toUserMessage(
+              e,
+              fallback: 'Fotoğraf seçilemedi. Tekrar dene.',
+            ),
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
+  }
+
+  Future<void> _showChangePhotoSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_camera_rounded),
+                title: const Text('Yeni fotoğraf çek'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_rounded),
+                title: const Text('Galeriden seç'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
-    if (picked == null || !mounted) return;
-    Uint8List? bytes;
-    if (kIsWeb) bytes = await picked.readAsBytes();
-    setState(() {
-      _pickedImage = picked;
-      _previewBytes = bytes;
-    });
   }
 
   Future<void> _loadSpotsIfNeeded() async {
@@ -192,7 +242,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
           onPressed: () => Navigator.of(context).pop(),
           tooltip: 'Kapat',
         ),
-        title: Text(_hasPhoto ? 'Yeni gönderi' : 'Fotoğraf seç'),
+        title: Text(_hasPhoto ? 'Yeni gönderi' : 'Fotoğraf ekle'),
       ),
       body: Column(
         children: [
@@ -203,7 +253,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   GestureDetector(
-                    onTap: _pickImage,
+                    onTap: _hasPhoto ? _showChangePhotoSheet : null,
                     child: AspectRatio(
                       aspectRatio: 1,
                       child: Container(
@@ -217,9 +267,31 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                         clipBehavior: Clip.antiAlias,
                         child: !_hasPhoto
                             ? const _PhotoPlaceholder()
-                            : _PhotoPreview(
-                                pickedImage: _pickedImage!,
-                                previewBytes: _previewBytes,
+                            : Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  _PhotoPreview(
+                                    pickedImage: _pickedImage!,
+                                    previewBytes: _previewBytes,
+                                  ),
+                                  Positioned(
+                                    right: 8,
+                                    top: 8,
+                                    child: Material(
+                                      color: Colors.black54,
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: IconButton(
+                                        onPressed: _showChangePhotoSheet,
+                                        icon: const Icon(
+                                          Icons.edit_rounded,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        tooltip: 'Fotoğrafı değiştir',
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                       ),
                     ),
@@ -227,11 +299,37 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                   if (!_hasPhoto) ...[
                     const SizedBox(height: 16),
                     SizedBox(
-                      height: 52,
-                      child: ElevatedButton.icon(
-                        onPressed: _pickImage,
-                        icon: const Icon(Icons.photo_library_rounded),
-                        label: const Text('Galeriden seç'),
+                      width: double.infinity,
+                      height: 54,
+                      child: FilledButton.icon(
+                        onPressed: () =>
+                            _pickImage(ImageSource.camera),
+                        icon: const Icon(Icons.photo_camera_rounded, size: 22),
+                        label: const Text(
+                          'Fotoğraf çek',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: OutlinedButton.icon(
+                        onPressed: () =>
+                            _pickImage(ImageSource.gallery),
+                        icon:
+                            const Icon(Icons.photo_library_rounded, size: 22),
+                        label: const Text(
+                          'Galeriden seç',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -456,11 +554,20 @@ class _PhotoPlaceholder extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Fotoğraf seç',
+          'Kamera veya galeri',
           style: TextStyle(
             color: AppColors.muted.withValues(alpha: 0.95),
             fontSize: 16,
             fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Aşağıdan seç',
+          style: TextStyle(
+            color: AppColors.muted.withValues(alpha: 0.75),
+            fontSize: 13,
           ),
         ),
       ],

@@ -70,6 +70,10 @@
 		<string>Yakınındaki meraları göstermek için konumunu kullanıyoruz.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 		<string>Yakınındaki meraları göstermek için konumunu kullanıyoruz.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Gönderi paylaşmak için fotoğraf çekmene izin verir.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Gönderide kullanmak için galeriden fotoğraf seçmeni sağlar.</string>
 		<key>CFBundleURLTypes</key>
 		<array>
 			<dict>
