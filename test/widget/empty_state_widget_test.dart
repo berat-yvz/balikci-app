@@ -60,34 +60,6 @@ void main() {
     });
   });
 
-  group('EmptyStateWidget.noFishLogs', () {
-    testWidgets('doğru başlık gösterilir', (tester) async {
-      await tester.pumpWidget(
-        _wrap(const EmptyStateWidget.noFishLogs()),
-      );
-      await tester.pump();
-      expect(find.text('İlk avını kaydet'), findsOneWidget);
-    });
-
-    testWidgets('buttonLabel ile buton görünür', (tester) async {
-      await tester.pumpWidget(
-        _wrap(const EmptyStateWidget.noFishLogs(
-          buttonLabel: 'Kayıt Ekle',
-        )),
-      );
-      await tester.pump();
-      expect(find.text('Kayıt Ekle'), findsOneWidget);
-    });
-
-    testWidgets('balık emoji gösterilir', (tester) async {
-      await tester.pumpWidget(
-        _wrap(const EmptyStateWidget.noFishLogs()),
-      );
-      await tester.pump();
-      expect(find.text('🎣'), findsOneWidget);
-    });
-  });
-
   group('EmptyStateWidget.mapNoSpots', () {
     testWidgets('doğru başlık gösterilir', (tester) async {
       await tester.pumpWidget(

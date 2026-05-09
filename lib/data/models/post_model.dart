@@ -51,7 +51,6 @@ class PostModel {
 
   final int likesCount;
   final int commentsCount;
-  final String? migratedFromLogId;
   final bool isDeleted;
   final DateTime createdAt;
 
@@ -70,7 +69,6 @@ class PostModel {
     this.authorRank,
     this.likesCount = 0,
     this.commentsCount = 0,
-    this.migratedFromLogId,
     this.isDeleted = false,
     required this.createdAt,
   });
@@ -134,7 +132,6 @@ class PostModel {
       authorRank: parsedAuthorRank,
       likesCount: (json['likes_count'] as num?)?.toInt() ?? 0,
       commentsCount: (json['comments_count'] as num?)?.toInt() ?? 0,
-      migratedFromLogId: json['migrated_from_log_id'] as String?,
       isDeleted: json['is_deleted'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
@@ -151,7 +148,6 @@ class PostModel {
         'spot_district': spotDistrict,
         'likes_count': likesCount,
         'comments_count': commentsCount,
-        'migrated_from_log_id': migratedFromLogId,
         'is_deleted': isDeleted,
         'created_at': createdAt.toIso8601String(),
       };
@@ -171,7 +167,6 @@ class PostModel {
     String? authorRank,
     int? likesCount,
     int? commentsCount,
-    String? migratedFromLogId,
     bool? isDeleted,
     DateTime? createdAt,
   }) =>
@@ -190,7 +185,6 @@ class PostModel {
         authorRank: authorRank ?? this.authorRank,
         likesCount: likesCount ?? this.likesCount,
         commentsCount: commentsCount ?? this.commentsCount,
-        migratedFromLogId: migratedFromLogId ?? this.migratedFromLogId,
         isDeleted: isDeleted ?? this.isDeleted,
         createdAt: createdAt ?? this.createdAt,
       );

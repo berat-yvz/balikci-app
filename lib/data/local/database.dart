@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
-import 'package:balikci_app/data/local/local_fish_log.dart';
 import 'package:balikci_app/data/local/local_post.dart';
 import 'package:balikci_app/data/local/local_spot.dart';
 import 'package:balikci_app/data/local/local_weather.dart';
@@ -8,31 +7,8 @@ import 'package:balikci_app/data/local/sync_queue.dart';
 
 part 'database.g.dart';
 
-/// H7 — Balık günlüğü tablosu (Supabase fish_logs şemasıyla uyumlu).
-/// UUID alanlar SQLite'ta TEXT olarak saklanır.
-/// FAZ 3'te bu tablo kaldırılacak; FAZ 1–2 süresince korunuyor.
-class FishLogs extends Table {
-  TextColumn get id => text()();
-  TextColumn get userId => text()();
-  TextColumn get spotId => text().nullable()();
-  TextColumn get fishType => text()();
-  RealColumn get weightKg => real().nullable()();
-  RealColumn get lengthCm => real().nullable()();
-  TextColumn get photoUrl => text().nullable()();
-  TextColumn get notes => text().nullable()();
-  BoolColumn get isPrivate => boolean().withDefault(const Constant(false))();
-  BoolColumn get isReleased => boolean().withDefault(const Constant(false))();
-  TextColumn get weatherSnapshot => text().nullable()();
-  DateTimeColumn get caughtAt => dateTime().withDefault(currentDateAndTime)();
-  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
-  BoolColumn get synced => boolean().withDefault(const Constant(true))();
-
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
 @DriftDatabase(
-  tables: [LocalSpots, LocalFishLogs, FishLogs, SyncQueue, LocalWeather, LocalPosts],
+  tables: [LocalSpots, SyncQueue, LocalWeather, LocalPosts],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase._() : super(_openConnection());
@@ -40,7 +16,7 @@ class AppDatabase extends _$AppDatabase {
   static final AppDatabase instance = AppDatabase._();
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -57,16 +33,6 @@ class AppDatabase extends _$AppDatabase {
       if (from < 4) {
         await m.addColumn(syncQueue, syncQueue.tableNameValue);
         await m.addColumn(syncQueue, syncQueue.retryCount);
-      }
-      if (from < 5) {
-        // LocalFishLogs: released ve weatherSnapshot eklendi (H7)
-        await m.addColumn(
-            localFishLogs, localFishLogs.released as GeneratedColumn<Object>);
-        await m.addColumn(localFishLogs,
-            localFishLogs.weatherSnapshot as GeneratedColumn<Object>);
-      }
-      if (from < 6) {
-        await m.createTable(fishLogs);
       }
       if (from < 7) {
         await m.addColumn(localWeather,
@@ -85,8 +51,11 @@ class AppDatabase extends _$AppDatabase {
             localWeather.dataJson as GeneratedColumn<Object>);
       }
       if (from < 8) {
-        // FAZ 1 — Sosyal Akış: LocalPosts önbellek tablosu eklendi
         await m.createTable(localPosts);
+      }
+      if (from < 9) {
+        await customStatement('DROP TABLE IF EXISTS local_fish_logs;');
+        await customStatement('DROP TABLE IF EXISTS fish_logs;');
       }
     },
   );

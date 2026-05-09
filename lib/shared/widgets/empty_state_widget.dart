@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:balikci_app/app/theme.dart';
 
-enum EmptyStateContext { mapNoSpots, noFishLogs, noNotifications, generic }
+enum EmptyStateContext { mapNoSpots, noNotifications, generic }
 
 /// Boş içerik durumu — offline-first, kompakt ve CTA'lı.
 ///
@@ -35,15 +35,6 @@ class EmptyStateWidget extends StatefulWidget {
        title = 'Henüz mera yok',
        subtitle = 'Henüz mera yok, ilk sen ekle!',
        icon = Icons.place_outlined;
-
-  const EmptyStateWidget.noFishLogs({
-    super.key,
-    this.buttonLabel,
-    this.onButtonPressed,
-  }) : contextType = EmptyStateContext.noFishLogs,
-       title = 'İlk avını kaydet',
-       subtitle = 'İlk avını kaydet! Sonra istatistiklerini burada görürsün.',
-       icon = Icons.menu_book_outlined;
 
   const EmptyStateWidget.noNotifications({
     super.key,
@@ -78,7 +69,6 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
   }
 
   String? get _contextEmoji => switch (widget.contextType) {
-    EmptyStateContext.noFishLogs => '🎣',
     EmptyStateContext.mapNoSpots => '🐟',
     EmptyStateContext.noNotifications => '🔔',
     EmptyStateContext.generic => null,
@@ -173,33 +163,23 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
                   ),
                 ] else ...[
                   const SizedBox(height: 8),
-                  if (widget.contextType == EmptyStateContext.noFishLogs)
-                    Text(
-                      'Sağ alttaki Balık Ekle düğmesiyle ilk kaydını oluştur.',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.muted,
-                        fontSize: 14,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        widget.icon,
+                        size: 18,
+                        color: AppColors.muted.withValues(alpha: 0.9),
                       ),
-                      textAlign: TextAlign.center,
-                    )
-                  else
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          widget.icon,
-                          size: 18,
-                          color: AppColors.muted.withValues(alpha: 0.9),
+                      const SizedBox(width: 8),
+                      Text(
+                        'İpucu: yukarıdan yenile',
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.muted,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'İpucu: yukarıdan yenile',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.muted,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
                 ],
               ],
             ),
@@ -239,9 +219,6 @@ class _EmptyStatePainter extends CustomPainter {
         _drawFish(canvas, size);
         _drawTextGlyph(canvas, size, '🐟', x: 0.10, y: 0.18);
         break;
-      case EmptyStateContext.noFishLogs:
-        _drawRod(canvas, size);
-        break;
       case EmptyStateContext.noNotifications:
         _drawBell(canvas, size);
         break;
@@ -269,48 +246,6 @@ class _EmptyStatePainter extends CustomPainter {
       ..lineTo(fishX + 48, fishY + 8)
       ..close();
     canvas.drawPath(body, fishPaint);
-  }
-
-  void _drawRod(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    final rodPaint = Paint()
-      ..color = AppColors.sand.withValues(alpha: 0.75)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawLine(
-      Offset(w * 0.25, h * 0.18),
-      Offset(w * 0.60, h * 0.58),
-      rodPaint,
-    );
-
-    final linePaint = Paint()
-      ..color = AppColors.foam.withValues(alpha: 0.22)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    final x = w * 0.60;
-    final y = h * 0.58;
-    final hookDrop = 18 + 10 * (0.5 + 0.5 * math.sin(t * 6.28318));
-    final line = Path()
-      ..moveTo(x, y)
-      ..quadraticBezierTo(x + 18, y + 12, x + 10, y + hookDrop);
-    canvas.drawPath(line, linePaint);
-
-    final hookPaint = Paint()
-      ..color = AppColors.foam.withValues(alpha: 0.30)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.6
-      ..strokeCap = StrokeCap.round;
-    canvas.drawArc(
-      Rect.fromCircle(center: Offset(x + 10, y + hookDrop + 6), radius: 7),
-      math.pi * 1.1,
-      math.pi * 1.1,
-      false,
-      hookPaint,
-    );
   }
 
   void _drawBell(Canvas canvas, Size size) {

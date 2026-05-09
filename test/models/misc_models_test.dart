@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:balikci_app/data/models/notification_model.dart';
-import 'package:balikci_app/data/models/fish_log_model.dart';
 
 void main() {
   // ─── NotificationModel ───────────────────────────────────────────────────
@@ -47,73 +46,6 @@ void main() {
       expect(NotificationModel.fromJson(j1).read, isTrue);
       final j2 = Map<String, dynamic>.from(baseJson)..['read'] = 'true';
       expect(NotificationModel.fromJson(j2).read, isTrue);
-    });
-  });
-
-  // ─── FishLogModel ────────────────────────────────────────────────────────
-
-  group('FishLogModel.fromJson', () {
-    final baseJson = {
-      'id': 'log-1',
-      'user_id': 'user-1',
-      'spot_id': 'spot-1',
-      'species': 'Lüfer',
-      'weight': 1.5,
-      'length': 35.0,
-      'photo_url': null,
-      'weather_snapshot': null,
-      'is_private': false,
-      'released': false,
-      'created_at': '2025-02-15T07:30:00.000Z',
-    };
-
-    test('tam veriyle parse edilir', () {
-      final log = FishLogModel.fromJson(baseJson);
-      expect(log.id, 'log-1');
-      expect(log.userId, 'user-1');
-      expect(log.spotId, 'spot-1');
-      expect(log.species, 'Lüfer');
-      expect(log.weight, closeTo(1.5, 0.001));
-      expect(log.length, closeTo(35.0, 0.001));
-      expect(log.isPrivate, isFalse);
-      expect(log.released, isFalse);
-    });
-
-    test('opsiyonel alanlar null olabilir', () {
-      final json = Map<String, dynamic>.from(baseJson);
-      json.remove('spot_id');
-      json.remove('weight');
-      json.remove('length');
-      final log = FishLogModel.fromJson(json);
-      expect(log.spotId, isNull);
-      expect(log.weight, isNull);
-      expect(log.length, isNull);
-    });
-
-    test('released true → sürdürülebilirlik işaretlendi', () {
-      final json = Map<String, dynamic>.from(baseJson);
-      json['released'] = true;
-      final log = FishLogModel.fromJson(json);
-      expect(log.released, isTrue);
-    });
-
-    test('toJson round-trip', () {
-      final original = FishLogModel.fromJson(baseJson);
-      final json = original.toJson();
-      final restored = FishLogModel.fromJson(json);
-      expect(restored.id, original.id);
-      expect(restored.species, original.species);
-      expect(restored.weight, original.weight);
-      expect(restored.released, original.released);
-    });
-
-    test('toJson doğru key isimleri kullanır', () {
-      final log = FishLogModel.fromJson(baseJson);
-      final json = log.toJson();
-      expect(json.containsKey('user_id'), isTrue);
-      expect(json.containsKey('spot_id'), isTrue);
-      expect(json.containsKey('is_private'), isTrue);
-      expect(json.containsKey('released'), isTrue);
     });
   });
 }

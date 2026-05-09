@@ -8,8 +8,6 @@ enum ScoreSource {
   checkinUnverified('checkin_unverified'), // +15
   correctVote('correct_vote'),             // +10 (olumlu oy alanı)
   wrongReport('wrong_report'),             // -20 (yanlış bildirim oylaması)
-  fishLogPublic('fish_log_public'),        // +10
-  releaseExif('release_exif'),             // +40 (EXIF doğrulamalı salma)
   spotPublic('spot_public');               // +50
 
   const ScoreSource(this.value);

@@ -21,7 +21,7 @@ class PostRepository {
   static const _postSelect = '''
     id, user_id, photo_url, caption, fish_species,
     spot_id, spot_privacy_snapshot, spot_district,
-    likes_count, comments_count, migrated_from_log_id,
+    likes_count, comments_count,
     is_deleted, created_at,
     author:users(username, avatar_url, rank),
     spot:fishing_spots(name)

@@ -19,14 +19,6 @@ void main() {
       expect(ScoreSource.wrongReport.value, 'wrong_report');
     });
 
-    test('fishLogPublic → "fish_log_public"', () {
-      expect(ScoreSource.fishLogPublic.value, 'fish_log_public');
-    });
-
-    test('releaseExif → "release_exif"', () {
-      expect(ScoreSource.releaseExif.value, 'release_exif');
-    });
-
     test('spotPublic → "spot_public"', () {
       expect(ScoreSource.spotPublic.value, 'spot_public');
     });
@@ -36,8 +28,8 @@ void main() {
       expect(values.length, values.toSet().length);
     });
 
-    test('ScoreSource.values toplamda 7 kayıt', () {
-      expect(ScoreSource.values.length, 7);
+    test('ScoreSource.values toplamda 5 kayıt', () {
+      expect(ScoreSource.values.length, 5);
     });
   });
 }

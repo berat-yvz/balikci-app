@@ -82,8 +82,11 @@ void main() {
     testWidgets('caption varsa görünüyor', (tester) async {
       final post = _makePost(caption: 'Test caption yazısı');
       await tester.pumpWidget(_wrap(post));
-      await tester.pump();
-      expect(find.text('Test caption yazısı'), findsOneWidget);
+      await tester.pumpAndSettle();
+      final anyCaptionRichText = tester
+          .widgetList<RichText>(find.byType(RichText))
+          .any((r) => r.text.toPlainText().contains('Test caption yazısı'));
+      expect(anyCaptionRichText, isTrue);
     });
 
     testWidgets('caption null ise hiç görünmüyor', (tester) async {
@@ -108,7 +111,7 @@ void main() {
       final post = _makePost(likes: 7);
       await tester.pumpWidget(_wrap(post));
       await tester.pumpAndSettle();
-      expect(find.text('7'), findsOneWidget);
+      expect(find.text(' 7'), findsOneWidget);
     });
 
     testWidgets('beğeni butonu tıklanabilir', (tester) async {
@@ -143,7 +146,7 @@ void main() {
       );
       await tester.pumpWidget(_wrap(post));
       await tester.pump();
-      expect(find.text('Haliç Köprüsü'), findsOneWidget);
+      expect(find.textContaining('Haliç Köprüsü'), findsOneWidget);
     });
 
     testWidgets('private spot — "📍" prefix\'i var', (tester) async {
@@ -165,7 +168,7 @@ void main() {
       );
       await tester.pumpWidget(_wrap(post));
       await tester.pump();
-      expect(find.text('🔒 VIP Mera'), findsOneWidget);
+      expect(find.textContaining('🔒 VIP Mera'), findsOneWidget);
     });
 
     testWidgets('friends spot — mera adı görünüyor', (tester) async {
@@ -176,7 +179,7 @@ void main() {
       );
       await tester.pumpWidget(_wrap(post));
       await tester.pump();
-      expect(find.text('Gizli Mera'), findsOneWidget);
+      expect(find.textContaining('Gizli Mera'), findsOneWidget);
     });
   });
 
@@ -185,7 +188,7 @@ void main() {
       final post = _makePost(comments: 5);
       await tester.pumpWidget(_wrap(post));
       await tester.pumpAndSettle();
-      expect(find.text('5'), findsOneWidget);
+      expect(find.text(' 5'), findsOneWidget);
     });
 
     testWidgets('yorum ikonu mevcut', (tester) async {

@@ -23,7 +23,7 @@ String _routeForType(String? type) => switch (type?.toLowerCase()) {
   'rank_up' => AppRoutes.profile,
   // Takip: hedef kullanıcı id yoksa kendi profil sekmesi (geriye dönük)
   'follow' => AppRoutes.profile,
-  'fish_log' => AppRoutes.fishLog,
+  'fish_log' => AppRoutes.feed,
   'weather_morning' => AppRoutes.weather,
   'morning_weather' => AppRoutes.weather,
   'season_reminder' => AppRoutes.weather,

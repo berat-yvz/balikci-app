@@ -13,7 +13,6 @@ class AppRoutes {
 
   // Shell (BottomNav)
   static const home = '/home';
-  static const fishLog = '/fish-log';
   static const social = '/social';
   static const socialFriends = '/social/friends';
   static const socialRequests = '/social/requests';
@@ -30,10 +29,6 @@ class AppRoutes {
 
   // Check-in
   static const checkin = '/checkin';
-
-  // Fish Log
-  static const fishLogAdd = '/fish-log/add';
-  static const fishLogStats = '/fish-log/stats';
 
   // Notifications
   static const notifications = '/notifications';

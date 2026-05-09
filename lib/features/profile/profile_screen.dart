@@ -19,7 +19,6 @@ import 'package:balikci_app/data/models/post_model.dart';
 import 'package:balikci_app/features/feed/screens/post_detail_screen.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/favorite_provider.dart';
-import 'package:balikci_app/shared/providers/fish_log_provider.dart';
 import 'package:balikci_app/shared/providers/friend_request_provider.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
@@ -265,25 +264,25 @@ class _ProfileContent extends ConsumerWidget {
                 _showExplanation(
                   context,
                   'Toplam puan nedir?',
-                  'Balık bildirimi, doğru rapor oyları ve günlük kayıtlar puan kazandırır. Toplam puan rütbeni belirler.',
+                  'Balık bildirimi, doğru rapor oyları ve sosyal gönderiler puan kazandırır. Toplam puan rütbeni belirler.',
                 );
               },
               onTapSustainability: () {
                 _showExplanation(
                   context,
                   'Sürdürülebilirlik puanı nedir?',
-                  'Balığı geri saldığın kayıtlar sürdürülebilirlik puanını artırır. Bu sayede “♻️” skorun yükselir.',
+                  'Çevre dostu davranışların ve aktivitelerin sürdürülebilirlik puanını etkiler. Bu sayede “♻️” skorun yükselir.',
                 );
               },
             ),
 
             if (isSelf) ...[
               const SizedBox(height: 20),
-              // ADIM 9: “Günlüğüm”, “Rozetlerim”, “Ayarlar” alt bölümleri
-              _ProfileActionSection(
-                onGoToLog: () => context.go(AppRoutes.fishLog),
-                onGoToStats: () => context.push(AppRoutes.fishLogStats),
-                onGoToSettings: () => context.push(AppRoutes.settings),
+              _ActionTile(
+                icon: Icons.settings_outlined,
+                label: 'Ayarlar',
+                subtitle: 'Hesap ve uygulama ayarları',
+                onTap: () => context.push(AppRoutes.settings),
               ),
             ] else ...[
               const SizedBox(height: 16),
@@ -841,6 +840,19 @@ class _SummaryStatsGrid extends ConsumerStatefulWidget {
     }
   }
 
+  static Future<int> _getPostCount(String userId) async {
+    try {
+      final rows = await SupabaseService.client
+          .from('posts')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('is_deleted', false);
+      return (rows as List).length;
+    } catch (_) {
+      return 0;
+    }
+  }
+
   @override
   ConsumerState<_SummaryStatsGrid> createState() => _SummaryStatsGridState();
 }
@@ -857,9 +869,8 @@ class _SummaryStatsGridState extends ConsumerState<_SummaryStatsGrid> {
   }
 
   Future<List<int>> _loadStats() {
-    final fishRepo = ref.read(fishLogRepositoryProvider);
     return Future.wait([
-      fishRepo.getLogCount(widget.userId),
+      _SummaryStatsGrid._getPostCount(widget.userId),
       _SummaryStatsGrid._getSpotCount(widget.userId),
       _SummaryStatsGrid._getCheckinCount(widget.userId),
     ]);
@@ -867,13 +878,12 @@ class _SummaryStatsGridState extends ConsumerState<_SummaryStatsGrid> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(fishLogRepositoryProvider);
     _statsFuture ??= _loadStats();
 
     return FutureBuilder<List<int>>(
       future: _statsFuture,
       builder: (context, snapshot) {
-        final logCount = snapshot.data?[0] ?? 0;
+        final postCount = snapshot.data?[0] ?? 0;
         final spotCount = snapshot.data?[1] ?? 0;
         final checkinCount = snapshot.data?[2] ?? 0;
 
@@ -881,9 +891,9 @@ class _SummaryStatsGridState extends ConsumerState<_SummaryStatsGrid> {
           children: [
             Expanded(
               child: _SummaryCard(
-                emoji: '🐟',
-                value: '$logCount',
-                label: 'Toplam Kayıt',
+                emoji: '📸',
+                value: '$postCount',
+                label: 'Gönderiler',
               ),
             ),
             const SizedBox(width: 10),
@@ -969,48 +979,6 @@ class _SummaryCard extends StatelessWidget {
         borderRadius: radius,
         child: child,
       ),
-    );
-  }
-}
-
-// ── ADIM 9: Profil aksiyon bölümleri ─────────────────────────────────────────
-
-class _ProfileActionSection extends StatelessWidget {
-  final VoidCallback onGoToLog;
-  final VoidCallback onGoToStats;
-  final VoidCallback onGoToSettings;
-
-  const _ProfileActionSection({
-    required this.onGoToLog,
-    required this.onGoToStats,
-    required this.onGoToSettings,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _ActionTile(
-          icon: Icons.menu_book_rounded,
-          label: 'Geçmiş Kayıtlar',
-          subtitle: 'Eski balık günlüğü kayıtları',
-          onTap: onGoToLog,
-        ),
-        const SizedBox(height: 8),
-        _ActionTile(
-          icon: Icons.bar_chart_rounded,
-          label: 'İstatistiklerim',
-          subtitle: 'Av grafikleri ve sürdürülebilirlik',
-          onTap: onGoToStats,
-        ),
-        const SizedBox(height: 8),
-        _ActionTile(
-          icon: Icons.settings_outlined,
-          label: 'Ayarlar',
-          subtitle: 'Hesap ve uygulama ayarları',
-          onTap: onGoToSettings,
-        ),
-      ],
     );
   }
 }

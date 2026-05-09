@@ -29,11 +29,6 @@ import 'package:balikci_app/features/map/pick_spot_location_screen.dart';
 // Features — Check-in
 import 'package:balikci_app/features/checkin/checkin_screen.dart';
 
-// Features — Fish Log
-import 'package:balikci_app/features/fish_log/screens/log_list_screen.dart';
-import 'package:balikci_app/features/fish_log/screens/add_log_screen.dart';
-import 'package:balikci_app/features/fish_log/stats_screen.dart';
-
 // Features — Balıkçım
 import 'package:balikci_app/features/balikcim/balikcim_screen.dart';
 
@@ -199,26 +194,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 initialSpotId: spotId,
               );
             },
-          ),
-          GoRoute(
-            path: AppRoutes.fishLog,
-            builder: (context, state) => const LogListScreen(),
-            routes: [
-              GoRoute(
-                path: 'stats',
-                pageBuilder: (context, state) => _fadeSlidePage(
-                  state: state,
-                  child: const StatsScreen(),
-                ),
-              ),
-              GoRoute(
-                path: 'add',
-                pageBuilder: (context, state) => _fadeSlidePage(
-                  state: state,
-                  child: const AddLogScreen(),
-                ),
-              ),
-            ],
           ),
           GoRoute(
             path: AppRoutes.rank,

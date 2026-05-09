@@ -28,7 +28,6 @@ Map<String, dynamic> _baseJson({
     'spot_district': spotDistrict,
     'likes_count': likesCount,
     'comments_count': commentsCount,
-    'migrated_from_log_id': null,
     'is_deleted': false,
     'created_at': createdAt,
     'author': author,
