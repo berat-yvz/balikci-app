@@ -11,21 +11,6 @@ import 'package:balikci_app/data/models/weather_model.dart';
 final selectedWeatherRegionProvider =
     StateProvider<String>((ref) => 'istanbul');
 
-/// Bölge anahtarı → Türkçe görünen ad (ekleme sırası korunur).
-const Map<String, String> weatherRegionDisplayNames = {
-  'istanbul':  'İstanbul',
-  'izmir':     'İzmir',
-  'antalya':   'Antalya',
-  'trabzon':   'Trabzon',
-  'canakkale': 'Çanakkale',
-  'bodrum':    'Bodrum',
-  'fethiye':   'Fethiye',
-  'sinop':     'Sinop',
-  'samsun':    'Samsun',
-  'mersin':    'Mersin',
-  'mugla':     'Muğla',
-  'balikesir': 'Balıkesir',
-};
 
 /// Hava durumu sekmesi — tek kaynak: Supabase `weather_cache`.
 /// Provider adı geriye uyumluluk için korunmuştur.
@@ -69,8 +54,10 @@ class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
   void _scheduleHourlyPoll(String regionKey) {
     _pollTimer?.cancel();
     final now = DateTime.now();
-    final nextHour = DateTime(now.year, now.month, now.day, now.hour + 1);
-    _pollTimer = Timer(nextHour.difference(now), () {
+    // +2 dakika: server cron (0 * * * *) tam saat başında çalışır ve 51 bölgeyi
+    // güncellemeyi ~5-10 saniyede tamamlar. 2 dk buffer ile race condition önlenir.
+    final nextFetch = DateTime(now.year, now.month, now.day, now.hour + 1, 2);
+    _pollTimer = Timer(nextFetch.difference(now), () {
       unawaited(_silentReload(regionKey));
       _scheduleHourlyPoll(regionKey);
     });

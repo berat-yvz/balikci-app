@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/constants/weather_regions.dart';
 import 'package:balikci_app/data/models/fishing_score.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';

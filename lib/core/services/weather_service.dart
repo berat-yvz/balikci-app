@@ -134,10 +134,11 @@ class WeatherService {
     dynamic cached,
     Map<String, dynamic>? dataJson,
   ) {
+    final regionKey = cached.regionKey as String;
     return WeatherModel(
       id: '',
-      lat: 0,
-      lng: 0,
+      lat: weatherRegions[regionKey]?['lat'] ?? 0.0,
+      lng: weatherRegions[regionKey]?['lng'] ?? 0.0,
       dataJson: dataJson,
       temperature: cached.tempC as double?,
       windspeed: cached.windSpeedKmh as double?,
@@ -152,7 +153,7 @@ class WeatherService {
       weatherCode: null,
       fishingSummary: null,
       fetchedAt: cached.cachedAt.toUtc(),
-      regionKey: cached.regionKey as String?,
+      regionKey: regionKey,
     );
   }
 
@@ -216,28 +217,10 @@ class WeatherService {
     return MeraWeatherSnapshot(
       weather: snap.current,
       currentHour: hour,
-      locationLabel: _coastalRegionDisplayName(regionKey),
+      locationLabel: weatherRegionDisplayNames[regionKey] ?? regionKey,
       locationSubtitle: 'Kıyı bölgesi · saatlik tahmin',
       dataRegionKey: regionKey,
     );
-  }
-
-  static String _coastalRegionDisplayName(String regionKey) {
-    const names = <String, String>{
-      'istanbul': 'İstanbul',
-      'izmir': 'İzmir',
-      'antalya': 'Antalya',
-      'trabzon': 'Trabzon',
-      'canakkale': 'Çanakkale',
-      'bodrum': 'Bodrum',
-      'fethiye': 'Fethiye',
-      'sinop': 'Sinop',
-      'samsun': 'Samsun',
-      'mersin': 'Mersin',
-      'mugla': 'Muğla',
-      'balikesir': 'Balıkesir',
-    };
-    return names[regionKey] ?? regionKey;
   }
 
   static List<HourlyWeatherModel> hourlyFromOpenMeteoV1Bundle(
