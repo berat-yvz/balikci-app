@@ -9,6 +9,9 @@ const POINTS: Record<string, number> = {
   fish_log_public: 10,
   release_exif: 40,
   spot_public: 50,
+  // Sosyal Akış (FAZ 2)
+  post_share: 10,   // fotoğraflı gönderi paylaşımı
+  post_comment: 2,  // bir gönderiye yorum yapma
 }
 
 const RANK_ORDER: Record<string, number> = {

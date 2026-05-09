@@ -92,7 +92,17 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    const { user_id, title, body, data, force = false } = await req.json()
+    const { user_id, actor_id, title, body, data, force = false } = await req.json()
+
+    // ── Öz-bildirim koruması ────────────────────────────────────────────────
+    // actor_id verilmişse ve user_id ile aynıysa bildirimi iptal et.
+    // (kendi gönderisine beğeni / yorum durumu)
+    if (actor_id && actor_id === user_id) {
+      return new Response(
+        JSON.stringify({ success: false, reason: 'self_notification_skipped' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      )
+    }
 
     if (!user_id || !title || !body) {
       return new Response(
@@ -128,6 +138,9 @@ serve(async (req: Request) => {
       weather_morning: 'weather_morning',
       morning_weather: 'weather_morning',
       season_reminder: 'season_reminder',
+      // Sosyal Akış (FAZ 2) — migration 20260509000004 ile eklendi
+      post_like: 'post_like',
+      post_comment: 'post_comment',
     }
     const settingsCol = settingsColumnMap[notifType]
     if (settingsCol) {

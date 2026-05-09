@@ -23,8 +23,9 @@ enum SpotPrivacyLevel {
 
 /// Sosyal akış gönderisi — Supabase [posts] tablosunun istemci modeli.
 ///
-/// [spotName] posts tablosunda saklanmaz; Supabase sorgusu sırasında
-/// `fishing_spots(name)` join'i ile doldurulur (PostRepository'de).
+/// [spotName], [authorUsername], [authorAvatarUrl], [authorRank] posts
+/// tablosunda saklanmaz; sorgularda `author:users(...)` ve
+/// `spot:fishing_spots(name)` join'leri ile doldurulur.
 class PostModel {
   final String id;
   final String userId;
@@ -38,6 +39,15 @@ class PostModel {
 
   /// fishing_spots.name — join ile doldurulur, tabloda saklanmaz.
   final String? spotName;
+
+  /// Gönderi sahibinin kullanıcı adı — users join'inden doldurulur.
+  final String? authorUsername;
+
+  /// Gönderi sahibinin avatar URL'si — users join'inden doldurulur.
+  final String? authorAvatarUrl;
+
+  /// Gönderi sahibinin rütbesi — users join'inden doldurulur.
+  final String? authorRank;
 
   final int likesCount;
   final int commentsCount;
@@ -55,6 +65,9 @@ class PostModel {
     this.spotPrivacySnapshot = SpotPrivacyLevel.public,
     this.spotDistrict,
     this.spotName,
+    this.authorUsername,
+    this.authorAvatarUrl,
+    this.authorRank,
     this.likesCount = 0,
     this.commentsCount = 0,
     this.migratedFromLogId,
@@ -94,6 +107,17 @@ class PostModel {
       parsedSpotName = rawSpot['name'] as String?;
     }
 
+    // author join: author:users(username, avatar_url, rank)
+    String? parsedAuthorUsername;
+    String? parsedAuthorAvatarUrl;
+    String? parsedAuthorRank;
+    final rawAuthor = json['author'];
+    if (rawAuthor is Map<String, dynamic>) {
+      parsedAuthorUsername = rawAuthor['username'] as String?;
+      parsedAuthorAvatarUrl = rawAuthor['avatar_url'] as String?;
+      parsedAuthorRank = rawAuthor['rank'] as String?;
+    }
+
     return PostModel(
       id: json['id'] as String,
       userId: json['user_id'] as String,
@@ -105,6 +129,9 @@ class PostModel {
           SpotPrivacyLevel.fromString(json['spot_privacy_snapshot'] as String?),
       spotDistrict: json['spot_district'] as String?,
       spotName: parsedSpotName,
+      authorUsername: parsedAuthorUsername,
+      authorAvatarUrl: parsedAuthorAvatarUrl,
+      authorRank: parsedAuthorRank,
       likesCount: (json['likes_count'] as num?)?.toInt() ?? 0,
       commentsCount: (json['comments_count'] as num?)?.toInt() ?? 0,
       migratedFromLogId: json['migrated_from_log_id'] as String?,
@@ -139,6 +166,9 @@ class PostModel {
     SpotPrivacyLevel? spotPrivacySnapshot,
     String? spotDistrict,
     String? spotName,
+    String? authorUsername,
+    String? authorAvatarUrl,
+    String? authorRank,
     int? likesCount,
     int? commentsCount,
     String? migratedFromLogId,
@@ -155,6 +185,9 @@ class PostModel {
         spotPrivacySnapshot: spotPrivacySnapshot ?? this.spotPrivacySnapshot,
         spotDistrict: spotDistrict ?? this.spotDistrict,
         spotName: spotName ?? this.spotName,
+        authorUsername: authorUsername ?? this.authorUsername,
+        authorAvatarUrl: authorAvatarUrl ?? this.authorAvatarUrl,
+        authorRank: authorRank ?? this.authorRank,
         likesCount: likesCount ?? this.likesCount,
         commentsCount: commentsCount ?? this.commentsCount,
         migratedFromLogId: migratedFromLogId ?? this.migratedFromLogId,

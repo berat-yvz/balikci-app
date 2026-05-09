@@ -10,8 +10,8 @@ import 'package:balikci_app/data/models/hourly_weather_model.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
 
-// TODO(cron): supabase/migrations/20260504000005_verify_and_register_cron_jobs.sql
-// içinde 'weather-cache-hourly' cron kaydı mevcut (her saat başı, 0 * * * *).
+//
+// içinde 'weather-cache-hourly' cron kaydı mevcut (her saat başTODO(cron): supabase/migrations/20260504000005_verify_and_register_cron_jobs.sqlı, 0 * * * *).
 // Ancak cron 'x-webhook-secret' header'ı kullanıyor, 'Authorization: Bearer' yok.
 // Eğer weather_cache tablosu güncellenmiyorsa Supabase Dashboard > Database >
 // Extensions > pg_cron aktif olduğunu ve app.supabase_url / app.webhook_secret
@@ -35,9 +35,7 @@ class WeatherScreen extends ConsumerWidget {
   ) {
     final now = DateTime.now();
     final currentHour = DateTime(now.year, now.month, now.day, now.hour);
-    final filtered = source
-        .where((h) => !h.time.isBefore(currentHour))
-        .toList()
+    final filtered = source.where((h) => !h.time.isBefore(currentHour)).toList()
       ..sort((a, b) => a.time.compareTo(b.time));
     return filtered.length > 24 ? filtered.take(24).toList() : filtered;
   }
@@ -51,16 +49,15 @@ class WeatherScreen extends ConsumerWidget {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        title: const Text('Hava Durumu'),
-      ),
+      appBar: AppBar(title: const Text('Hava Durumu')),
       body: weatherAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => const _EmptyWeather(),
         data: (data) {
           final hoursFromNow = _next24Hours(data.hourly);
-          final currentHour =
-              hoursFromNow.isNotEmpty ? hoursFromNow.first : null;
+          final currentHour = hoursFromNow.isNotEmpty
+              ? hoursFromNow.first
+              : null;
           return RefreshIndicator(
             color: AppColors.primary,
             onRefresh: () async {
@@ -133,19 +130,23 @@ class WeatherScreen extends ConsumerWidget {
                   Container(
                     width: double.infinity,
                     margin: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 4),
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.3)),
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Text(
                       data.current.fishingSummary!,
-                      style:
-                          AppTextStyles.body.copyWith(color: AppColors.foam),
+                      style: AppTextStyles.body.copyWith(color: AppColors.foam),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -167,9 +168,7 @@ class WeatherScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  RepaintBoundary(
-                    child: _HourlyScrollRow(hours: hoursFromNow),
-                  ),
+                  RepaintBoundary(child: _HourlyScrollRow(hours: hoursFromNow)),
                   const SizedBox(height: 12),
                   Text(
                     'Sıcaklık grafiği',
@@ -197,7 +196,6 @@ class WeatherScreen extends ConsumerWidget {
                 // Ay fazı kartı — büyük ikon + Türkçe isim
                 const _MoonPhaseCard(),
                 const SizedBox(height: 12),
-
               ],
             ),
           );
@@ -276,8 +274,7 @@ class _HourlyScrollRow extends StatelessWidget {
           return Container(
             width: 72,
             margin: const EdgeInsets.only(right: 8),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             decoration: BoxDecoration(
               color: isNow
                   ? AppColors.primary.withValues(alpha: 0.20)
@@ -301,18 +298,14 @@ class _HourlyScrollRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  h.weatherEmoji,
-                  style: const TextStyle(fontSize: 22),
-                ),
+                Text(h.weatherEmoji, style: const TextStyle(fontSize: 22)),
                 const SizedBox(height: 6),
                 Text(
                   '${h.temperature.round()}°',
                   style: TextStyle(
                     color: isNow ? Colors.white : Colors.white70,
                     fontSize: 16,
-                    fontWeight:
-                        isNow ? FontWeight.w900 : FontWeight.w600,
+                    fontWeight: isNow ? FontWeight.w900 : FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -352,10 +345,12 @@ class _HourlyWeatherChart extends StatelessWidget {
       );
     }
 
-    final minTemp =
-        hours.map((h) => h.temperature).reduce((a, b) => a < b ? a : b);
-    final maxTemp =
-        hours.map((h) => h.temperature).reduce((a, b) => a > b ? a : b);
+    final minTemp = hours
+        .map((h) => h.temperature)
+        .reduce((a, b) => a < b ? a : b);
+    final maxTemp = hours
+        .map((h) => h.temperature)
+        .reduce((a, b) => a > b ? a : b);
     final totalW = (hours.length * _colW).toDouble();
 
     return Container(
@@ -416,9 +411,7 @@ class _HourlyWeatherChart extends StatelessWidget {
                                 '${hours[i].time.hour.toString().padLeft(2, '0')}:00',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: i == 0
-                                      ? Colors.white
-                                      : Colors.white60,
+                                  color: i == 0 ? Colors.white : Colors.white60,
                                   fontSize: 14,
                                   fontWeight: i == 0
                                       ? FontWeight.w900
@@ -545,8 +538,9 @@ class _LineChartPainter extends CustomPainter {
 
   List<Offset> _calcPoints(Size size) {
     final drawH = size.height - _topPad - _botPad;
-    final tempRange =
-        (maxTemp - minTemp).abs() < 0.5 ? 1.0 : (maxTemp - minTemp);
+    final tempRange = (maxTemp - minTemp).abs() < 0.5
+        ? 1.0
+        : (maxTemp - minTemp);
     return [
       for (int i = 0; i < hours.length; i++)
         Offset(
@@ -554,8 +548,10 @@ class _LineChartPainter extends CustomPainter {
           _topPad +
               drawH *
                   (1.0 -
-                      ((hours[i].temperature - minTemp) / tempRange)
-                          .clamp(0.0, 1.0)),
+                      ((hours[i].temperature - minTemp) / tempRange).clamp(
+                        0.0,
+                        1.0,
+                      )),
         ),
     ];
   }
@@ -566,9 +562,12 @@ class _LineChartPainter extends CustomPainter {
     for (int i = 0; i < pts.length - 1; i++) {
       final midX = (pts[i].dx + pts[i + 1].dx) / 2;
       path.cubicTo(
-        midX, pts[i].dy,
-        midX, pts[i + 1].dy,
-        pts[i + 1].dx, pts[i + 1].dy,
+        midX,
+        pts[i].dy,
+        midX,
+        pts[i + 1].dy,
+        pts[i + 1].dx,
+        pts[i + 1].dy,
       );
     }
     return path;
@@ -641,9 +640,7 @@ class _LineChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _LineChartPainter old) =>
-      old.hours != hours ||
-      old.minTemp != minTemp ||
-      old.maxTemp != maxTemp;
+      old.hours != hours || old.minTemp != minTemp || old.maxTemp != maxTemp;
 }
 
 class _WeatherHeroCard extends StatelessWidget {
@@ -653,13 +650,13 @@ class _WeatherHeroCard extends StatelessWidget {
   // Open-Meteo WMO kodlarına göre emoji (OWM kodları değil).
   String _weatherIcon(int? code) {
     if (code == null) return '🌤️';
-    if (code == 0) return '☀️';     // Açık gökyüzü
-    if (code <= 3) return '⛅';     // Parçalı bulutlu
-    if (code <= 49) return '🌫️';  // Sis / pus
-    if (code <= 69) return '🌧️';  // Çisenti / yağmur
-    if (code <= 79) return '❄️';   // Kar
-    if (code <= 82) return '🌦️';  // Sağanak yağış
-    if (code <= 99) return '⛈️';  // Gök gürültülü fırtına
+    if (code == 0) return '☀️'; // Açık gökyüzü
+    if (code <= 3) return '⛅'; // Parçalı bulutlu
+    if (code <= 49) return '🌫️'; // Sis / pus
+    if (code <= 69) return '🌧️'; // Çisenti / yağmur
+    if (code <= 79) return '❄️'; // Kar
+    if (code <= 82) return '🌦️'; // Sağanak yağış
+    if (code <= 99) return '⛈️'; // Gök gürültülü fırtına
     return '🌤️';
   }
 
@@ -695,10 +692,7 @@ class _WeatherDetailGrid extends StatelessWidget {
   final WeatherModel weather;
   final HourlyWeatherModel? currentHour;
 
-  const _WeatherDetailGrid({
-    required this.weather,
-    this.currentHour,
-  });
+  const _WeatherDetailGrid({required this.weather, this.currentHour});
 
   String _visibilityLabel() {
     final km = weather.visibilityKm ?? currentHour?.visibilityKm;
@@ -746,8 +740,7 @@ class _WeatherDetailGrid extends StatelessWidget {
             final h = currentHour?.waveHeight ?? weather.waveHeight;
             return h != null ? '${h.toStringAsFixed(1)} m' : 'Veri yok';
           }(),
-          valueColor:
-              currentHour?.waveHeight == null ? AppColors.muted : null,
+          valueColor: currentHour?.waveHeight == null ? AppColors.muted : null,
         ),
         _DetailTile(
           icon: '💧',
@@ -756,19 +749,15 @@ class _WeatherDetailGrid extends StatelessWidget {
               ? '%${weather.humidity!.toStringAsFixed(0)}'
               : 'Veri yok',
         ),
-        _DetailTile(
-          icon: '👁️',
-          label: 'Görüş',
-          value: _visibilityLabel(),
-        ),
+        _DetailTile(icon: '👁️', label: 'Görüş', value: _visibilityLabel()),
         _DetailTile(
           icon: '☁️',
           label: 'Bulutluluk',
           value: currentHour?.cloudCover != null
               ? '%${currentHour!.cloudCover!.toStringAsFixed(0)}'
               : weather.cloudCover != null
-                  ? '%${weather.cloudCover!.toStringAsFixed(0)}'
-                  : 'Veri yok',
+              ? '%${weather.cloudCover!.toStringAsFixed(0)}'
+              : 'Veri yok',
         ),
         // Deniz yüzey sıcaklığı — saatlik veriden, yoksa WeatherModel alanına düş
         _DetailTile(
@@ -776,7 +765,8 @@ class _WeatherDetailGrid extends StatelessWidget {
           label: 'Deniz Sıcaklığı',
           value: () {
             final sst =
-                currentHour?.seaSurfaceTemperature ?? weather.seaSurfaceTemperature;
+                currentHour?.seaSurfaceTemperature ??
+                weather.seaSurfaceTemperature;
             return sst != null ? '${sst.round()}°C' : 'Veri yok';
           }(),
           valueColor: currentHour?.seaSurfaceTemperature == null
@@ -792,8 +782,9 @@ class _WeatherDetailGrid extends StatelessWidget {
           value: currentHour?.currentVelocity != null
               ? '${(currentHour!.currentVelocity! * 100).round()} cm/s'
               : 'Veri yok',
-          valueColor:
-              currentHour?.currentVelocity == null ? AppColors.muted : null,
+          valueColor: currentHour?.currentVelocity == null
+              ? AppColors.muted
+              : null,
         ),
         _DetailTile(
           icon: '🧭',
@@ -956,17 +947,14 @@ class _RegionSelector extends ConsumerWidget {
           final entry = weatherRegionDisplayNames.entries.elementAt(i);
           final isSelected = entry.key == selected;
           return GestureDetector(
-            onTap: () => ref
-                .read(selectedWeatherRegionProvider.notifier)
-                .state = entry.key,
+            onTap: () =>
+                ref.read(selectedWeatherRegionProvider.notifier).state =
+                    entry.key,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.surface,
+                color: isSelected ? AppColors.primary : AppColors.surface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelected
@@ -979,8 +967,7 @@ class _RegionSelector extends ConsumerWidget {
                 style: AppTextStyles.caption.copyWith(
                   fontSize: 13,
                   color: isSelected ? AppColors.foam : AppColors.muted,
-                  fontWeight:
-                      isSelected ? FontWeight.w700 : FontWeight.w500,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
             ),

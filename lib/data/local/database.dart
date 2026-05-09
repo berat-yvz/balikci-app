@@ -90,6 +90,40 @@ class AppDatabase extends _$AppDatabase {
       }
     },
   );
+
+  // ─── LocalPosts CRUD ──────────────────────────────────────────────────────
+
+  /// Postu önbelleğe yazar; aynı id varsa günceller.
+  Future<void> savePost(LocalPostsCompanion post) async {
+    await into(localPosts).insertOnConflictUpdate(post);
+  }
+
+  /// Önbellekten post listesi döner.
+  /// [before] verilirse o tarihten önceki kayıtlar döner (cursor pagination).
+  Future<List<LocalPost>> getLocalPosts({
+    int limit = 20,
+    DateTime? before,
+  }) {
+    final query = select(localPosts)
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+      ..limit(limit);
+
+    if (before != null) {
+      query.where((t) => t.createdAt.isSmallerThanValue(before));
+    }
+
+    return query.get();
+  }
+
+  /// Tek bir postu önbellekten siler.
+  Future<void> deleteLocalPost(String id) async {
+    await (delete(localPosts)..where((t) => t.id.equals(id))).go();
+  }
+
+  /// Tüm yerel post önbelleğini temizler.
+  Future<void> clearLocalPosts() async {
+    await delete(localPosts).go();
+  }
 }
 
 QueryExecutor _openConnection() {
