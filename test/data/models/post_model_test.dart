@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:balikci_app/data/models/post_model.dart';
+import 'package:balikci_app/data/models/user_model.dart';
 
 /// Temel bir PostModel JSON verisi döner.
 Map<String, dynamic> _baseJson({
@@ -75,9 +76,30 @@ void main() {
       expect(post.fishSpecies, isEmpty);
     });
 
-    test('author join yoksa authorUsername null olur', () {
+    test('author join yoksa kullanıcı id\'den okunaklı takma ad', () {
       final post = PostModel.fromJson(_baseJson());
-      expect(post.authorUsername, isNull);
+      expect(
+        post.authorUsername,
+        UserModel.displayUsername(
+          rawUsername: null,
+          email: '',
+          userId: 'user-1',
+        ),
+      );
+    });
+
+    test('author teknik kuyruk → gösterimde önek (kayıtlı rumuz)', () {
+      final post = PostModel.fromJson(
+        _baseJson(
+          author: {
+            'username': 'foo_a1b2c3d4',
+            'email': 'haluk.deniz@test.com',
+            'avatar_url': null,
+            'rank': 'acemi',
+          },
+        ),
+      );
+      expect(post.authorUsername, 'foo');
     });
 
     test('private spot — displaySpotName "📍" ile başlar', () {

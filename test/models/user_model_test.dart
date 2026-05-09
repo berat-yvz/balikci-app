@@ -94,11 +94,18 @@ void main() {
       expect(user.username, 'user_xyz');
     });
 
-    test('RPC: email yok, otomatik user_* → boş kalmaz (otomatik ad gösterilir)', () {
+    test('RPC: email yok, otomatik user_* → Balıkçı + id kuyruğu', () {
       final user = UserModel.fromJson(
         baseJson(username: 'user_abc123def', email: ''),
       );
-      expect(user.username, 'user_abc123def');
+      expect(user.username, 'Balıkçı_user1');
+    });
+
+    test('teknik _xxxxxxxx kuyruğu düşürülür → önek gösterilir', () {
+      final user = UserModel.fromJson(
+        baseJson(username: 'ahmet_balikci_a1b2c3d4', email: ''),
+      );
+      expect(user.username, 'ahmet_balikci');
     });
 
     test('RPC: email ve username yok → Balıkçı + id kuyruğu', () {

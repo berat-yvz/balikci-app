@@ -98,24 +98,35 @@ class AuthRepository {
 
       final email = user.email ?? '';
       final metaUser = user.userMetadata?['username'] as String?;
-      var username = metaUser?.trim();
-      if (username == null || username.isEmpty) {
-        username = email.contains('@') ? email.split('@').first : 'user';
+      var chosen = metaUser?.trim();
+      if (chosen == null || chosen.isEmpty) {
+        chosen = email.contains('@') ? email.split('@').first : 'balikci';
       }
-      username = _sanitizeUsername(username);
-      if (username.length < 3) username = 'user';
+      chosen = _sanitizeUsername(chosen);
+      if (chosen.length < 3) chosen = 'balikci';
+
+      Future<bool> tryInsert(String username) async {
+        try {
+          await _db.from('users').insert({
+            'id': user.id,
+            'email': email.isNotEmpty ? email : '$username@oauth.local',
+            'username': username,
+            'created_at': DateTime.now().toIso8601String(),
+          });
+          return true;
+        } on PostgrestException catch (e) {
+          if (e.code == '23505') return false;
+          return false;
+        }
+      }
+
+      if (await tryInsert(chosen)) return;
+
       final idShort = user.id.replaceAll('-', '');
       final suffix = idShort.length >= 8
           ? idShort.substring(0, 8)
           : idShort.padRight(8, '0');
-      username = '${username}_$suffix';
-
-      await _db.from('users').insert({
-        'id': user.id,
-        'email': email.isNotEmpty ? email : '$username@oauth.local',
-        'username': username,
-        'created_at': DateTime.now().toIso8601String(),
-      });
+      await tryInsert('${chosen}_$suffix');
     } catch (_) {
       // Zaten var, unique veya RLS — yutulur
     }

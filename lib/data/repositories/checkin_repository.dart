@@ -100,7 +100,7 @@ class CheckinRepository {
       );
       final response = await _db
           .from('checkins')
-          .select('*, users:user_id(username)')
+          .select('*, users:user_id(username, email)')
           .eq('spot_id', spotId)
           .eq('is_hidden', false)
           .gte('created_at', threshold.toIso8601String())

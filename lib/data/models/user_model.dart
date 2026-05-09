@@ -22,18 +22,45 @@ class UserModel {
     required this.createdAt,
   });
 
-  /// RPC satırlarında `email` gelmeyebilir; otomatik `user_*` adını o zaman da göster.
+  /// İstemci/sunucunun eklediği teknik kullanıcı adlarını gizler; mümkünse gerçek
+  /// rumuzu veya e-posta ön ekini gösterir.
+  ///
+  /// - `user_abcdef...` → e-posta ön eki veya [Balıkçı + kısa id]
+  /// - `rumuz_a1b2c3d4` (8 hex kuyruk) → gösterimde `rumuz`
   static String _resolveUsername(String? raw, String email, String userId) {
-    final trimmed = raw?.trim() ?? '';
-    final autoPattern = RegExp(r'^user_[0-9a-f]{6,}$', caseSensitive: false);
-    if (trimmed.isNotEmpty && !autoPattern.hasMatch(trimmed)) {
-      return trimmed;
+    var token = raw?.trim() ?? '';
+    final autoFull = RegExp(r'^user_[0-9a-f]{6,}$', caseSensitive: false);
+    final uuidSuffix = RegExp(r'_([0-9a-f]{8})$', caseSensitive: false);
+
+    if (token.isNotEmpty && autoFull.hasMatch(token)) {
+      token = '';
     }
+
+    if (token.isNotEmpty) {
+      final m = uuidSuffix.firstMatch(token);
+      if (m != null) {
+        final base = token.substring(0, m.start);
+        if (base.isNotEmpty &&
+            base.toLowerCase() != 'user' &&
+            base.length >= 2) {
+          return base;
+        }
+        token = '';
+      } else {
+        return token;
+      }
+    }
+
     final mail = email.trim();
     if (mail.isNotEmpty) {
       return mail.split('@').first;
     }
-    if (trimmed.isNotEmpty) return trimmed;
+
+    final trimmedRaw = raw?.trim() ?? '';
+    if (trimmedRaw.isNotEmpty && !autoFull.hasMatch(trimmedRaw)) {
+      return trimmedRaw;
+    }
+
     final compact = userId.replaceAll('-', '');
     final tail = compact.length >= 6
         ? compact.substring(compact.length - 6)

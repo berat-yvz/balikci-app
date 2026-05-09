@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:balikci_app/data/models/checkin_model.dart';
+import 'package:balikci_app/data/models/user_model.dart';
 
 void main() {
   final now = DateTime.now();
@@ -215,14 +216,28 @@ void main() {
       expect(model.username, 'mehmet_usta');
     });
 
-    test('users null → username null', () {
+    test('users null → join yokken okunaklı takma ad', () {
       final model = CheckinModel.fromJson(baseJson(users: null));
-      expect(model.username, isNull);
+      expect(
+        model.username,
+        UserModel.displayUsername(
+          rawUsername: null,
+          email: '',
+          userId: 'user-1',
+        ),
+      );
     });
 
-    test('users boş liste → username null', () {
+    test('users boş liste → join yokken okunaklı takma ad', () {
       final model = CheckinModel.fromJson(baseJson(users: []));
-      expect(model.username, isNull);
+      expect(
+        model.username,
+        UserModel.displayUsername(
+          rawUsername: null,
+          email: '',
+          userId: 'user-1',
+        ),
+      );
     });
   });
 }

@@ -23,13 +23,13 @@ class PostRepository {
     spot_id, spot_privacy_snapshot, spot_district,
     likes_count, comments_count,
     is_deleted, created_at,
-    author:users(username, avatar_url, rank),
+    author:users(username, avatar_url, rank, email),
     spot:fishing_spots(name)
   ''';
 
   /// Comments için tam select — user join dahil.
   static const _commentSelect =
-      'id, post_id, user_id, content, created_at, user:users(username, avatar_url)';
+      'id, post_id, user_id, content, created_at, user:users(username, avatar_url, email)';
 
   // ─── Yardımcı: puan hesapla (fire-and-forget) ──────────────────────────────
 

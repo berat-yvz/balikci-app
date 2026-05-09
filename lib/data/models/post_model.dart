@@ -1,3 +1,5 @@
+import 'package:balikci_app/data/models/user_model.dart';
+
 /// Mera gizlilik seviyeleri — fishing_spots.privacy_level ile eşdeğer semantik.
 enum SpotPrivacyLevel {
   public,
@@ -105,20 +107,29 @@ class PostModel {
       parsedSpotName = rawSpot['name'] as String?;
     }
 
-    // author join: author:users(username, avatar_url, rank)
-    String? parsedAuthorUsername;
+    // author join: author:users(username, avatar_url, rank, email)
+    String? rawAuthorUsername;
     String? parsedAuthorAvatarUrl;
     String? parsedAuthorRank;
+    var parsedAuthorEmail = '';
     final rawAuthor = json['author'];
     if (rawAuthor is Map<String, dynamic>) {
-      parsedAuthorUsername = rawAuthor['username'] as String?;
+      rawAuthorUsername = rawAuthor['username'] as String?;
       parsedAuthorAvatarUrl = rawAuthor['avatar_url'] as String?;
       parsedAuthorRank = rawAuthor['rank'] as String?;
+      parsedAuthorEmail = rawAuthor['email'] as String? ?? '';
     }
+
+    final uid = json['user_id'] as String;
+    final resolvedAuthorUsername = UserModel.displayUsername(
+      rawUsername: rawAuthorUsername,
+      email: parsedAuthorEmail,
+      userId: uid,
+    );
 
     return PostModel(
       id: json['id'] as String,
-      userId: json['user_id'] as String,
+      userId: uid,
       photoUrl: json['photo_url'] as String,
       caption: json['caption'] as String?,
       fishSpecies: parsedSpecies,
@@ -127,7 +138,7 @@ class PostModel {
           SpotPrivacyLevel.fromString(json['spot_privacy_snapshot'] as String?),
       spotDistrict: json['spot_district'] as String?,
       spotName: parsedSpotName,
-      authorUsername: parsedAuthorUsername,
+      authorUsername: resolvedAuthorUsername,
       authorAvatarUrl: parsedAuthorAvatarUrl,
       authorRank: parsedAuthorRank,
       likesCount: (json['likes_count'] as num?)?.toInt() ?? 0,
@@ -215,19 +226,27 @@ class CommentModel {
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {
     // users join: PostgREST nested object
-    String? parsedUsername;
+    String? rawUsername;
     String? parsedAvatarUrl;
+    var parsedEmail = '';
     final rawUser = json['user'];
     if (rawUser is Map<String, dynamic>) {
-      parsedUsername = rawUser['username'] as String?;
+      rawUsername = rawUser['username'] as String?;
       parsedAvatarUrl = rawUser['avatar_url'] as String?;
+      parsedEmail = rawUser['email'] as String? ?? '';
     }
+
+    final uid = json['user_id'] as String;
 
     return CommentModel(
       id: json['id'] as String,
       postId: json['post_id'] as String,
-      userId: json['user_id'] as String,
-      username: parsedUsername,
+      userId: uid,
+      username: UserModel.displayUsername(
+        rawUsername: rawUsername,
+        email: parsedEmail,
+        userId: uid,
+      ),
       avatarUrl: parsedAvatarUrl,
       content: json['content'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),

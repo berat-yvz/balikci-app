@@ -8,6 +8,7 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/storage_buckets.dart';
 import 'package:balikci_app/core/utils/time_utils.dart';
 import 'package:balikci_app/data/models/post_model.dart';
+import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
@@ -28,17 +29,27 @@ class PostCard extends ConsumerStatefulWidget {
 class _PostCardState extends ConsumerState<PostCard> {
   bool _liking = false;
 
+  /// Bildirim metinleri için veritabanıyla uyumlu görünen ad (teknik kuyruk düşürülür).
+  String? _notificationActorName() {
+    final u = ref.read(currentUserProvider);
+    if (u == null) return null;
+    return UserModel.displayUsername(
+      rawUsername: u.userMetadata?['username'] as String?,
+      email: u.email ?? '',
+      userId: u.id,
+    );
+  }
+
   Future<void> _toggleLike() async {
     if (_liking) return;
     setState(() => _liking = true);
     try {
       final repo = ref.read(postRepositoryProvider);
-      final userMeta = ref.read(currentUserProvider)?.userMetadata;
-      final myUsername = userMeta?['username'] as String?;
+      final actorName = _notificationActorName();
       await repo.toggleLike(
         widget.post.id,
         postOwnerId: widget.post.userId,
-        actorUsername: myUsername,
+        actorUsername: actorName,
       );
       ref.invalidate(likedPostsProvider(widget.post.id));
       ref.invalidate(friendsFeedProvider);
@@ -476,6 +487,16 @@ class _DetailActionRow extends ConsumerStatefulWidget {
 class _DetailActionRowState extends ConsumerState<_DetailActionRow> {
   bool _liking = false;
 
+  String? _notificationActorName() {
+    final u = ref.read(currentUserProvider);
+    if (u == null) return null;
+    return UserModel.displayUsername(
+      rawUsername: u.userMetadata?['username'] as String?,
+      email: u.email ?? '',
+      userId: u.id,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final likedAsync = ref.watch(likedPostsProvider(widget.post.id));
@@ -538,12 +559,11 @@ class _DetailActionRowState extends ConsumerState<_DetailActionRow> {
     setState(() => _liking = true);
     try {
       final repo = ref.read(postRepositoryProvider);
-      final userMeta = ref.read(currentUserProvider)?.userMetadata;
-      final myUsername = userMeta?['username'] as String?;
+      final actorName = _notificationActorName();
       await repo.toggleLike(
         widget.post.id,
         postOwnerId: widget.post.userId,
-        actorUsername: myUsername,
+        actorUsername: actorName,
       );
       ref.invalidate(likedPostsProvider(widget.post.id));
       ref.invalidate(friendsFeedProvider);

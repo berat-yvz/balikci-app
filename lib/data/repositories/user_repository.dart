@@ -293,6 +293,7 @@ class UserRepository {
                 final uid = m['user_id'] as String;
                 final name = UserModel.displayUsername(
                   rawUsername: m['username'] as String?,
+                  email: m['email'] as String? ?? '',
                   userId: uid,
                 );
                 return WeeklyRankEntry(
@@ -312,7 +313,9 @@ class UserRepository {
       final since = DateTime.now().toUtc().subtract(const Duration(days: 7));
       final response = await _db
           .from('checkins')
-          .select('user_id, users!inner(id, username, avatar_url, rank)')
+          .select(
+            'user_id, users!inner(id, username, avatar_url, rank, email)',
+          )
           .gte('created_at', since.toIso8601String())
           .eq('is_hidden', false)
           .limit(500); // fazlasını çekip istemci tarafında say
@@ -336,6 +339,7 @@ class UserRepository {
         final meta = userMeta[e.key]!;
         final name = UserModel.displayUsername(
           rawUsername: meta['username'] as String?,
+          email: meta['email'] as String? ?? '',
           userId: e.key,
         );
         return WeeklyRankEntry(

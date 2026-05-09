@@ -1,5 +1,7 @@
 import 'package:balikci_app/core/constants/app_constants.dart';
 
+import 'package:balikci_app/data/models/user_model.dart';
+
 /// Check-in modeli — ARCHITECTURE.md `checkins` tablosu referans.
 class CheckinModel {
   // cleaned: oy sayıları ve gizleme kuralı model seviyesine eklendi
@@ -66,24 +68,27 @@ class CheckinModel {
   /// Rapor 6 saatten eski mi? (haritadan kaldır)
   bool get isExpired => DateTime.now().difference(createdAt).inHours >= 6;
 
-  factory CheckinModel.fromJson(Map<String, dynamic> json) => CheckinModel(
-    id: json['id'] as String,
-    userId: json['user_id'] as String,
-    spotId: json['spot_id'] as String,
-    username: _parseUsername(json['users']),
-    crowdLevel: json['crowd_level'] as String?,
-    fishDensity: json['fish_density'] as String?,
-    fishSpecies: _parseStringList(json['fish_species']),
-    photoUrl: json['photo_url'] as String?,
-    exifVerified: json['exif_verified'] as bool? ?? false,
-    isHidden: json['is_hidden'] as bool? ?? false,
-    trueVotes: (json['true_votes'] as num?)?.toInt() ?? 0,
-    falseVotes: (json['false_votes'] as num?)?.toInt() ?? 0,
-    createdAt: DateTime.parse(json['created_at'] as String),
-    expiresAt: json['expires_at'] != null
-        ? DateTime.parse(json['expires_at'] as String)
-        : null,
-  );
+  factory CheckinModel.fromJson(Map<String, dynamic> json) {
+    final uid = json['user_id'] as String;
+    return CheckinModel(
+      id: json['id'] as String,
+      userId: uid,
+      spotId: json['spot_id'] as String,
+      username: _displayUsername(json['users'], uid),
+      crowdLevel: json['crowd_level'] as String?,
+      fishDensity: json['fish_density'] as String?,
+      fishSpecies: _parseStringList(json['fish_species']),
+      photoUrl: json['photo_url'] as String?,
+      exifVerified: json['exif_verified'] as bool? ?? false,
+      isHidden: json['is_hidden'] as bool? ?? false,
+      trueVotes: (json['true_votes'] as num?)?.toInt() ?? 0,
+      falseVotes: (json['false_votes'] as num?)?.toInt() ?? 0,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      expiresAt: json['expires_at'] != null
+          ? DateTime.parse(json['expires_at'] as String)
+          : null,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -113,16 +118,23 @@ class CheckinModel {
     return const [];
   }
 
-  static String? _parseUsername(dynamic usersField) {
+  static String? _displayUsername(dynamic usersField, String userId) {
+    var raw = '';
+    var email = '';
     if (usersField is Map<String, dynamic>) {
-      return usersField['username'] as String?;
-    }
-    if (usersField is List && usersField.isNotEmpty) {
+      raw = usersField['username'] as String? ?? '';
+      email = usersField['email'] as String? ?? '';
+    } else if (usersField is List && usersField.isNotEmpty) {
       final first = usersField.first;
       if (first is Map<String, dynamic>) {
-        return first['username'] as String?;
+        raw = first['username'] as String? ?? '';
+        email = first['email'] as String? ?? '';
       }
     }
-    return null;
+    return UserModel.displayUsername(
+      rawUsername: raw.isEmpty ? null : raw,
+      email: email,
+      userId: userId,
+    );
   }
 }
