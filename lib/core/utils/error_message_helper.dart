@@ -56,6 +56,47 @@ class ErrorMessageHelper {
       return '🔍 İstenen veri bulunamadı.';
     }
 
+    // Supabase Storage — MIME / boyut / politika
+    if (msg.contains('mime') ||
+        msg.contains('invalid mime') ||
+        msg.contains('content-type') ||
+        msg.contains('invalid upload')) {
+      return '📷 Fotoğraf sunucuya uygun formatta gitmedi.\n'
+          'Başka bir JPG veya PNG dene (veya galeriden seç).';
+    }
+
+    if (msg.contains('413') ||
+        msg.contains('payload too large') ||
+        msg.contains('entity too large')) {
+      return '📷 Fotoğraf çok büyük.\nDaha küçük bir görsel seç.';
+    }
+
+    if ((msg.contains('storage') || msg.contains('bucket')) &&
+        (msg.contains('403') ||
+            msg.contains('forbidden') ||
+            msg.contains('policy') ||
+            msg.contains('row-level security'))) {
+      return '📷 Fotoğraf yüklemesi engellendi.\n'
+          'Supabase’de fish-photos politikalarının güncel olduğundan emin ol '
+          '(bkz. migration `20260509000005_fix_fish_photos_storage_rls.sql`).';
+    }
+
+    // posts.user_id → users(id)
+    if (msg.contains('foreign key') ||
+        msg.contains('23503') ||
+        (msg.contains('posts') &&
+            msg.contains('violates') &&
+            msg.contains('users'))) {
+      return '👤 Hesap kaydı eksik görünüyor.\n'
+          'Çıkış yapıp tekrar giriş yap; sorun sürerse destek al.';
+    }
+
+    // posts INSERT RLS
+    if (msg.contains('row-level security') && msg.contains('posts')) {
+      return '📝 Gönderi kaydı sunucu güvenlik kuralına takıldı.\n'
+          'Çıkış yapıp tekrar dene; migration’ların uygulandığını kontrol et.';
+    }
+
     return fallback;
   }
 

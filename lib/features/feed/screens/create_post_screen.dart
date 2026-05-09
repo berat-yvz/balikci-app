@@ -162,13 +162,13 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     if (uid == null) {
       throw Exception('Oturum bulunamadı. Tekrar giriş yap.');
     }
-    final path = '$uid/posts/${DateTime.now().millisecondsSinceEpoch}.webp';
+    final path = '$uid/posts/${DateTime.now().millisecondsSinceEpoch}.jpg';
     final bytes = await prepareAvatarUploadBytes(_pickedImage!);
     await SupabaseService.storage.from(AppConstants.photoBucket).uploadBinary(
           path,
           bytes,
           fileOptions: const FileOptions(
-            contentType: 'image/webp',
+            contentType: 'image/jpeg',
             upsert: true,
           ),
         );
