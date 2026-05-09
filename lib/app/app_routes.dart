@@ -14,6 +14,8 @@ class AppRoutes {
   // Shell (BottomNav)
   static const home = '/home';
   static const social = '/social';
+  static const socialHub = '/social/hub';
+  static const socialLeaderboard = '/social/leaderboard';
   static const socialFriends = '/social/friends';
   static const socialRequests = '/social/requests';
   static const rank = '/rank';

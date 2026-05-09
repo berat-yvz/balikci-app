@@ -12,9 +12,9 @@ import 'package:balikci_app/shared/widgets/rank_badge.dart';
 /// Arkadaşlar / istekler ekranlarıyla aynı kart dolgusu ([FriendRequestsScreen]).
 const Color _kSocialCardFill = Color(0xFF132236);
 
-/// Genel sıralama — Topluluk > Arkadaşlar ile aynı tipografi ve liste düzeni.
+/// Genel sıralama — arkadaş listesi ile aynı tipografi ve liste düzeni.
 ///
-/// [embedded] true iken iç [Scaffold] kullanılmaz (Sosyal > Sıralama sekmesi).
+/// [embedded] true iken iç [Scaffold] kullanılmaz (tam ekran için [/social/leaderboard]).
 class LeaderboardScreen extends ConsumerStatefulWidget {
   const LeaderboardScreen({super.key, this.embedded = false});
 

@@ -745,7 +745,7 @@ class _FriendshipActionBar extends ConsumerWidget {
   }
 }
 
-// ── ADIM 9: Arkadaş sayısı (liste: Sosyal > Arkadaşlarım veya başka profil) ──
+// ── ADIM 9: Arkadaş sayısı (liste: akış > arkadaşlar veya başka profil) ──
 
 class _FriendsStatRow extends ConsumerWidget {
   final String userId;

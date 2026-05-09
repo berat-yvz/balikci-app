@@ -39,9 +39,10 @@ import 'package:balikci_app/features/feed/screens/feed_screen.dart';
 import 'package:balikci_app/features/feed/screens/post_detail_screen.dart';
 
 // Features — Social
+import 'package:balikci_app/features/rank/leaderboard_screen.dart';
 import 'package:balikci_app/features/social/friend_requests_screen.dart';
+import 'package:balikci_app/features/social/friends_hub_screen.dart';
 import 'package:balikci_app/features/social/friends_list_screen.dart';
-import 'package:balikci_app/features/social/social_screen.dart';
 
 // Features — Weather
 import 'package:balikci_app/features/weather/weather_screen.dart';
@@ -197,7 +198,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.rank,
-            redirect: (context, state) => AppRoutes.social,
+            redirect: (context, state) => AppRoutes.socialLeaderboard,
           ),
           GoRoute(
             path: AppRoutes.balikcim,
@@ -241,7 +242,21 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.social,
-            builder: (context, state) => const SocialScreen(),
+            redirect: (context, state) => AppRoutes.feed,
+          ),
+          GoRoute(
+            path: AppRoutes.socialHub,
+            pageBuilder: (context, state) => _fadeSlidePage(
+              state: state,
+              child: const FriendsHubScreen(),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.socialLeaderboard,
+            pageBuilder: (context, state) => _fadeSlidePage(
+              state: state,
+              child: const LeaderboardScreen(),
+            ),
           ),
           GoRoute(
             path: AppRoutes.socialFriends,

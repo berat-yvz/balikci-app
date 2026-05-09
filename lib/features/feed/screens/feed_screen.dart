@@ -9,7 +9,7 @@ import 'package:balikci_app/features/feed/screens/post_detail_screen.dart';
 import 'package:balikci_app/features/feed/widgets/post_card.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
 
-/// Sosyal akış — "Arkadaşlar" ve "Türkiye" sekmeleri.
+/// Sosyal akış — varsayılan olarak genel gönderiler; çevre akışı ikinci sekmede.
 class FeedScreen extends ConsumerWidget {
   const FeedScreen({super.key});
 
@@ -31,6 +31,13 @@ class FeedScreen extends ConsumerWidget {
             ),
           ),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.people_outline_rounded,
+                  color: AppColors.foam),
+              iconSize: 22,
+              tooltip: 'Arkadaşlar',
+              onPressed: () => context.push(AppRoutes.socialHub),
+            ),
             IconButton(
               icon: const Icon(Icons.camera_alt_rounded, color: AppColors.foam),
               iconSize: 28,
@@ -67,15 +74,15 @@ class FeedScreen extends ConsumerWidget {
               fontSize: 15,
             ),
             tabs: const [
-              Tab(text: '👥 Arkadaşlar'),
               Tab(text: '🇹🇷 Türkiye'),
+              Tab(text: '👥 Çevrem'),
             ],
           ),
         ),
         body: const TabBarView(
           children: [
-            _FriendsFeedList(),
             _GlobalFeedList(),
+            _FriendsFeedList(),
           ],
         ),
       ),
@@ -113,7 +120,8 @@ class _FriendsFeedList extends ConsumerWidget {
               slivers: [
                 SliverFillRemaining(
                   child: _EmptyFriendsWidget(
-                    onFindFriends: () => context.go(AppRoutes.social),
+                    onFindFriends: () =>
+                        context.push(AppRoutes.socialHub),
                   ),
                 ),
               ],

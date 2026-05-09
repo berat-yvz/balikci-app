@@ -11,10 +11,17 @@ import 'package:balikci_app/shared/providers/friend_request_provider.dart';
 
 /// Karşılıklı takip (kabul edilmiş arkadaşlıklar).
 /// [forUserId] null → oturumdaki kullanıcı; dolu → o kullanıcının arkadaş listesi.
+///
+/// [embedded] true ise üst çubuğu olmadan gövde (ör. [FriendsHubScreen] sekmesi).
 class FriendsListScreen extends ConsumerWidget {
   final String? forUserId;
+  final bool embedded;
 
-  const FriendsListScreen({super.key, this.forUserId});
+  const FriendsListScreen({
+    super.key,
+    this.forUserId,
+    this.embedded = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,13 +31,10 @@ class FriendsListScreen extends ConsumerWidget {
 
     final title = forUserId == null ? 'Arkadaşlarım' : 'Arkadaşlar';
     final emptyOwn =
-        'Henüz arkadaşın yok.\nTopluluk sekmesinden istek gönderebilirsin.';
+        'Henüz arkadaşın yok.\nAkışta arkadaşlar düğmesinden balıkçı ekleyebilirsin.';
     final emptyOther = 'Bu kullanıcının henüz arkadaşı yok.';
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(title: Text(title)),
-      body: async.when(
+    final body = async.when(
         data: (users) {
           if (users.isEmpty) {
             return Center(
@@ -112,7 +116,19 @@ class FriendsListScreen extends ConsumerWidget {
             }
           },
         ),
-      ),
+    );
+
+    if (embedded) {
+      return ColoredBox(
+        color: AppColors.background,
+        child: body,
+      );
+    }
+
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      appBar: AppBar(title: Text(title)),
+      body: body,
     );
   }
 }
