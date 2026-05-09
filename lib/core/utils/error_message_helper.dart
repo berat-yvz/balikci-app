@@ -42,12 +42,14 @@ class ErrorMessageHelper {
     // PostgREST: tablo şema önbelleğinde yok (migration uygulanmamış projeler)
     if (msg.contains('pgrst205') ||
         (msg.contains('could not find the table') &&
-            msg.contains('posts'))) {
-      return '🛠️ Sosyal gönderiler sunucuda henüz açılmamış.\n\n'
-          'Supabase Dashboard → SQL Editor üzerinden '
-          '`supabase/migrations/` klasöründeki gönderi ile ilgili '
-          'SQL dosyalarını sırayla çalıştırın '
-          '(örn. create_posts_table, likes/comments migrationları).';
+            (msg.contains('posts') ||
+                msg.contains('post_comments') ||
+                msg.contains('post_likes')))) {
+      return '🛠️ Yorum veya beğeni için gerekli tablolar sunucuda eksik.\n\n'
+          'Supabase Dashboard → SQL Editor’da şunu çalıştırın:\n'
+          '`20260509120000_ensure_post_likes_post_comments.sql`\n\n'
+          'veya terminalde proje kökünde: `supabase db push`.\n'
+          'Sonra Dashboard → Settings → API → Reload schema (veya birkaç dk bekleyin).';
     }
 
     if (msg.contains('not found') || msg.contains('404')) {

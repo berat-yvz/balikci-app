@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/storage_buckets.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
+import 'package:balikci_app/core/utils/error_message_helper.dart';
 import 'package:balikci_app/core/utils/time_utils.dart';
 import 'package:balikci_app/data/models/post_model.dart';
 import 'package:balikci_app/features/feed/widgets/post_card.dart';
@@ -48,7 +49,12 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Yorum gönderilemedi: $e'),
+          content: Text(
+            ErrorMessageHelper.toUserMessage(
+              e,
+              fallback: 'Yorum gönderilemedi. Tekrar dene.',
+            ),
+          ),
           backgroundColor: AppColors.danger,
         ),
       );
