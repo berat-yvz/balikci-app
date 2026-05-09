@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:balikci_app/data/local/local_fish_log.dart';
+import 'package:balikci_app/data/local/local_post.dart';
 import 'package:balikci_app/data/local/local_spot.dart';
 import 'package:balikci_app/data/local/local_weather.dart';
 import 'package:balikci_app/data/local/sync_queue.dart';
@@ -9,6 +10,7 @@ part 'database.g.dart';
 
 /// H7 — Balık günlüğü tablosu (Supabase fish_logs şemasıyla uyumlu).
 /// UUID alanlar SQLite'ta TEXT olarak saklanır.
+/// FAZ 3'te bu tablo kaldırılacak; FAZ 1–2 süresince korunuyor.
 class FishLogs extends Table {
   TextColumn get id => text()();
   TextColumn get userId => text()();
@@ -29,14 +31,16 @@ class FishLogs extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [LocalSpots, LocalFishLogs, FishLogs, SyncQueue, LocalWeather])
+@DriftDatabase(
+  tables: [LocalSpots, LocalFishLogs, FishLogs, SyncQueue, LocalWeather, LocalPosts],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase._() : super(_openConnection());
 
   static final AppDatabase instance = AppDatabase._();
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -79,6 +83,10 @@ class AppDatabase extends _$AppDatabase {
             localWeather.pressureHpa as GeneratedColumn<Object>);
         await m.addColumn(localWeather,
             localWeather.dataJson as GeneratedColumn<Object>);
+      }
+      if (from < 8) {
+        // FAZ 1 — Sosyal Akış: LocalPosts önbellek tablosu eklendi
+        await m.createTable(localPosts);
       }
     },
   );
