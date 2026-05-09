@@ -15,10 +15,13 @@ import 'package:balikci_app/core/widgets/network_error_widget.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/data/repositories/notification_repository.dart';
+import 'package:balikci_app/data/models/post_model.dart';
+import 'package:balikci_app/features/feed/screens/post_detail_screen.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/favorite_provider.dart';
 import 'package:balikci_app/shared/providers/fish_log_provider.dart';
 import 'package:balikci_app/shared/providers/friend_request_provider.dart';
+import 'package:balikci_app/shared/providers/post_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
 
@@ -310,6 +313,12 @@ class _ProfileContent extends ConsumerWidget {
                     ),
                   ),
             ],
+
+            // Gönderi grid'i — her kullanıcı profili için
+            const SizedBox(height: 24),
+            _SectionTitle(title: 'Gönderileri'),
+            const SizedBox(height: 10),
+            _PostGridSection(userId: user.id),
 
             if (isSelf) ...[
               const SizedBox(height: 24),
@@ -1178,6 +1187,117 @@ class _FavoriteSpotTile extends StatelessWidget {
                   size: 20,
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Gönderi Grid Bölümü ───────────────────────────────────────────────────────
+
+class _PostGridSection extends ConsumerWidget {
+  final String userId;
+
+  const _PostGridSection({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final postsAsync = ref.watch(userPostsProvider(userId));
+
+    return postsAsync.when(
+      loading: () => const Center(
+        child: SizedBox(
+          width: 32,
+          height: 32,
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+            strokeWidth: 2.5,
+          ),
+        ),
+      ),
+      error: (_, _) => Text(
+        'Gönderiler yüklenemedi',
+        style: TextStyle(color: AppColors.muted, fontSize: 14),
+      ),
+      data: (posts) {
+        if (posts.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              'Henüz gönderi yok',
+              style: TextStyle(color: AppColors.muted, fontSize: 14),
+            ),
+          );
+        }
+
+        final visible = posts.take(9).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 3,
+                mainAxisSpacing: 3,
+                childAspectRatio: 1,
+              ),
+              itemCount: visible.length,
+              itemBuilder: (context, index) {
+                final post = visible[index];
+                return _PostGridTile(post: post);
+              },
+            ),
+            if (posts.length > 9) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: () {
+                    // Şimdilik aynı listeyi gösterir; FAZ 4'te ayrı ekran
+                  },
+                  child: const Text('Tümünü Gör'),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PostGridTile extends StatelessWidget {
+  final PostModel post;
+
+  const _PostGridTile({required this.post});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PostDetailScreen(post: post),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: Image.network(
+            post.photoUrl,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => Container(
+              color: AppColors.surface,
+              child: const Icon(
+                Icons.broken_image_outlined,
+                color: AppColors.muted,
+              ),
             ),
           ),
         ),

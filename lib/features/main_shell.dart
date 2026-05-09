@@ -8,6 +8,8 @@ import 'package:balikci_app/core/services/proximity_vote_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/shared/providers/connectivity_provider.dart';
 
+// TODO: router.dart'a feed route'larını ekle — ayrı oturumda yapılacak
+
 /// Ana shell — 5 sekme, harita ortada vurgulu.
 /// Sıra: Hava(0) | Balıkçım(1) | Harita(2) | Sosyal(3) | Profil(4)
 /// [-1]: Bu shell’de karşılığı olmayan rotalar (ör. balık günlüğü) — hiçbir sekme seçili gösterilmez.
@@ -39,7 +41,11 @@ class _MainShellState extends ConsumerState<MainShell> {
     if (path.startsWith(AppRoutes.weather)) return 0;
     if (path.startsWith(AppRoutes.balikcim)) return 1;
     if (path == AppRoutes.home) return 2;
-    if (path.startsWith(AppRoutes.social)) return 3;
+    // feed hem /feed hem de (eski) /social yolunu kapsar
+    if (path.startsWith(AppRoutes.feed) ||
+        path.startsWith(AppRoutes.social)) {
+      return 3;
+    }
     if (path.startsWith(AppRoutes.fishLog)) return -1;
     if (path.startsWith(AppRoutes.profile) ||
         path.startsWith(AppRoutes.settings) ||
@@ -59,6 +65,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       case 2:
         context.go(AppRoutes.home);
       case 3:
+        // Feed rotası router.dart'a eklenene kadar /social'a git
         context.go(AppRoutes.social);
       case 4:
         context.go(AppRoutes.profile);
@@ -174,9 +181,9 @@ class _MainShellState extends ConsumerState<MainShell> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _NavItem(
-                        icon: Icons.groups_outlined,
-                        activeIcon: Icons.groups,
-                        label: 'Sosyal',
+                        icon: Icons.dynamic_feed_outlined,
+                        activeIcon: Icons.dynamic_feed_rounded,
+                        label: 'Akış',
                         index: 3,
                         currentIndex: _currentIndex,
                         onTap: () => _onTabTapped(3),

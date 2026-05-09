@@ -44,4 +44,9 @@ class AppRoutes {
 
   /// [userId] kullanıcısının eklediği meralar listesi (profil istatistikten).
   static String profileUserSpots(String userId) => '$profile/$userId/meralar';
+
+  // Feed (Sosyal Akış)
+  static const feed = '/feed';
+  static const createPost = '/feed/create';
+  static const postDetail = '/feed/post';
 }
