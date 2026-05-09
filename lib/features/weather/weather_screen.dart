@@ -8,7 +8,9 @@ import 'package:balikci_app/core/constants/weather_regions.dart';
 import 'package:balikci_app/core/utils/moon_phase_utils.dart';
 import 'package:balikci_app/data/models/hourly_weather_model.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
+import 'package:balikci_app/core/utils/weekly_forecast_aggregate.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
+import 'package:balikci_app/features/weather/widgets/weekly_forecast_table_card.dart';
 
 //
 // içinde 'weather-cache-hourly' cron kaydı mevcut (her saat başTODO(cron): supabase/migrations/20260504000005_verify_and_register_cron_jobs.sqlı, 0 * * * *).
@@ -189,6 +191,13 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
                   currentHour: currentHour,
                 ),
                 const SizedBox(height: 12),
+
+                if (data.hourly.isNotEmpty) ...[
+                  WeeklyForecastTableCard(
+                    rows: buildWeeklyForecastRows(data.hourly, DateTime.now()),
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 // ADIM 4: Saatlik tahmin yatay kaydırmalı
                 if (hoursFromNow.isNotEmpty) ...[
