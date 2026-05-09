@@ -9,171 +9,51 @@ import 'package:balikci_app/features/feed/screens/post_detail_screen.dart';
 import 'package:balikci_app/features/feed/widgets/post_card.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
 
-/// Sosyal akış — varsayılan olarak genel gönderiler; çevre akışı ikinci sekmede.
+/// Sosyal akış — herkese açık gönderiler; arkadaşlar için üst çubuktaki simge.
 class FeedScreen extends ConsumerWidget {
   const FeedScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.primary,
-          elevation: 0,
-          title: const Text(
-            'Sosyal 🎣',
-            style: TextStyle(
-              color: AppColors.foam,
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.people_outline_rounded,
-                  color: AppColors.foam),
-              iconSize: 22,
-              tooltip: 'Arkadaşlar',
-              onPressed: () => context.push(AppRoutes.socialHub),
-            ),
-            IconButton(
-              icon: const Icon(Icons.camera_alt_rounded, color: AppColors.foam),
-              iconSize: 28,
-              tooltip: 'Gönderi Paylaş',
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const CreatePostScreen(),
-                  fullscreenDialog: true,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-          ],
-          bottom: TabBar(
-            indicatorColor: AppColors.accent,
-            indicatorWeight: 3,
-            indicatorSize: TabBarIndicatorSize.tab,
-            indicator: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: AppColors.accent,
-                  width: 3,
-                ),
-              ),
-            ),
-            labelColor: AppColors.foam,
-            unselectedLabelColor: Colors.white70,
-            labelStyle: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-            ),
-            unselectedLabelStyle: const TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 15,
-            ),
-            tabs: const [
-              Tab(text: '🇹🇷 Türkiye'),
-              Tab(text: '👥 Çevrem'),
-            ],
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        elevation: 0,
+        title: const Text(
+          'Sosyal 🎣',
+          style: TextStyle(
+            color: AppColors.foam,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
           ),
         ),
-        body: const TabBarView(
-          children: [
-            _GlobalFeedList(),
-            _FriendsFeedList(),
-          ],
-        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.people_outline_rounded,
+                color: AppColors.foam),
+            iconSize: 22,
+            tooltip: 'Arkadaşlar',
+            onPressed: () => context.push(AppRoutes.socialHub),
+          ),
+          IconButton(
+            icon: const Icon(Icons.camera_alt_rounded, color: AppColors.foam),
+            iconSize: 28,
+            tooltip: 'Gönderi Paylaş',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const CreatePostScreen(),
+                fullscreenDialog: true,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
+      body: const _GlobalFeedList(),
     );
   }
 }
-
-// ── Arkadaşlar sekmesi ───────────────────────────────────────────────────────
-
-class _FriendsFeedList extends ConsumerWidget {
-  const _FriendsFeedList();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final feedAsync = ref.watch(friendsFeedProvider);
-    final notifier = ref.read(friendsFeedProvider.notifier);
-
-    return RefreshIndicator(
-      color: AppColors.primary,
-      onRefresh: notifier.refresh,
-      child: feedAsync.when(
-        loading: () => const _PostSkeletonList(),
-        error: (_, _) => CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverFillRemaining(
-              child: _FeedErrorWidget(onRetry: notifier.refresh),
-            ),
-          ],
-        ),
-        data: (posts) {
-          if (posts.isEmpty) {
-            return CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverFillRemaining(
-                  child: _EmptyFriendsWidget(
-                    onFindFriends: () =>
-                        context.push(AppRoutes.socialHub),
-                  ),
-                ),
-              ],
-            );
-          }
-          return NotificationListener<ScrollNotification>(
-            onNotification: (n) {
-              if (n is ScrollEndNotification &&
-                  n.metrics.extentAfter < 300) {
-                notifier.loadMore();
-              }
-              return false;
-            },
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.only(top: 4),
-                  sliver: SliverList.builder(
-                    itemCount: posts.length,
-                    itemBuilder: (context, i) => Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        PostCard(
-                          post: posts[i],
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  PostDetailScreen(post: posts[i]),
-                            ),
-                          ),
-                        ),
-                        Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: Colors.grey.shade800,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-// ── Türkiye sekmesi ──────────────────────────────────────────────────────────
 
 class _GlobalFeedList extends ConsumerWidget {
   const _GlobalFeedList();
@@ -433,73 +313,7 @@ class _PostSkeleton extends StatelessWidget {
   }
 }
 
-// ── Boş durum — Arkadaşlar ───────────────────────────────────────────────────
-
-class _EmptyFriendsWidget extends StatelessWidget {
-  final VoidCallback onFindFriends;
-
-  const _EmptyFriendsWidget({required this.onFindFriends});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.surface,
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.people_outline_rounded,
-            size: 80,
-            color: AppColors.muted,
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Arkadaşın yok henüz',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.foam,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Balıkçıları takip et,\nonların avlarını burada gör!',
-            style: TextStyle(
-              fontSize: 16,
-              color: AppColors.muted,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton.icon(
-              onPressed: onFindFriends,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.foam,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              icon: const Icon(Icons.search_rounded),
-              label: const Text(
-                '🔍 Balıkçı Bul',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Boş durum — Türkiye ───────────────────────────────────────────────────────
+// ── Boş durum — genel akış ───────────────────────────────────────────────────
 
 class _EmptyGlobalWidget extends StatelessWidget {
   final VoidCallback onShare;

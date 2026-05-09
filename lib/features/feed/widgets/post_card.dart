@@ -53,7 +53,6 @@ class _PostCardState extends ConsumerState<PostCard> {
         actorUsername: actorName,
       );
       ref.invalidate(likedPostsProvider(widget.post.id));
-      ref.invalidate(friendsFeedProvider);
       ref.invalidate(globalFeedProvider);
     } catch (_) {
       // Sessizce başarısız
@@ -567,7 +566,6 @@ class _DetailActionRowState extends ConsumerState<_DetailActionRow> {
         actorUsername: actorName,
       );
       ref.invalidate(likedPostsProvider(widget.post.id));
-      ref.invalidate(friendsFeedProvider);
       ref.invalidate(globalFeedProvider);
     } catch (_) {
       // Sessizce başarısız
@@ -608,7 +606,6 @@ class _PostMenu extends ConsumerWidget {
     if (!context.mounted || confirm != true) return;
     try {
       await ref.read(postRepositoryProvider).deletePost(post.id);
-      ref.invalidate(friendsFeedProvider);
       ref.invalidate(globalFeedProvider);
       ref.invalidate(userPostsProvider(post.userId));
       ref.invalidate(likedPostsProvider(post.id));

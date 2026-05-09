@@ -153,7 +153,6 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             spotId: spot?.id,
             spotDistrict: spot?.description,
           );
-      ref.invalidate(friendsFeedProvider);
       ref.invalidate(globalFeedProvider);
 
       if (!mounted) return;
