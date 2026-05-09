@@ -26,8 +26,8 @@ import 'package:balikci_app/features/weather/providers/istanbul_weather_provider
 //          body:'{}'::jsonb) $$);
 
 /// Detaylı hava durumu ekranı — H9 sprint.
-/// Veri yalnızca sunucu `weather_cache` üzerinden gelir; manuel yenileme yoktur.
-class WeatherScreen extends ConsumerWidget {
+/// Veri sunucu `weather_cache` üzerinden gelir; periyodik yenileme + sekme/ön plan dönüşü.
+class WeatherScreen extends ConsumerStatefulWidget {
   const WeatherScreen({super.key});
 
   static List<HourlyWeatherModel> _next24Hours(
@@ -41,7 +41,39 @@ class WeatherScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WeatherScreen> createState() => _WeatherScreenState();
+}
+
+class _WeatherScreenState extends ConsumerState<WeatherScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(
+        ref.read(istanbulWeatherProvider.notifier).pullLatestSilently(),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(
+        ref.read(istanbulWeatherProvider.notifier).pullLatestSilently(),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final weatherAsync = ref.watch(istanbulWeatherProvider);
     final selectedRegion = ref.watch(selectedWeatherRegionProvider);
     final regionDisplayName =
@@ -54,7 +86,7 @@ class WeatherScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => const _EmptyWeather(),
         data: (data) {
-          final hoursFromNow = _next24Hours(data.hourly);
+          final hoursFromNow = WeatherScreen._next24Hours(data.hourly);
           final currentHour = hoursFromNow.isNotEmpty
               ? hoursFromNow.first
               : null;

@@ -41,42 +41,64 @@ class IstanbulWeatherData {
 class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
   Timer? _pollTimer;
 
+  /// Ön planda ~10 dakikada bir; sunucu saatlik cron ile uyumlu (gecikmeli yakalar).
+  static const Duration _pollInterval = Duration(minutes: 10);
+
   @override
   Future<IstanbulWeatherData> build() async {
     final regionKey = ref.watch(selectedWeatherRegionProvider);
     _pollTimer?.cancel();
     final data = await _loadFromSupabase(regionKey);
-    _scheduleHourlyPoll(regionKey);
+    _startPeriodicPoll(regionKey);
     ref.onDispose(() => _pollTimer?.cancel());
     return data;
   }
 
-  void _scheduleHourlyPoll(String regionKey) {
+  void _startPeriodicPoll(String regionKey) {
     _pollTimer?.cancel();
-    final now = DateTime.now();
-    // +2 dakika: server cron (0 * * * *) tam saat başında çalışır ve 51 bölgeyi
-    // güncellemeyi ~5-10 saniyede tamamlar. 2 dk buffer ile race condition önlenir.
-    final nextFetch = DateTime(now.year, now.month, now.day, now.hour + 1, 2);
-    _pollTimer = Timer(nextFetch.difference(now), () {
+    _pollTimer = Timer.periodic(_pollInterval, (_) {
       unawaited(_silentReload(regionKey));
-      _scheduleHourlyPoll(regionKey);
     });
+  }
+
+  /// Hava sekmesi açılınca / uygulama öne gelince — yükleme spinner’ı olmadan güncelle.
+  Future<void> pullLatestSilently() async {
+    final regionKey = ref.read(selectedWeatherRegionProvider);
+    await _silentReload(regionKey);
   }
 
   Future<void> _silentReload(String regionKey) async {
     try {
       final snap =
           await WeatherService.fetchRegionalWeatherFromSupabase(regionKey);
-      // Drift cache verisiyle (isFromCache=true) iyi online veriyi ezme.
-      // Internet kesilince Drift fallback devreye girer ama eski doğru
-      // skoru bozmaması için state güncellenmez; mevcut veri korunur.
-      if (snap == null || snap.isFromCache) return;
-      state = AsyncData(IstanbulWeatherData(
-        hourly: snap.hourly,
-        current: snap.current,
-        lat: snap.lat,
-        lng: snap.lng,
-      ));
+      final prev = state.asData?.value;
+
+      if (snap == null) return;
+
+      // Çevrimdışı Drift paketi: ekranda halihazırda sunucu verisi varsa ezme.
+      if (snap.isFromCache) {
+        if (prev != null && !prev.isFromCache) return;
+        state = AsyncData(
+          IstanbulWeatherData(
+            hourly: snap.hourly,
+            current: snap.current,
+            lat: snap.lat,
+            lng: snap.lng,
+            isFromCache: true,
+          ),
+        );
+        return;
+      }
+
+      state = AsyncData(
+        IstanbulWeatherData(
+          hourly: snap.hourly,
+          current: snap.current,
+          lat: snap.lat,
+          lng: snap.lng,
+          isFromCache: false,
+        ),
+      );
     } catch (e, st) {
       debugPrint('[IstanbulWeatherProvider] Sessiz yenileme hatası: $e\n$st');
     }
