@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/core/services/weather_service.dart';
@@ -89,8 +90,8 @@ class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
         lat: snap.lat,
         lng: snap.lng,
       ));
-    } catch (_) {
-      // Mevcut veriyi koru
+    } catch (e, st) {
+      debugPrint('[IstanbulWeatherProvider] Sessiz yenileme hatası: $e\n$st');
     }
   }
 

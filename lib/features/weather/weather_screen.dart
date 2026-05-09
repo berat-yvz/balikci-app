@@ -9,6 +9,21 @@ import 'package:balikci_app/data/models/hourly_weather_model.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
 
+// TODO(cron): supabase/migrations/20260504000005_verify_and_register_cron_jobs.sql
+// içinde 'weather-cache-hourly' cron kaydı mevcut (her saat başı, 0 * * * *).
+// Ancak cron 'x-webhook-secret' header'ı kullanıyor, 'Authorization: Bearer' yok.
+// Eğer weather_cache tablosu güncellenmiyorsa Supabase Dashboard > Database >
+// Extensions > pg_cron aktif olduğunu ve app.supabase_url / app.webhook_secret
+// ayarlarının SET edildiğini kontrol edin:
+//   ALTER DATABASE postgres SET app.supabase_url = 'https://<proje>.supabase.co';
+//   ALTER DATABASE postgres SET app.webhook_secret = '<secret>';
+// Alternatif doğrudan anon_key ile çağrı:
+//   SELECT cron.schedule('weather-update', '0 * * * *',
+//     $$ SELECT net.http_post(
+//          url:='https://<PROJE>.supabase.co/functions/v1/weather-cache',
+//          headers:'{"Authorization":"Bearer <ANON_KEY>","Content-Type":"application/json"}'::jsonb,
+//          body:'{}'::jsonb) $$);
+
 /// Detaylı hava durumu ekranı — H9 sprint.
 /// Veri yalnızca sunucu `weather_cache` üzerinden gelir; manuel yenileme yoktur.
 class WeatherScreen extends ConsumerWidget {
@@ -975,11 +990,11 @@ class _RegionSelector extends ConsumerWidget {
   }
 }
 
-class _EmptyWeather extends StatelessWidget {
+class _EmptyWeather extends ConsumerWidget {
   const _EmptyWeather();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -999,6 +1014,24 @@ class _EmptyWeather extends StatelessWidget {
               'Veri saat başında otomatik güncellenir.',
               style: AppTextStyles.body.copyWith(color: AppColors.muted),
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () => ref.invalidate(istanbulWeatherProvider),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Yenile'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         ),

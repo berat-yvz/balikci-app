@@ -193,7 +193,7 @@ async function upsertWeatherRegion(
   lng: number,
   fetchedAt: string,
 ): Promise<void> {
-  const q = `latitude=${lat}&longitude=${lng}&timezone=Europe%2FIstanbul&forecast_days=2`
+  const q = `latitude=${lat}&longitude=${lng}&timezone=Europe%2FIstanbul&forecast_days=2&temperature_unit=celsius&windspeed_unit=kmh&precipitation_unit=mm`
 
   const forecastUrl =
     `https://api.open-meteo.com/v1/forecast?${q}&hourly=temperature_2m,windspeed_10m,winddirection_10m,relativehumidity_2m,precipitation,weathercode,cloudcover,visibility,surface_pressure`

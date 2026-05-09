@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:balikci_app/core/constants/weather_regions.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/istanbul_ilce_resolver.dart';
@@ -30,6 +31,12 @@ class WeatherService {
           .maybeSingle();
       if (response == null) return null;
       final row = Map<String, dynamic>.from(response);
+      if (kDebugMode) {
+        debugPrint('[WeatherService] Supabase yanıtı ($regionKey): '
+            'region_key=${row['region_key']}, '
+            'fetched_at=${row['fetched_at']}, '
+            'source=${(row['data_json'] as Map<String, dynamic>?)?['source']}');
+      }
       final current = WeatherModel.fromJson(row);
       try {
         await _driftDb.into(_driftDb.localWeather).insertOnConflictUpdate(
@@ -53,15 +60,16 @@ class WeatherService {
             ),
           ),
         );
-      } catch (_) {
-        // Drift write hatası yoksayılır
+      } catch (e, st) {
+        debugPrint('[WeatherService] Drift write hatası: $e\n$st');
       }
       final hourly = hourlyFromOpenMeteoV1Bundle(current.dataJson);
       if (hourly.isEmpty && current.dataJson?['source'] != 'open_meteo_v1') {
         return RegionalWeatherData(hourly: const [], current: current);
       }
       return RegionalWeatherData(hourly: hourly, current: current);
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('[WeatherService] Supabase fetch hatası ($regionKey): $e\n$st');
       try {
         final cached = await (_driftDb.select(_driftDb.localWeather)
               ..where((t) => t.regionKey.equals(regionKey)))
@@ -72,7 +80,8 @@ class WeatherService {
               return cached.dataJson != null
                   ? jsonDecode(cached.dataJson!) as Map<String, dynamic>
                   : null;
-            } catch (_) {
+            } catch (e) {
+              debugPrint('[WeatherService] dataJson decode hatası: $e');
               return null;
             }
           })();
@@ -95,7 +104,8 @@ class WeatherService {
                 'data_json': decodedDataJson,
                 'fishing_summary': null,
               });
-            } catch (_) {
+            } catch (e, st) {
+              debugPrint('[WeatherService] Drift cache fromJson hatası: $e\n$st');
               current = _buildModelFromCachedFields(cached, decodedDataJson);
             }
           } else {
@@ -112,8 +122,8 @@ class WeatherService {
             isFromCache: true,
           );
         }
-      } catch (_) {
-        // Drift okuma da başarısız
+      } catch (e, st) {
+        debugPrint('[WeatherService] Drift okuma hatası ($regionKey): $e\n$st');
       }
       return null;
     }
@@ -260,7 +270,8 @@ class WeatherService {
             windDirection: (m['wind_direction'] as num?)?.toInt(),
           ),
         );
-      } catch (_) {
+      } catch (e) {
+        debugPrint('[WeatherService] hourly satır parse hatası: $e');
         continue;
       }
     }
