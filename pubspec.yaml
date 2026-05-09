@@ -80,7 +80,6 @@ flutter:
   assets:
     - .env
     - assets/fishing/
-    - assets/knots/
     - assets/tackle/
     - assets/images/
     - assets/images/logo.png

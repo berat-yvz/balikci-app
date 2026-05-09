@@ -3523,27 +3523,16 @@ class $LocalPostsTable extends LocalPosts
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _authorUsernameMeta = const VerificationMeta(
-    'authorUsername',
+  static const VerificationMeta _photoUrlMeta = const VerificationMeta(
+    'photoUrl',
   );
   @override
-  late final GeneratedColumn<String> authorUsername = GeneratedColumn<String>(
-    'author_username',
+  late final GeneratedColumn<String> photoUrl = GeneratedColumn<String>(
+    'photo_url',
     aliasedName,
-    true,
+    false,
     type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _authorAvatarUrlMeta = const VerificationMeta(
-    'authorAvatarUrl',
-  );
-  @override
-  late final GeneratedColumn<String> authorAvatarUrl = GeneratedColumn<String>(
-    'author_avatar_url',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
+    requiredDuringInsert: true,
   );
   static const VerificationMeta _captionMeta = const VerificationMeta(
     'caption',
@@ -3551,17 +3540,6 @@ class $LocalPostsTable extends LocalPosts
   @override
   late final GeneratedColumn<String> caption = GeneratedColumn<String>(
     'caption',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _photoUrlMeta = const VerificationMeta(
-    'photoUrl',
-  );
-  @override
-  late final GeneratedColumn<String> photoUrl = GeneratedColumn<String>(
-    'photo_url',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -3578,43 +3556,6 @@ class $LocalPostsTable extends LocalPosts
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _fishWeightMeta = const VerificationMeta(
-    'fishWeight',
-  );
-  @override
-  late final GeneratedColumn<double> fishWeight = GeneratedColumn<double>(
-    'fish_weight',
-    aliasedName,
-    true,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _fishLengthMeta = const VerificationMeta(
-    'fishLength',
-  );
-  @override
-  late final GeneratedColumn<double> fishLength = GeneratedColumn<double>(
-    'fish_length',
-    aliasedName,
-    true,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _fishReleasedMeta = const VerificationMeta(
-    'fishReleased',
-  );
-  @override
-  late final GeneratedColumn<bool> fishReleased = GeneratedColumn<bool>(
-    'fish_released',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("fish_released" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
   static const VerificationMeta _spotIdMeta = const VerificationMeta('spotId');
   @override
   late final GeneratedColumn<String> spotId = GeneratedColumn<String>(
@@ -3624,62 +3565,28 @@ class $LocalPostsTable extends LocalPosts
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _spotLatMeta = const VerificationMeta(
-    'spotLat',
+  static const VerificationMeta _spotPrivacySnapshotMeta =
+      const VerificationMeta('spotPrivacySnapshot');
+  @override
+  late final GeneratedColumn<String> spotPrivacySnapshot =
+      GeneratedColumn<String>(
+        'spot_privacy_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('public'),
+      );
+  static const VerificationMeta _spotDistrictMeta = const VerificationMeta(
+    'spotDistrict',
   );
   @override
-  late final GeneratedColumn<double> spotLat = GeneratedColumn<double>(
-    'spot_lat',
-    aliasedName,
-    true,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _spotLngMeta = const VerificationMeta(
-    'spotLng',
-  );
-  @override
-  late final GeneratedColumn<double> spotLng = GeneratedColumn<double>(
-    'spot_lng',
-    aliasedName,
-    true,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _weatherSnapshotMeta = const VerificationMeta(
-    'weatherSnapshot',
-  );
-  @override
-  late final GeneratedColumn<String> weatherSnapshot = GeneratedColumn<String>(
-    'weather_snapshot',
+  late final GeneratedColumn<String> spotDistrict = GeneratedColumn<String>(
+    'spot_district',
     aliasedName,
     true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-  );
-  static const VerificationMeta _visibilityMeta = const VerificationMeta(
-    'visibility',
-  );
-  @override
-  late final GeneratedColumn<String> visibility = GeneratedColumn<String>(
-    'visibility',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('public'),
-  );
-  static const VerificationMeta _postTypeMeta = const VerificationMeta(
-    'postType',
-  );
-  @override
-  late final GeneratedColumn<String> postType = GeneratedColumn<String>(
-    'post_type',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('catch'),
   );
   static const VerificationMeta _likesCountMeta = const VerificationMeta(
     'likesCount',
@@ -3705,18 +3612,18 @@ class $LocalPostsTable extends LocalPosts
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
-  static const VerificationMeta _isLikedByMeMeta = const VerificationMeta(
-    'isLikedByMe',
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
   );
   @override
-  late final GeneratedColumn<bool> isLikedByMe = GeneratedColumn<bool>(
-    'is_liked_by_me',
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+    'is_deleted',
     aliasedName,
     false,
     type: DriftSqlType.bool,
     requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_liked_by_me" IN (0, 1))',
+      'CHECK ("is_deleted" IN (0, 1))',
     ),
     defaultValue: const Constant(false),
   );
@@ -3731,41 +3638,20 @@ class $LocalPostsTable extends LocalPosts
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _cachedAtMeta = const VerificationMeta(
-    'cachedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> cachedAt = GeneratedColumn<DateTime>(
-    'cached_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    defaultValue: currentDateAndTime,
-  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     userId,
-    authorUsername,
-    authorAvatarUrl,
-    caption,
     photoUrl,
+    caption,
     fishSpecies,
-    fishWeight,
-    fishLength,
-    fishReleased,
     spotId,
-    spotLat,
-    spotLng,
-    weatherSnapshot,
-    visibility,
-    postType,
+    spotPrivacySnapshot,
+    spotDistrict,
     likesCount,
     commentsCount,
-    isLikedByMe,
+    isDeleted,
     createdAt,
-    cachedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3792,34 +3678,18 @@ class $LocalPostsTable extends LocalPosts
     } else if (isInserting) {
       context.missing(_userIdMeta);
     }
-    if (data.containsKey('author_username')) {
+    if (data.containsKey('photo_url')) {
       context.handle(
-        _authorUsernameMeta,
-        authorUsername.isAcceptableOrUnknown(
-          data['author_username']!,
-          _authorUsernameMeta,
-        ),
+        _photoUrlMeta,
+        photoUrl.isAcceptableOrUnknown(data['photo_url']!, _photoUrlMeta),
       );
-    }
-    if (data.containsKey('author_avatar_url')) {
-      context.handle(
-        _authorAvatarUrlMeta,
-        authorAvatarUrl.isAcceptableOrUnknown(
-          data['author_avatar_url']!,
-          _authorAvatarUrlMeta,
-        ),
-      );
+    } else if (isInserting) {
+      context.missing(_photoUrlMeta);
     }
     if (data.containsKey('caption')) {
       context.handle(
         _captionMeta,
         caption.isAcceptableOrUnknown(data['caption']!, _captionMeta),
-      );
-    }
-    if (data.containsKey('photo_url')) {
-      context.handle(
-        _photoUrlMeta,
-        photoUrl.isAcceptableOrUnknown(data['photo_url']!, _photoUrlMeta),
       );
     }
     if (data.containsKey('fish_species')) {
@@ -3831,64 +3701,28 @@ class $LocalPostsTable extends LocalPosts
         ),
       );
     }
-    if (data.containsKey('fish_weight')) {
-      context.handle(
-        _fishWeightMeta,
-        fishWeight.isAcceptableOrUnknown(data['fish_weight']!, _fishWeightMeta),
-      );
-    }
-    if (data.containsKey('fish_length')) {
-      context.handle(
-        _fishLengthMeta,
-        fishLength.isAcceptableOrUnknown(data['fish_length']!, _fishLengthMeta),
-      );
-    }
-    if (data.containsKey('fish_released')) {
-      context.handle(
-        _fishReleasedMeta,
-        fishReleased.isAcceptableOrUnknown(
-          data['fish_released']!,
-          _fishReleasedMeta,
-        ),
-      );
-    }
     if (data.containsKey('spot_id')) {
       context.handle(
         _spotIdMeta,
         spotId.isAcceptableOrUnknown(data['spot_id']!, _spotIdMeta),
       );
     }
-    if (data.containsKey('spot_lat')) {
+    if (data.containsKey('spot_privacy_snapshot')) {
       context.handle(
-        _spotLatMeta,
-        spotLat.isAcceptableOrUnknown(data['spot_lat']!, _spotLatMeta),
-      );
-    }
-    if (data.containsKey('spot_lng')) {
-      context.handle(
-        _spotLngMeta,
-        spotLng.isAcceptableOrUnknown(data['spot_lng']!, _spotLngMeta),
-      );
-    }
-    if (data.containsKey('weather_snapshot')) {
-      context.handle(
-        _weatherSnapshotMeta,
-        weatherSnapshot.isAcceptableOrUnknown(
-          data['weather_snapshot']!,
-          _weatherSnapshotMeta,
+        _spotPrivacySnapshotMeta,
+        spotPrivacySnapshot.isAcceptableOrUnknown(
+          data['spot_privacy_snapshot']!,
+          _spotPrivacySnapshotMeta,
         ),
       );
     }
-    if (data.containsKey('visibility')) {
+    if (data.containsKey('spot_district')) {
       context.handle(
-        _visibilityMeta,
-        visibility.isAcceptableOrUnknown(data['visibility']!, _visibilityMeta),
-      );
-    }
-    if (data.containsKey('post_type')) {
-      context.handle(
-        _postTypeMeta,
-        postType.isAcceptableOrUnknown(data['post_type']!, _postTypeMeta),
+        _spotDistrictMeta,
+        spotDistrict.isAcceptableOrUnknown(
+          data['spot_district']!,
+          _spotDistrictMeta,
+        ),
       );
     }
     if (data.containsKey('likes_count')) {
@@ -3906,13 +3740,10 @@ class $LocalPostsTable extends LocalPosts
         ),
       );
     }
-    if (data.containsKey('is_liked_by_me')) {
+    if (data.containsKey('is_deleted')) {
       context.handle(
-        _isLikedByMeMeta,
-        isLikedByMe.isAcceptableOrUnknown(
-          data['is_liked_by_me']!,
-          _isLikedByMeMeta,
-        ),
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
       );
     }
     if (data.containsKey('created_at')) {
@@ -3922,12 +3753,6 @@ class $LocalPostsTable extends LocalPosts
       );
     } else if (isInserting) {
       context.missing(_createdAtMeta);
-    }
-    if (data.containsKey('cached_at')) {
-      context.handle(
-        _cachedAtMeta,
-        cachedAt.isAcceptableOrUnknown(data['cached_at']!, _cachedAtMeta),
-      );
     }
     return context;
   }
@@ -3946,62 +3771,30 @@ class $LocalPostsTable extends LocalPosts
         DriftSqlType.string,
         data['${effectivePrefix}user_id'],
       )!,
-      authorUsername: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}author_username'],
-      ),
-      authorAvatarUrl: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}author_avatar_url'],
-      ),
-      caption: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}caption'],
-      ),
       photoUrl: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}photo_url'],
+      )!,
+      caption: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}caption'],
       ),
       fishSpecies: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}fish_species'],
       ),
-      fishWeight: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}fish_weight'],
-      ),
-      fishLength: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}fish_length'],
-      ),
-      fishReleased: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}fish_released'],
-      )!,
       spotId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}spot_id'],
       ),
-      spotLat: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}spot_lat'],
-      ),
-      spotLng: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}spot_lng'],
-      ),
-      weatherSnapshot: attachedDatabase.typeMapping.read(
+      spotPrivacySnapshot: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}weather_snapshot'],
-      ),
-      visibility: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}visibility'],
+        data['${effectivePrefix}spot_privacy_snapshot'],
       )!,
-      postType: attachedDatabase.typeMapping.read(
+      spotDistrict: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}post_type'],
-      )!,
+        data['${effectivePrefix}spot_district'],
+      ),
       likesCount: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}likes_count'],
@@ -4010,17 +3803,13 @@ class $LocalPostsTable extends LocalPosts
         DriftSqlType.int,
         data['${effectivePrefix}comments_count'],
       )!,
-      isLikedByMe: attachedDatabase.typeMapping.read(
+      isDeleted: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
-        data['${effectivePrefix}is_liked_by_me'],
+        data['${effectivePrefix}is_deleted'],
       )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
-      )!,
-      cachedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}cached_at'],
       )!,
     );
   }
@@ -4034,94 +3823,59 @@ class $LocalPostsTable extends LocalPosts
 class LocalPost extends DataClass implements Insertable<LocalPost> {
   final String id;
   final String userId;
-  final String? authorUsername;
-  final String? authorAvatarUrl;
+
+  /// Fotoğraf zorunlu (posts.photo_url NOT NULL ile eşleşir)
+  final String photoUrl;
   final String? caption;
-  final String? photoUrl;
+
+  /// Supabase TEXT[] → JSON string (ör. '["levrek","çipura"]')
   final String? fishSpecies;
-  final double? fishWeight;
-  final double? fishLength;
-  final bool fishReleased;
   final String? spotId;
-  final double? spotLat;
-  final double? spotLng;
-  final String? weatherSnapshot;
-  final String visibility;
-  final String postType;
+
+  /// fishing_spots.privacy_level snapshot'ı (public/friends/private/vip)
+  final String spotPrivacySnapshot;
+  final String? spotDistrict;
   final int likesCount;
   final int commentsCount;
-  final bool isLikedByMe;
+  final bool isDeleted;
   final DateTime createdAt;
-  final DateTime cachedAt;
   const LocalPost({
     required this.id,
     required this.userId,
-    this.authorUsername,
-    this.authorAvatarUrl,
+    required this.photoUrl,
     this.caption,
-    this.photoUrl,
     this.fishSpecies,
-    this.fishWeight,
-    this.fishLength,
-    required this.fishReleased,
     this.spotId,
-    this.spotLat,
-    this.spotLng,
-    this.weatherSnapshot,
-    required this.visibility,
-    required this.postType,
+    required this.spotPrivacySnapshot,
+    this.spotDistrict,
     required this.likesCount,
     required this.commentsCount,
-    required this.isLikedByMe,
+    required this.isDeleted,
     required this.createdAt,
-    required this.cachedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['user_id'] = Variable<String>(userId);
-    if (!nullToAbsent || authorUsername != null) {
-      map['author_username'] = Variable<String>(authorUsername);
-    }
-    if (!nullToAbsent || authorAvatarUrl != null) {
-      map['author_avatar_url'] = Variable<String>(authorAvatarUrl);
-    }
+    map['photo_url'] = Variable<String>(photoUrl);
     if (!nullToAbsent || caption != null) {
       map['caption'] = Variable<String>(caption);
-    }
-    if (!nullToAbsent || photoUrl != null) {
-      map['photo_url'] = Variable<String>(photoUrl);
     }
     if (!nullToAbsent || fishSpecies != null) {
       map['fish_species'] = Variable<String>(fishSpecies);
     }
-    if (!nullToAbsent || fishWeight != null) {
-      map['fish_weight'] = Variable<double>(fishWeight);
-    }
-    if (!nullToAbsent || fishLength != null) {
-      map['fish_length'] = Variable<double>(fishLength);
-    }
-    map['fish_released'] = Variable<bool>(fishReleased);
     if (!nullToAbsent || spotId != null) {
       map['spot_id'] = Variable<String>(spotId);
     }
-    if (!nullToAbsent || spotLat != null) {
-      map['spot_lat'] = Variable<double>(spotLat);
+    map['spot_privacy_snapshot'] = Variable<String>(spotPrivacySnapshot);
+    if (!nullToAbsent || spotDistrict != null) {
+      map['spot_district'] = Variable<String>(spotDistrict);
     }
-    if (!nullToAbsent || spotLng != null) {
-      map['spot_lng'] = Variable<double>(spotLng);
-    }
-    if (!nullToAbsent || weatherSnapshot != null) {
-      map['weather_snapshot'] = Variable<String>(weatherSnapshot);
-    }
-    map['visibility'] = Variable<String>(visibility);
-    map['post_type'] = Variable<String>(postType);
     map['likes_count'] = Variable<int>(likesCount);
     map['comments_count'] = Variable<int>(commentsCount);
-    map['is_liked_by_me'] = Variable<bool>(isLikedByMe);
+    map['is_deleted'] = Variable<bool>(isDeleted);
     map['created_at'] = Variable<DateTime>(createdAt);
-    map['cached_at'] = Variable<DateTime>(cachedAt);
     return map;
   }
 
@@ -4129,47 +3883,24 @@ class LocalPost extends DataClass implements Insertable<LocalPost> {
     return LocalPostsCompanion(
       id: Value(id),
       userId: Value(userId),
-      authorUsername: authorUsername == null && nullToAbsent
-          ? const Value.absent()
-          : Value(authorUsername),
-      authorAvatarUrl: authorAvatarUrl == null && nullToAbsent
-          ? const Value.absent()
-          : Value(authorAvatarUrl),
+      photoUrl: Value(photoUrl),
       caption: caption == null && nullToAbsent
           ? const Value.absent()
           : Value(caption),
-      photoUrl: photoUrl == null && nullToAbsent
-          ? const Value.absent()
-          : Value(photoUrl),
       fishSpecies: fishSpecies == null && nullToAbsent
           ? const Value.absent()
           : Value(fishSpecies),
-      fishWeight: fishWeight == null && nullToAbsent
-          ? const Value.absent()
-          : Value(fishWeight),
-      fishLength: fishLength == null && nullToAbsent
-          ? const Value.absent()
-          : Value(fishLength),
-      fishReleased: Value(fishReleased),
       spotId: spotId == null && nullToAbsent
           ? const Value.absent()
           : Value(spotId),
-      spotLat: spotLat == null && nullToAbsent
+      spotPrivacySnapshot: Value(spotPrivacySnapshot),
+      spotDistrict: spotDistrict == null && nullToAbsent
           ? const Value.absent()
-          : Value(spotLat),
-      spotLng: spotLng == null && nullToAbsent
-          ? const Value.absent()
-          : Value(spotLng),
-      weatherSnapshot: weatherSnapshot == null && nullToAbsent
-          ? const Value.absent()
-          : Value(weatherSnapshot),
-      visibility: Value(visibility),
-      postType: Value(postType),
+          : Value(spotDistrict),
       likesCount: Value(likesCount),
       commentsCount: Value(commentsCount),
-      isLikedByMe: Value(isLikedByMe),
+      isDeleted: Value(isDeleted),
       createdAt: Value(createdAt),
-      cachedAt: Value(cachedAt),
     );
   }
 
@@ -4181,25 +3912,18 @@ class LocalPost extends DataClass implements Insertable<LocalPost> {
     return LocalPost(
       id: serializer.fromJson<String>(json['id']),
       userId: serializer.fromJson<String>(json['userId']),
-      authorUsername: serializer.fromJson<String?>(json['authorUsername']),
-      authorAvatarUrl: serializer.fromJson<String?>(json['authorAvatarUrl']),
+      photoUrl: serializer.fromJson<String>(json['photoUrl']),
       caption: serializer.fromJson<String?>(json['caption']),
-      photoUrl: serializer.fromJson<String?>(json['photoUrl']),
       fishSpecies: serializer.fromJson<String?>(json['fishSpecies']),
-      fishWeight: serializer.fromJson<double?>(json['fishWeight']),
-      fishLength: serializer.fromJson<double?>(json['fishLength']),
-      fishReleased: serializer.fromJson<bool>(json['fishReleased']),
       spotId: serializer.fromJson<String?>(json['spotId']),
-      spotLat: serializer.fromJson<double?>(json['spotLat']),
-      spotLng: serializer.fromJson<double?>(json['spotLng']),
-      weatherSnapshot: serializer.fromJson<String?>(json['weatherSnapshot']),
-      visibility: serializer.fromJson<String>(json['visibility']),
-      postType: serializer.fromJson<String>(json['postType']),
+      spotPrivacySnapshot: serializer.fromJson<String>(
+        json['spotPrivacySnapshot'],
+      ),
+      spotDistrict: serializer.fromJson<String?>(json['spotDistrict']),
       likesCount: serializer.fromJson<int>(json['likesCount']),
       commentsCount: serializer.fromJson<int>(json['commentsCount']),
-      isLikedByMe: serializer.fromJson<bool>(json['isLikedByMe']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      cachedAt: serializer.fromJson<DateTime>(json['cachedAt']),
     );
   }
   @override
@@ -4208,124 +3932,70 @@ class LocalPost extends DataClass implements Insertable<LocalPost> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'userId': serializer.toJson<String>(userId),
-      'authorUsername': serializer.toJson<String?>(authorUsername),
-      'authorAvatarUrl': serializer.toJson<String?>(authorAvatarUrl),
+      'photoUrl': serializer.toJson<String>(photoUrl),
       'caption': serializer.toJson<String?>(caption),
-      'photoUrl': serializer.toJson<String?>(photoUrl),
       'fishSpecies': serializer.toJson<String?>(fishSpecies),
-      'fishWeight': serializer.toJson<double?>(fishWeight),
-      'fishLength': serializer.toJson<double?>(fishLength),
-      'fishReleased': serializer.toJson<bool>(fishReleased),
       'spotId': serializer.toJson<String?>(spotId),
-      'spotLat': serializer.toJson<double?>(spotLat),
-      'spotLng': serializer.toJson<double?>(spotLng),
-      'weatherSnapshot': serializer.toJson<String?>(weatherSnapshot),
-      'visibility': serializer.toJson<String>(visibility),
-      'postType': serializer.toJson<String>(postType),
+      'spotPrivacySnapshot': serializer.toJson<String>(spotPrivacySnapshot),
+      'spotDistrict': serializer.toJson<String?>(spotDistrict),
       'likesCount': serializer.toJson<int>(likesCount),
       'commentsCount': serializer.toJson<int>(commentsCount),
-      'isLikedByMe': serializer.toJson<bool>(isLikedByMe),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
       'createdAt': serializer.toJson<DateTime>(createdAt),
-      'cachedAt': serializer.toJson<DateTime>(cachedAt),
     };
   }
 
   LocalPost copyWith({
     String? id,
     String? userId,
-    Value<String?> authorUsername = const Value.absent(),
-    Value<String?> authorAvatarUrl = const Value.absent(),
+    String? photoUrl,
     Value<String?> caption = const Value.absent(),
-    Value<String?> photoUrl = const Value.absent(),
     Value<String?> fishSpecies = const Value.absent(),
-    Value<double?> fishWeight = const Value.absent(),
-    Value<double?> fishLength = const Value.absent(),
-    bool? fishReleased,
     Value<String?> spotId = const Value.absent(),
-    Value<double?> spotLat = const Value.absent(),
-    Value<double?> spotLng = const Value.absent(),
-    Value<String?> weatherSnapshot = const Value.absent(),
-    String? visibility,
-    String? postType,
+    String? spotPrivacySnapshot,
+    Value<String?> spotDistrict = const Value.absent(),
     int? likesCount,
     int? commentsCount,
-    bool? isLikedByMe,
+    bool? isDeleted,
     DateTime? createdAt,
-    DateTime? cachedAt,
   }) => LocalPost(
     id: id ?? this.id,
     userId: userId ?? this.userId,
-    authorUsername: authorUsername.present
-        ? authorUsername.value
-        : this.authorUsername,
-    authorAvatarUrl: authorAvatarUrl.present
-        ? authorAvatarUrl.value
-        : this.authorAvatarUrl,
+    photoUrl: photoUrl ?? this.photoUrl,
     caption: caption.present ? caption.value : this.caption,
-    photoUrl: photoUrl.present ? photoUrl.value : this.photoUrl,
     fishSpecies: fishSpecies.present ? fishSpecies.value : this.fishSpecies,
-    fishWeight: fishWeight.present ? fishWeight.value : this.fishWeight,
-    fishLength: fishLength.present ? fishLength.value : this.fishLength,
-    fishReleased: fishReleased ?? this.fishReleased,
     spotId: spotId.present ? spotId.value : this.spotId,
-    spotLat: spotLat.present ? spotLat.value : this.spotLat,
-    spotLng: spotLng.present ? spotLng.value : this.spotLng,
-    weatherSnapshot: weatherSnapshot.present
-        ? weatherSnapshot.value
-        : this.weatherSnapshot,
-    visibility: visibility ?? this.visibility,
-    postType: postType ?? this.postType,
+    spotPrivacySnapshot: spotPrivacySnapshot ?? this.spotPrivacySnapshot,
+    spotDistrict: spotDistrict.present ? spotDistrict.value : this.spotDistrict,
     likesCount: likesCount ?? this.likesCount,
     commentsCount: commentsCount ?? this.commentsCount,
-    isLikedByMe: isLikedByMe ?? this.isLikedByMe,
+    isDeleted: isDeleted ?? this.isDeleted,
     createdAt: createdAt ?? this.createdAt,
-    cachedAt: cachedAt ?? this.cachedAt,
   );
   LocalPost copyWithCompanion(LocalPostsCompanion data) {
     return LocalPost(
       id: data.id.present ? data.id.value : this.id,
       userId: data.userId.present ? data.userId.value : this.userId,
-      authorUsername: data.authorUsername.present
-          ? data.authorUsername.value
-          : this.authorUsername,
-      authorAvatarUrl: data.authorAvatarUrl.present
-          ? data.authorAvatarUrl.value
-          : this.authorAvatarUrl,
-      caption: data.caption.present ? data.caption.value : this.caption,
       photoUrl: data.photoUrl.present ? data.photoUrl.value : this.photoUrl,
+      caption: data.caption.present ? data.caption.value : this.caption,
       fishSpecies: data.fishSpecies.present
           ? data.fishSpecies.value
           : this.fishSpecies,
-      fishWeight: data.fishWeight.present
-          ? data.fishWeight.value
-          : this.fishWeight,
-      fishLength: data.fishLength.present
-          ? data.fishLength.value
-          : this.fishLength,
-      fishReleased: data.fishReleased.present
-          ? data.fishReleased.value
-          : this.fishReleased,
       spotId: data.spotId.present ? data.spotId.value : this.spotId,
-      spotLat: data.spotLat.present ? data.spotLat.value : this.spotLat,
-      spotLng: data.spotLng.present ? data.spotLng.value : this.spotLng,
-      weatherSnapshot: data.weatherSnapshot.present
-          ? data.weatherSnapshot.value
-          : this.weatherSnapshot,
-      visibility: data.visibility.present
-          ? data.visibility.value
-          : this.visibility,
-      postType: data.postType.present ? data.postType.value : this.postType,
+      spotPrivacySnapshot: data.spotPrivacySnapshot.present
+          ? data.spotPrivacySnapshot.value
+          : this.spotPrivacySnapshot,
+      spotDistrict: data.spotDistrict.present
+          ? data.spotDistrict.value
+          : this.spotDistrict,
       likesCount: data.likesCount.present
           ? data.likesCount.value
           : this.likesCount,
       commentsCount: data.commentsCount.present
           ? data.commentsCount.value
           : this.commentsCount,
-      isLikedByMe: data.isLikedByMe.present
-          ? data.isLikedByMe.value
-          : this.isLikedByMe,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      cachedAt: data.cachedAt.present ? data.cachedAt.value : this.cachedAt,
     );
   }
 
@@ -4334,199 +4004,129 @@ class LocalPost extends DataClass implements Insertable<LocalPost> {
     return (StringBuffer('LocalPost(')
           ..write('id: $id, ')
           ..write('userId: $userId, ')
-          ..write('authorUsername: $authorUsername, ')
-          ..write('authorAvatarUrl: $authorAvatarUrl, ')
-          ..write('caption: $caption, ')
           ..write('photoUrl: $photoUrl, ')
+          ..write('caption: $caption, ')
           ..write('fishSpecies: $fishSpecies, ')
-          ..write('fishWeight: $fishWeight, ')
-          ..write('fishLength: $fishLength, ')
-          ..write('fishReleased: $fishReleased, ')
           ..write('spotId: $spotId, ')
-          ..write('spotLat: $spotLat, ')
-          ..write('spotLng: $spotLng, ')
-          ..write('weatherSnapshot: $weatherSnapshot, ')
-          ..write('visibility: $visibility, ')
-          ..write('postType: $postType, ')
+          ..write('spotPrivacySnapshot: $spotPrivacySnapshot, ')
+          ..write('spotDistrict: $spotDistrict, ')
           ..write('likesCount: $likesCount, ')
           ..write('commentsCount: $commentsCount, ')
-          ..write('isLikedByMe: $isLikedByMe, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('cachedAt: $cachedAt')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hashAll([
+  int get hashCode => Object.hash(
     id,
     userId,
-    authorUsername,
-    authorAvatarUrl,
-    caption,
     photoUrl,
+    caption,
     fishSpecies,
-    fishWeight,
-    fishLength,
-    fishReleased,
     spotId,
-    spotLat,
-    spotLng,
-    weatherSnapshot,
-    visibility,
-    postType,
+    spotPrivacySnapshot,
+    spotDistrict,
     likesCount,
     commentsCount,
-    isLikedByMe,
+    isDeleted,
     createdAt,
-    cachedAt,
-  ]);
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is LocalPost &&
           other.id == this.id &&
           other.userId == this.userId &&
-          other.authorUsername == this.authorUsername &&
-          other.authorAvatarUrl == this.authorAvatarUrl &&
-          other.caption == this.caption &&
           other.photoUrl == this.photoUrl &&
+          other.caption == this.caption &&
           other.fishSpecies == this.fishSpecies &&
-          other.fishWeight == this.fishWeight &&
-          other.fishLength == this.fishLength &&
-          other.fishReleased == this.fishReleased &&
           other.spotId == this.spotId &&
-          other.spotLat == this.spotLat &&
-          other.spotLng == this.spotLng &&
-          other.weatherSnapshot == this.weatherSnapshot &&
-          other.visibility == this.visibility &&
-          other.postType == this.postType &&
+          other.spotPrivacySnapshot == this.spotPrivacySnapshot &&
+          other.spotDistrict == this.spotDistrict &&
           other.likesCount == this.likesCount &&
           other.commentsCount == this.commentsCount &&
-          other.isLikedByMe == this.isLikedByMe &&
-          other.createdAt == this.createdAt &&
-          other.cachedAt == this.cachedAt);
+          other.isDeleted == this.isDeleted &&
+          other.createdAt == this.createdAt);
 }
 
 class LocalPostsCompanion extends UpdateCompanion<LocalPost> {
   final Value<String> id;
   final Value<String> userId;
-  final Value<String?> authorUsername;
-  final Value<String?> authorAvatarUrl;
+  final Value<String> photoUrl;
   final Value<String?> caption;
-  final Value<String?> photoUrl;
   final Value<String?> fishSpecies;
-  final Value<double?> fishWeight;
-  final Value<double?> fishLength;
-  final Value<bool> fishReleased;
   final Value<String?> spotId;
-  final Value<double?> spotLat;
-  final Value<double?> spotLng;
-  final Value<String?> weatherSnapshot;
-  final Value<String> visibility;
-  final Value<String> postType;
+  final Value<String> spotPrivacySnapshot;
+  final Value<String?> spotDistrict;
   final Value<int> likesCount;
   final Value<int> commentsCount;
-  final Value<bool> isLikedByMe;
+  final Value<bool> isDeleted;
   final Value<DateTime> createdAt;
-  final Value<DateTime> cachedAt;
   final Value<int> rowid;
   const LocalPostsCompanion({
     this.id = const Value.absent(),
     this.userId = const Value.absent(),
-    this.authorUsername = const Value.absent(),
-    this.authorAvatarUrl = const Value.absent(),
-    this.caption = const Value.absent(),
     this.photoUrl = const Value.absent(),
+    this.caption = const Value.absent(),
     this.fishSpecies = const Value.absent(),
-    this.fishWeight = const Value.absent(),
-    this.fishLength = const Value.absent(),
-    this.fishReleased = const Value.absent(),
     this.spotId = const Value.absent(),
-    this.spotLat = const Value.absent(),
-    this.spotLng = const Value.absent(),
-    this.weatherSnapshot = const Value.absent(),
-    this.visibility = const Value.absent(),
-    this.postType = const Value.absent(),
+    this.spotPrivacySnapshot = const Value.absent(),
+    this.spotDistrict = const Value.absent(),
     this.likesCount = const Value.absent(),
     this.commentsCount = const Value.absent(),
-    this.isLikedByMe = const Value.absent(),
+    this.isDeleted = const Value.absent(),
     this.createdAt = const Value.absent(),
-    this.cachedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LocalPostsCompanion.insert({
     required String id,
     required String userId,
-    this.authorUsername = const Value.absent(),
-    this.authorAvatarUrl = const Value.absent(),
+    required String photoUrl,
     this.caption = const Value.absent(),
-    this.photoUrl = const Value.absent(),
     this.fishSpecies = const Value.absent(),
-    this.fishWeight = const Value.absent(),
-    this.fishLength = const Value.absent(),
-    this.fishReleased = const Value.absent(),
     this.spotId = const Value.absent(),
-    this.spotLat = const Value.absent(),
-    this.spotLng = const Value.absent(),
-    this.weatherSnapshot = const Value.absent(),
-    this.visibility = const Value.absent(),
-    this.postType = const Value.absent(),
+    this.spotPrivacySnapshot = const Value.absent(),
+    this.spotDistrict = const Value.absent(),
     this.likesCount = const Value.absent(),
     this.commentsCount = const Value.absent(),
-    this.isLikedByMe = const Value.absent(),
+    this.isDeleted = const Value.absent(),
     required DateTime createdAt,
-    this.cachedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        userId = Value(userId),
+       photoUrl = Value(photoUrl),
        createdAt = Value(createdAt);
   static Insertable<LocalPost> custom({
     Expression<String>? id,
     Expression<String>? userId,
-    Expression<String>? authorUsername,
-    Expression<String>? authorAvatarUrl,
-    Expression<String>? caption,
     Expression<String>? photoUrl,
+    Expression<String>? caption,
     Expression<String>? fishSpecies,
-    Expression<double>? fishWeight,
-    Expression<double>? fishLength,
-    Expression<bool>? fishReleased,
     Expression<String>? spotId,
-    Expression<double>? spotLat,
-    Expression<double>? spotLng,
-    Expression<String>? weatherSnapshot,
-    Expression<String>? visibility,
-    Expression<String>? postType,
+    Expression<String>? spotPrivacySnapshot,
+    Expression<String>? spotDistrict,
     Expression<int>? likesCount,
     Expression<int>? commentsCount,
-    Expression<bool>? isLikedByMe,
+    Expression<bool>? isDeleted,
     Expression<DateTime>? createdAt,
-    Expression<DateTime>? cachedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (userId != null) 'user_id': userId,
-      if (authorUsername != null) 'author_username': authorUsername,
-      if (authorAvatarUrl != null) 'author_avatar_url': authorAvatarUrl,
-      if (caption != null) 'caption': caption,
       if (photoUrl != null) 'photo_url': photoUrl,
+      if (caption != null) 'caption': caption,
       if (fishSpecies != null) 'fish_species': fishSpecies,
-      if (fishWeight != null) 'fish_weight': fishWeight,
-      if (fishLength != null) 'fish_length': fishLength,
-      if (fishReleased != null) 'fish_released': fishReleased,
       if (spotId != null) 'spot_id': spotId,
-      if (spotLat != null) 'spot_lat': spotLat,
-      if (spotLng != null) 'spot_lng': spotLng,
-      if (weatherSnapshot != null) 'weather_snapshot': weatherSnapshot,
-      if (visibility != null) 'visibility': visibility,
-      if (postType != null) 'post_type': postType,
+      if (spotPrivacySnapshot != null)
+        'spot_privacy_snapshot': spotPrivacySnapshot,
+      if (spotDistrict != null) 'spot_district': spotDistrict,
       if (likesCount != null) 'likes_count': likesCount,
       if (commentsCount != null) 'comments_count': commentsCount,
-      if (isLikedByMe != null) 'is_liked_by_me': isLikedByMe,
+      if (isDeleted != null) 'is_deleted': isDeleted,
       if (createdAt != null) 'created_at': createdAt,
-      if (cachedAt != null) 'cached_at': cachedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4534,49 +4134,31 @@ class LocalPostsCompanion extends UpdateCompanion<LocalPost> {
   LocalPostsCompanion copyWith({
     Value<String>? id,
     Value<String>? userId,
-    Value<String?>? authorUsername,
-    Value<String?>? authorAvatarUrl,
+    Value<String>? photoUrl,
     Value<String?>? caption,
-    Value<String?>? photoUrl,
     Value<String?>? fishSpecies,
-    Value<double?>? fishWeight,
-    Value<double?>? fishLength,
-    Value<bool>? fishReleased,
     Value<String?>? spotId,
-    Value<double?>? spotLat,
-    Value<double?>? spotLng,
-    Value<String?>? weatherSnapshot,
-    Value<String>? visibility,
-    Value<String>? postType,
+    Value<String>? spotPrivacySnapshot,
+    Value<String?>? spotDistrict,
     Value<int>? likesCount,
     Value<int>? commentsCount,
-    Value<bool>? isLikedByMe,
+    Value<bool>? isDeleted,
     Value<DateTime>? createdAt,
-    Value<DateTime>? cachedAt,
     Value<int>? rowid,
   }) {
     return LocalPostsCompanion(
       id: id ?? this.id,
       userId: userId ?? this.userId,
-      authorUsername: authorUsername ?? this.authorUsername,
-      authorAvatarUrl: authorAvatarUrl ?? this.authorAvatarUrl,
-      caption: caption ?? this.caption,
       photoUrl: photoUrl ?? this.photoUrl,
+      caption: caption ?? this.caption,
       fishSpecies: fishSpecies ?? this.fishSpecies,
-      fishWeight: fishWeight ?? this.fishWeight,
-      fishLength: fishLength ?? this.fishLength,
-      fishReleased: fishReleased ?? this.fishReleased,
       spotId: spotId ?? this.spotId,
-      spotLat: spotLat ?? this.spotLat,
-      spotLng: spotLng ?? this.spotLng,
-      weatherSnapshot: weatherSnapshot ?? this.weatherSnapshot,
-      visibility: visibility ?? this.visibility,
-      postType: postType ?? this.postType,
+      spotPrivacySnapshot: spotPrivacySnapshot ?? this.spotPrivacySnapshot,
+      spotDistrict: spotDistrict ?? this.spotDistrict,
       likesCount: likesCount ?? this.likesCount,
       commentsCount: commentsCount ?? this.commentsCount,
-      isLikedByMe: isLikedByMe ?? this.isLikedByMe,
+      isDeleted: isDeleted ?? this.isDeleted,
       createdAt: createdAt ?? this.createdAt,
-      cachedAt: cachedAt ?? this.cachedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4590,47 +4172,25 @@ class LocalPostsCompanion extends UpdateCompanion<LocalPost> {
     if (userId.present) {
       map['user_id'] = Variable<String>(userId.value);
     }
-    if (authorUsername.present) {
-      map['author_username'] = Variable<String>(authorUsername.value);
-    }
-    if (authorAvatarUrl.present) {
-      map['author_avatar_url'] = Variable<String>(authorAvatarUrl.value);
+    if (photoUrl.present) {
+      map['photo_url'] = Variable<String>(photoUrl.value);
     }
     if (caption.present) {
       map['caption'] = Variable<String>(caption.value);
     }
-    if (photoUrl.present) {
-      map['photo_url'] = Variable<String>(photoUrl.value);
-    }
     if (fishSpecies.present) {
       map['fish_species'] = Variable<String>(fishSpecies.value);
-    }
-    if (fishWeight.present) {
-      map['fish_weight'] = Variable<double>(fishWeight.value);
-    }
-    if (fishLength.present) {
-      map['fish_length'] = Variable<double>(fishLength.value);
-    }
-    if (fishReleased.present) {
-      map['fish_released'] = Variable<bool>(fishReleased.value);
     }
     if (spotId.present) {
       map['spot_id'] = Variable<String>(spotId.value);
     }
-    if (spotLat.present) {
-      map['spot_lat'] = Variable<double>(spotLat.value);
+    if (spotPrivacySnapshot.present) {
+      map['spot_privacy_snapshot'] = Variable<String>(
+        spotPrivacySnapshot.value,
+      );
     }
-    if (spotLng.present) {
-      map['spot_lng'] = Variable<double>(spotLng.value);
-    }
-    if (weatherSnapshot.present) {
-      map['weather_snapshot'] = Variable<String>(weatherSnapshot.value);
-    }
-    if (visibility.present) {
-      map['visibility'] = Variable<String>(visibility.value);
-    }
-    if (postType.present) {
-      map['post_type'] = Variable<String>(postType.value);
+    if (spotDistrict.present) {
+      map['spot_district'] = Variable<String>(spotDistrict.value);
     }
     if (likesCount.present) {
       map['likes_count'] = Variable<int>(likesCount.value);
@@ -4638,14 +4198,11 @@ class LocalPostsCompanion extends UpdateCompanion<LocalPost> {
     if (commentsCount.present) {
       map['comments_count'] = Variable<int>(commentsCount.value);
     }
-    if (isLikedByMe.present) {
-      map['is_liked_by_me'] = Variable<bool>(isLikedByMe.value);
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (cachedAt.present) {
-      map['cached_at'] = Variable<DateTime>(cachedAt.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -4658,25 +4215,16 @@ class LocalPostsCompanion extends UpdateCompanion<LocalPost> {
     return (StringBuffer('LocalPostsCompanion(')
           ..write('id: $id, ')
           ..write('userId: $userId, ')
-          ..write('authorUsername: $authorUsername, ')
-          ..write('authorAvatarUrl: $authorAvatarUrl, ')
-          ..write('caption: $caption, ')
           ..write('photoUrl: $photoUrl, ')
+          ..write('caption: $caption, ')
           ..write('fishSpecies: $fishSpecies, ')
-          ..write('fishWeight: $fishWeight, ')
-          ..write('fishLength: $fishLength, ')
-          ..write('fishReleased: $fishReleased, ')
           ..write('spotId: $spotId, ')
-          ..write('spotLat: $spotLat, ')
-          ..write('spotLng: $spotLng, ')
-          ..write('weatherSnapshot: $weatherSnapshot, ')
-          ..write('visibility: $visibility, ')
-          ..write('postType: $postType, ')
+          ..write('spotPrivacySnapshot: $spotPrivacySnapshot, ')
+          ..write('spotDistrict: $spotDistrict, ')
           ..write('likesCount: $likesCount, ')
           ..write('commentsCount: $commentsCount, ')
-          ..write('isLikedByMe: $isLikedByMe, ')
+          ..write('isDeleted: $isDeleted, ')
           ..write('createdAt: $createdAt, ')
-          ..write('cachedAt: $cachedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -6352,50 +5900,32 @@ typedef $$LocalPostsTableCreateCompanionBuilder =
     LocalPostsCompanion Function({
       required String id,
       required String userId,
-      Value<String?> authorUsername,
-      Value<String?> authorAvatarUrl,
+      required String photoUrl,
       Value<String?> caption,
-      Value<String?> photoUrl,
       Value<String?> fishSpecies,
-      Value<double?> fishWeight,
-      Value<double?> fishLength,
-      Value<bool> fishReleased,
       Value<String?> spotId,
-      Value<double?> spotLat,
-      Value<double?> spotLng,
-      Value<String?> weatherSnapshot,
-      Value<String> visibility,
-      Value<String> postType,
+      Value<String> spotPrivacySnapshot,
+      Value<String?> spotDistrict,
       Value<int> likesCount,
       Value<int> commentsCount,
-      Value<bool> isLikedByMe,
+      Value<bool> isDeleted,
       required DateTime createdAt,
-      Value<DateTime> cachedAt,
       Value<int> rowid,
     });
 typedef $$LocalPostsTableUpdateCompanionBuilder =
     LocalPostsCompanion Function({
       Value<String> id,
       Value<String> userId,
-      Value<String?> authorUsername,
-      Value<String?> authorAvatarUrl,
+      Value<String> photoUrl,
       Value<String?> caption,
-      Value<String?> photoUrl,
       Value<String?> fishSpecies,
-      Value<double?> fishWeight,
-      Value<double?> fishLength,
-      Value<bool> fishReleased,
       Value<String?> spotId,
-      Value<double?> spotLat,
-      Value<double?> spotLng,
-      Value<String?> weatherSnapshot,
-      Value<String> visibility,
-      Value<String> postType,
+      Value<String> spotPrivacySnapshot,
+      Value<String?> spotDistrict,
       Value<int> likesCount,
       Value<int> commentsCount,
-      Value<bool> isLikedByMe,
+      Value<bool> isDeleted,
       Value<DateTime> createdAt,
-      Value<DateTime> cachedAt,
       Value<int> rowid,
     });
 
@@ -6418,13 +5948,8 @@ class $$LocalPostsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get authorUsername => $composableBuilder(
-    column: $table.authorUsername,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get authorAvatarUrl => $composableBuilder(
-    column: $table.authorAvatarUrl,
+  ColumnFilters<String> get photoUrl => $composableBuilder(
+    column: $table.photoUrl,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6433,28 +5958,8 @@ class $$LocalPostsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get photoUrl => $composableBuilder(
-    column: $table.photoUrl,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<String> get fishSpecies => $composableBuilder(
     column: $table.fishSpecies,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get fishWeight => $composableBuilder(
-    column: $table.fishWeight,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get fishLength => $composableBuilder(
-    column: $table.fishLength,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get fishReleased => $composableBuilder(
-    column: $table.fishReleased,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6463,28 +5968,13 @@ class $$LocalPostsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get spotLat => $composableBuilder(
-    column: $table.spotLat,
+  ColumnFilters<String> get spotPrivacySnapshot => $composableBuilder(
+    column: $table.spotPrivacySnapshot,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get spotLng => $composableBuilder(
-    column: $table.spotLng,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get weatherSnapshot => $composableBuilder(
-    column: $table.weatherSnapshot,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get visibility => $composableBuilder(
-    column: $table.visibility,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get postType => $composableBuilder(
-    column: $table.postType,
+  ColumnFilters<String> get spotDistrict => $composableBuilder(
+    column: $table.spotDistrict,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6498,18 +5988,13 @@ class $$LocalPostsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<bool> get isLikedByMe => $composableBuilder(
-    column: $table.isLikedByMe,
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
     builder: (column) => ColumnFilters(column),
   );
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get cachedAt => $composableBuilder(
-    column: $table.cachedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -6533,13 +6018,8 @@ class $$LocalPostsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get authorUsername => $composableBuilder(
-    column: $table.authorUsername,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get authorAvatarUrl => $composableBuilder(
-    column: $table.authorAvatarUrl,
+  ColumnOrderings<String> get photoUrl => $composableBuilder(
+    column: $table.photoUrl,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -6548,28 +6028,8 @@ class $$LocalPostsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get photoUrl => $composableBuilder(
-    column: $table.photoUrl,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get fishSpecies => $composableBuilder(
     column: $table.fishSpecies,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get fishWeight => $composableBuilder(
-    column: $table.fishWeight,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get fishLength => $composableBuilder(
-    column: $table.fishLength,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get fishReleased => $composableBuilder(
-    column: $table.fishReleased,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -6578,28 +6038,13 @@ class $$LocalPostsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get spotLat => $composableBuilder(
-    column: $table.spotLat,
+  ColumnOrderings<String> get spotPrivacySnapshot => $composableBuilder(
+    column: $table.spotPrivacySnapshot,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get spotLng => $composableBuilder(
-    column: $table.spotLng,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get weatherSnapshot => $composableBuilder(
-    column: $table.weatherSnapshot,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get visibility => $composableBuilder(
-    column: $table.visibility,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get postType => $composableBuilder(
-    column: $table.postType,
+  ColumnOrderings<String> get spotDistrict => $composableBuilder(
+    column: $table.spotDistrict,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -6613,18 +6058,13 @@ class $$LocalPostsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get isLikedByMe => $composableBuilder(
-    column: $table.isLikedByMe,
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
     builder: (column) => ColumnOrderings(column),
   );
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get cachedAt => $composableBuilder(
-    column: $table.cachedAt,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -6644,63 +6084,29 @@ class $$LocalPostsTableAnnotationComposer
   GeneratedColumn<String> get userId =>
       $composableBuilder(column: $table.userId, builder: (column) => column);
 
-  GeneratedColumn<String> get authorUsername => $composableBuilder(
-    column: $table.authorUsername,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get authorAvatarUrl => $composableBuilder(
-    column: $table.authorAvatarUrl,
-    builder: (column) => column,
-  );
+  GeneratedColumn<String> get photoUrl =>
+      $composableBuilder(column: $table.photoUrl, builder: (column) => column);
 
   GeneratedColumn<String> get caption =>
       $composableBuilder(column: $table.caption, builder: (column) => column);
-
-  GeneratedColumn<String> get photoUrl =>
-      $composableBuilder(column: $table.photoUrl, builder: (column) => column);
 
   GeneratedColumn<String> get fishSpecies => $composableBuilder(
     column: $table.fishSpecies,
     builder: (column) => column,
   );
 
-  GeneratedColumn<double> get fishWeight => $composableBuilder(
-    column: $table.fishWeight,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<double> get fishLength => $composableBuilder(
-    column: $table.fishLength,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get fishReleased => $composableBuilder(
-    column: $table.fishReleased,
-    builder: (column) => column,
-  );
-
   GeneratedColumn<String> get spotId =>
       $composableBuilder(column: $table.spotId, builder: (column) => column);
 
-  GeneratedColumn<double> get spotLat =>
-      $composableBuilder(column: $table.spotLat, builder: (column) => column);
-
-  GeneratedColumn<double> get spotLng =>
-      $composableBuilder(column: $table.spotLng, builder: (column) => column);
-
-  GeneratedColumn<String> get weatherSnapshot => $composableBuilder(
-    column: $table.weatherSnapshot,
+  GeneratedColumn<String> get spotPrivacySnapshot => $composableBuilder(
+    column: $table.spotPrivacySnapshot,
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get visibility => $composableBuilder(
-    column: $table.visibility,
+  GeneratedColumn<String> get spotDistrict => $composableBuilder(
+    column: $table.spotDistrict,
     builder: (column) => column,
   );
-
-  GeneratedColumn<String> get postType =>
-      $composableBuilder(column: $table.postType, builder: (column) => column);
 
   GeneratedColumn<int> get likesCount => $composableBuilder(
     column: $table.likesCount,
@@ -6712,16 +6118,11 @@ class $$LocalPostsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<bool> get isLikedByMe => $composableBuilder(
-    column: $table.isLikedByMe,
-    builder: (column) => column,
-  );
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get cachedAt =>
-      $composableBuilder(column: $table.cachedAt, builder: (column) => column);
 }
 
 class $$LocalPostsTableTableManager
@@ -6757,96 +6158,60 @@ class $$LocalPostsTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> userId = const Value.absent(),
-                Value<String?> authorUsername = const Value.absent(),
-                Value<String?> authorAvatarUrl = const Value.absent(),
+                Value<String> photoUrl = const Value.absent(),
                 Value<String?> caption = const Value.absent(),
-                Value<String?> photoUrl = const Value.absent(),
                 Value<String?> fishSpecies = const Value.absent(),
-                Value<double?> fishWeight = const Value.absent(),
-                Value<double?> fishLength = const Value.absent(),
-                Value<bool> fishReleased = const Value.absent(),
                 Value<String?> spotId = const Value.absent(),
-                Value<double?> spotLat = const Value.absent(),
-                Value<double?> spotLng = const Value.absent(),
-                Value<String?> weatherSnapshot = const Value.absent(),
-                Value<String> visibility = const Value.absent(),
-                Value<String> postType = const Value.absent(),
+                Value<String> spotPrivacySnapshot = const Value.absent(),
+                Value<String?> spotDistrict = const Value.absent(),
                 Value<int> likesCount = const Value.absent(),
                 Value<int> commentsCount = const Value.absent(),
-                Value<bool> isLikedByMe = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
-                Value<DateTime> cachedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalPostsCompanion(
                 id: id,
                 userId: userId,
-                authorUsername: authorUsername,
-                authorAvatarUrl: authorAvatarUrl,
-                caption: caption,
                 photoUrl: photoUrl,
+                caption: caption,
                 fishSpecies: fishSpecies,
-                fishWeight: fishWeight,
-                fishLength: fishLength,
-                fishReleased: fishReleased,
                 spotId: spotId,
-                spotLat: spotLat,
-                spotLng: spotLng,
-                weatherSnapshot: weatherSnapshot,
-                visibility: visibility,
-                postType: postType,
+                spotPrivacySnapshot: spotPrivacySnapshot,
+                spotDistrict: spotDistrict,
                 likesCount: likesCount,
                 commentsCount: commentsCount,
-                isLikedByMe: isLikedByMe,
+                isDeleted: isDeleted,
                 createdAt: createdAt,
-                cachedAt: cachedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
                 required String id,
                 required String userId,
-                Value<String?> authorUsername = const Value.absent(),
-                Value<String?> authorAvatarUrl = const Value.absent(),
+                required String photoUrl,
                 Value<String?> caption = const Value.absent(),
-                Value<String?> photoUrl = const Value.absent(),
                 Value<String?> fishSpecies = const Value.absent(),
-                Value<double?> fishWeight = const Value.absent(),
-                Value<double?> fishLength = const Value.absent(),
-                Value<bool> fishReleased = const Value.absent(),
                 Value<String?> spotId = const Value.absent(),
-                Value<double?> spotLat = const Value.absent(),
-                Value<double?> spotLng = const Value.absent(),
-                Value<String?> weatherSnapshot = const Value.absent(),
-                Value<String> visibility = const Value.absent(),
-                Value<String> postType = const Value.absent(),
+                Value<String> spotPrivacySnapshot = const Value.absent(),
+                Value<String?> spotDistrict = const Value.absent(),
                 Value<int> likesCount = const Value.absent(),
                 Value<int> commentsCount = const Value.absent(),
-                Value<bool> isLikedByMe = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
                 required DateTime createdAt,
-                Value<DateTime> cachedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalPostsCompanion.insert(
                 id: id,
                 userId: userId,
-                authorUsername: authorUsername,
-                authorAvatarUrl: authorAvatarUrl,
-                caption: caption,
                 photoUrl: photoUrl,
+                caption: caption,
                 fishSpecies: fishSpecies,
-                fishWeight: fishWeight,
-                fishLength: fishLength,
-                fishReleased: fishReleased,
                 spotId: spotId,
-                spotLat: spotLat,
-                spotLng: spotLng,
-                weatherSnapshot: weatherSnapshot,
-                visibility: visibility,
-                postType: postType,
+                spotPrivacySnapshot: spotPrivacySnapshot,
+                spotDistrict: spotDistrict,
                 likesCount: likesCount,
                 commentsCount: commentsCount,
-                isLikedByMe: isLikedByMe,
+                isDeleted: isDeleted,
                 createdAt: createdAt,
-                cachedAt: cachedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
