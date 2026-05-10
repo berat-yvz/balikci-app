@@ -173,7 +173,7 @@ class _WeatherGlyphPainter extends CustomPainter {
     final cy = size.height / 2;
     switch (kind) {
       case WeeklyWeatherVisualKind.rain:
-        _paintRain(canvas, size);
+        _paintRainWithCloud(canvas, size);
       case WeeklyWeatherVisualKind.cloudy:
         _paintCloud(canvas, cx, cy, size.width * 0.38, const Color(0xFFE8EEF5));
       case WeeklyWeatherVisualKind.partlyCloudyDay:
@@ -201,16 +201,30 @@ class _WeatherGlyphPainter extends CustomPainter {
     }
   }
 
-  void _paintRain(Canvas canvas, Size size) {
+  /// Yalnızca çizgisel yağmur küçük kutuda "\" / yağmur ipliği gibi görünüyordu;
+  /// önce bulut, altta kısa çizgiler.
+  void _paintRainWithCloud(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cloudY = size.height * 0.36;
+    _paintCloud(
+      canvas,
+      cx,
+      cloudY,
+      size.width * 0.34,
+      const Color(0xFFB0BEC5),
+    );
     final p = Paint()
-      ..color = Colors.white.withValues(alpha: 0.92)
-      ..strokeWidth = 2
+      ..color = Colors.white.withValues(alpha: 0.9)
+      ..strokeWidth = 1.35
       ..strokeCap = StrokeCap.round;
-    final ox = size.width * 0.15;
-    final oy = size.height * 0.2;
-    for (var i = 0; i < 3; i++) {
-      final dx = ox + i * size.width * 0.22;
-      canvas.drawLine(Offset(dx, oy), Offset(dx + 5, oy + size.height * 0.48), p);
+    final y0 = size.height * 0.55;
+    for (var i = 0; i < 4; i++) {
+      final x0 = size.width * 0.12 + i * size.width * 0.19;
+      canvas.drawLine(
+        Offset(x0, y0),
+        Offset(x0 + 2.8, y0 + size.height * 0.26),
+        p,
+      );
     }
   }
 

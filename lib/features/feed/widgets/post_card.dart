@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,6 +30,27 @@ class PostCard extends ConsumerStatefulWidget {
 
 class _PostCardState extends ConsumerState<PostCard> {
   bool _liking = false;
+  late final TapGestureRecognizer _captionAuthorNameTap;
+
+  @override
+  void initState() {
+    super.initState();
+    _captionAuthorNameTap = TapGestureRecognizer()
+      ..onTap = () {
+        if (!mounted) return;
+        context.push('${AppRoutes.profile}/${widget.post.userId}');
+      };
+  }
+
+  @override
+  void dispose() {
+    _captionAuthorNameTap.dispose();
+    super.dispose();
+  }
+
+  void _openAuthorProfile() {
+    context.push('${AppRoutes.profile}/${widget.post.userId}');
+  }
 
   /// Bildirim metinleri için veritabanıyla uyumlu görünen ad (teknik kuyruk düşürülür).
   String? _notificationActorName() {
@@ -88,36 +110,50 @@ class _PostCardState extends ConsumerState<PostCard> {
             padding: const EdgeInsets.fromLTRB(12, 12, 8, 8),
             child: Row(
               children: [
-                _AuthorAvatar(
-                  avatarUrl: widget.post.authorAvatarUrl,
-                  username: widget.post.authorUsername ?? 'Balıkçı',
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _openAuthorProfile,
+                    customBorder: const CircleBorder(),
+                    child: _AuthorAvatar(
+                      avatarUrl: widget.post.authorAvatarUrl,
+                      username: widget.post.authorUsername ?? 'Balıkçı',
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              widget.post.authorUsername ?? 'Balıkçı',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.foam,
+                      InkWell(
+                        onTap: _openAuthorProfile,
+                        borderRadius: BorderRadius.circular(6),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  widget.post.authorUsername ?? 'Balıkçı',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.foam,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                              if (widget.post.authorRank != null) ...[
+                                const SizedBox(width: 6),
+                                RankBadge(
+                                  rank: widget.post.authorRank!,
+                                  size: RankBadgeSize.small,
+                                ),
+                              ],
+                            ],
                           ),
-                          if (widget.post.authorRank != null) ...[
-                            const SizedBox(width: 6),
-                            RankBadge(
-                              rank: widget.post.authorRank!,
-                              size: RankBadgeSize.small,
-                            ),
-                          ],
-                        ],
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -283,6 +319,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                         fontSize: 15,
                         color: AppColors.foam,
                       ),
+                      recognizer: _captionAuthorNameTap,
                     ),
                     TextSpan(
                       text: widget.post.caption!,

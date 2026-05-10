@@ -61,6 +61,30 @@ void main() {
     expect(rows[0].precipChancePercent, isNotNull);
   });
 
+  test('gece kapalı bulut (WMO≥3): ay+bulut ikonu; gündüz yalnız bulut', () {
+    final now = DateTime(2026, 5, 9, 12);
+    final d = DateTime(2026, 5, 9);
+    final hourly = <HourlyWeatherModel>[];
+    for (var h = 0; h < 24; h++) {
+      hourly.add(_h(DateTime(d.year, d.month, d.day, h), temp: 16, code: 3));
+    }
+    final row = buildWeeklyForecastRows(hourly, now).single;
+    expect(row.dayVisual, WeeklyWeatherVisualKind.cloudy);
+    expect(row.nightVisual, WeeklyWeatherVisualKind.partlyCloudyNight);
+  });
+
+  test('yağmurlu gündüz kodu: rain görsel türü', () {
+    final now = DateTime(2026, 5, 9, 12);
+    final d = DateTime(2026, 5, 9);
+    final hourly = <HourlyWeatherModel>[];
+    for (var h = 0; h < 24; h++) {
+      hourly.add(_h(DateTime(d.year, d.month, d.day, h), temp: 14, code: 61));
+    }
+    final row = buildWeeklyForecastRows(hourly, now).single;
+    expect(row.dayVisual, WeeklyWeatherVisualKind.rain);
+    expect(row.nightVisual, WeeklyWeatherVisualKind.rain);
+  });
+
   test('yedi günlük saatlik veriden yedi satır üretir', () {
     final now = DateTime(2026, 5, 9, 12);
     final hourly = <HourlyWeatherModel>[];

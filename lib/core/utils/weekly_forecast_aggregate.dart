@@ -50,7 +50,13 @@ bool _rainWeatherCode(int c) =>
 
 WeeklyWeatherVisualKind _visualFromCode(int code, {required bool night}) {
   if (_rainWeatherCode(code)) return WeeklyWeatherVisualKind.rain;
-  if (code >= 3) return WeeklyWeatherVisualKind.cloudy;
+  // Kapalı/gece (WMO ≥3): küçük glifte yalnızca bulut → "gece" hissi kayboluyordu.
+  // Diğer gece satırlarıyla uyum için ay + bulut (partlyCloudyNight) kullan.
+  if (code >= 3) {
+    return night
+        ? WeeklyWeatherVisualKind.partlyCloudyNight
+        : WeeklyWeatherVisualKind.cloudy;
+  }
   if (code == 2 || code == 1) {
     return night
         ? WeeklyWeatherVisualKind.partlyCloudyNight
