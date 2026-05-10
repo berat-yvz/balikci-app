@@ -15,9 +15,19 @@ import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
 
-/// Gönderi oluşturma — tek kaydırmalı ekran, Facebook tarzı sade akış.
-///
-/// Fotoğraf + yazı zorunlu adım; mera ve balık etiketi isteğe bağlı (katlanır).
+/// Sık seçilen balık türleri — gönderi ekranında chip olarak.
+const List<String> _kCommonFishSpecies = [
+  'Lüfer',
+  'Çipura',
+  'Levrek',
+  'Hamsi',
+  'Palamut',
+  'Kefal',
+  'İstavrit',
+  'Kofana',
+];
+
+/// Gönderi oluşturma — tek sayfa: fotoğraf, balık chip'leri, yazı, mera, paylaş.
 class CreatePostScreen extends ConsumerStatefulWidget {
   const CreatePostScreen({super.key});
 
@@ -27,11 +37,12 @@ class CreatePostScreen extends ConsumerStatefulWidget {
 
 class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   final _captionController = TextEditingController();
-  final _fishSpeciesController = TextEditingController();
+  final _fishExtraController = TextEditingController();
   final _spotRepo = SpotRepository();
 
   XFile? _pickedImage;
   Uint8List? _previewBytes;
+  final Set<String> _selectedFish = {};
 
   /// Seçili meranın ID'si; null = mera gösterme.
   String? _selectedSpotId;
@@ -45,8 +56,18 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   @override
   void dispose() {
     _captionController.dispose();
-    _fishSpeciesController.dispose();
+    _fishExtraController.dispose();
     super.dispose();
+  }
+
+  void _toggleFish(String species) {
+    setState(() {
+      if (_selectedFish.contains(species)) {
+        _selectedFish.remove(species);
+      } else {
+        _selectedFish.add(species);
+      }
+    });
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -64,6 +85,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         _pickedImage = picked;
         _previewBytes = bytes;
       });
+      await _loadSpotsIfNeeded();
     } catch (e, st) {
       debugPrint('pickImage ($source): $e\n$st');
       if (!mounted) return;
@@ -160,7 +182,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   Future<String> _uploadPhoto() async {
     final uid = SupabaseService.auth.currentUser?.id;
     if (uid == null) {
-      throw Exception('Oturum bulunamadı. Tekrar giriş yap.');
+      throw Exception('Oturum bulunamadı — lütfen tekrar giriş yapın');
     }
     final path = '$uid/posts/${DateTime.now().millisecondsSinceEpoch}.jpg';
     final bytes = await prepareAvatarUploadBytes(_pickedImage!);
@@ -177,31 +199,56 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         .getPublicUrl(path);
   }
 
-  List<String>? _parsedFishSpecies() {
-    final raw = _fishSpeciesController.text.trim();
-    if (raw.isEmpty) return null;
-    final parts = raw
-        .split(RegExp(r'[,;]'))
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
-    return parts.isEmpty ? null : parts;
+  List<String>? _combinedFishSpecies() {
+    final extraRaw = _fishExtraController.text.trim();
+    final fromExtra = extraRaw.isEmpty
+        ? <String>[]
+        : extraRaw
+            .split(RegExp(r'[,;]'))
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
+    final merged = {..._selectedFish, ...fromExtra}.toList();
+    if (merged.isEmpty) return null;
+    merged.sort();
+    return merged;
   }
 
   Future<void> _share() async {
     if (!_hasPhoto || _uploading) return;
     setState(() => _uploading = true);
     try {
-      final photoUrl = await _uploadPhoto();
-      final spot = _resolvedSpot();
+      late final String photoUrl;
+      try {
+        photoUrl = await _uploadPhoto();
+      } catch (e, st) {
+        debugPrint('GÖNDERI STORAGE HATA: $e\n$st');
+        if (!mounted) return;
+        final text = ErrorMessageHelper.isNetworkError(e)
+            ? ErrorMessageHelper.toUserMessage(e)
+            : ErrorMessageHelper.toUserMessage(
+                e,
+                fallback:
+                    'Fotoğraf yüklenemedi, internet bağlantını kontrol et',
+              );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(text),
+            backgroundColor: AppColors.danger,
+            duration: const Duration(seconds: 8),
+          ),
+        );
+        return;
+      }
+
       await ref.read(postRepositoryProvider).createPost(
             photoUrl: photoUrl,
             caption: _captionController.text.trim().isEmpty
                 ? null
                 : _captionController.text.trim(),
-            fishSpecies: _parsedFishSpecies(),
-            spotId: spot?.id,
-            spotDistrict: spot?.description,
+            fishSpecies: _combinedFishSpecies(),
+            spotId: _resolvedSpot()?.id,
+            spotDistrict: _resolvedSpot()?.description,
           );
       ref.invalidate(globalFeedProvider);
 
@@ -214,15 +261,16 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         ),
       );
     } catch (e, st) {
-      debugPrint('createPost: $e\n$st');
+      debugPrint('GÖNDERI PAYLAŞ HATA: $e\n$st');
       if (!mounted) return;
-      final friendly = ErrorMessageHelper.toUserMessage(
-        e,
-        fallback: 'Gönderi paylaşılamadı. Tekrar dene.',
-      );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(friendly),
+          content: Text(
+            ErrorMessageHelper.toUserMessage(
+              e,
+              fallback: 'Bir sorun oluştu, lütfen tekrar dene',
+            ),
+          ),
           backgroundColor: AppColors.danger,
           duration: const Duration(seconds: 8),
         ),
@@ -252,10 +300,13 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  GestureDetector(
-                    onTap: _hasPhoto ? _showChangePhotoSheet : null,
-                    child: AspectRatio(
-                      aspectRatio: 1,
+                  SizedBox(
+                    height: 250,
+                    width: double.infinity,
+                    child: GestureDetector(
+                      onTap: _hasPhoto
+                          ? null
+                          : () => _pickImage(ImageSource.gallery),
                       child: Container(
                         decoration: BoxDecoration(
                           color: AppColors.surface,
@@ -275,19 +326,26 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                                     previewBytes: _previewBytes,
                                   ),
                                   Positioned(
-                                    right: 8,
+                                    left: 8,
                                     top: 8,
-                                    child: Material(
-                                      color: Colors.black54,
-                                      borderRadius: BorderRadius.circular(20),
-                                      child: IconButton(
-                                        onPressed: _showChangePhotoSheet,
-                                        icon: const Icon(
-                                          Icons.edit_rounded,
-                                          color: Colors.white,
-                                          size: 20,
+                                    child: TextButton(
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: Colors.black54,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 8,
                                         ),
-                                        tooltip: 'Fotoğrafı değiştir',
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      onPressed: _showChangePhotoSheet,
+                                      child: const Text(
+                                        'Fotoğraf Değiştir',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -302,8 +360,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                       width: double.infinity,
                       height: 54,
                       child: FilledButton.icon(
-                        onPressed: () =>
-                            _pickImage(ImageSource.camera),
+                        onPressed: () => _pickImage(ImageSource.camera),
                         icon: const Icon(Icons.photo_camera_rounded, size: 22),
                         label: const Text(
                           'Fotoğraf çek',
@@ -319,8 +376,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                       width: double.infinity,
                       height: 54,
                       child: OutlinedButton.icon(
-                        onPressed: () =>
-                            _pickImage(ImageSource.gallery),
+                        onPressed: () => _pickImage(ImageSource.gallery),
                         icon:
                             const Icon(Icons.photo_library_rounded, size: 22),
                         label: const Text(
@@ -335,6 +391,46 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                   ],
                   if (_hasPhoto) ...[
                     const SizedBox(height: 16),
+                    Text(
+                      'Balık türü (isteğe bağlı)',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.muted,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _kCommonFishSpecies
+                          .map(
+                            (species) => FilterChip(
+                              label: Text(species),
+                              selected: _selectedFish.contains(species),
+                              onSelected: (_) => _toggleFish(species),
+                              selectedColor:
+                                  AppColors.primary.withValues(alpha: 0.28),
+                              checkmarkColor: AppColors.primary,
+                              labelStyle: TextStyle(
+                                color: _selectedFish.contains(species)
+                                    ? AppColors.foam
+                                    : AppColors.foam.withValues(alpha: 0.9),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _fishExtraController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: const InputDecoration(
+                        hintText: 'Başka tür (virgülle yazabilirsin)',
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     TextField(
                       controller: _captionController,
                       maxLines: 5,
@@ -346,151 +442,112 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                         alignLabelWithHint: true,
                       ),
                     ),
-                    Theme(
-                      data: Theme.of(context).copyWith(
-                        dividerColor: Colors.transparent,
+                    if (_showPrivateSpotNotice)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.warning.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color:
+                                  AppColors.warning.withValues(alpha: 0.45),
+                            ),
+                          ),
+                          child: const Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                color: AppColors.warning,
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Gizli merada gönderide yalnızca bölge '
+                                  'bilgisi görünür.',
+                                  style: TextStyle(
+                                    color: AppColors.warning,
+                                    fontSize: 13,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      child: ExpansionTile(
-                        tilePadding: EdgeInsets.zero,
-                        title: const Text(
-                          'Konum veya balık (isteğe bağlı)',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                            color: AppColors.foam,
-                          ),
-                        ),
-                        subtitle: Text(
-                          'Boş bırakabilirsin',
-                          style: TextStyle(
-                            color: AppColors.muted.withValues(alpha: 0.9),
-                            fontSize: 13,
-                          ),
-                        ),
-                        onExpansionChanged: (open) {
-                          if (open) _loadSpotsIfNeeded();
-                        },
-                        children: [
-                          if (_showPrivateSpotNotice)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color:
-                                      AppColors.warning.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: AppColors.warning
-                                        .withValues(alpha: 0.45),
-                                  ),
-                                ),
-                                child: const Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Icon(
-                                      Icons.info_outline_rounded,
-                                      color: AppColors.warning,
-                                      size: 20,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Gizli merada gönderide yalnızca bölge '
-                                        'bilgisi görünür.',
-                                        style: TextStyle(
-                                          color: AppColors.warning,
-                                          fontSize: 13,
-                                          height: 1.35,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          TextField(
-                            controller: _fishSpeciesController,
-                            textCapitalization: TextCapitalization.words,
-                            decoration: const InputDecoration(
-                              hintText:
-                                  'Balık türleri — virgülle: Lüfer, Çipura',
-                              isDense: true,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Mera',
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppColors.muted,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          if (_loadingSpots)
-                            const Padding(
-                              padding: EdgeInsets.all(16),
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  color: AppColors.primary,
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            )
-                          else if (_userSpots.isEmpty && _spotsLoaded)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: Text(
-                                'Kayıtlı meran yok. İstersen boş bırak.',
-                                style: TextStyle(
-                                  color: AppColors.muted.withValues(alpha: 0.95),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            )
-                          else
-                            InputDecorator(
-                              decoration: const InputDecoration(
-                                hintText: 'İstersen mera bağla',
-                                isDense: true,
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String?>(
-                                  value: _effectiveSpotIdForDropdown,
-                                  isExpanded: true,
-                                  isDense: true,
-                                  hint: Text(
-                                    'Mera seç',
-                                    style: TextStyle(
-                                      color:
-                                          AppColors.muted.withValues(alpha: 0.9),
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  items: [
-                                    const DropdownMenuItem<String?>(
-                                      value: null,
-                                      child: Text('Mera gösterme'),
-                                    ),
-                                    ..._userSpots.map(
-                                      (spot) => DropdownMenuItem<String?>(
-                                        value: spot.id,
-                                        child: Text(
-                                          '${spot.name} · '
-                                          '${_privacyLabel(spot.privacyLevel)}',
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  onChanged: (v) => setState(() {
-                                    _selectedSpotId = v;
-                                  }),
-                                ),
-                              ),
-                            ),
-                        ],
+                    Text(
+                      'Mera (isteğe bağlı)',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.muted,
                       ),
                     ),
+                    const SizedBox(height: 6),
+                    if (_loadingSpots)
+                      const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      )
+                    else if (_userSpots.isEmpty && _spotsLoaded)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          'Kayıtlı meran yok. İstersen boş bırak.',
+                          style: TextStyle(
+                            color: AppColors.muted.withValues(alpha: 0.95),
+                            fontSize: 14,
+                          ),
+                        ),
+                      )
+                    else
+                      InputDecorator(
+                        decoration: const InputDecoration(
+                          hintText: 'İstersen mera bağla',
+                          isDense: true,
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String?>(
+                            value: _effectiveSpotIdForDropdown,
+                            isExpanded: true,
+                            isDense: true,
+                            hint: Text(
+                              'Mera seç',
+                              style: TextStyle(
+                                color:
+                                    AppColors.muted.withValues(alpha: 0.9),
+                                fontSize: 15,
+                              ),
+                            ),
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('Mera gösterme'),
+                              ),
+                              ..._userSpots.map(
+                                (spot) => DropdownMenuItem<String?>(
+                                  value: spot.id,
+                                  child: Text(
+                                    '${spot.name} · '
+                                    '${_privacyLabel(spot.privacyLevel)}',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            onChanged: (v) => setState(() {
+                              _selectedSpotId = v;
+                            }),
+                          ),
+                        ),
+                      ),
                   ],
                 ],
               ),
@@ -503,8 +560,15 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: SizedBox(
                   width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
+                  height: 56,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.foam,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                     onPressed: _uploading ? null : _share,
                     child: _uploading
                         ? const SizedBox(
@@ -516,10 +580,11 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                             ),
                           )
                         : const Text(
-                            'Paylaş',
+                            'PAYLAŞ',
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
                             ),
                           ),
                   ),

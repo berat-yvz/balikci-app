@@ -32,6 +32,42 @@ class PostRepository {
   static const _commentSelect =
       'id, post_id, user_id, content, created_at, user:users(username, avatar_url, email)';
 
+  // ─── Gönderi oluşturma sonrası: skor / gölge puan (ana akışı engellemez) ───
+
+  void _schedulePostCreateSideEffects({
+    required String userId,
+    required String postId,
+    String? spotId,
+  }) {
+    unawaited(() async {
+      try {
+        await _remote.functions.invoke(
+          'score-calculator',
+          body: <String, dynamic>{
+            'source_type': ScoreSource.postShared.value,
+            'user_id': userId,
+            'source_id': postId,
+            'spot_id': ?spotId,
+          },
+        );
+      } catch (e, st) {
+        debugPrint('Score hatası (gönderi etkilenmedi): $e\n$st');
+      }
+      try {
+        await _remote.functions.invoke(
+          'shadow-point-calculator',
+          body: {
+            'post_id': postId,
+            'poster_user_id': userId,
+            'spot_id': spotId,
+          },
+        );
+      } catch (e, st) {
+        debugPrint('Shadow point hatası (gönderi etkilenmedi): $e\n$st');
+      }
+    }());
+  }
+
   // ─── Yardımcı: puan hesapla (fire-and-forget) ──────────────────────────────
 
   void _scoreEvent(
@@ -63,27 +99,6 @@ class PostRepository {
       }),
     );
   }
-
-  Future<void> _shadowPointEvent({
-    required String postId,
-    required String posterUserId,
-    String? spotId,
-  }) async {
-    try {
-      await _remote.functions.invoke(
-        'shadow-point-calculator',
-        body: {
-          'post_id': postId,
-          'poster_user_id': posterUserId,
-          'spot_id': spotId,
-        },
-      );
-    } catch (e, st) {
-      debugPrint('_shadowPointEvent hata: $e\n$st');
-    }
-  }
-
-  // ─── Yardımcı: bildirim gönder (fire-and-forget) ───────────────────────────
 
   /// [actorId] ile [postOwnerId] aynıysa bildirim gönderilmez (öz-bildirim önleme).
   void _notifyPostActivity({
@@ -164,20 +179,17 @@ class PostRepository {
           .single();
 
       final post = PostModel.fromJson(response);
-      _scoreEvent(uid, ScoreSource.postShared, sourceId: post.id);
-      unawaited(
-        _shadowPointEvent(
-          postId: post.id,
-          posterUserId: uid,
-          spotId: post.spotId,
-        ),
+      _schedulePostCreateSideEffects(
+        userId: uid,
+        postId: post.id,
+        spotId: post.spotId,
       );
       return post;
-    } on PostgrestException catch (e) {
-      debugPrint('createPost hatası: ${e.message}');
+    } on PostgrestException catch (e, st) {
+      debugPrint('PostRepository.createPost HATA: ${e.message}\n$st');
       rethrow;
-    } catch (e) {
-      debugPrint('createPost hatası: $e');
+    } catch (e, st) {
+      debugPrint('PostRepository.createPost HATA: $e\n$st');
       rethrow;
     }
   }

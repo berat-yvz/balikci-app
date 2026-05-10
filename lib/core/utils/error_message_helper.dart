@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 /// Teknik exception mesajlarını kullanıcı dostu Türkçeye çevirir.
 ///
 /// 45+ yaş hedef kitle: sade, kısa, teknik terim içermeyen mesajlar.
@@ -8,6 +10,30 @@ class ErrorMessageHelper {
     dynamic error, {
     String fallback = 'Bir hata oluştu. Lütfen tekrar deneyin.',
   }) {
+    if (error is PostgrestException) {
+      final code = error.code;
+      final details = (error.details ?? '').toString().toLowerCase();
+      final message = error.message.toLowerCase();
+      if (code == '42501' ||
+          message.contains('row-level security') ||
+          message.contains('new row violates row-level security') ||
+          message.contains('permission denied for') ||
+          details.contains('row-level security')) {
+        return 'Gönderi oluşturulamadı, tekrar giriş yapmayı dene';
+      }
+    }
+
+    if (error is StorageException) {
+      final blob = '${error.message} ${error.statusCode}'.toLowerCase();
+      if (blob.contains('403') ||
+          blob.contains('forbidden') ||
+          blob.contains('policy') ||
+          blob.contains('row-level security')) {
+        return 'Gönderi oluşturulamadı, tekrar giriş yapmayı dene';
+      }
+      return 'Fotoğraf yüklenemedi, internet bağlantını kontrol et';
+    }
+
     final msg = error.toString().toLowerCase();
 
     if (msg.contains('socket') ||
@@ -76,9 +102,7 @@ class ErrorMessageHelper {
             msg.contains('forbidden') ||
             msg.contains('policy') ||
             msg.contains('row-level security'))) {
-      return '📷 Fotoğraf yüklemesi engellendi.\n'
-          'Supabase’de fish-photos politikalarının güncel olduğundan emin ol '
-          '(bkz. migration `20260509000005_fix_fish_photos_storage_rls.sql`).';
+      return 'Gönderi oluşturulamadı, tekrar giriş yapmayı dene';
     }
 
     // posts.user_id → users(id)
@@ -93,8 +117,15 @@ class ErrorMessageHelper {
 
     // posts INSERT RLS
     if (msg.contains('row-level security') && msg.contains('posts')) {
-      return '📝 Gönderi kaydı sunucu güvenlik kuralına takıldı.\n'
-          'Çıkış yapıp tekrar dene; migration’ların uygulandığını kontrol et.';
+      return 'Gönderi oluşturulamadı, tekrar giriş yapmayı dene';
+    }
+
+    // Genel yetki / JWT
+    if (msg.contains('jwt expired') ||
+        msg.contains('invalid jwt') ||
+        (msg.contains('401') &&
+            (msg.contains('postgrest') || msg.contains('pgrst')))) {
+      return 'Gönderi oluşturulamadı, tekrar giriş yapmayı dene';
     }
 
     return fallback;
