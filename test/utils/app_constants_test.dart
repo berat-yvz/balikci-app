@@ -70,8 +70,8 @@ void main() {
   });
 
   group('weatherRegions', () {
-    test('12 bölge tanımlı', () {
-      expect(weatherRegions.length, 12);
+    test('13 bölge tanımlı', () {
+      expect(weatherRegions.length, 13);
     });
 
     test('her bölgenin lat ve lng değeri var', () {

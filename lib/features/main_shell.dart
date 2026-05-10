@@ -22,10 +22,13 @@ import 'package:balikci_app/shared/providers/user_provider.dart';
 
 /// Ana shell — 5 sekme, harita ortada vurgulu.
 /// Sıra: Hava(0) | Balıkçım(1) | Harita(2) | Sosyal(3) | Profil(4)
+///
+/// [StatefulNavigationShell] + IndexedStack: sekme değişince alt ağaç dispose
+/// edilmez; özellikle harita ([MapScreen]) ve karo sağlayıcısı canlı kalır.
 class MainShell extends ConsumerStatefulWidget {
-  final Widget child;
+  final StatefulNavigationShell navigationShell;
 
-  const MainShell({super.key, required this.child});
+  const MainShell({super.key, required this.navigationShell});
 
   @override
   ConsumerState<MainShell> createState() => _MainShellState();
@@ -74,8 +77,8 @@ class _MainShellState extends ConsumerState<MainShell> {
     if (path.startsWith(AppRoutes.weather)) return 0;
     if (path.startsWith(AppRoutes.balikcim)) return 1;
     if (path == AppRoutes.home) return 2;
-    // feed hem /feed hem de (eski) /social yolunu kapsar
-    if (path.startsWith(AppRoutes.feed) ||
+    if (path == AppRoutes.rank ||
+        path.startsWith(AppRoutes.feed) ||
         path.startsWith(AppRoutes.social)) {
       return 3;
     }
@@ -88,19 +91,10 @@ class _MainShellState extends ConsumerState<MainShell> {
   }
 
   void _onTabTapped(int index) {
-    setState(() => _currentIndex = index);
-    switch (index) {
-      case 0:
-        context.go(AppRoutes.weather);
-      case 1:
-        context.go(AppRoutes.balikcim);
-      case 2:
-        context.go(AppRoutes.home);
-      case 3:
-        context.go(AppRoutes.feed);
-      case 4:
-        context.go(AppRoutes.profile);
-    }
+    widget.navigationShell.goBranch(
+      index,
+      initialLocation: index == widget.navigationShell.currentIndex,
+    );
   }
 
   @override
@@ -201,7 +195,7 @@ class _MainShellState extends ConsumerState<MainShell> {
                       ),
                     ),
             ),
-            Expanded(child: widget.child),
+            Expanded(child: widget.navigationShell),
           ],
         ),
         bottomNavigationBar: BottomAppBar(

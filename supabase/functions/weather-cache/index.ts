@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 /**
- * Open-Meteo → weather_cache (12 kıyı bölgesi + İstanbul ilçeleri saatlik).
+ * Open-Meteo → weather_cache (13 kıyı/şehir bölgesi + İstanbul ilçeleri saatlik).
  * pg_cron ile her saat **başında** (:00) tetiklenir; istemci Open-Meteo çağırmaz
  * ve weather_cache'i yalnızca ~2 dk sonra (yerel :02) okur.
  *
@@ -16,6 +16,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // ağ gecikmesiyle kalıyordu; diğer bölgeler ısındıktan sonra aynı çalıştırmada güncellenir.
 const REGIONS: Record<string, { lat: number; lng: number }> = {
   antalya: { lat: 36.896, lng: 30.713 },
+  adana: { lat: 37.001, lng: 35.329 },
   trabzon: { lat: 41.005, lng: 39.716 },
   canakkale: { lat: 40.144, lng: 26.406 },
   bodrum: { lat: 37.034, lng: 27.43 },

@@ -13,7 +13,6 @@ import 'package:balikci_app/data/models/post_model.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
-import 'package:balikci_app/shared/widgets/rank_badge.dart';
 
 /// Sosyal akış gönderi kartı — Facebook/Instagram karışımı.
 ///
@@ -131,27 +130,14 @@ class _PostCardState extends ConsumerState<PostCard> {
                         borderRadius: BorderRadius.circular(6),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  widget.post.authorUsername ?? 'Balıkçı',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.foam,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (widget.post.authorRank != null) ...[
-                                const SizedBox(width: 6),
-                                RankBadge(
-                                  rank: widget.post.authorRank!,
-                                  size: RankBadgeSize.small,
-                                ),
-                              ],
-                            ],
+                          child: Text(
+                            widget.post.authorUsername ?? 'Balıkçı',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.foam,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ),

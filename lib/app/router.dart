@@ -183,145 +183,173 @@ final routerProvider = Provider<GoRouter>((ref) {
             _fadeSlidePage(state: state, child: const OnboardingScreen()),
       ),
 
-      ShellRoute(
-        builder: (context, state, child) => MainShell(child: child),
-        routes: [
-          GoRoute(
-            path: AppRoutes.home,
-            builder: (context, state) {
-              final spotId =
-                  state.extra is String ? state.extra as String : null;
-              return MapScreen(
-                key: ValueKey('map_${spotId ?? 'default'}'),
-                initialSpotId: spotId,
-              );
-            },
-          ),
-          GoRoute(
-            path: AppRoutes.rank,
-            redirect: (context, state) => AppRoutes.socialLeaderboard,
-          ),
-          GoRoute(
-            path: AppRoutes.balikcim,
-            builder: (context, state) => const BalikcimScreen(),
-          ),
-          GoRoute(
-            path: AppRoutes.weather,
-            builder: (context, state) => const WeatherScreen(),
-          ),
-          // ── Sosyal Akış (Feed) ───────────────────────────────────────────
-          GoRoute(
-            path: AppRoutes.feed,
-            builder: (context, state) => const FeedScreen(),
+      /// Alt sekme içerikleri IndexedStack ile canlı tutulur; harita sekmesinden
+      /// çıkınca [MapScreen] dispose olmaz, karo katmanı yeniden üretilmez (siyah ekran).
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return MainShell(navigationShell: navigationShell);
+        },
+        branches: [
+          // 0 — Hava
+          StatefulShellBranch(
             routes: [
               GoRoute(
-                path: 'create',
-                pageBuilder: (context, state) => MaterialPage<void>(
-                  fullscreenDialog: true,
-                  child: const CreatePostScreen(),
-                ),
+                path: AppRoutes.weather,
+                builder: (context, state) => const WeatherScreen(),
               ),
+            ],
+          ),
+          // 1 — Balıkçım
+          StatefulShellBranch(
+            routes: [
               GoRoute(
-                path: 'post',
-                pageBuilder: (context, state) {
-                  final post = state.extra;
-                  if (post is! PostModel) {
-                    return _fadeSlidePage(
-                      state: state,
-                      child: const Scaffold(
-                        body: Center(child: Text('Gönderi bulunamadı')),
-                      ),
-                    );
-                  }
-                  return _fadeSlidePage(
-                    state: state,
-                    child: PostDetailScreen(post: post),
+                path: AppRoutes.balikcim,
+                builder: (context, state) => const BalikcimScreen(),
+              ),
+            ],
+          ),
+          // 2 — Harita
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                builder: (context, state) {
+                  final spotId =
+                      state.extra is String ? state.extra as String : null;
+                  return MapScreen(
+                    key: ValueKey('map_${spotId ?? 'default'}'),
+                    initialSpotId: spotId,
                   );
                 },
               ),
             ],
           ),
-          GoRoute(
-            path: AppRoutes.social,
-            redirect: (context, state) => AppRoutes.feed,
-          ),
-          GoRoute(
-            path: AppRoutes.socialHub,
-            pageBuilder: (context, state) => _fadeSlidePage(
-              state: state,
-              child: const FriendsHubScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.socialLeaderboard,
-            pageBuilder: (context, state) => _fadeSlidePage(
-              state: state,
-              child: const LeaderboardScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.socialFriends,
-            pageBuilder: (context, state) {
-              final forUserId =
-                  state.extra is String ? state.extra as String : null;
-              return _fadeSlidePage(
-                state: state,
-                child: FriendsListScreen(forUserId: forUserId),
-              );
-            },
-          ),
-          GoRoute(
-            path: AppRoutes.socialRequests,
-            pageBuilder: (context, state) => _fadeSlidePage(
-              state: state,
-              child: const FriendRequestsScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.profile,
-            builder: (context, state) => const ProfileScreen(),
-          ),
-          GoRoute(
-            path: AppRoutes.editProfile,
-            pageBuilder: (context, state) => _fadeSlidePage(
-              state: state,
-              child: const EditProfileScreen(),
-            ),
-          ),
-          GoRoute(
-            path: '${AppRoutes.profile}/:userId/meralar',
-            pageBuilder: (context, state) => _fadeSlidePage(
-              state: state,
-              child: UserSpotsListScreen(
-                userId: state.pathParameters['userId']!,
+          // 3 — Sosyal
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.feed,
+                builder: (context, state) => const FeedScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'create',
+                    pageBuilder: (context, state) => MaterialPage<void>(
+                      fullscreenDialog: true,
+                      child: const CreatePostScreen(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'post',
+                    pageBuilder: (context, state) {
+                      final post = state.extra;
+                      if (post is! PostModel) {
+                        return _fadeSlidePage(
+                          state: state,
+                          child: const Scaffold(
+                            body: Center(child: Text('Gönderi bulunamadı')),
+                          ),
+                        );
+                      }
+                      return _fadeSlidePage(
+                        state: state,
+                        child: PostDetailScreen(post: post),
+                      );
+                    },
+                  ),
+                ],
               ),
-            ),
+              GoRoute(
+                path: AppRoutes.social,
+                redirect: (context, state) => AppRoutes.feed,
+              ),
+              GoRoute(
+                path: AppRoutes.socialHub,
+                pageBuilder: (context, state) => _fadeSlidePage(
+                  state: state,
+                  child: const FriendsHubScreen(),
+                ),
+              ),
+              GoRoute(
+                path: AppRoutes.socialLeaderboard,
+                pageBuilder: (context, state) => _fadeSlidePage(
+                  state: state,
+                  child: const LeaderboardScreen(),
+                ),
+              ),
+              GoRoute(
+                path: AppRoutes.socialFriends,
+                pageBuilder: (context, state) {
+                  final forUserId =
+                      state.extra is String ? state.extra as String : null;
+                  return _fadeSlidePage(
+                    state: state,
+                    child: FriendsListScreen(forUserId: forUserId),
+                  );
+                },
+              ),
+              GoRoute(
+                path: AppRoutes.socialRequests,
+                pageBuilder: (context, state) => _fadeSlidePage(
+                  state: state,
+                  child: const FriendRequestsScreen(),
+                ),
+              ),
+              GoRoute(
+                path: AppRoutes.rank,
+                redirect: (context, state) => AppRoutes.socialLeaderboard,
+              ),
+            ],
           ),
-          GoRoute(
-            path: '${AppRoutes.profile}/:userId',
-            pageBuilder: (context, state) => _fadeSlidePage(
-              state: state,
-              child: ProfileScreen(userId: state.pathParameters['userId']),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.settings,
-            pageBuilder: (context, state) =>
-                _fadeSlidePage(state: state, child: const SettingsScreen()),
-          ),
-          GoRoute(
-            path: AppRoutes.notifications,
-            pageBuilder: (context, state) => _fadeSlidePage(
-              state: state,
-              child: const NotificationListScreen(),
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.notificationsSettings,
-            pageBuilder: (context, state) => _fadeSlidePage(
-              state: state,
-              child: const NotificationSettingsScreen(),
-            ),
+          // 4 — Profil (özel yollar `:userId`'den önce)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.profile,
+                builder: (context, state) => const ProfileScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.editProfile,
+                pageBuilder: (context, state) => _fadeSlidePage(
+                  state: state,
+                  child: const EditProfileScreen(),
+                ),
+              ),
+              GoRoute(
+                path: '${AppRoutes.profile}/:userId/meralar',
+                pageBuilder: (context, state) => _fadeSlidePage(
+                  state: state,
+                  child: UserSpotsListScreen(
+                    userId: state.pathParameters['userId']!,
+                  ),
+                ),
+              ),
+              GoRoute(
+                path: '${AppRoutes.profile}/:userId',
+                pageBuilder: (context, state) => _fadeSlidePage(
+                  state: state,
+                  child: ProfileScreen(userId: state.pathParameters['userId']),
+                ),
+              ),
+              GoRoute(
+                path: AppRoutes.settings,
+                pageBuilder: (context, state) =>
+                    _fadeSlidePage(state: state, child: const SettingsScreen()),
+              ),
+              GoRoute(
+                path: AppRoutes.notifications,
+                pageBuilder: (context, state) => _fadeSlidePage(
+                  state: state,
+                  child: const NotificationListScreen(),
+                ),
+              ),
+              GoRoute(
+                path: AppRoutes.notificationsSettings,
+                pageBuilder: (context, state) => _fadeSlidePage(
+                  state: state,
+                  child: const NotificationSettingsScreen(),
+                ),
+              ),
+            ],
           ),
         ],
       ),

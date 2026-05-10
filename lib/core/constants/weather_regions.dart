@@ -1,11 +1,11 @@
-/// Türkiye'nin 12 kıyı bölgesi koordinatları.
+/// Türkiye'nin kıyı / önemli balıkçı şehirleri koordinatları (13 bölge + İstanbul ilçeleri).
 /// MVP_PLAN.md → M-04 Hava Durumu bölümünden alındı.
 ///
 /// Open-Meteo istek sıklığı (weather-cache Edge Function, pg_cron):
 ///   • Çalışma tarifesi : her saat başı (0 * * * *)
-///   • Bölge sayısı     : 12 kıyı + 39 İstanbul ilçesi = 51 bölge
+///   • Bölge sayısı     : 13 kıyı/şehir + 39 İstanbul ilçesi = 52 bölge
 ///   • Her bölge        : 2 API çağrısı (forecast + marine)
-///   • Saat başı toplam : 102 istek  |  günlük: ~2 448 istek
+///   • Saat başı toplam : 104 istek  |  günlük: ~2 496 istek
 ///   • Ücretsiz limit   : 10 000/gün — kullanım oranı ~%25
 ///   • Flutter istemcisi: Open-Meteo'ya ASLA doğrudan istek göndermez;
 ///     yalnızca Supabase weather_cache tablosunu okur.
@@ -13,6 +13,7 @@ const Map<String, Map<String, double>> weatherRegions = {
   'istanbul': {'lat': 41.015, 'lng': 28.979},
   'izmir': {'lat': 38.423, 'lng': 27.143},
   'antalya': {'lat': 36.896, 'lng': 30.713},
+  'adana': {'lat': 37.001, 'lng': 35.329},
   'trabzon': {'lat': 41.005, 'lng': 39.716},
   'canakkale': {'lat': 40.144, 'lng': 26.406},
   'bodrum': {'lat': 37.034, 'lng': 27.430},
@@ -31,6 +32,7 @@ const Map<String, String> weatherRegionDisplayNames = {
   'istanbul':  'İstanbul',
   'izmir':     'İzmir',
   'antalya':   'Antalya',
+  'adana':     'Adana',
   'trabzon':   'Trabzon',
   'canakkale': 'Çanakkale',
   'bodrum':    'Bodrum',
