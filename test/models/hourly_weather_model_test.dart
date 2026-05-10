@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:balikci_app/core/utils/weather_tr_schedule.dart';
 import 'package:balikci_app/data/models/hourly_weather_model.dart';
 
 HourlyWeatherModel _make({int weatherCode = 0, double? currentDirection}) =>
@@ -78,7 +79,7 @@ void main() {
   });
 
   group('HourlyWeatherModel.fromOpenMeteo', () {
-    test('datetime string doğru parse edilir', () {
+    test('datetime string doğru parse edilir (İstanbul yerel saat → UTC depo)', () {
       final m = HourlyWeatherModel.fromOpenMeteo(
         timeStr: '2025-06-01T14:00',
         temperature: 25.0,
@@ -86,8 +87,9 @@ void main() {
         precipitation: 0.0,
         weatherCode: 0,
       );
-      expect(m.time.hour, 14);
-      expect(m.time.day, 1);
+      expect(istanbulWallHourFromUtc(m.time), 14);
+      expect(m.time.toUtc().hour, 11);
+      expect(istanbulWallDateOnlyFromUtc(m.time).day, 1);
     });
 
     test('opsiyonel alanlar null kalır', () {

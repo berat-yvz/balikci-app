@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 
+import 'package:balikci_app/core/utils/weather_tr_schedule.dart';
 import 'package:balikci_app/data/models/hourly_weather_model.dart';
 
 /// Günlük satırda gösterilecek küçük ikon türü (gündüz / gece slotuna göre).
@@ -72,7 +73,7 @@ HourlyWeatherModel? _nearestHour(List<HourlyWeatherModel> hs, int targetHour) {
   HourlyWeatherModel? best;
   var bestDist = 999;
   for (final h in hs) {
-    final d = (h.time.hour - targetHour).abs();
+    final d = (istanbulWallHourFromUtc(h.time) - targetHour).abs();
     if (d < bestDist) {
       bestDist = d;
       best = h;
@@ -106,11 +107,11 @@ List<WeeklyForecastRow> buildWeeklyForecastRows(
 ) {
   if (hourly.isEmpty) return [];
 
-  final todayOnly = _dateOnly(now);
+  final todayOnly = istanbulWallDateOnlyFromUtc(now);
 
   final byDay = <DateTime, List<HourlyWeatherModel>>{};
   for (final h in hourly) {
-    final k = _dateOnly(h.time);
+    final k = istanbulWallDateOnlyFromUtc(h.time);
     byDay.putIfAbsent(k, () => []).add(h);
   }
 

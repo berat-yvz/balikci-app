@@ -1,6 +1,8 @@
-/// Türkiye'nin kıyı / önemli balıkçı şehirleri koordinatları (13 bölge + İstanbul ilçeleri).
-/// MVP_PLAN.md → M-04 Hava Durumu bölümünden alındı.
-///
+// Türkiye'nin kıyı / önemli balıkçı şehirleri koordinatları (13 bölge + İstanbul ilçeleri).
+// MVP_PLAN.md → M-04 Hava Durumu bölümünden alındı.
+//
+import 'package:balikci_app/core/constants/istanbul_ilce_weather.dart';
+
 /// Open-Meteo istek sıklığı (weather-cache Edge Function, pg_cron):
 ///   • Çalışma tarifesi : her saat başı (0 * * * *)
 ///   • Bölge sayısı     : 13 kıyı/şehir + 39 İstanbul ilçesi = 52 bölge
@@ -43,3 +45,27 @@ const Map<String, String> weatherRegionDisplayNames = {
   'mugla':     'Muğla',
   'balikesir': 'Balıkesir',
 };
+
+/// `weather_cache.region_key` → koordinat (13 kıyı + İstanbul ilçeleri).
+({double lat, double lng})? latLngForWeatherRegionKey(String regionKey) {
+  final coastal = weatherRegions[regionKey];
+  if (coastal != null) {
+    return (lat: coastal['lat']!, lng: coastal['lng']!);
+  }
+  for (final p in istanbulIlceWeatherPoints) {
+    if (p.regionKey == regionKey) {
+      return (lat: p.lat, lng: p.lng);
+    }
+  }
+  return null;
+}
+
+/// Harita / Drift okumaları için kısa etiket.
+String displayNameForWeatherRegionKey(String regionKey) {
+  final name = weatherRegionDisplayNames[regionKey];
+  if (name != null) return name;
+  for (final p in istanbulIlceWeatherPoints) {
+    if (p.regionKey == regionKey) return p.displayName;
+  }
+  return regionKey;
+}

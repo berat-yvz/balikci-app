@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/core/utils/fishing_score_engine.dart';
 import 'package:balikci_app/core/utils/moon_phase_calculator.dart';
+import 'package:balikci_app/core/utils/weather_tr_schedule.dart';
 import 'package:balikci_app/data/models/fishing_score.dart';
 import 'package:balikci_app/data/models/hourly_weather_model.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
@@ -86,12 +87,14 @@ final tomorrowFishingScoreProvider =
 // ── Yardımcı fonksiyonlar ────────────────────────────────────────────────────
 
 WeatherModel? _aggregateTomorrowWeather(List<HourlyWeatherModel> hourly) {
-  final tomorrow = DateTime.now().add(const Duration(days: 1));
-  final tomorrowDate = DateTime(tomorrow.year, tomorrow.month, tomorrow.day);
+  final nowU = DateTime.now().toUtc();
+  final tomorrowIst =
+      istanbulWallDateOnlyFromUtc(nowU).add(const Duration(days: 1));
 
   final hours = hourly.where((h) {
-    final hDate = DateTime(h.time.year, h.time.month, h.time.day);
-    return hDate == tomorrowDate && h.time.hour >= 5 && h.time.hour <= 18;
+    final hDay = istanbulWallDateOnlyFromUtc(h.time);
+    final hr = istanbulWallHourFromUtc(h.time);
+    return hDay == tomorrowIst && hr >= 5 && hr <= 18;
   }).toList();
 
   if (hours.isEmpty) return null;

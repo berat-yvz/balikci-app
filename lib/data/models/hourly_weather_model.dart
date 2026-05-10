@@ -1,3 +1,5 @@
+import 'package:balikci_app/core/utils/weather_tr_schedule.dart';
+
 /// Saatlik hava tahmin verisi — Open-Meteo forecast + marine API.
 class HourlyWeatherModel {
   final DateTime time;
@@ -68,7 +70,7 @@ class HourlyWeatherModel {
     int? windDirection,
   }) {
     return HourlyWeatherModel(
-      time: DateTime.parse(timeStr),
+      time: openMeteoIstanbulNaiveTimeToUtc(timeStr),
       temperature: temperature,
       windspeed: windspeed,
       precipitation: precipitation,

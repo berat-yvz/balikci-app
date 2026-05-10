@@ -3,9 +3,11 @@ import 'dart:math' as math;
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
+import 'package:balikci_app/core/constants/istanbul_ilce_weather.dart';
 import 'package:balikci_app/core/constants/weather_regions.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/istanbul_ilce_resolver.dart';
+import 'package:balikci_app/core/utils/weather_tr_schedule.dart';
 import 'package:balikci_app/data/local/database.dart';
 import 'package:balikci_app/data/models/hourly_weather_model.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
@@ -13,8 +15,8 @@ import 'package:balikci_app/data/models/weather_model.dart';
 /// Hava durumu — sunucu `weather_cache` + yerel Drift.
 ///
 /// - Open-Meteo **yalnızca** Edge `weather-cache` (pg_cron, saat başı) ile çağrılır.
-/// - İstemci `weather_cache` okumasını **yalnızca** planlı senkronla yapar (İstanbul XX:02);
-///   bunun dışında yalnızca Drift okur (harita mera kartı dahil).
+/// - İstemci planlı senkronla (İstanbul XX:02) **tüm** `weather_cache` satırlarını
+///   tek sorguda Drift’e yazar; seçili bölge görünümü buna göre güncellenir.
 class WeatherService {
   WeatherService._();
 
@@ -74,12 +76,13 @@ class WeatherService {
       })();
 
       WeatherModel current;
+      final coords = latLngForWeatherRegionKey(cached.regionKey);
       if (decodedDataJson != null) {
         try {
           current = WeatherModel.fromJson({
             'id': '',
-            'lat': weatherRegions[cached.regionKey]?['lat'] ?? 0.0,
-            'lng': weatherRegions[cached.regionKey]?['lng'] ?? 0.0,
+            'lat': coords?.lat ?? 0.0,
+            'lng': coords?.lng ?? 0.0,
             'fetched_at': cached.cachedAt.toUtc().toIso8601String(),
             'region_key': cached.regionKey,
             'data_json': decodedDataJson,
@@ -104,6 +107,73 @@ class WeatherService {
       debugPrint('[WeatherService] Drift okuma hatası ($regionKey): $e\n$st');
       return null;
     }
+  }
+
+  static Future<void> _persistRegionalWeatherToDrift(
+    WeatherModel c,
+    String regionKey,
+  ) async {
+    await _driftDb.into(_driftDb.localWeather).insertOnConflictUpdate(
+          LocalWeatherCompanion.insert(
+            regionKey: regionKey,
+            tempC: Value(c.temperature ?? 0.0),
+            windSpeedKmh: Value(c.windspeed ?? 0.0),
+            waveHeightM: Value(c.waveHeight ?? 0.0),
+            humidity: Value(c.humidity ?? 0.0),
+            cachedAt: c.fetchedAt,
+            windDirection: Value(c.windDirection),
+            cloudCover: Value(c.cloudCover),
+            visibilityKm: Value(c.visibilityKm),
+            precipitation: Value(c.precipitation),
+            seaSurfaceTemperature: Value(c.seaSurfaceTemperature),
+            pressureHpa: Value(c.pressureHpa),
+            dataJson: Value(
+              c.dataJson != null ? jsonEncode(c.dataJson) : null,
+            ),
+          ),
+        );
+  }
+
+  /// 13 kıyı + tüm İstanbul ilçeleri — tek Supabase sorgusu, Drift’e toplu yazma.
+  /// Planlı :02 senkronunda çağrılır (Edge cron ~:00’dan sonra).
+  static Future<int> syncAllWeatherCacheRowsToDrift() async {
+    final keys = <String>[
+      ...weatherRegions.keys,
+      ...istanbulIlceWeatherPoints.map((e) => e.regionKey),
+    ];
+    try {
+      final response = await _db
+          .from('weather_cache')
+          .select()
+          .inFilter('region_key', keys);
+      final list = response as List<dynamic>;
+      var n = 0;
+      for (final raw in list) {
+        final row = Map<String, dynamic>.from(raw as Map);
+        final rk = row['region_key'] as String?;
+        if (rk == null) continue;
+        final current = WeatherModel.fromJson(row);
+        try {
+          await _persistRegionalWeatherToDrift(current, rk);
+          n++;
+        } catch (e, st) {
+          debugPrint('[WeatherService] Drift toplu yazım ($rk): $e\n$st');
+        }
+      }
+      return n;
+    } catch (e, st) {
+      debugPrint('[WeatherService] Toplu weather_cache okuma: $e\n$st');
+      return 0;
+    }
+  }
+
+  /// Drift + gerekiyorsa Fatih satırı ile kıyı `istanbul` taze paket düzeltmesi.
+  static Future<RegionalWeatherData?> regionalFromDriftDisplayReady(
+    String regionKey,
+  ) async {
+    final raw = await loadRegionalWeatherFromDrift(regionKey);
+    if (raw == null) return null;
+    return _applyCoastalFreshRowFallbackFromDrift(regionKey, raw);
   }
 
   /// Supabase `weather_cache` tek okuma + Drift yaz; istenirse ağ hatasında Drift'e düş.
@@ -136,25 +206,7 @@ class WeatherService {
       );
       try {
         final c = pack.current;
-        await _driftDb.into(_driftDb.localWeather).insertOnConflictUpdate(
-              LocalWeatherCompanion.insert(
-                regionKey: regionKey,
-                tempC: Value(c.temperature ?? 0.0),
-                windSpeedKmh: Value(c.windspeed ?? 0.0),
-                waveHeightM: Value(c.waveHeight ?? 0.0),
-                humidity: Value(c.humidity ?? 0.0),
-                cachedAt: c.fetchedAt,
-                windDirection: Value(c.windDirection),
-                cloudCover: Value(c.cloudCover),
-                visibilityKm: Value(c.visibilityKm),
-                precipitation: Value(c.precipitation),
-                seaSurfaceTemperature: Value(c.seaSurfaceTemperature),
-                pressureHpa: Value(c.pressureHpa),
-                dataJson: Value(
-                  c.dataJson != null ? jsonEncode(c.dataJson) : null,
-                ),
-              ),
-            );
+        await _persistRegionalWeatherToDrift(c, regionKey);
       } catch (e, st) {
         debugPrint('[WeatherService] Drift write hatası: $e\n$st');
       }
@@ -176,10 +228,11 @@ class WeatherService {
     Map<String, dynamic>? dataJson,
   ) {
     final regionKey = cached.regionKey as String;
+    final coords = latLngForWeatherRegionKey(regionKey);
     return WeatherModel(
       id: '',
-      lat: weatherRegions[regionKey]?['lat'] ?? 0.0,
-      lng: weatherRegions[regionKey]?['lng'] ?? 0.0,
+      lat: coords?.lat ?? 0.0,
+      lng: coords?.lng ?? 0.0,
       dataJson: dataJson,
       temperature: cached.tempC as double?,
       windspeed: cached.windSpeedKmh as double?,
@@ -212,14 +265,14 @@ class WeatherService {
     return key;
   }
 
-  /// Şu anki saat dilimine denk gelen saatlik satır (tahmin başlangıcı).
+  /// İstanbul yerel saatine göre güncel saat diliminin başlangıcı (UTC karşılığı).
   static HourlyWeatherModel? currentHourFromHourly(
     List<HourlyWeatherModel> hourly,
   ) {
     if (hourly.isEmpty) return null;
-    final now = DateTime.now();
-    final slot = DateTime(now.year, now.month, now.day, now.hour);
-    final filtered = hourly.where((h) => !h.time.isBefore(slot)).toList()
+    final nowU = DateTime.now().toUtc();
+    final slot = startOfCurrentIstanbulWallHourUtc(nowU);
+    final filtered = hourly.where((h) => !h.time.toUtc().isBefore(slot)).toList()
       ..sort((a, b) => a.time.compareTo(b.time));
     if (filtered.isNotEmpty) return filtered.first;
     return hourly.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
@@ -258,7 +311,7 @@ class WeatherService {
     return MeraWeatherSnapshot(
       weather: snap.current,
       currentHour: hour,
-      locationLabel: weatherRegionDisplayNames[regionKey] ?? regionKey,
+      locationLabel: displayNameForWeatherRegionKey(regionKey),
       locationSubtitle: 'Kıyı bölgesi · saatlik tahmin',
       dataRegionKey: regionKey,
     );

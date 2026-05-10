@@ -83,6 +83,24 @@ async function sleep(ms: number): Promise<void> {
   await new Promise((r) => setTimeout(r, ms))
 }
 
+const OPEN_METEO_CONCURRENCY = 8
+
+async function runWithConcurrency(
+  tasks: (() => Promise<void>)[],
+  concurrency: number,
+): Promise<void> {
+  let i = 0
+  const worker = async (): Promise<void> => {
+    for (;;) {
+      const idx = i++
+      if (idx >= tasks.length) return
+      await tasks[idx]()
+    }
+  }
+  const n = Math.max(1, Math.min(concurrency, tasks.length))
+  await Promise.all(Array.from({ length: n }, () => worker()))
+}
+
 function mergeOpenMeteo(
   lat: number,
   lng: number,
@@ -306,37 +324,43 @@ serve(async (req: Request) => {
   const results: string[] = []
   const fetchedAt = new Date().toISOString()
 
+  const tasks: (() => Promise<void>)[] = []
+
   for (const [regionKey, coords] of Object.entries(REGIONS)) {
-    try {
-      await upsertWeatherRegionWithRetry(
-        supabase,
-        regionKey,
-        coords.lat,
-        coords.lng,
-        fetchedAt,
-      )
-      results.push(`✓ ${regionKey}`)
-    } catch (err) {
-      results.push(`✗ ${regionKey}: ${String(err)}`)
-    }
-    await sleep(120)
+    tasks.push(async () => {
+      try {
+        await upsertWeatherRegionWithRetry(
+          supabase,
+          regionKey,
+          coords.lat,
+          coords.lng,
+          fetchedAt,
+        )
+        results.push(`✓ ${regionKey}`)
+      } catch (err) {
+        results.push(`✗ ${regionKey}: ${String(err)}`)
+      }
+    })
   }
 
   for (const row of ISTANBUL_ILCE_REGIONS) {
-    try {
-      await upsertWeatherRegionWithRetry(
-        supabase,
-        row.region_key,
-        row.lat,
-        row.lng,
-        fetchedAt,
-      )
-      results.push(`✓ ${row.region_key}`)
-    } catch (err) {
-      results.push(`✗ ${row.region_key}: ${String(err)}`)
-    }
-    await sleep(120)
+    tasks.push(async () => {
+      try {
+        await upsertWeatherRegionWithRetry(
+          supabase,
+          row.region_key,
+          row.lat,
+          row.lng,
+          fetchedAt,
+        )
+        results.push(`✓ ${row.region_key}`)
+      } catch (err) {
+        results.push(`✗ ${row.region_key}: ${String(err)}`)
+      }
+    })
   }
+
+  await runWithConcurrency(tasks, OPEN_METEO_CONCURRENCY)
 
   return new Response(JSON.stringify({ ok: true, fetched_at: fetchedAt, results }), {
     headers: { 'Content-Type': 'application/json' },

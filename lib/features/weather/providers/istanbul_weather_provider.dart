@@ -41,12 +41,30 @@ class IstanbulWeatherData {
 class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
   Timer? _syncTimer;
 
+  /// Hava sekmesi yalnızca kıyı bölgeleri; mera detayında ilçe anahtarları kullanılır.
+  String _coastalWeatherRegionKey() {
+    final s = ref.read(selectedWeatherRegionProvider);
+    if (s.startsWith('istanbul_ilce_')) return 'istanbul';
+    return s;
+  }
+
+  void _normalizeSelectionOffIlceKeys() {
+    final s = ref.read(selectedWeatherRegionProvider);
+    if (!s.startsWith('istanbul_ilce_')) return;
+    Future.microtask(() {
+      try {
+        ref.read(selectedWeatherRegionProvider.notifier).state = 'istanbul';
+      } catch (_) {}
+    });
+  }
+
   @override
   Future<IstanbulWeatherData> build() async {
     _syncTimer?.cancel();
     ref.watch(selectedWeatherRegionProvider);
+    _normalizeSelectionOffIlceKeys();
 
-    final regionKey = ref.read(selectedWeatherRegionProvider);
+    final regionKey = _coastalWeatherRegionKey();
     final data = await _initialLoad(regionKey);
     _armNextScheduledSync();
 
@@ -67,12 +85,15 @@ class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
 
   /// Planlı saat :02 — `weather_cache` tek okuma (sunucu saat başı doldurmuş olmalı).
   Future<void> _runScheduledSupabaseSyncThenReschedule() async {
-    final regionKey = ref.read(selectedWeatherRegionProvider);
+    final regionKey = _coastalWeatherRegionKey();
     try {
-      final snap = await WeatherService.syncRegionalWeatherFromSupabase(
-        regionKey,
-        fallbackToDrift: true,
-      );
+      if (!isIstanbulWallMinuteAtOrAfterSyncMark(DateTime.now().toUtc())) {
+        _armNextScheduledSync();
+        return;
+      }
+      await WeatherService.syncAllWeatherCacheRowsToDrift();
+      final snap =
+          await WeatherService.regionalFromDriftDisplayReady(regionKey);
       if (snap == null) {
         _armNextScheduledSync();
         return;
@@ -98,11 +119,31 @@ class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
   }
 
   Future<IstanbulWeatherData> _initialLoad(String regionKey) async {
-    var snap = await WeatherService.loadRegionalWeatherFromDrift(regionKey);
-    snap ??= await WeatherService.syncRegionalWeatherFromSupabase(
-      regionKey,
-      fallbackToDrift: true,
-    );
+    final utc = DateTime.now().toUtc();
+    final gate = isIstanbulWallMinuteAtOrAfterSyncMark(utc);
+    final hourStart = startOfCurrentIstanbulWallHourUtc(utc);
+
+    RegionalWeatherData? snap =
+        await WeatherService.regionalFromDriftDisplayReady(regionKey);
+
+    if (snap == null) {
+      snap = await WeatherService.syncRegionalWeatherFromSupabase(
+        regionKey,
+        fallbackToDrift: true,
+      );
+    } else if (gate && snap.current.fetchedAt.toUtc().isBefore(hourStart)) {
+      final n = await WeatherService.syncAllWeatherCacheRowsToDrift();
+      if (n > 0) {
+        snap = await WeatherService.regionalFromDriftDisplayReady(regionKey);
+      } else {
+        final one = await WeatherService.syncRegionalWeatherFromSupabase(
+          regionKey,
+          fallbackToDrift: true,
+        );
+        if (one != null) snap = one;
+      }
+    }
+
     if (snap == null) {
       throw StateError(
         'Hava önbelleği boş. Sunucu weather-cache (saat başı) ve '
@@ -122,12 +163,15 @@ class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
 
   /// Aşağı kaydırma: `weather_cache` tek okuma + Drift (Edge/Open-Meteo tetiklenmez).
   Future<void> refreshFromServer() async {
-    final regionKey = ref.read(selectedWeatherRegionProvider);
+    final regionKey = _coastalWeatherRegionKey();
     try {
-      final snap = await WeatherService.syncRegionalWeatherFromSupabase(
-        regionKey,
-        fallbackToDrift: true,
-      );
+      await WeatherService.syncAllWeatherCacheRowsToDrift();
+      final snap =
+          await WeatherService.regionalFromDriftDisplayReady(regionKey) ??
+              await WeatherService.syncRegionalWeatherFromSupabase(
+                regionKey,
+                fallbackToDrift: true,
+              );
       if (snap != null) {
         state = AsyncData(_toUi(snap));
         return;
@@ -145,8 +189,9 @@ class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
 
   Future<void> reloadFromDriftOnly() async {
     try {
-      final regionKey = ref.read(selectedWeatherRegionProvider);
-      final snap = await WeatherService.loadRegionalWeatherFromDrift(regionKey);
+      final regionKey = _coastalWeatherRegionKey();
+      final snap =
+          await WeatherService.regionalFromDriftDisplayReady(regionKey);
       if (snap == null) return;
       final prev = state.asData?.value;
       if (snap.isFromCache) {

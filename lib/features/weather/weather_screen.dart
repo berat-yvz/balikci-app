@@ -11,6 +11,7 @@ import 'package:balikci_app/data/models/weather_model.dart';
 import 'package:balikci_app/core/utils/weekly_forecast_aggregate.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
 import 'package:balikci_app/features/weather/widgets/weekly_forecast_table_card.dart';
+import 'package:balikci_app/core/utils/weather_tr_schedule.dart';
 
 /// Detaylı hava durumu ekranı — H9 sprint.
 ///
@@ -23,9 +24,11 @@ class WeatherScreen extends ConsumerStatefulWidget {
   static List<HourlyWeatherModel> _next24Hours(
     List<HourlyWeatherModel> source,
   ) {
-    final now = DateTime.now();
-    final currentHour = DateTime(now.year, now.month, now.day, now.hour);
-    final filtered = source.where((h) => !h.time.isBefore(currentHour)).toList()
+    final nowU = DateTime.now().toUtc();
+    final currentHour = startOfCurrentIstanbulWallHourUtc(nowU);
+    final filtered = source
+        .where((h) => !h.time.toUtc().isBefore(currentHour))
+        .toList()
       ..sort((a, b) => a.time.compareTo(b.time));
     return filtered.length > 24 ? filtered.take(24).toList() : filtered;
   }
@@ -199,7 +202,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
                     child: WeeklyForecastTableCard(
                       rows: buildWeeklyForecastRows(
                         data.hourly,
-                        DateTime.now(),
+                        DateTime.now().toUtc(),
                       ),
                     ),
                   ),
@@ -313,10 +316,26 @@ class _FetchedAtLabelState extends State<_FetchedAtLabel> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant _FetchedAtLabel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.fetchedAt != widget.fetchedAt) {
+      setState(() {});
+    }
+  }
+
+  String _formatAbsoluteIstanbul() {
+    final tr = widget.fetchedAt.toUtc().add(const Duration(hours: 3));
+    return '${tr.day.toString().padLeft(2, '0')}.${tr.month.toString().padLeft(2, '0')}.${tr.year} '
+        '${tr.hour.toString().padLeft(2, '0')}:${tr.minute.toString().padLeft(2, '0')}';
+  }
+
   String _formatRelative() {
-    final diff = DateTime.now().toUtc().difference(widget.fetchedAt.toUtc());
-    if (diff.isNegative || diff.inMinutes < 1) return 'Az önce güncellendi';
-    final mins = diff.inMinutes;
+    final rawSecs =
+        DateTime.now().toUtc().difference(widget.fetchedAt.toUtc()).inSeconds;
+    final secs = rawSecs < 0 ? 0 : rawSecs;
+    if (secs < 60) return 'Az önce güncellendi';
+    final mins = secs ~/ 60;
     if (mins < 60) return '$mins dakika önce güncellendi';
     final hours = mins ~/ 60;
     final rem = mins % 60;
@@ -331,13 +350,26 @@ class _FetchedAtLabelState extends State<_FetchedAtLabel> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        _formatRelative(),
-        style: AppTextStyles.caption.copyWith(
-          color: AppColors.muted.withValues(alpha: 0.88),
-          fontSize: 12,
-        ),
-        textAlign: TextAlign.center,
+      child: Column(
+        children: [
+          Text(
+            _formatRelative(),
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.muted.withValues(alpha: 0.88),
+              fontSize: 12,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Sunucu ölçümü (TSİ): ${_formatAbsoluteIstanbul()}',
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.muted.withValues(alpha: 0.65),
+              fontSize: 11,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
@@ -351,14 +383,15 @@ class _HourlyScrollRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
+    final nowU = DateTime.now().toUtc();
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       primary: false,
       physics: const ClampingScrollPhysics(),
       child: Row(
         children: hours.map((h) {
-          final isNow = h.time.difference(now).abs().inMinutes <= 30;
+          final isNow =
+              h.time.toUtc().difference(nowU).abs().inMinutes <= 30;
           return Container(
             width: 72,
             margin: const EdgeInsets.only(right: 8),
@@ -378,7 +411,7 @@ class _HourlyScrollRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${h.time.hour.toString().padLeft(2, '0')}:00',
+                  '${istanbulWallHourFromUtc(h.time).toString().padLeft(2, '0')}:00',
                   style: TextStyle(
                     color: isNow ? AppColors.primary : Colors.white60,
                     fontSize: 12,
@@ -498,7 +531,7 @@ class _HourlyWeatherChart extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                '${hours[i].time.hour.toString().padLeft(2, '0')}:00',
+                                '${istanbulWallHourFromUtc(hours[i].time).toString().padLeft(2, '0')}:00',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: i == 0 ? Colors.white : Colors.white60,
