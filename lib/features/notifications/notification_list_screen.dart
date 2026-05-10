@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -244,72 +242,39 @@ class _NotificationEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return const Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(
-              width: 120,
-              height: 120,
-              child: CustomPaint(painter: _BellPainter()),
+            Icon(
+              Icons.notifications_rounded,
+              size: 80,
+              color: AppColors.muted,
             ),
-            const SizedBox(height: 16),
-            Text('Henüz bildirim yok', style: AppTextStyles.h2),
-            const SizedBox(height: 8),
+            SizedBox(height: 16),
             Text(
-              'Yeni gelişmeleri kaçırmamak için takip etmeye devam et.',
-              style: AppTextStyles.body.copyWith(color: AppColors.muted),
+              'Henüz bildirim yok',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: AppColors.foam,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Yeni gelişmeleri kaçırmamak için\ntakip etmeye devam et.',
               textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.muted,
+                height: 1.5,
+              ),
             ),
           ],
         ),
       ),
     );
   }
-}
-
-class _BellPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-
-    final paint = Paint()
-      ..color = AppColors.primary
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6;
-
-    // çan gövdesi
-    final rect = Rect.fromCenter(
-      center: Offset(center.dx, center.dy - 10),
-      width: size.width * 0.55,
-      height: size.height * 0.42,
-    );
-    canvas.drawArc(rect, math.pi, math.pi, false, paint);
-
-    // alt yay
-    canvas.drawLine(
-      Offset(center.dx - rect.width / 2, rect.bottom),
-      Offset(center.dx + rect.width / 2, rect.bottom),
-      paint,
-    );
-
-    // zil sapı
-    canvas.drawLine(
-      Offset(center.dx, rect.top - 10),
-      Offset(center.dx, rect.top + 6),
-      paint,
-    );
-
-    // çan içi küçük çizgi
-    canvas.drawCircle(
-      Offset(center.dx, rect.bottom + 18),
-      6,
-      Paint()..color = AppColors.accent,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

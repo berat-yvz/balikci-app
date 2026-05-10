@@ -87,12 +87,13 @@ void main() {
       expect(find.text('Henüz bildirim yok'), findsOneWidget);
     });
 
-    testWidgets('bildirim emoji gösterilir', (tester) async {
+    testWidgets('bildirim zil ikonu (Material) gösterilir', (tester) async {
       await tester.pumpWidget(
         _wrap(const EmptyStateWidget.noNotifications()),
       );
       await tester.pump();
-      expect(find.text('🔔'), findsOneWidget);
+      expect(find.byIcon(Icons.notifications_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.notifications_outlined), findsOneWidget);
     });
   });
 }

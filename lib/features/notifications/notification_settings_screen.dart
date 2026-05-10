@@ -115,7 +115,7 @@ class _NotificationSettingsScreenState
                           color: Colors.white,
                         ),
                       )
-                    : const Icon(Icons.notifications_active_outlined),
+                    : const Icon(Icons.notifications_rounded),
                 label: const Text('Bildirimlere İzin Ver'),
               ),
             ),
@@ -145,7 +145,7 @@ class _StatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final (icon, label, color) = switch (status) {
       AuthorizationStatus.authorized => (
-          Icons.notifications_active,
+          Icons.notifications_rounded,
           'Bildirimler Açık',
           AppColors.success,
         ),
@@ -159,7 +159,11 @@ class _StatusCard extends StatelessWidget {
           'Bildirimler Kapalı',
           AppColors.danger,
         ),
-      _ => (Icons.notifications_none, 'Durum Bilinmiyor', AppColors.muted),
+      _ => (
+          Icons.notifications_outlined,
+          'Durum Bilinmiyor',
+          AppColors.muted,
+        ),
     };
 
     return Container(

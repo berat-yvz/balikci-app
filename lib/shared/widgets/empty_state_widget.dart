@@ -43,7 +43,7 @@ class EmptyStateWidget extends StatefulWidget {
   }) : contextType = EmptyStateContext.noNotifications,
        title = 'Henüz bildirim yok',
        subtitle = 'Henüz bildirim yok. Yeni gelişmeler burada görünecek.',
-       icon = Icons.notifications_none;
+       icon = Icons.notifications_outlined;
 
   @override
   State<EmptyStateWidget> createState() => _EmptyStateWidgetState();
@@ -70,7 +70,7 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
 
   String? get _contextEmoji => switch (widget.contextType) {
     EmptyStateContext.mapNoSpots => '🐟',
-    EmptyStateContext.noNotifications => '🔔',
+    EmptyStateContext.noNotifications => null,
     EmptyStateContext.generic => null,
   };
 
@@ -105,34 +105,36 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
               children: [
                 SizedBox(
                   height: 120,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Canvas animasyonu yalnızca emoji yoksa göster;
-                      // emoji olan durumlarda TextPainter gri kutu çizmez.
-                      if (_contextEmoji == null)
-                        AnimatedBuilder(
-                          animation: _c,
-                          builder: (context, _) => CustomPaint(
-                            size: Size.infinite,
-                            painter: _EmptyStatePainter(
-                              t: _c.value,
-                              kind: widget.contextType,
-                            ),
-                          ),
+                  child: widget.contextType == EmptyStateContext.noNotifications
+                      ? const Icon(
+                          Icons.notifications_rounded,
+                          size: 80,
+                          color: AppColors.muted,
+                        )
+                      : Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            if (_contextEmoji == null)
+                              AnimatedBuilder(
+                                animation: _c,
+                                builder: (context, _) => CustomPaint(
+                                  size: Size.infinite,
+                                  painter: _EmptyStatePainter(
+                                    t: _c.value,
+                                    kind: widget.contextType,
+                                  ),
+                                ),
+                              ),
+                            if (_contextEmoji != null)
+                              Text(
+                                _contextEmoji!,
+                                style: const TextStyle(
+                                  fontSize: 52,
+                                  color: Colors.white,
+                                ),
+                              ),
+                          ],
                         ),
-                      // Emoji — Text widget olarak göster (Canvas TextPainter
-                      // Android'de emoji'yi gri kutu çizebilir)
-                      if (_contextEmoji != null)
-                        Text(
-                          _contextEmoji!,
-                          style: const TextStyle(
-                            fontSize: 52,
-                            color: Colors.white,
-                          ),
-                        ),
-                    ],
-                  ),
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -220,7 +222,6 @@ class _EmptyStatePainter extends CustomPainter {
         _drawTextGlyph(canvas, size, '🐟', x: 0.10, y: 0.18);
         break;
       case EmptyStateContext.noNotifications:
-        _drawBell(canvas, size);
         break;
       case EmptyStateContext.generic:
         _drawGenericBox(canvas, size);
@@ -246,37 +247,6 @@ class _EmptyStatePainter extends CustomPainter {
       ..lineTo(fishX + 48, fishY + 8)
       ..close();
     canvas.drawPath(body, fishPaint);
-  }
-
-  void _drawBell(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final c = Offset(w * 0.50, h * 0.42);
-
-    final bellPaint = Paint()
-      ..color = AppColors.foam.withValues(alpha: 0.20)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 5
-      ..strokeCap = StrokeCap.round;
-
-    final rect = Rect.fromCenter(
-      center: c.translate(0, -6),
-      width: w * 0.26,
-      height: h * 0.34,
-    );
-    canvas.drawArc(rect, math.pi, math.pi, false, bellPaint);
-    canvas.drawLine(
-      Offset(rect.left, rect.bottom),
-      Offset(rect.right, rect.bottom),
-      bellPaint,
-    );
-
-    final ripplePaint = Paint()
-      ..color = AppColors.teal.withValues(alpha: 0.18 * (1 - t))
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    canvas.drawCircle(c.translate(0, -10), 22 + 10 * t, ripplePaint);
-    canvas.drawCircle(c.translate(0, -10), 30 + 14 * t, ripplePaint);
   }
 
   void _drawGenericBox(Canvas canvas, Size size) {

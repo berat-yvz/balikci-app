@@ -31,20 +31,22 @@ import 'package:balikci_app/features/map/widgets/deferred_map_weather_card.dart'
 import 'package:balikci_app/data/repositories/shop_repository.dart';
 import 'package:balikci_app/data/repositories/user_repository.dart';
 import 'package:balikci_app/shared/providers/favorite_provider.dart';
+import 'package:balikci_app/shared/providers/location_provider.dart';
 import 'package:balikci_app/shared/providers/notification_provider.dart';
 
 /// Harita ekranı — H3 temel implementasyon.
-class MapScreen extends StatefulWidget {
+class MapScreen extends ConsumerStatefulWidget {
   /// Bildirimden gelince doğrudan açılacak mera kimliği.
   final String? initialSpotId;
 
   const MapScreen({super.key, this.initialSpotId});
 
   @override
-  State<MapScreen> createState() => _MapScreenState();
+  ConsumerState<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
+class _MapScreenState extends ConsumerState<MapScreen>
+    with TickerProviderStateMixin {
   final SpotRepository _repository = SpotRepository();
   final CheckinRepository _checkinRepository = CheckinRepository();
   final ShopRepository _shopRepository = ShopRepository();
@@ -71,9 +73,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   /// Uzak sunucudan mera listesi çekilirken — tam ekran spinner yok, ince çubuk.
   bool _spotsRemoteRefreshing = false;
   String? _error;
-
-  /// GPS aranırken true — buton devre dışı kalır ve spinner gösterilir.
-  bool _isLocating = false;
 
   /// Bildirim deep-link'inden gelen mera Supabase'den çekilirken true.
   /// Haritanın üstünde geçici bir yükleme banner'ı gösterir.
@@ -133,6 +132,15 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      final existing = ref.read(userLocationProvider);
+      if (existing != null) {
+        try {
+          _mapController.move(
+            LatLng(existing.latitude, existing.longitude),
+            13.0,
+          );
+        } catch (_) {}
+      }
       unawaited(_initializeCacheAndLoad());
       Future<void>.delayed(const Duration(milliseconds: 200), () {
         if (mounted) setState(() => _mapSecondaryLayersReady = true);
@@ -517,45 +525,19 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _goToMyLocation() async {
-    if (_isLocating) return;
-    setState(() => _isLocating = true);
-    try {
-      final pos = await LocationService.getCurrentPosition(
-        purpose: LocationPurpose.mapCenter,
-      );
-      if (!mounted) return;
-      if (pos == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Konumunuz bulunamadı. Lütfen telefonunuzun konum (GPS) özelliğinin açık olduğundan ve uygulamaya konum izni verildiğinden emin olun.',
-            ),
-            backgroundColor: AppColors.danger,
-            duration: Duration(seconds: 5),
-          ),
-        );
-        return;
-      }
+  void _goToMyLocation() {
+    final pos = ref.read(userLocationProvider);
+    if (pos != null) {
       try {
-        _mapController.move(LatLng(pos.latitude, pos.longitude), 15);
+        _mapController.move(LatLng(pos.latitude, pos.longitude), 14.0);
       } catch (e) {
         debugPrint('Harita konuma taşınamadı: $e');
       }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Konum alınırken bir sorun oluştu. Lütfen telefonunuzun konum (GPS) özelliğinin açık olduğundan emin olun ve tekrar deneyin.',
-          ),
-          backgroundColor: AppColors.danger,
-          duration: Duration(seconds: 5),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _isLocating = false);
+      return;
     }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Konum alınamadı')),
+    );
   }
 
   Future<void> _openDirectionsForSpot(SpotModel spot) async {
@@ -933,6 +915,16 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<Position?>(userLocationProvider, (previous, next) {
+      if (next == null || !mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        try {
+          _mapController.move(LatLng(next.latitude, next.longitude), 13.0);
+        } catch (_) {}
+      });
+    });
+
     const sheetInitialSize = 0.18;
     const sheetMinSize = 0.14;
     const sheetMaxSize = 0.85;
@@ -960,7 +952,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 mapController: _mapController,
                 options: MapOptions(
                   initialCenter: const LatLng(41.0082, 28.9784),
-                  initialZoom: 11.0,
+                  initialZoom: 12.0,
                   minZoom: 5.0,
                   maxZoom: 19.0,
                   // Varsayılan açık gri; karo boşluklarında “beyaz kare” hissi verir.
@@ -1294,16 +1286,19 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ),
           ),
 
-          // Sağ alt: harita aksiyonları
+          // Sağ alt: mevcut konuma git (arka planda doldurulan provider)
           Positioned(
             right: 16,
             bottom: mapFabBottom,
-            child: _MapActionButton(
+            child: FloatingActionButton.small(
+              heroTag: 'location_btn',
+              backgroundColor: AppColors.surface,
               tooltip: 'Konumumu Bul',
-              // GPS aranırken butonu devre dışı bırak (spam engeli).
-              onPressed: _isLocating ? null : _goToMyLocation,
-              icon: _isLocating ? null : Icons.my_location,
-              isLoading: _isLocating,
+              onPressed: _goToMyLocation,
+              child: const Icon(
+                Icons.my_location_rounded,
+                color: AppColors.primary,
+              ),
             ),
           ),
 
@@ -1353,7 +1348,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
-                          Icons.notifications_rounded,
+                          Icons.notifications_outlined,
                           color: Colors.white,
                           size: 26,
                         ),
@@ -1382,7 +1377,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 children: [
                                   Center(
                                     child: Icon(
-                                      Icons.notifications_rounded,
+                                      count > 0
+                                          ? Icons.notifications_rounded
+                                          : Icons.notifications_outlined,
                                       color: count > 0
                                           ? AppColors.sand
                                           : Colors.white,
@@ -1667,45 +1664,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _MapActionButton extends StatelessWidget {
-  final IconData? icon;
-  final String tooltip;
-  final VoidCallback? onPressed;
-
-  /// GPS/loading durumunda true — ikon yerine spinner gösterilir.
-  final bool isLoading;
-
-  const _MapActionButton({
-    required this.tooltip,
-    this.icon,
-    this.onPressed,
-    this.isLoading = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black.withValues(alpha: 0.65),
-      shape: const CircleBorder(),
-      child: IconButton(
-        tooltip: tooltip,
-        // onPressed null olunca Flutter butonu otomatik disable eder.
-        onPressed: onPressed,
-        icon: isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: Colors.white,
-                ),
-              )
-            : Icon(icon, color: Colors.white),
       ),
     );
   }

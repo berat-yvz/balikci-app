@@ -41,7 +41,7 @@ Aşağıdaki döngüyü sonsuza kadar tekrar et, benden onay bekleme:
 4. Tekrar `flutter test` → hepsi yeşil olana kadar
 5. Sprint'teki bir sonraki göreve geç (docs/SPRINT.md)
 6. Görevi uygula → analyze → test döngüsü
-7. Commit at: "feat/fix: [ne yaptın]"
+7. Commit mesajı ver: "[ne yaptın]"
 8. 6. adıma dön
 
 Dur ve sor: sadece Supabase şema değişikliği, breaking API değişikliği veya

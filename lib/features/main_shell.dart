@@ -1,16 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/proximity_vote_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/connectivity_provider.dart';
 import 'package:balikci_app/shared/providers/favorite_provider.dart';
+import 'package:balikci_app/shared/providers/location_provider.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
 import 'package:balikci_app/shared/providers/profile_summary_stats_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
@@ -29,16 +32,38 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
-  int _currentIndex = 2; // harita varsayılan
+  /// Alt sekme indeksi: Harita = 2 (AppRoutes.home).
+  static const int _homeTabIndex = 2;
+
+  int _currentIndex = _homeTabIndex; // harita varsayılan
   bool _scheduledProximityVote = false;
   /// Profil önbelleği bir kez ısıtıldı mı (oturum kullanıcısı başına).
   String? _profileWarmupUid;
+
+  /// Harita kökünde çift geri tuşu ile çıkış penceresi.
+  DateTime? _lastBackPress;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _scheduledProximityVote) return;
+      if (!mounted) return;
+      // Başlangıç merkezi İstanbul kalır; konum arka planda istenir.
+      Future.microtask(() async {
+        try {
+          final position = await LocationService.getCurrentPosition(
+            purpose: LocationPurpose.mapCenter,
+          );
+          if (!mounted || position == null) return;
+          ref.read(userLocationProvider.notifier).state = position;
+        } catch (e) {
+          debugPrint(
+            'Konum alınamadı: $e — İstanbul varsayılanı kullanılıyor',
+          );
+        }
+      });
+
+      if (_scheduledProximityVote) return;
       if (SupabaseService.auth.currentUser == null) return;
       _scheduledProximityVote = true;
       ProximityVoteService.instance.checkAndShowVoteDialog(context);
@@ -111,9 +136,27 @@ class _MainShellState extends ConsumerState<MainShell> {
         final router = GoRouter.of(context);
         if (router.canPop()) {
           router.pop();
-        } else {
-          context.go(AppRoutes.home);
+          return;
         }
+
+        if (_currentIndex != _homeTabIndex) {
+          context.go(AppRoutes.home);
+          return;
+        }
+
+        final now = DateTime.now();
+        if (_lastBackPress == null ||
+            now.difference(_lastBackPress!) > const Duration(seconds: 2)) {
+          _lastBackPress = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Çıkmak için tekrar basın'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
+        SystemNavigator.pop();
       },
       child: Scaffold(
         // Alt navigasyon her zaman içeriğin alt sınırı; gövde çubuğun altına uzanmasın
