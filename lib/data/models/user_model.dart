@@ -3,6 +3,8 @@ class UserModel {
   final String id;
   final String email;
   final String username;
+  /// Profil biyografisi (users.bio); sunucuda yoksa null.
+  final String? bio;
   final String? avatarUrl;
   final String rank; // acemi | olta_kurdu | usta | deniz_reisi
   final int totalScore;
@@ -14,6 +16,7 @@ class UserModel {
     required this.id,
     required this.email,
     required this.username,
+    this.bio,
     this.avatarUrl,
     this.rank = 'acemi',
     this.totalScore = 0,
@@ -94,6 +97,7 @@ class UserModel {
       id: id,
       email: email,
       username: resolved.trim().isEmpty ? 'Balıkçı' : resolved,
+      bio: null,
       avatarUrl: null,
       rank: 'acemi',
       totalScore: 0,
@@ -124,6 +128,7 @@ class UserModel {
       id: id,
       email: json['email'] as String? ?? '',
       username: resolvedName.trim().isEmpty ? 'Balıkçı' : resolvedName,
+      bio: json['bio'] as String?,
       avatarUrl: json['avatar_url'] as String?,
       rank: json['rank'] as String? ?? 'acemi',
       totalScore: coerceToInt(json['total_score']),
@@ -140,6 +145,7 @@ class UserModel {
     'id': id,
     'email': email,
     'username': username,
+    'bio': bio,
     'avatar_url': avatarUrl,
     'rank': rank,
     'total_score': totalScore,

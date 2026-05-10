@@ -52,6 +52,7 @@ import 'package:balikci_app/features/notifications/notification_list_screen.dart
 import 'package:balikci_app/features/notifications/notification_settings_screen.dart';
 
 // Features — Profile
+import 'package:balikci_app/features/profile/edit_profile_screen.dart';
 import 'package:balikci_app/features/profile/profile_screen.dart';
 import 'package:balikci_app/features/profile/settings_screen.dart';
 import 'package:balikci_app/features/profile/user_spots_list_screen.dart';
@@ -279,6 +280,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRoutes.profile,
             builder: (context, state) => const ProfileScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.editProfile,
+            pageBuilder: (context, state) => _fadeSlidePage(
+              state: state,
+              child: const EditProfileScreen(),
+            ),
           ),
           GoRoute(
             path: '${AppRoutes.profile}/:userId/meralar',

@@ -24,6 +24,7 @@ import 'package:balikci_app/shared/providers/post_provider.dart';
 import 'package:balikci_app/shared/providers/profile_summary_stats_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
 import 'package:balikci_app/data/repositories/shadow_point_repository.dart';
+import 'package:balikci_app/features/profile/edit_profile_screen.dart';
 import 'package:balikci_app/features/profile/widgets/how_to_earn_points_sheet.dart';
 import 'package:balikci_app/features/profile/widgets/shadow_point_history_sheet.dart';
 import 'package:balikci_app/shared/providers/shadow_point_provider.dart';
@@ -104,6 +105,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       );
     }
 
+    final isSelfProfile =
+        widget.userId == null && currentUser != null;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
@@ -112,6 +116,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ? resolvedUser.username
               : 'Profil',
         ),
+        actions: [
+          if (isSelfProfile)
+            IconButton(
+              icon: const Icon(
+                Icons.edit_rounded,
+                size: 24,
+                color: AppColors.foam,
+              ),
+              onPressed: () {
+                Navigator.of(context)
+                    .push<bool>(
+                  MaterialPageRoute<bool>(
+                    builder: (_) => const EditProfileScreen(),
+                  ),
+                )
+                    .then((saved) {
+                  if (saved == true && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Profil güncellendi ✓'),
+                        backgroundColor: AppColors.primary,
+                      ),
+                    );
+                  }
+                });
+              },
+            ),
+        ],
       ),
       body: body,
     );

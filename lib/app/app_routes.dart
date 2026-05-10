@@ -38,6 +38,7 @@ class AppRoutes {
 
   // Profile
   static const settings = '/settings';
+  static const editProfile = '/profile/edit';
 
   /// [userId] kullanıcısının eklediği meralar listesi (profil istatistikten).
   static String profileUserSpots(String userId) => '$profile/$userId/meralar';

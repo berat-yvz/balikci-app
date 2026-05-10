@@ -33,7 +33,7 @@ class UserRepository {
     try {
       final data = await _db
           .from('users')
-          .select('id, email, username, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at')
+          .select('id, email, username, bio, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at')
           .eq('id', userId)
           .maybeSingle();
       if (data == null) return null;
@@ -50,10 +50,15 @@ class UserRepository {
     required String userId,
     String? username,
     String? avatarUrl,
+    String? bio,
+    bool includeBioInUpdate = false,
   }) async {
     final updates = <String, dynamic>{};
     if (username != null) updates['username'] = username;
     if (avatarUrl != null) updates['avatar_url'] = avatarUrl;
+    if (includeBioInUpdate) {
+      updates['bio'] = bio;
+    }
 
     if (updates.isEmpty) return;
 
@@ -86,7 +91,7 @@ class UserRepository {
         final response = await _db
             .from('users')
             .select(
-              'id, email, username, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
+              'id, email, username, bio, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
             )
             .eq('rank', filter)
             .order('total_score', ascending: false)
@@ -123,7 +128,7 @@ class UserRepository {
       final response = await _db
           .from('users')
           .select(
-            'id, email, username, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
+            'id, email, username, bio, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
           )
           .order('total_score', ascending: false)
           .limit(limit);
@@ -194,7 +199,7 @@ class UserRepository {
       final response = await _db
           .from('users')
           .select(
-            'id, email, username, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
+            'id, email, username, bio, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
           )
           .order('username', ascending: true)
           .limit(limit);
@@ -223,7 +228,7 @@ class UserRepository {
         final response = await _db
             .from('users')
             .select(
-              'id, email, username, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
+              'id, email, username, bio, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
             )
             .inFilter('id', part);
         for (final row in response as List) {
@@ -371,7 +376,7 @@ class UserRepository {
       final response = await _db
           .from('users')
           .select(
-            'id, email, username, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
+            'id, email, username, bio, avatar_url, rank, total_score, sustainability_score, fcm_token, created_at',
           )
           .ilike('username', pattern)
           .order('total_score', ascending: false)
