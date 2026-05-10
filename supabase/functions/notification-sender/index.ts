@@ -141,6 +141,7 @@ serve(async (req: Request) => {
       // Sosyal Akış (FAZ 2) — migration 20260509000004 ile eklendi
       post_like: 'post_like',
       post_comment: 'post_comment',
+      shadow_point: 'shadow_point',
     }
     const settingsCol = settingsColumnMap[notifType]
     if (settingsCol) {

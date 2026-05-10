@@ -23,7 +23,10 @@ import 'package:balikci_app/shared/providers/friend_request_provider.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
 import 'package:balikci_app/shared/providers/profile_summary_stats_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
+import 'package:balikci_app/data/repositories/shadow_point_repository.dart';
 import 'package:balikci_app/features/profile/widgets/how_to_earn_points_sheet.dart';
+import 'package:balikci_app/features/profile/widgets/shadow_point_history_sheet.dart';
+import 'package:balikci_app/shared/providers/shadow_point_provider.dart';
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -189,6 +192,8 @@ class _ProfileContent extends ConsumerWidget {
         if (isSelf) {
           ref.invalidate(currentUserProfileProvider);
           ref.invalidate(favoriteSpotsProvider);
+          ref.invalidate(shadowPointSummaryProvider(uid));
+          ref.invalidate(recentShadowEventsProvider(uid));
         } else {
           ref.invalidate(userProfileProvider(uid));
           ref.invalidate(socialEdgeProvider(uid));
@@ -287,6 +292,7 @@ class _ProfileContent extends ConsumerWidget {
               currentRank: user.rank,
               totalScore: user.totalScore,
               showHowToEarnButton: isSelf,
+              shadowSummaryUserId: isSelf ? user.id : null,
             ),
             const SizedBox(height: 20),
 
@@ -532,19 +538,97 @@ const Map<String, _RankThresholdData> _rankThresholds = {
   'deniz_reisi': _RankThresholdData(5000, 5000, ''),
 };
 
-class _RankProgress extends StatelessWidget {
+class _ShadowPointCard extends StatelessWidget {
+  final ShadowPointSummary summary;
+  final String userId;
+
+  const _ShadowPointCard({
+    required this.summary,
+    required this.userId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => showModalBottomSheet<void>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => ShadowPointHistorySheet(userId: userId),
+        ),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.accent.withValues(alpha: 0.4),
+            ),
+          ),
+          child: Row(
+            children: [
+              const Text('📍', style: TextStyle(fontSize: 32)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Gölge Puanın',
+                      style: TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      '+${summary.total} puan',
+                      style: const TextStyle(
+                        color: AppColors.accent,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '${summary.eventCount} kez meranı kullanan oldu',
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.muted,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RankProgress extends ConsumerWidget {
   final String currentRank;
   final int totalScore;
   final bool showHowToEarnButton;
+  final String? shadowSummaryUserId;
 
   const _RankProgress({
     required this.currentRank,
     required this.totalScore,
     this.showHowToEarnButton = false,
+    this.shadowSummaryUserId,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final band = _rankThresholds[currentRank] ?? _rankThresholds['acemi']!;
     final isDenizReisi = currentRank == 'deniz_reisi';
 
@@ -608,6 +692,23 @@ class _RankProgress extends StatelessWidget {
                   color: AppColors.muted,
                 ),
               ),
+            if (shadowSummaryUserId != null) ...[
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: ref
+                    .watch(shadowPointSummaryProvider(shadowSummaryUserId!))
+                    .when(
+                      data: (summary) => summary.total > 0
+                          ? _ShadowPointCard(
+                              summary: summary,
+                              userId: shadowSummaryUserId!,
+                            )
+                          : const SizedBox.shrink(),
+                      loading: () => const SizedBox.shrink(),
+                      error: (error, stack) => const SizedBox.shrink(),
+                    ),
+              ),
+            ],
             if (showHowToEarnButton) ...[
               const SizedBox(height: 4),
               TextButton.icon(

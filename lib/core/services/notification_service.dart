@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:balikci_app/app/app_routes.dart';
@@ -11,6 +11,7 @@ import 'package:balikci_app/app/router.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/notification_routing.dart';
 import 'package:balikci_app/data/repositories/user_repository.dart';
+import 'package:balikci_app/features/profile/widgets/shadow_point_history_sheet.dart';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Yardımcı: mesaj türüne göre route belirle
@@ -27,6 +28,7 @@ String _routeForType(String? type) => switch (type?.toLowerCase()) {
   'weather_morning' => AppRoutes.weather,
   'morning_weather' => AppRoutes.weather,
   'season_reminder' => AppRoutes.weather,
+  'shadow_point' => AppRoutes.profile,
   _ => AppRoutes.home,
 };
 
@@ -40,6 +42,24 @@ Map<String, dynamic> _navigationPayloadFromData(Map<String, dynamic> data) {
     if (v != null && v.isNotEmpty) m[k] = v;
   }
   return m;
+}
+
+/// Push / yerel bildirimden sonra profil üzerinde gölge puan sheet'i gösterir.
+void presentShadowPointHistorySheetDelayed({
+  Duration delay = const Duration(milliseconds: 500),
+}) {
+  Future<void>.delayed(delay, () {
+    final navigatorContext = appNavigatorKey.currentContext;
+    if (navigatorContext == null || !navigatorContext.mounted) return;
+    final uid = SupabaseService.auth.currentUser?.id;
+    if (uid == null) return;
+    showModalBottomSheet<void>(
+      context: navigatorContext,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ShadowPointHistorySheet(userId: uid),
+    );
+  });
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -196,6 +216,11 @@ class NotificationService {
       _navigate(AppRoutes.home, extra: spotId);
       return;
     }
+    if (type?.toLowerCase() == 'shadow_point') {
+      _navigate(AppRoutes.profile);
+      presentShadowPointHistorySheetDelayed();
+      return;
+    }
     final profileId = profileUserIdFromNotificationData(message.data);
     if (notificationTypeOpensFollowProfile(type) && profileId != null) {
       _navigate('${AppRoutes.profile}/$profileId');
@@ -214,6 +239,11 @@ class NotificationService {
       final spotId = map['spot_id'] as String?;
       if (spotId != null && (type == 'checkin' || type == 'vote')) {
         _navigate(AppRoutes.home, extra: spotId);
+        return;
+      }
+      if (type?.toLowerCase() == 'shadow_point') {
+        _navigate(AppRoutes.profile);
+        presentShadowPointHistorySheetDelayed();
         return;
       }
       final profileId = profileUserIdFromNotificationData(map);

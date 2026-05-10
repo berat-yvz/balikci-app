@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/services/notification_service.dart';
 import 'package:balikci_app/core/utils/error_message_helper.dart';
 import 'package:balikci_app/core/widgets/network_error_widget.dart';
 import 'package:balikci_app/core/utils/notification_routing.dart';
@@ -122,6 +123,9 @@ class NotificationListScreen extends ConsumerWidget {
       }
     } else if (type.contains('season') || type.contains('weather')) {
       router.go(AppRoutes.weather);
+    } else if (type == 'shadow_point') {
+      router.go(AppRoutes.profile);
+      presentShadowPointHistorySheetDelayed();
     } else if (type.contains('checkin') || type.contains('vote')) {
       final spotId = n.data['spot_id'] as String?;
       router.go(AppRoutes.home, extra: spotId);
@@ -143,6 +147,7 @@ class _NotificationTile extends StatelessWidget {
     if (t.contains('vote')) return '👍';
     if (t.contains('rank')) return '🏆';
     if (t.contains('follow')) return '👤';
+    if (t == 'shadow_point') return '📍';
     if (t.contains('season')) return '📅';
     return '🔔';
   }
