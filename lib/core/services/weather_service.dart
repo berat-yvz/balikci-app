@@ -94,10 +94,11 @@ class WeatherService {
       }
 
       final cachedHourly = hourlyFromOpenMeteoV1Bundle(decodedDataJson);
+      // Drift = planlı senkron sonrası normal depo; "çevrimdışı" yalnızca eksik veride.
       return RegionalWeatherData(
         hourly: cachedHourly,
         current: current,
-        isFromCache: true,
+        isFromCache: cachedHourly.isEmpty,
       );
     } catch (e, st) {
       debugPrint('[WeatherService] Drift okuma hatası ($regionKey): $e\n$st');

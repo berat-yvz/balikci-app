@@ -102,6 +102,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
             },
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+              cacheExtent: 380,
               children: [
                 const _RegionSelector(),
                 if (data.isFromCache) ...[
@@ -195,8 +196,13 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
                 const SizedBox(height: 12),
 
                 if (data.hourly.isNotEmpty) ...[
-                  WeeklyForecastTableCard(
-                    rows: buildWeeklyForecastRows(data.hourly, DateTime.now()),
+                  RepaintBoundary(
+                    child: WeeklyForecastTableCard(
+                      rows: buildWeeklyForecastRows(
+                        data.hourly,
+                        DateTime.now(),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -362,6 +368,8 @@ class _HourlyScrollRow extends StatelessWidget {
     final now = DateTime.now();
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
+      primary: false,
+      physics: const ClampingScrollPhysics(),
       child: Row(
         children: hours.map((h) {
           final isNow = h.time.difference(now).abs().inMinutes <= 30;
@@ -470,6 +478,8 @@ class _HourlyWeatherChart extends StatelessWidget {
           // ── Yatay kaydırmalı grafik + etiketler ──────
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
+            primary: false,
+            physics: const ClampingScrollPhysics(),
             child: SizedBox(
               width: totalW,
               child: Column(
@@ -733,8 +743,28 @@ class _LineChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _LineChartPainter old) =>
-      old.hours != hours || old.minTemp != minTemp || old.maxTemp != maxTemp;
+  bool shouldRepaint(covariant _LineChartPainter old) {
+    if (identical(old.hours, hours) &&
+        old.minTemp == minTemp &&
+        old.maxTemp == maxTemp) {
+      return false;
+    }
+    if (old.hours.length != hours.length ||
+        old.minTemp != minTemp ||
+        old.maxTemp != maxTemp) {
+      return true;
+    }
+    for (var i = 0; i < hours.length; i++) {
+      final a = old.hours[i];
+      final b = hours[i];
+      if (a.time != b.time ||
+          a.temperature != b.temperature ||
+          a.weatherCode != b.weatherCode) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 class _WeatherHeroCard extends StatelessWidget {
@@ -1031,42 +1061,55 @@ class _RegionSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selected = ref.watch(selectedWeatherRegionProvider);
+    final entries = weatherRegionDisplayNames.entries.toList();
     return SizedBox(
       height: 36,
-      child: ListView.separated(
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        itemCount: weatherRegionDisplayNames.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, i) {
-          final entry = weatherRegionDisplayNames.entries.elementAt(i);
-          final isSelected = entry.key == selected;
-          return GestureDetector(
-            onTap: () =>
-                ref.read(selectedWeatherRegionProvider.notifier).state =
-                    entry.key,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : AppColors.surface,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.muted.withValues(alpha: 0.25),
+        primary: false,
+        physics: const ClampingScrollPhysics(),
+        child: Row(
+          children: [
+            for (final (i, entry) in entries.indexed) ...[
+              if (i > 0) const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => ref
+                    .read(selectedWeatherRegionProvider.notifier)
+                    .state = entry.key,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: entry.key == selected
+                        ? AppColors.primary
+                        : AppColors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: entry.key == selected
+                          ? AppColors.primary
+                          : AppColors.muted.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Text(
+                    entry.value,
+                    style: AppTextStyles.caption.copyWith(
+                      fontSize: 13,
+                      color: entry.key == selected
+                          ? AppColors.foam
+                          : AppColors.muted,
+                      fontWeight: entry.key == selected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                    ),
+                  ),
                 ),
               ),
-              child: Text(
-                entry.value,
-                style: AppTextStyles.caption.copyWith(
-                  fontSize: 13,
-                  color: isSelected ? AppColors.foam : AppColors.muted,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
-            ),
-          );
-        },
+            ],
+          ],
+        ),
       ),
     );
   }
