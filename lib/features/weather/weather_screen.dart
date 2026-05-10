@@ -330,9 +330,24 @@ class _FetchedAtLabelState extends State<_FetchedAtLabel> {
         '${tr.hour.toString().padLeft(2, '0')}:${tr.minute.toString().padLeft(2, '0')}';
   }
 
+  bool _sameIstanbulWallHour(DateTime fetchedUtc, DateTime nowUtc) {
+    return istanbulWallDateOnlyFromUtc(fetchedUtc) ==
+            istanbulWallDateOnlyFromUtc(nowUtc) &&
+        istanbulWallHourFromUtc(fetchedUtc) ==
+            istanbulWallHourFromUtc(nowUtc);
+  }
+
   String _formatRelative() {
-    final rawSecs =
-        DateTime.now().toUtc().difference(widget.fetchedAt.toUtc()).inSeconds;
+    final nowU = DateTime.now().toUtc();
+    final fetchU = widget.fetchedAt.toUtc();
+
+    // Saat başı cron ~XX:00 TSİ; aynı yerel saat dilimindeyseniz paket hâlâ "bu saat" verisidir.
+    if (_sameIstanbulWallHour(widget.fetchedAt, nowU)) {
+      final hh = istanbulWallHourFromUtc(fetchU).toString().padLeft(2, '0');
+      return 'Bu saatlik veri (sunucu $hh:00 TSİ çekimi)';
+    }
+
+    final rawSecs = nowU.difference(fetchU).inSeconds;
     final secs = rawSecs < 0 ? 0 : rawSecs;
     if (secs < 60) return 'Az önce güncellendi';
     final mins = secs ~/ 60;

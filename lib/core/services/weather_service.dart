@@ -23,6 +23,9 @@ class WeatherService {
   static final _db = SupabaseService.client;
   static final _driftDb = AppDatabase.instance;
 
+  /// Aynı turda diğer kıyılar tazelendi, sunucuda bu il hâlâ eskiyse gereksiz tekrar isteği kes.
+  static final Set<String> _coastalCatchupDeferred = {};
+
   /// `istanbul` kıyı anahtarı bazen worker'da diğerlerinden eski kalabiliyor; taze ilçe
   /// satırı Drift'te varsa aynı paketi bölge adıyla sunarız (ekstra ağ isteği yok).
   static const Duration _coastalStaleFallbackAfter = Duration(minutes: 75);
@@ -52,6 +55,56 @@ class WeatherService {
       lng: meta['lng']!,
     );
     return RegionalWeatherData(hourly: hourly, current: current);
+  }
+
+  /// Diğer kıyı illerinin Drift `fetched_at` değerlerinden en yeni olanı (kendisi hariç).
+  static Future<DateTime?> _newestCoastalPeerFetchedAtUtc(
+    String excludeRegionKey,
+  ) async {
+    DateTime? maxT;
+    for (final k in weatherRegions.keys) {
+      if (k == excludeRegionKey) continue;
+      final raw = await loadRegionalWeatherFromDrift(k);
+      if (raw == null) continue;
+      final t = raw.current.fetchedAt.toUtc();
+      if (maxT == null || t.isAfter(maxT)) maxT = t;
+    }
+    return maxT;
+  }
+
+  /// Edge tek turda tüm kıyılara aynı `fetched_at` yazar; biri Drift'te kaldıysa düzelt.
+  static Future<RegionalWeatherData> _resyncCoastalIfDriftBehindPeers(
+    String regionKey,
+    RegionalWeatherData pack,
+  ) async {
+    if (!weatherRegions.containsKey(regionKey)) return pack;
+    final peerNewest = await _newestCoastalPeerFetchedAtUtc(regionKey);
+    if (peerNewest == null) return pack;
+    final mine = pack.current.fetchedAt.toUtc();
+    const tolerance = Duration(minutes: 2);
+    if (!mine.isBefore(peerNewest.subtract(tolerance))) {
+      _coastalCatchupDeferred.remove(regionKey);
+      return pack;
+    }
+    if (_coastalCatchupDeferred.contains(regionKey)) return pack;
+    if (kDebugMode) {
+      debugPrint(
+        '[WeatherService] $regionKey yerel fetched_at ($mine) emsallardan '
+        '($peerNewest) geride — weather_cache tek satır yenileniyor',
+      );
+    }
+    final fresh = await syncRegionalWeatherFromSupabase(
+      regionKey,
+      fallbackToDrift: true,
+    );
+    if (fresh == null) return pack;
+    final freshT = fresh.current.fetchedAt.toUtc();
+    if (freshT.isBefore(peerNewest.subtract(tolerance))) {
+      _coastalCatchupDeferred.add(regionKey);
+    } else {
+      _coastalCatchupDeferred.remove(regionKey);
+    }
+    return fresh;
   }
 
   /// Yalnızca Drift — ağ yok. Harita mera sheet ve anlık gösterim için.
@@ -160,6 +213,7 @@ class WeatherService {
           debugPrint('[WeatherService] Drift toplu yazım ($rk): $e\n$st');
         }
       }
+      if (n > 0) _coastalCatchupDeferred.clear();
       return n;
     } catch (e, st) {
       debugPrint('[WeatherService] Toplu weather_cache okuma: $e\n$st');
@@ -167,13 +221,15 @@ class WeatherService {
     }
   }
 
-  /// Drift + gerekiyorsa Fatih satırı ile kıyı `istanbul` taze paket düzeltmesi.
+  /// Drift + gerekiyorsa Fatih satırı; kıyı ilinde Drift tur sapması varsa tek sunucu okuması.
   static Future<RegionalWeatherData?> regionalFromDriftDisplayReady(
     String regionKey,
   ) async {
     final raw = await loadRegionalWeatherFromDrift(regionKey);
     if (raw == null) return null;
-    return _applyCoastalFreshRowFallbackFromDrift(regionKey, raw);
+    var pack = await _applyCoastalFreshRowFallbackFromDrift(regionKey, raw);
+    pack = await _resyncCoastalIfDriftBehindPeers(regionKey, pack);
+    return pack;
   }
 
   /// Supabase `weather_cache` tek okuma + Drift yaz; istenirse ağ hatasında Drift'e düş.
