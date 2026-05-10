@@ -87,7 +87,7 @@ class FollowRepository {
   Future<bool> areMutualFriends(String otherUserId) async {
     final a = await isFollowing(otherUserId);
     if (!a) return false;
-    return isFollowedBy(otherUserId);
+    return await isFollowedBy(otherUserId);
   }
 
   Future<List<String>> getFollowerIds(String userId) async {
@@ -111,7 +111,7 @@ class FollowRepository {
     final followers = (await getFollowerIds(userId)).toSet();
     if (followers.isEmpty) return [];
     final following = await getFollowingIds(userId);
-    return following.where(followers.contains).toList();
+    return following.where((id) => followers.contains(id)).toList();
   }
 
   Future<List<String>> getFollowingIds(String userId) async {

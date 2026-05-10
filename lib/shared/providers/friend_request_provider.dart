@@ -14,6 +14,21 @@ final friendRequestRepositoryProvider = Provider<FriendRequestRepository>((
   return FriendRequestRepository();
 });
 
+/// Soğuk açılışta `authState` ilk olayı gelmeden `currentUser` boş kalabiliyor; bu yüzden
+/// arkadaş listesi yanlışlıkla boş dönmesin diye auth akışının ilk snapshot'ını bekler.
+Future<String?> _resolvedCurrentUserId(Ref ref) async {
+  ref.watch(currentUserProvider);
+  ref.watch(authStateProvider);
+  try {
+    await ref.read(authStateProvider.future);
+  } catch (_) {
+    // Oturum yok veya hata — aşağıdaki sync okumaya düş
+  }
+  final id = ref.read(currentUserProvider)?.id;
+  if (id != null && id.isNotEmpty) return id;
+  return SupabaseService.auth.currentUser?.id;
+}
+
 /// Başka bir kullanıcıyla arkadaşlık / istek durumu.
 enum SocialEdgeKind {
   self,
@@ -32,8 +47,9 @@ class SocialEdge {
 
 final socialEdgeProvider =
     FutureProvider.family<SocialEdge, String>((ref, otherUserId) async {
-      final me = SupabaseService.auth.currentUser?.id;
-      if (me == null) return const SocialEdge(SocialEdgeKind.stranger);
+      ref.watch(authStateProvider);
+      final me = await _resolvedCurrentUserId(ref);
+      if (me == null || me.isEmpty) return const SocialEdge(SocialEdgeKind.stranger);
       if (me == otherUserId) return const SocialEdge(SocialEdgeKind.self);
 
       final followRepo = ref.read(followRepositoryProvider);
@@ -53,16 +69,19 @@ final socialEdgeProvider =
     });
 
 /// Karşılıklı takip (kabul edilmiş arkadaşlıklar) — oturumdaki kullanıcı.
-final mutualFriendsProvider =
-    FutureProvider.autoDispose<List<UserModel>>((ref) async {
-      final me = ref.watch(currentUserProvider)?.id;
-      if (me == null) return [];
-      final followRepo = ref.read(followRepositoryProvider);
-      final userRepo = ref.read(userRepositoryProvider);
-      final ids = await followRepo.getMutualFriendIds(me);
-      if (ids.isEmpty) return [];
-      return userRepo.getProfilesByIds(ids);
-    });
+///
+/// autoDispose değil: [FriendsHubScreen] sekmesi değişince istek yarım kalmasın / boş state
+/// flicker olmasın; yenileme [ref.invalidate(mutualFriendsProvider)] ile.
+final mutualFriendsProvider = FutureProvider<List<UserModel>>((ref) async {
+  ref.watch(authStateProvider);
+  final me = await _resolvedCurrentUserId(ref);
+  if (me == null || me.isEmpty) return [];
+  final followRepo = ref.read(followRepositoryProvider);
+  final userRepo = ref.read(userRepositoryProvider);
+  final ids = await followRepo.getMutualFriendIds(me);
+  if (ids.isEmpty) return [];
+  return userRepo.getProfilesByIds(ids);
+});
 
 /// [userId] için arkadaş (karşılıklı takip) profilleri.
 final mutualFriendsForUserProvider =

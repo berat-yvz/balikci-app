@@ -35,13 +35,35 @@ class FriendsHubScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: const TabBarView(
+        body: TabBarView(
           children: [
-            FriendsListScreen(embedded: true),
-            CommunityDiscoverScreen(showShortcutRow: false),
+            const _KeepAliveFriendsListTab(),
+            const CommunityDiscoverScreen(showShortcutRow: false),
           ],
         ),
       ),
     );
+  }
+}
+
+/// Sekme değişince [FriendsListScreen] dispose olmasın — arkadaş provider yükleme yarışı ve
+/// gereksiz yeniden isteklerin önüne geçer.
+class _KeepAliveFriendsListTab extends StatefulWidget {
+  const _KeepAliveFriendsListTab();
+
+  @override
+  State<_KeepAliveFriendsListTab> createState() =>
+      _KeepAliveFriendsListTabState();
+}
+
+class _KeepAliveFriendsListTabState extends State<_KeepAliveFriendsListTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return const FriendsListScreen(embedded: true);
   }
 }
