@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:intl/intl.dart' hide TextDirection;
-
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/weather_regions.dart';
 import 'package:balikci_app/core/utils/moon_phase_utils.dart';
@@ -330,28 +328,15 @@ class _FetchedAtLabelState extends State<_FetchedAtLabel> {
 
   @override
   Widget build(BuildContext context) {
-    final abs =
-        DateFormat('dd.MM.yyyy HH:mm').format(widget.fetchedAt.toLocal());
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Sunucu kaydı: $abs',
-            style: AppTextStyles.caption.copyWith(color: AppColors.muted),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _formatRelative(),
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.muted.withValues(alpha: 0.88),
-              fontSize: 12,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+      child: Text(
+        _formatRelative(),
+        style: AppTextStyles.caption.copyWith(
+          color: AppColors.muted.withValues(alpha: 0.88),
+          fontSize: 12,
+        ),
+        textAlign: TextAlign.center,
       ),
     );
   }

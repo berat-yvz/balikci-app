@@ -67,8 +67,13 @@ class _MapScreenState extends ConsumerState<MapScreen>
   final MapController _mapController = MapController();
 
   /// Hızlı zoom’da gereksiz indirmeleri iptal eder; beyaz kareleri azaltır.
-  final CancellableNetworkTileProvider _mapTileProvider =
+  final CancellableNetworkTileProvider _networkTileProvider =
       CancellableNetworkTileProvider();
+
+  /// [FMTCStore.getTileProvider] genelde her çağrıda yeni nesne döndürür; [TileLayer]
+  /// bunu sağlayıcı değişimi sanıp tüm karoyu sıfırlar. Sekmeden dönünce üst üste
+  /// `setState` ile harita kalıcı şekilde "siyah" (yalnızca arka plan rengi) kalabiliyordu.
+  TileProvider? _cachedFmtcTileProvider;
 
   /// FMTC tile cache başarıyla başlatıldıysa true; yoksa fallback provider kullanılır.
   bool _fmtcReady = false;
@@ -217,23 +222,25 @@ class _MapScreenState extends ConsumerState<MapScreen>
     }
   }
 
-  /// FMTC hazırsa cache provider, değilse CancellableNetworkTileProvider döner.
-  /// Exception build() metodunu kırmaz.
-  TileProvider _buildTileProvider() {
-    try {
-      if (_fmtcReady) {
-        return FMTCStore(AppConstants.fmtcStoreName).getTileProvider(
+  /// FMTC hazırsa önbelleğe alınmış cache provider; değilse ağ sağlayıcısı.
+  /// Exception [build] sırasında yakalanır, ağa düşülür.
+  TileProvider get _tileProvider {
+    if (_fmtcReady) {
+      try {
+        _cachedFmtcTileProvider ??=
+            FMTCStore(AppConstants.fmtcStoreName).getTileProvider(
           settings: FMTCTileProviderSettings(
             behavior: CacheBehavior.cacheFirst,
             cachedValidDuration:
                 Duration(days: AppConstants.fmtcMaxCacheDays),
           ),
         );
+        return _cachedFmtcTileProvider!;
+      } catch (e) {
+        debugPrint('FMTC provider hatası: $e');
       }
-    } catch (e) {
-      debugPrint('FMTC provider hatası: $e');
     }
-    return _mapTileProvider;
+    return _networkTileProvider;
   }
 
   @override
@@ -249,6 +256,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
     _searchController.dispose();
     _searchFocusNode.dispose();
     _pulseController?.dispose();
+    unawaited(_networkTileProvider.dispose());
     super.dispose();
   }
 
@@ -1003,8 +1011,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
       body: Stack(
         children: [
           Positioned.fill(
-            child: RepaintBoundary(
-              child: FlutterMap(
+            child: FlutterMap(
                 mapController: _mapController,
                 options: MapOptions(
                   initialCenter: const LatLng(41.0082, 28.9784),
@@ -1044,7 +1051,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
                     panBuffer: 3,
                     tileDisplay: const TileDisplay.instantaneous(),
                     evictErrorTileStrategy: EvictErrorTileStrategy.none,
-                    tileProvider: _buildTileProvider(),
+                    tileProvider: _tileProvider,
                     errorTileCallback: (tile, error, stackTrace) {
                       debugPrint('Tile yükleme hatası: $error');
                     },
@@ -1153,7 +1160,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
                     MarkerLayer(markers: _buildShopMarkers()),
                 ],
               ),
-            ),
           ),
 
           // H9: Kompakt hava kartı — arama çubuğu (48px) altına yerleşir

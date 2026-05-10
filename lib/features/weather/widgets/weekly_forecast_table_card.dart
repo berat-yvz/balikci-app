@@ -1,9 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
-import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/utils/weekly_forecast_aggregate.dart';
 
@@ -42,14 +40,6 @@ class WeeklyForecastTableCard extends StatelessWidget {
                     fontSize: 17,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Bugün ve önümüzdeki 6 gün — sunucu saatlik verisinden',
-                  style: AppTextStyles.caption.copyWith(
-                    color: Colors.white.withValues(alpha: 0.55),
-                    fontSize: 12,
-                  ),
-                ),
                 const SizedBox(height: 12),
                 for (var i = 0; i < rows.length; i++) ...[
                   if (i > 0)
@@ -63,32 +53,6 @@ class WeeklyForecastTableCard extends StatelessWidget {
                     child: _WeeklyForecastRowWidget(row: rows[i]),
                   ),
                 ],
-                const SizedBox(height: 4),
-                InkWell(
-                  onTap: () => context.go(AppRoutes.balikcim),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '15 günlük hava durumu tahmini',
-                          style: AppTextStyles.caption.copyWith(
-                            color: Colors.white.withValues(alpha: 0.92),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          size: 22,
-                          color: Colors.white.withValues(alpha: 0.85),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
