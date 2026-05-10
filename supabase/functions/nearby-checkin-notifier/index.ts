@@ -116,7 +116,8 @@ serve(async (req: Request) => {
             user_id: uid,
             title: '🐟 Balık var!',
             body: `${spotLabel} yakınında check-in yapıldı.`,
-            data: { type: 'checkin', spot_id },
+            // checkin_nearby → notification_settings.checkin_nearby ile uyumlu (genel 'checkin' değil)
+            data: { type: 'checkin_nearby', spot_id },
           }),
         })
         notified++

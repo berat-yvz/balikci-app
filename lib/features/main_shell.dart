@@ -69,7 +69,11 @@ class _MainShellState extends ConsumerState<MainShell> {
       if (_scheduledProximityVote) return;
       if (SupabaseService.auth.currentUser == null) return;
       _scheduledProximityVote = true;
-      ProximityVoteService.instance.checkAndShowVoteDialog(context);
+      // Bildirim → meraya geçiş ile ProximityVote yarışmasın; GPS otursun.
+      Future<void>.delayed(const Duration(seconds: 4), () {
+        if (!mounted) return;
+        unawaited(ProximityVoteService.instance.checkAndShowVoteDialog(context));
+      });
     });
   }
 

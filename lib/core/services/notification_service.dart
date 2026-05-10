@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/router.dart';
+import 'package:balikci_app/core/services/launch_navigation_suppression.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/notification_routing.dart';
 import 'package:balikci_app/data/repositories/user_repository.dart';
@@ -19,6 +20,7 @@ import 'package:balikci_app/features/profile/widgets/shadow_point_history_sheet.
 
 String _routeForType(String? type) => switch (type?.toLowerCase()) {
   'checkin' => AppRoutes.home,
+  'checkin_nearby' => AppRoutes.home,
   'vote' => AppRoutes.home,
   'rank' => AppRoutes.rank,
   'rank_up' => AppRoutes.profile,
@@ -42,6 +44,12 @@ Map<String, dynamic> _navigationPayloadFromData(Map<String, dynamic> data) {
     if (v != null && v.isNotEmpty) m[k] = v;
   }
   return m;
+}
+
+bool _opensMapWithSpotForCheckinOrVote(String? type, String? spotId) {
+  if (spotId == null || spotId.isEmpty) return false;
+  final t = type?.toLowerCase();
+  return t == 'checkin' || t == 'checkin_nearby' || t == 'vote';
 }
 
 /// Push / yerel bildirimden sonra profil üzerinde gölge puan sheet'i gösterir.
@@ -212,7 +220,8 @@ class NotificationService {
     final type = message.data['type'] as String?;
     final spotId = message.data['spot_id'] as String?;
     debugPrint('FCM yönlendirme: type=$type, spotId=$spotId');
-    if (spotId != null && (type == 'checkin' || type == 'vote')) {
+    if (_opensMapWithSpotForCheckinOrVote(type, spotId)) {
+      LaunchNavigationSuppression.suppressProximityVoteBriefly();
       _navigate(AppRoutes.home, extra: spotId);
       return;
     }
@@ -237,7 +246,8 @@ class NotificationService {
       final map = jsonDecode(payload) as Map<String, dynamic>;
       final type = map['type'] as String?;
       final spotId = map['spot_id'] as String?;
-      if (spotId != null && (type == 'checkin' || type == 'vote')) {
+      if (_opensMapWithSpotForCheckinOrVote(type, spotId)) {
+        LaunchNavigationSuppression.suppressProximityVoteBriefly();
         _navigate(AppRoutes.home, extra: spotId);
         return;
       }

@@ -120,8 +120,21 @@ class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
         isFromCache: snap.isFromCache,
       );
 
-  /// Aşağı kaydırma / kullanıcı isteği: Edge tetiklenmez; yalnızca yerel önbellek yenilenir.
+  /// Aşağı kaydırma: `weather_cache` tek okuma + Drift (Edge/Open-Meteo tetiklenmez).
   Future<void> refreshFromServer() async {
+    final regionKey = ref.read(selectedWeatherRegionProvider);
+    try {
+      final snap = await WeatherService.syncRegionalWeatherFromSupabase(
+        regionKey,
+        fallbackToDrift: true,
+      );
+      if (snap != null) {
+        state = AsyncData(_toUi(snap));
+        return;
+      }
+    } catch (e, st) {
+      debugPrint('[IstanbulWeatherNotifier] Sunucu yenileme: $e\n$st');
+    }
     await reloadFromDriftOnly();
   }
 

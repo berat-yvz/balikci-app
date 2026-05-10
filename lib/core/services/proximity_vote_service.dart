@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'package:balikci_app/core/constants/app_constants.dart';
+import 'package:balikci_app/core/services/launch_navigation_suppression.dart';
 import 'package:balikci_app/core/services/location_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/geo_utils.dart';
@@ -33,6 +34,10 @@ class ProximityVoteService {
       };
 
   Future<void> checkAndShowVoteDialog(BuildContext context) async {
+    if (LaunchNavigationSuppression.shouldSkipProximityVoteDialog) {
+      return;
+    }
+
     if (_lastProximityCheck != null &&
         DateTime.now().difference(_lastProximityCheck!) <
             const Duration(minutes: 5)) {

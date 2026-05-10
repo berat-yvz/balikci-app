@@ -90,8 +90,9 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text(
-                      'Sunucu verisi her saat başı yenilenir; uygulama bunu '
-                      'genelde saat :02 geçe çeker. Şimdi yalnızca kayıtlı önbellek yenilendi.',
+                      'Hava verisi sunucudan güncellendi. Tam taze özet saat başında '
+                      'arka planda hesaplanır; uygulama genelde yerel saat ile :02 '
+                      'geçe çeker.',
                     ),
                     backgroundColor: AppColors.primary,
                   ),

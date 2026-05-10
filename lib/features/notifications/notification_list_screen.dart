@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
+import 'package:balikci_app/core/services/launch_navigation_suppression.dart';
 import 'package:balikci_app/core/services/notification_service.dart';
 import 'package:balikci_app/core/utils/error_message_helper.dart';
 import 'package:balikci_app/core/widgets/network_error_widget.dart';
@@ -126,6 +127,9 @@ class NotificationListScreen extends ConsumerWidget {
       presentShadowPointHistorySheetDelayed();
     } else if (type.contains('checkin') || type.contains('vote')) {
       final spotId = n.data['spot_id'] as String?;
+      if (spotId != null && spotId.isNotEmpty) {
+        LaunchNavigationSuppression.suppressProximityVoteBriefly();
+      }
       router.go(AppRoutes.home, extra: spotId);
     } else {
       router.go(AppRoutes.home);

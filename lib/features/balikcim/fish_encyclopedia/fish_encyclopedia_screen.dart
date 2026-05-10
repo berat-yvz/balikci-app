@@ -307,6 +307,17 @@ class _FishCard extends StatelessWidget {
                   fontSize: 16,
                 ),
               ),
+              if (entry.istanbulGear?.hasDisplayableData ?? false) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Önerilen takım (İstanbul veri seti)',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.accent.withValues(alpha: 0.95),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

@@ -242,6 +242,50 @@ class FishDetailScreen extends StatelessWidget {
                 children: fish.techniques.map((t) => _Chip(t)).toList(),
               ),
             ),
+            if (fish.istanbulGear case final gear?
+                when gear.hasDisplayableData) ...[
+              _Section(
+                title: '🎒 Önerilen takım',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'İstanbul av skorunda kullanılan tür dosyasından (olta, teknik, iğne, ağırlık). '
+                      'Mevcut deniz ve mevzuata göre uyarlamanız gerekebilir.',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.muted,
+                        fontSize: 14,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (gear.tackle.isNotEmpty)
+                      _GearDetailLine(label: 'Yem / takım', value: gear.tackle),
+                    if (gear.technique.isNotEmpty)
+                      _GearDetailLine(label: 'Teknik', value: gear.technique),
+                    if (gear.hookSize.isNotEmpty)
+                      _GearDetailLine(label: 'İğne numarası', value: gear.hookSize),
+                    if (gear.weightGr > 0)
+                      _GearDetailLine(
+                        label: 'Ağırlık (öneri)',
+                        value: '${gear.weightGr} g',
+                      ),
+                    if (gear.weightGr <= 0 &&
+                        gear.technique.toLowerCase().contains('yüzey'))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          'Yüzey avı — kurşun ekini koşula göre ayarlayın.',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.muted,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             _Section(
               title: '💡 İpuçları',
               child: Column(
@@ -359,6 +403,42 @@ class _Section extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           child,
+        ],
+      ),
+    );
+  }
+}
+
+class _GearDetailLine extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _GearDetailLine({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.muted,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.foam,
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );
