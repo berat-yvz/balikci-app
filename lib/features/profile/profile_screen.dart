@@ -23,6 +23,7 @@ import 'package:balikci_app/shared/providers/friend_request_provider.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
 import 'package:balikci_app/shared/providers/profile_summary_stats_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
+import 'package:balikci_app/features/profile/widgets/how_to_earn_points_sheet.dart';
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -282,7 +283,11 @@ class _ProfileContent extends ConsumerWidget {
 
             _SectionTitle(title: 'Rütbe İlerlemesi'),
             const SizedBox(height: 10),
-            _RankProgress(currentRank: user.rank, totalScore: user.totalScore),
+            _RankProgress(
+              currentRank: user.rank,
+              totalScore: user.totalScore,
+              showHowToEarnButton: isSelf,
+            ),
             const SizedBox(height: 20),
 
             _SectionTitle(title: 'Skorlar'),
@@ -511,97 +516,123 @@ class _ScoreRow extends StatelessWidget {
   }
 }
 
+/// score-calculator rütbe eşikleri ile uyumlu (min/max aralığı).
+class _RankThresholdData {
+  final int min;
+  final int max;
+  final String next;
+
+  const _RankThresholdData(this.min, this.max, this.next);
+}
+
+const Map<String, _RankThresholdData> _rankThresholds = {
+  'acemi': _RankThresholdData(0, 500, 'Olta Kurdusu'),
+  'olta_kurdu': _RankThresholdData(500, 2000, 'Usta Balıkçı'),
+  'usta': _RankThresholdData(2000, 5000, 'Deniz Reisi'),
+  'deniz_reisi': _RankThresholdData(5000, 5000, ''),
+};
+
 class _RankProgress extends StatelessWidget {
   final String currentRank;
   final int totalScore;
+  final bool showHowToEarnButton;
 
-  const _RankProgress({required this.currentRank, required this.totalScore});
+  const _RankProgress({
+    required this.currentRank,
+    required this.totalScore,
+    this.showHowToEarnButton = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Eşikler score-calculator Edge Function ile birebir uyumlu:
-    // acemi=0, olta_kurdu=500, usta=2000, deniz_reisi=5000
-    final thresholds = <String, int>{
-      'acemi': 500,
-      'olta_kurdu': 2000,
-      'usta': 5000,
-      'deniz_reisi': 5000,
-    };
+    final band = _rankThresholds[currentRank] ?? _rankThresholds['acemi']!;
+    final isDenizReisi = currentRank == 'deniz_reisi';
 
-    final lower = switch (currentRank) {
-      'acemi' => 0,
-      'olta_kurdu' => 500,
-      'usta' => 2000,
-      'deniz_reisi' => 5000,
-      _ => 0,
-    };
-
-    final next = thresholds[currentRank];
-    if (currentRank == 'deniz_reisi' || next == null) {
-      return Card(
-        color: const Color(0xFF132236),
-        child: const Padding(
-          padding: EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Deniz Reisi rütbesindesin.',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              SizedBox(height: 10),
-              LinearProgressIndicator(
-                value: 1,
-                backgroundColor: Colors.white24,
-                valueColor: AlwaysStoppedAnimation(AppColors.primary),
-              ),
-            ],
-          ),
-        ),
-      );
+    final double progress;
+    if (isDenizReisi) {
+      progress = 1.0;
+    } else {
+      final span = band.max - band.min;
+      progress = span <= 0
+          ? 1.0
+          : (totalScore - band.min) / span;
     }
+    final clampedProgress = progress.clamp(0.0, 1.0);
 
-    final progressRange = next - lower;
-    final progressValue = progressRange <= 0
-        ? 1.0
-        : ((totalScore - lower).clamp(0, progressRange)) / progressRange;
-
-    final xpToNext = (next - totalScore).clamp(0, next);
-    final nextRank = switch (currentRank) {
-      'acemi' => 'Olta Kurdu (500 puan)',
-      'olta_kurdu' => 'Usta (2.000 puan)',
-      'usta' => 'Deniz Reisi (5.000 puan)',
-      _ => 'Olta Kurdu',
-    };
+    final remainingScore = isDenizReisi
+        ? 0
+        : (band.max - totalScore).clamp(0, band.max);
 
     return Card(
-      color: const Color(0xFF132236),
+      color: AppColors.leaderboardBanner,
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Şu an: ${_rankLabel(currentRank)}',
+              isDenizReisi
+                  ? 'Deniz Reisi rütbesindesin.'
+                  : 'Şu an: ${_rankLabel(currentRank)}',
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.foam,
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 10),
-            LinearProgressIndicator(
-              value: progressValue,
-              backgroundColor: Colors.white24,
-              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(5),
+              child: LinearProgressIndicator(
+                value: clampedProgress,
+                minHeight: 10,
+                backgroundColor: AppColors.surface,
+                valueColor:
+                    const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              ),
             ),
             const SizedBox(height: 8),
-            Text(
-              'Sonraki: $nextRank. $xpToNext puan kaldı.',
-              style: const TextStyle(color: Colors.white70, fontSize: 14),
-            ),
+            if (isDenizReisi)
+              const Text(
+                'En yüksek rütbeye ulaştın! 🌊',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+            else
+              Text(
+                '${band.next} için $remainingScore puan daha kazan',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.muted,
+                ),
+              ),
+            if (showHowToEarnButton) ...[
+              const SizedBox(height: 4),
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.muted,
+                  minimumSize: const Size(48, 48),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                icon: const Icon(
+                  Icons.info_outline_rounded,
+                  size: 18,
+                  color: AppColors.muted,
+                ),
+                label: const Text(
+                  'Nasıl puan kazanırım?',
+                  style: TextStyle(color: AppColors.muted, fontSize: 14),
+                ),
+                onPressed: () => showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => const HowToEarnPointsSheet(),
+                ),
+              ),
+            ],
           ],
         ),
       ),

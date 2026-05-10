@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:balikci_app/core/services/score_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/error_message_helper.dart';
 import 'package:balikci_app/data/local/database.dart';
@@ -6,6 +9,17 @@ import 'package:drift/drift.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // cleaned: hata yönetimi, method dokümantasyonu ve public API açıklamaları iyileştirildi
+
+ScoreSource _scoreSourceForSpotPrivacy(String privacyLevel) {
+  switch (privacyLevel) {
+    case 'public':
+      return ScoreSource.spotPublic;
+    case 'friends':
+      return ScoreSource.spotFriends;
+    default:
+      return ScoreSource.spotPrivate;
+  }
+}
 
 /// Mera repository — fishing_spots CRUD.
 /// H3 ve H4 sprint görevleri.
@@ -108,6 +122,13 @@ class SpotRepository {
           .single();
       final created = SpotModel.fromJson(response);
       await _cacheSpots([created]);
+      unawaited(
+        ScoreService.award(
+          created.userId,
+          _scoreSourceForSpotPrivacy(created.privacyLevel),
+          extraFields: {'source_id': created.id},
+        ),
+      );
       return created;
     } on PostgrestException catch (e) {
       throw Exception(ErrorMessageHelper.toUserMessage(e, fallback: 'Mera kaydedilemedi.'));

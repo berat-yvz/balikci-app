@@ -325,7 +325,16 @@ class _CheckinScreenState extends State<CheckinScreen>
       setState(() => _createdCheckin = created);
       unawaited(_successAnimController.forward());
 
-      unawaited(ScoreService.award(uid, ScoreSource.checkinUnverified));
+      unawaited(
+        ScoreService.award(
+          uid,
+          ScoreSource.checkinUnverified,
+          extraFields: {
+            'spot_id': widget.spotId,
+            'source_id': created.id,
+          },
+        ),
+      );
 
       // Push / edge çağrıları UI isolate’ini meşgul etmesin — bir sonraki event loop turunda çalışsın.
       unawaited(

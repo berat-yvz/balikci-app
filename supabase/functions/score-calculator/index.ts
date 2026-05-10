@@ -2,14 +2,15 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const POINTS: Record<string, number> = {
-  checkin_verified: 30,
   checkin_unverified: 15,
   correct_vote: 10,
   wrong_report: -20,
   spot_public: 50,
-  // Sosyal Akış (FAZ 2)
-  post_share: 10,   // fotoğraflı gönderi paylaşımı
-  post_comment: 2,  // bir gönderiye yorum yapma
+  spot_friends: 30,
+  spot_private: 10,
+  post_share: 20,
+  post_liked: 5,
+  post_comment: 2,
 }
 
 const RANK_ORDER: Record<string, number> = {
@@ -18,6 +19,8 @@ const RANK_ORDER: Record<string, number> = {
   usta: 2,
   deniz_reisi: 3,
 }
+
+const JSON_HDR = { 'Content-Type': 'application/json' }
 
 function rankFromScore(score: number): string {
   if (score >= 5000) return 'deniz_reisi'
@@ -77,14 +80,22 @@ function sendRankUpNotification(
   }).catch((e) => console.error('rank_up notification-sender hatası:', e))
 }
 
+type ScoreBody = {
+  source_type?: unknown
+  user_id?: unknown
+  source_id?: unknown
+  spot_id?: unknown
+  post_id?: unknown
+  liker_id?: unknown
+}
+
 serve(async (req: Request) => {
   try {
-    // Authorization header kontrolü — kimliği doğrulanmamış istekleri reddet
     const authorizationHeader = req.headers.get('Authorization')
     if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HDR,
       })
     }
     const token = authorizationHeader.slice('Bearer '.length)
@@ -94,48 +105,170 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    // JWT doğrulama — token geçersizse isteği reddet
-    const { data: { user: callerUser }, error: authErr } = await supabase.auth.getUser(token)
-    if (authErr || !callerUser) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
+    try {
+      const { data: authData, error: authErr } = await supabase.auth.getUser(token)
+      if (authErr || !authData.user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: JSON_HDR,
+        })
+      }
+    } catch (e) {
+      console.error('score-calculator auth.getUser:', e)
+      return new Response(JSON.stringify({ error: 'internal_error' }), {
+        status: 500,
+        headers: JSON_HDR,
       })
     }
 
-    const { source_type, user_id } = await req.json()
-    const delta = POINTS[source_type] ?? 0
-
-    if (delta === 0) {
-      return new Response(
-        JSON.stringify({ message: 'no-op', source_type }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      )
+    let body: ScoreBody
+    try {
+      body = await req.json() as ScoreBody
+    } catch {
+      return new Response(JSON.stringify({ error: 'invalid_json' }), {
+        status: 400,
+        headers: JSON_HDR,
+      })
     }
 
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('total_score')
-      .eq('id', user_id)
-      .single()
+    const source_type = body.source_type
+    const user_id = body.user_id
+    // source_id gövdede kabul edilir (ileride gölge puan); şimdilik kullanılmıyor.
+    const spot_id = typeof body.spot_id === 'string' ? body.spot_id : undefined
+    const post_id = typeof body.post_id === 'string' ? body.post_id : undefined
+    const liker_id = typeof body.liker_id === 'string' ? body.liker_id : undefined
 
-    if (error || !user) {
-      return new Response(
-        JSON.stringify({ error: 'User not found' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } },
-      )
+    if (typeof source_type !== 'string' || !(source_type in POINTS)) {
+      console.warn('Bilinmeyen source_type: ' + String(source_type))
+      return new Response(JSON.stringify({ error: 'unknown_source_type' }), {
+        status: 400,
+        headers: JSON_HDR,
+      })
     }
 
-    const oldScore = Math.max(0, user.total_score ?? 0)
-    const newScore = Math.max(0, oldScore + delta)
+    if (typeof user_id !== 'string') {
+      return new Response(JSON.stringify({ error: 'invalid_user_id' }), {
+        status: 400,
+        headers: JSON_HDR,
+      })
+    }
 
-    const prevRank = rankFromScore(oldScore)
-    const newRank = rankFromScore(newScore)
+    const delta = POINTS[source_type]
 
-    await supabase
-      .from('users')
-      .update({ total_score: newScore, rank: newRank })
-      .eq('id', user_id)
+    if (source_type === 'checkin_unverified' && spot_id !== undefined) {
+      try {
+        const today = new Date().toLocaleDateString('sv', { timeZone: 'Europe/Istanbul' })
+        const dayStart = `${today}T00:00:00+03:00`
+        const dayEnd = `${today}T23:59:59.999+03:00`
+        const { count, error: cntErr } = await supabase
+          .from('checkins')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user_id)
+          .eq('spot_id', spot_id)
+          .gte('created_at', dayStart)
+          .lte('created_at', dayEnd)
+
+        if (cntErr) throw cntErr
+        if (count != null && count > 1) {
+          return new Response(
+            JSON.stringify({ message: 'gunluk_limit', awarded: 0 }),
+            { status: 200, headers: JSON_HDR },
+          )
+        }
+      } catch (e) {
+        console.error('score-calculator checkin günlük limit:', e)
+        return new Response(JSON.stringify({ error: 'internal_error' }), {
+          status: 500,
+          headers: JSON_HDR,
+        })
+      }
+    }
+
+    if (source_type === 'post_liked' && post_id !== undefined) {
+      try {
+        const { data: post, error: postErr } = await supabase
+          .from('posts')
+          .select('likes_count, user_id')
+          .eq('id', post_id)
+          .maybeSingle()
+
+        if (postErr) throw postErr
+        if (!post) {
+          return new Response(
+            JSON.stringify({ message: 'post_not_found', awarded: 0 }),
+            { status: 200, headers: JSON_HDR },
+          )
+        }
+
+        const ownerId = post.user_id as string
+        if (ownerId !== user_id) {
+          return new Response(JSON.stringify({ error: 'user_mismatch' }), {
+            status: 400,
+            headers: JSON_HDR,
+          })
+        }
+
+        if (liker_id !== undefined && liker_id === ownerId) {
+          return new Response(
+            JSON.stringify({ message: 'oz_begeni', awarded: 0 }),
+            { status: 200, headers: JSON_HDR },
+          )
+        }
+
+        const likesCount = (post.likes_count as number | null | undefined) ?? 0
+        if (likesCount % 10 !== 0) {
+          return new Response(
+            JSON.stringify({ message: 'limit_degil', awarded: 0 }),
+            { status: 200, headers: JSON_HDR },
+          )
+        }
+      } catch (e) {
+        console.error('score-calculator post_liked doğrulama:', e)
+        return new Response(JSON.stringify({ error: 'internal_error' }), {
+          status: 500,
+          headers: JSON_HDR,
+        })
+      }
+    }
+
+    let oldScore = 0
+    let newScore = 0
+    let prevRank = 'acemi'
+    let newRank = 'acemi'
+
+    try {
+      const { data: user, error: userErr } = await supabase
+        .from('users')
+        .select('total_score')
+        .eq('id', user_id)
+        .single()
+
+      if (userErr || !user) {
+        return new Response(
+          JSON.stringify({ error: 'User not found' }),
+          { status: 404, headers: JSON_HDR },
+        )
+      }
+
+      oldScore = Math.max(0, user.total_score ?? 0)
+      newScore = Math.max(0, oldScore + delta)
+
+      prevRank = rankFromScore(oldScore)
+      newRank = rankFromScore(newScore)
+
+      const { error: updErr } = await supabase
+        .from('users')
+        .update({ total_score: newScore, rank: newRank })
+        .eq('id', user_id)
+
+      if (updErr) throw updErr
+    } catch (e) {
+      console.error('score-calculator users güncelleme:', e)
+      return new Response(JSON.stringify({ error: 'internal_error' }), {
+        status: 500,
+        headers: JSON_HDR,
+      })
+    }
 
     const prevOrder = RANK_ORDER[prevRank] ?? 0
     const newOrder = RANK_ORDER[newRank] ?? 0
@@ -151,13 +284,15 @@ serve(async (req: Request) => {
         newScore,
         newRank,
         rank_up_notified: newOrder > prevOrder,
+        awarded: delta,
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
+      { status: 200, headers: JSON_HDR },
     )
   } catch (err) {
+    console.error('score-calculator:', err)
     return new Response(
       JSON.stringify({ error: String(err) }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } },
+      { status: 500, headers: JSON_HDR },
     )
   }
 })

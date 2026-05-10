@@ -68,6 +68,9 @@ class CheckinRepository {
   }
 
   /// Yeni bir check-in kaydı oluşturur.
+  ///
+  /// Puan (`checkin_unverified`) istemci tarafında [spot_id] ile birlikte
+  /// çağrılır — bkz. `checkin_screen`.
   Future<CheckinModel?> addCheckin(Map<String, dynamic> data) async {
     try {
       final response = await _db

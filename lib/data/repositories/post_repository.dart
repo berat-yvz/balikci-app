@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:balikci_app/core/services/score_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/models/post_model.dart';
 
@@ -33,16 +34,31 @@ class PostRepository {
 
   // ─── Yardımcı: puan hesapla (fire-and-forget) ──────────────────────────────
 
-  void _scoreEvent(String userId, String sourceType) {
+  void _scoreEvent(
+    String userId,
+    ScoreSource source, {
+    String? sourceId,
+    String? spotId,
+    String? postId,
+    String? likerId,
+  }) {
     unawaited(
       Future(() async {
         try {
+          final body = <String, dynamic>{
+            'source_type': source.value,
+            'user_id': userId,
+            'source_id': ?sourceId,
+            'spot_id': ?spotId,
+            'post_id': ?postId,
+            'liker_id': ?likerId,
+          };
           await _remote.functions.invoke(
             'score-calculator',
-            body: {'source_type': sourceType, 'user_id': userId},
+            body: body,
           );
         } catch (e) {
-          debugPrint('score-calculator çağrı hatası ($sourceType): $e');
+          debugPrint('score-calculator çağrı hatası (${source.value}): $e');
         }
       }),
     );
@@ -129,7 +145,7 @@ class PostRepository {
           .single();
 
       final post = PostModel.fromJson(response);
-      _scoreEvent(uid, 'post_share');
+      _scoreEvent(uid, ScoreSource.postShared, sourceId: post.id);
       return post;
     } on PostgrestException catch (e) {
       debugPrint('createPost hatası: ${e.message}');
@@ -294,10 +310,28 @@ class PostRepository {
         'post_id': postId,
         'user_id': uid,
       });
-      // INSERT başarılı → yeni beğeni
-      if (postOwnerId != null) {
+      // INSERT başarılı → gönderi sahibine puan (10'un katı + öz-beğeni edge'de)
+      var ownerId = postOwnerId;
+      if (ownerId == null) {
+        final row = await _remote
+            .from('posts')
+            .select('user_id')
+            .eq('id', postId)
+            .maybeSingle();
+        ownerId = row?['user_id'] as String?;
+      }
+      if (ownerId != null && ownerId != uid) {
+        _scoreEvent(
+          ownerId,
+          ScoreSource.postLiked,
+          postId: postId,
+          likerId: uid,
+        );
+      }
+      final notifyOwner = postOwnerId ?? ownerId;
+      if (notifyOwner != null) {
         _notifyPostActivity(
-          postOwnerId: postOwnerId,
+          postOwnerId: notifyOwner,
           actorId: uid,
           type: 'post_like',
           title: '❤️ Yeni Beğeni',
@@ -377,7 +411,12 @@ class PostRepository {
           .single();
 
       final comment = CommentModel.fromJson(response);
-      _scoreEvent(uid, 'post_comment');
+      _scoreEvent(
+        uid,
+        ScoreSource.postComment,
+        sourceId: comment.id,
+        postId: postId,
+      );
 
       if (postOwnerId != null && postOwnerId != uid) {
         _notifyPostActivity(
