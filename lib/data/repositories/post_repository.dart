@@ -64,6 +64,25 @@ class PostRepository {
     );
   }
 
+  Future<void> _shadowPointEvent({
+    required String postId,
+    required String posterUserId,
+    String? spotId,
+  }) async {
+    try {
+      await _remote.functions.invoke(
+        'shadow-point-calculator',
+        body: {
+          'post_id': postId,
+          'poster_user_id': posterUserId,
+          'spot_id': spotId,
+        },
+      );
+    } catch (e, st) {
+      debugPrint('_shadowPointEvent hata: $e\n$st');
+    }
+  }
+
   // ─── Yardımcı: bildirim gönder (fire-and-forget) ───────────────────────────
 
   /// [actorId] ile [postOwnerId] aynıysa bildirim gönderilmez (öz-bildirim önleme).
@@ -146,6 +165,13 @@ class PostRepository {
 
       final post = PostModel.fromJson(response);
       _scoreEvent(uid, ScoreSource.postShared, sourceId: post.id);
+      unawaited(
+        _shadowPointEvent(
+          postId: post.id,
+          posterUserId: uid,
+          spotId: post.spotId,
+        ),
+      );
       return post;
     } on PostgrestException catch (e) {
       debugPrint('createPost hatası: ${e.message}');

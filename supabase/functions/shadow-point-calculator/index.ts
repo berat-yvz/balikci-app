@@ -93,49 +93,75 @@ function sendShadowPointPush(
   }).catch((e) => console.error('shadow-point notification-sender:', e))
 }
 
-type ShadowBody = {
-  post_id?: unknown
-  poster_user_id?: unknown
-  spot_id?: unknown
+/** Database Webhook gövdesi (posts INSERT) veya doğrudan Flutter gövdesi. */
+function normalizePayload(raw: Record<string, unknown>): {
+  postId: string | undefined
+  posterUserId: string | undefined
+  spotId: string | undefined
+  fromWebhook: boolean
+} {
+  const recordRaw = raw['record']
+  const directPostId = raw['post_id']
+
+  const tableOk = raw['table'] === undefined || raw['table'] === 'posts'
+  const typeOk = raw['type'] === undefined || raw['type'] === 'INSERT'
+
+  const recObj =
+    recordRaw !== null && typeof recordRaw === 'object'
+      ? recordRaw as Record<string, unknown>
+      : null
+
+  const fromWebhook =
+    recObj !== null &&
+    typeof directPostId !== 'string' &&
+    typeof recObj['id'] === 'string' &&
+    typeof recObj['user_id'] === 'string' &&
+    tableOk &&
+    typeOk
+
+  if (fromWebhook && recObj !== null) {
+    const rec = recObj
+    const sid = rec['spot_id']
+    const spotId =
+      typeof sid === 'string' && sid.trim().length > 0 ? sid.trim() : undefined
+
+    return {
+      postId: typeof rec['id'] === 'string' ? rec['id'] : undefined,
+      posterUserId: typeof rec['user_id'] === 'string' ? rec['user_id'] : undefined,
+      spotId,
+      fromWebhook: true,
+    }
+  }
+
+  const spotRaw = raw['spot_id']
+  const spotId =
+    typeof spotRaw === 'string' && spotRaw.trim().length > 0
+      ? spotRaw.trim()
+      : undefined
+
+  return {
+    postId: typeof raw['post_id'] === 'string' ? raw['post_id'] : undefined,
+    posterUserId:
+      typeof raw['poster_user_id'] === 'string'
+        ? raw['poster_user_id']
+        : undefined,
+    spotId,
+    fromWebhook: false,
+  }
 }
 
 serve(async (req: Request) => {
   try {
     const authorizationHeader = req.headers.get('Authorization')
-    if (!authorizationHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: JSON_HDR,
-      })
-    }
-    const token = authorizationHeader.slice('Bearer '.length)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    let authUserId: string
+    let raw: Record<string, unknown>
     try {
-      const { data: authData, error: authErr } = await supabase.auth.getUser(token)
-      if (authErr || !authData.user) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-          status: 401,
-          headers: JSON_HDR,
-        })
-      }
-      authUserId = authData.user.id
-    } catch (e) {
-      console.error('shadow-point-calculator auth.getUser:', e)
-      return new Response(JSON.stringify({ error: 'internal_error' }), {
-        status: 500,
-        headers: JSON_HDR,
-      })
-    }
-
-    let body: ShadowBody
-    try {
-      body = await req.json() as ShadowBody
+      raw = await req.json() as Record<string, unknown>
     } catch {
       return new Response(JSON.stringify({ error: 'invalid_json' }), {
         status: 400,
@@ -143,28 +169,58 @@ serve(async (req: Request) => {
       })
     }
 
-    const postId = typeof body.post_id === 'string' ? body.post_id : undefined
-    const posterUserId =
-      typeof body.poster_user_id === 'string' ? body.poster_user_id : undefined
-
-    const spotRaw = body.spot_id
-    const spotId =
-      typeof spotRaw === 'string' && spotRaw.trim().length > 0
-        ? spotRaw.trim()
-        : undefined
+    const { postId, posterUserId, spotId, fromWebhook } = normalizePayload(raw)
 
     if (!postId || !posterUserId) {
-      return new Response(JSON.stringify({ error: 'missing_required_fields' }), {
+      return new Response(JSON.stringify({ error: 'eksik_parametre' }), {
         status: 400,
         headers: JSON_HDR,
       })
     }
 
-    if (posterUserId !== authUserId) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: JSON_HDR,
-      })
+    if (fromWebhook) {
+      const svc = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      const token = authorizationHeader?.startsWith('Bearer ')
+        ? authorizationHeader.slice('Bearer '.length)
+        : ''
+      if (!token || token !== svc) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: JSON_HDR,
+        })
+      }
+    } else {
+      if (!authorizationHeader?.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: JSON_HDR,
+        })
+      }
+      const token = authorizationHeader.slice('Bearer '.length)
+
+      try {
+        const { data: authData, error: authErr } = await supabase.auth.getUser(
+          token,
+        )
+        if (authErr || !authData.user) {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: JSON_HDR,
+          })
+        }
+        if (posterUserId !== authData.user.id) {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: JSON_HDR,
+          })
+        }
+      } catch (e) {
+        console.error('shadow-point-calculator auth.getUser:', e)
+        return new Response(JSON.stringify({ error: 'internal_error' }), {
+          status: 500,
+          headers: JSON_HDR,
+        })
+      }
     }
 
     if (!spotId) {
