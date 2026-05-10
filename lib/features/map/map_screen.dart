@@ -34,6 +34,20 @@ import 'package:balikci_app/shared/providers/favorite_provider.dart';
 import 'package:balikci_app/shared/providers/location_provider.dart';
 import 'package:balikci_app/shared/providers/notification_provider.dart';
 
+/// Harita üstü UI modu — "Mera Ekle" yalnızca [MapViewState.clean] iken görünür.
+enum MapViewState {
+  /// Sadece harita; arama odakta değil, liste ve detay kapalı.
+  clean,
+  /// Arama alanı odakta; sonuç listesi henüz yok.
+  searching,
+  /// Arama sonuçları / yakındaki meralar listesi açık.
+  spotList,
+  /// Alt sayfada mera detayı (sheet) açık.
+  spotDetail,
+  /// Mera ekleme tam ekran rotası açık.
+  addingSpot,
+}
+
 /// Harita ekranı — H3 temel implementasyon.
 class MapScreen extends ConsumerStatefulWidget {
   /// Bildirimden gelince doğrudan açılacak mera kimliği.
@@ -127,9 +141,27 @@ class _MapScreenState extends ConsumerState<MapScreen>
   bool get _isUstaOrAbove =>
       _currentUserRank == 'usta' || _currentUserRank == 'deniz_reisi';
 
+  /// Push sırasında [MapViewState.addingSpot] — `context.push` await bitince false.
+  bool _addingSpotRouteOpen = false;
+
+  void _onSearchFocusChanged() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  /// Öncelik: form rotası → detay sheet → sonuç listesi → arama odağı → temiz.
+  MapViewState get _mapViewState {
+    if (_addingSpotRouteOpen) return MapViewState.addingSpot;
+    if (_sheetSpot != null) return MapViewState.spotDetail;
+    if (_searchResults.isNotEmpty) return MapViewState.spotList;
+    if (_searchFocusNode.hasFocus) return MapViewState.searching;
+    return MapViewState.clean;
+  }
+
   @override
   void initState() {
     super.initState();
+    _searchFocusNode.addListener(_onSearchFocusChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final existing = ref.read(userLocationProvider);
@@ -206,6 +238,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
   @override
   void dispose() {
+    _searchFocusNode.removeListener(_onSearchFocusChanged);
     unawaited(_checkinsRealtimeChannel?.unsubscribe());
     _checkinsRealtimeChannel = null;
     _checkinPollTimer?.cancel();
@@ -942,7 +975,30 @@ class _MapScreenState extends ConsumerState<MapScreen>
     final mostRecent = sheetCheckins.isNotEmpty ? sheetCheckins.first : null;
     final sheetDescriptionTrimmed = sheetSpot?.description?.trim();
 
-    return Scaffold(
+    final canPopMapLeavesOverlays =
+        _sheetSpot == null &&
+        _searchResults.isEmpty &&
+        !_searchFocusNode.hasFocus;
+
+    return PopScope(
+      canPop: canPopMapLeavesOverlays,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (!mounted) return;
+        if (_sheetSpot != null) {
+          setState(() => _sheetSpot = null);
+          return;
+        }
+        if (_searchResults.isNotEmpty) {
+          setState(() => _searchResults = const []);
+          return;
+        }
+        if (_searchFocusNode.hasFocus) {
+          _searchFocusNode.unfocus();
+          setState(() {});
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
@@ -1302,28 +1358,42 @@ class _MapScreenState extends ConsumerState<MapScreen>
             ),
           ),
 
-          // Sol alt — mera ekle (tema rengi)
+          // Sol alt — mera ekle (yalnızca saf harita görünümünde)
           Positioned(
             left: 16,
             bottom: mapFabBottom,
-            child: FloatingActionButton.extended(
-              heroTag: 'addSpotFab',
-              onPressed: () async {
-                final ok = await context.push<bool>('/map/add-spot');
-                if (!mounted) return;
-                if (ok == true) unawaited(_refreshSpotsFromRemote());
-              },
-              backgroundColor: AppColors.mapSpotLayerActive,
-              foregroundColor: AppColors.foam,
-              elevation: 3,
-              extendedPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 0,
-              ),
-              icon: const Icon(Icons.add_location_alt, size: 20),
-              label: const Text(
-                'Mera Ekle',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            child: AnimatedOpacity(
+              opacity: _mapViewState == MapViewState.clean ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 200),
+              child: IgnorePointer(
+                ignoring: _mapViewState != MapViewState.clean,
+                child: FloatingActionButton.extended(
+                  heroTag: 'addSpotFab',
+                  onPressed: () async {
+                    setState(() => _addingSpotRouteOpen = true);
+                    try {
+                      final ok = await context.push<bool>('/map/add-spot');
+                      if (!mounted) return;
+                      if (ok == true) unawaited(_refreshSpotsFromRemote());
+                    } finally {
+                      if (mounted) {
+                        setState(() => _addingSpotRouteOpen = false);
+                      }
+                    }
+                  },
+                  backgroundColor: AppColors.mapSpotLayerActive,
+                  foregroundColor: AppColors.foam,
+                  elevation: 3,
+                  extendedPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 0,
+                  ),
+                  icon: const Icon(Icons.add_location_alt, size: 20),
+                  label: const Text(
+                    'Mera Ekle',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
+                ),
               ),
             ),
           ),
@@ -1665,6 +1735,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
             ),
         ],
       ),
+    ),
     );
   }
 }
