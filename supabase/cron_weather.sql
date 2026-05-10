@@ -1,6 +1,9 @@
 -- Open-Meteo önbelleği — Edge Function: weather-cache (12 kıyı + İstanbul ilçe satırları)
 -- Supabase Dashboard > SQL Editor'da çalıştırın.
 --
+-- Akış: Her saat **:00** cron bu Edge'i çağırır → Open-Meteo'dan veri çekilip `weather_cache` dolar.
+-- Flutter istemci **:02** (İstanbul yerel) `weather_cache` okur (işlem bitsin diye 2 dk pay).
+--
 -- Önkoşul: pg_cron + pg_net etkin olmalı.
 -- Vault'a sırlar şöyle eklenir:
 --   SELECT vault.create_secret('eyJ..._ANON_KEY',      'anon_key');
@@ -22,7 +25,7 @@ SELECT cron.unschedule('weather-cache-hourly') WHERE EXISTS (
 
 SELECT cron.schedule(
   'weather-cache-hourly',
-  '2 * * * *',   -- her saat 02:00'de (cron bitişinden 2dk sonra taze veri garantisi)
+  '0 * * * *',   -- her saat başı Open-Meteo → weather_cache
   $$
   SELECT net.http_post(
     url := 'https://bcsihxgekoqwbovbmlog.supabase.co/functions/v1/weather-cache',

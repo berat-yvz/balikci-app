@@ -15,8 +15,10 @@ import 'package:balikci_app/features/weather/providers/istanbul_weather_provider
 import 'package:balikci_app/features/weather/widgets/weekly_forecast_table_card.dart';
 
 /// Detaylı hava durumu ekranı — H9 sprint.
-/// Veri `weather_cache` üzerinden gelir; pg_cron saatte bir `weather-cache` Edge
-/// fonksiyonunu tetikler. Aşağı kaydırma tüm bölgeleri sunucuda yeniler.
+///
+/// Veri `weather_cache` + yerel Drift: sunucu saat başında Edge `weather-cache`
+/// ile Open-Meteo doldurur; uygulama **yalnızca her saat :02** (İstanbul)
+/// `weather_cache` okur. Aşağı kaydırma Edge tetiklemez, yalnızca Drift yenilenir.
 class WeatherScreen extends ConsumerStatefulWidget {
   const WeatherScreen({super.key});
 
@@ -82,8 +84,22 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
               : null;
           return RefreshIndicator(
             color: AppColors.primary,
-            onRefresh: () =>
-                ref.read(istanbulWeatherProvider.notifier).refreshFromServer(),
+            onRefresh: () async {
+              await ref
+                  .read(istanbulWeatherProvider.notifier)
+                  .refreshFromServer();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Sunucu verisi her saat başı yenilenir; uygulama bunu '
+                      'genelde saat :02 geçe çeker. Şimdi yalnızca kayıtlı önbellek yenilendi.',
+                    ),
+                    backgroundColor: AppColors.primary,
+                  ),
+                );
+              }
+            },
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
               children: [

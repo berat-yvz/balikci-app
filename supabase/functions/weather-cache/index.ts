@@ -3,7 +3,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 /**
  * Open-Meteo → weather_cache (12 kıyı bölgesi + İstanbul ilçeleri saatlik).
- * pg_cron ile her saat başı tetiklenir; istemci doğrudan Open-Meteo çağırmaz.
+ * pg_cron ile her saat **başında** (:00) tetiklenir; istemci Open-Meteo çağırmaz
+ * ve weather_cache'i yalnızca ~2 dk sonra (yerel :02) okur.
  *
  * forecast_days=7 — saatlik ~7 gün (hava sekmesi haftalık özet + saatlik tahmin).
  *
