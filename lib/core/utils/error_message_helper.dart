@@ -21,6 +21,12 @@ class ErrorMessageHelper {
           details.contains('row-level security')) {
         return 'Gönderi oluşturulamadı, tekrar giriş yapmayı dene';
       }
+      // Örn. users.bio seçiliyken sunucuda kolon yok → profil / arkadaş listesi patlar
+      if (message.contains('does not exist') &&
+          message.contains('column')) {
+        return 'Profil verisi sunucuda güncelleniyor olabilir.\n'
+            'Bir süre sonra tekrar dene veya uygulamayı son sürüme güncelle.';
+      }
     }
 
     if (error is StorageException) {

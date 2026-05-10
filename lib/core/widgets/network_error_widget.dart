@@ -41,7 +41,8 @@ class NetworkErrorWidget extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'İnternet bağlantınızı kontrol edin.',
+              'İnternetin iyi olsa bile sunucu veya güncelleme kaynaklı olabilir.\n'
+              'Tekrar dene; sürerse uygulamayı güncelle.',
               style: TextStyle(color: AppColors.muted),
               textAlign: TextAlign.center,
             ),
