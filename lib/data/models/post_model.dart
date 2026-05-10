@@ -26,7 +26,7 @@ enum SpotPrivacyLevel {
 /// Sosyal akış gönderisi — Supabase [posts] tablosunun istemci modeli.
 ///
 /// [spotName], [authorUsername], [authorAvatarUrl], [authorRank] posts
-/// tablosunda saklanmaz; sorgularda `author:users(...)` ve
+/// tablosunda saklanmaz; sorgularda `author:users!posts_user_id_fkey(...)` ve
 /// `spot:fishing_spots(name)` join'leri ile doldurulur.
 class PostModel {
   final String id;
@@ -107,7 +107,7 @@ class PostModel {
       parsedSpotName = rawSpot['name'] as String?;
     }
 
-    // author join: author:users(username, avatar_url, rank, email)
+    // author join: author:users!posts_user_id_fkey(...)
     String? rawAuthorUsername;
     String? parsedAuthorAvatarUrl;
     String? parsedAuthorRank;

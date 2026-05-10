@@ -19,12 +19,13 @@ class PostRepository {
   // ─── PostgREST select sabitleri ────────────────────────────────────────────
 
   /// Posts için tam select — author ve spot join'leri dahil.
+  /// `post_likes` nedeniyle posts↔users birden fazla ilişki; embed için FK şart.
   static const _postSelect = '''
     id, user_id, photo_url, caption, fish_species,
     spot_id, spot_privacy_snapshot, spot_district,
     likes_count, comments_count,
     is_deleted, created_at,
-    author:users(username, avatar_url, rank, email),
+    author:users!posts_user_id_fkey(username, avatar_url, rank, email),
     spot:fishing_spots(name)
   ''';
 

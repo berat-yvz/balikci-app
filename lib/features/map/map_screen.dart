@@ -2801,7 +2801,7 @@ class _VipLockedWidget extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Bir mera paylaşırsan +50 puan kazanırsın! 🎣',
+            'Herkese açık mera eklemek +50 puan verir; daha kapalı seçenekler +30 / +10. 🎣',
             style: AppTextStyles.caption.copyWith(color: AppColors.muted),
             textAlign: TextAlign.center,
           ),

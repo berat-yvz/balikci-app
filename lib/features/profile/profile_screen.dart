@@ -69,7 +69,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
 
     final loaded = profileAsync.asData?.value;
-    final resolvedUser = loaded ?? (profileAsync.isLoading ? provisional : null);
+    // Kendi profilinde sunucu henüz satır dönmese bile provizyonel iskelet göster;
+    // aksi halde resolvedUser null kalıp resolvedUser! patlar.
+    final resolvedUser = loaded ??
+        (profileAsync.isLoading ? provisional : (isSelf ? provisional : null));
 
     final needsBlockingSpinner =
         resolvedUser == null && profileAsync.isLoading && provisional == null;

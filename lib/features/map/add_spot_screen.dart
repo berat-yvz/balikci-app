@@ -47,10 +47,10 @@ class _AddSpotScreenState extends State<AddSpotScreen> {
   ];
 
   static const _privacyOptions = [
-    ('public', 'Herkes', '+50 puan (public)', 'Konumun haritada herkese görünür.'),
-    ('friends', 'Takipçiler', 'Arkadaş merası', 'Yalnızca arkadaşlık isteği kabul ettiğin kişiler görür.'),
-    ('private', 'Sadece ben', 'Konum gizli', 'Sadece sen görürsün. Kimseyle paylaşılmaz.'),
-    ('vip', 'VIP (Usta+)', 'Rütbe gerekebilir', 'Usta ve Deniz Reisi rütbesindeki balıkçılar görür.'),
+    ('public', 'Herkes', '+50 puan', 'Konumun haritada herkese görünür.'),
+    ('friends', 'Takipçiler', '+30 puan', 'Yalnızca seni takip edenler görür.'),
+    ('private', 'Sadece ben', '+10 puan', 'Sadece sen görürsün; konum paylaşılmaz.'),
+    ('vip', 'VIP (Usta+)', '+10 puan', 'Usta ve Deniz Reisi görür; ödül +10 (gizli mera ile aynı).'),
   ];
 
   @override
@@ -375,22 +375,22 @@ class _PrivacyInfoBanner extends StatelessWidget {
     final (icon, text, color) = switch (privacy) {
       'public' => (
           Icons.emoji_events_outlined,
-          'Public meranı herkesle paylaşıyorsun — +50 puan kazanırsın. 🎣',
+          'Herkese açık meranı paylaşıyorsun — +50 puan (en yüksek katkı). 🎣',
           AppColors.success,
         ),
       'friends' => (
           Icons.people_outline,
-          'Sadece takipçilerin görebilir — puan kazanmazsın ama gizliliğin korunur.',
+          'Takipçilerin görebilir — mera ekleyince +30 puan; gizliliğin daha yüksek.',
           AppColors.secondary,
         ),
       'private' => (
           Icons.lock_outline,
-          'Sadece sen görürsün — puan yok. Özel noktalarını saklamak için ideal.',
+          'Sadece sen görürsün — yine de +10 puan (küçük katkı ödülü).',
           AppColors.muted,
         ),
       'vip' => (
           Icons.star_outline,
-          'Usta+ rütbesindekiler görebilir — puan yok. VIP takımın için harika.',
+          'Usta ve Deniz Reisi görebilir — +10 puan (gizli mera ile aynı tablo).',
           AppColors.accent,
         ),
       _ => (Icons.info_outline, '', Colors.white54),
