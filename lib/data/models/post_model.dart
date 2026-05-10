@@ -100,11 +100,20 @@ class PostModel {
       parsedSpecies = rawSpecies.map((e) => e.toString()).toList();
     }
 
+    final spotPrivacySnapshot =
+        SpotPrivacyLevel.fromString(json['spot_privacy_snapshot'] as String?);
+
     // spot join: PostgREST nested object veya null
     String? parsedSpotName;
     final rawSpot = json['spot'];
     if (rawSpot is Map<String, dynamic>) {
       parsedSpotName = rawSpot['name'] as String?;
+    }
+
+    String? parsedDistrict = json['spot_district'] as String?;
+    if (spotPrivacySnapshot == SpotPrivacyLevel.vip) {
+      parsedSpotName = null;
+      parsedDistrict = null;
     }
 
     // author join: author:users!posts_user_id_fkey(...)
@@ -134,9 +143,8 @@ class PostModel {
       caption: json['caption'] as String?,
       fishSpecies: parsedSpecies,
       spotId: json['spot_id'] as String?,
-      spotPrivacySnapshot:
-          SpotPrivacyLevel.fromString(json['spot_privacy_snapshot'] as String?),
-      spotDistrict: json['spot_district'] as String?,
+      spotPrivacySnapshot: spotPrivacySnapshot,
+      spotDistrict: parsedDistrict,
       spotName: parsedSpotName,
       authorUsername: resolvedAuthorUsername,
       authorAvatarUrl: parsedAuthorAvatarUrl,

@@ -248,7 +248,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 : _captionController.text.trim(),
             fishSpecies: _combinedFishSpecies(),
             spotId: _resolvedSpot()?.id,
-            spotDistrict: _resolvedSpot()?.description,
+            spotDistrict: _resolvedSpot()?.privacyLevel == 'vip'
+                ? null
+                : _resolvedSpot()?.description,
           );
       ref.invalidate(globalFeedProvider);
 

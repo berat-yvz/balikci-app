@@ -18,6 +18,52 @@ class WeatherService {
   static final _db = SupabaseService.client;
   static final _driftDb = AppDatabase.instance;
 
+  /// `istanbul` kıyı anahtarı bazen worker'da diğerlerinden eski kalabiliyor; taze ilçe
+  /// satırı varsa aynı paketi bölge adıyla sunarız (Open-Meteo verisi, ~merkez koordinat).
+  static const Duration _coastalStaleFallbackAfter = Duration(minutes: 75);
+  static const String _istanbulFreshFallbackRowKey = 'istanbul_ilce_fatih';
+
+  static Future<RegionalWeatherData> _applyCoastalFreshRowFallback(
+    String regionKey,
+    RegionalWeatherData pack,
+  ) async {
+    if (pack.isFromCache || regionKey != 'istanbul') return pack;
+    final age =
+        DateTime.now().toUtc().difference(pack.current.fetchedAt.toUtc());
+    if (age <= _coastalStaleFallbackAfter) return pack;
+
+    try {
+      final response = await _db
+          .from('weather_cache')
+          .select()
+          .eq('region_key', _istanbulFreshFallbackRowKey)
+          .maybeSingle();
+      if (response == null) return pack;
+      final row = Map<String, dynamic>.from(response);
+      final fb = WeatherModel.fromJson(row);
+      if (!fb.fetchedAt.isAfter(pack.current.fetchedAt)) return pack;
+
+      final meta = weatherRegions[regionKey];
+      if (meta == null) return pack;
+      final hourly = hourlyFromOpenMeteoV1Bundle(fb.dataJson);
+      final current = fb.withDisplayRegion(
+        regionKey: regionKey,
+        lat: meta['lat']!,
+        lng: meta['lng']!,
+      );
+      return RegionalWeatherData(hourly: hourly, current: current);
+    } catch (e, st) {
+      debugPrint(
+        '[WeatherService] istanbul tazelik yedeği başarısız: $e\n$st',
+      );
+      return pack;
+    }
+  }
+
+  static Future<void> triggerBackendCacheRefresh() async {
+    await _db.functions.invoke('weather-cache', body: {});
+  }
+
   /// Bölge anahtarına göre cache satırı + saatlik liste.
   /// Supabase başarısızsa Drift local cache'e düşer.
   static Future<RegionalWeatherData?> fetchRegionalWeatherFromSupabase(
@@ -38,36 +84,38 @@ class WeatherService {
             'source=${(row['data_json'] as Map<String, dynamic>?)?['source']}');
       }
       final current = WeatherModel.fromJson(row);
+      final hourly = hourlyFromOpenMeteoV1Bundle(current.dataJson);
+      final pack = await _applyCoastalFreshRowFallback(
+        regionKey,
+        hourly.isEmpty && current.dataJson?['source'] != 'open_meteo_v1'
+            ? RegionalWeatherData(hourly: const [], current: current)
+            : RegionalWeatherData(hourly: hourly, current: current),
+      );
       try {
+        final c = pack.current;
         await _driftDb.into(_driftDb.localWeather).insertOnConflictUpdate(
           LocalWeatherCompanion.insert(
             regionKey: regionKey,
-            tempC: Value(current.temperature ?? 0.0),
-            windSpeedKmh: Value(current.windspeed ?? 0.0),
-            waveHeightM: Value(current.waveHeight ?? 0.0),
-            humidity: Value(current.humidity ?? 0.0),
-            cachedAt: current.fetchedAt,
-            windDirection: Value(current.windDirection),
-            cloudCover: Value(current.cloudCover),
-            visibilityKm: Value(current.visibilityKm),
-            precipitation: Value(current.precipitation),
-            seaSurfaceTemperature: Value(current.seaSurfaceTemperature),
-            pressureHpa: Value(current.pressureHpa),
+            tempC: Value(c.temperature ?? 0.0),
+            windSpeedKmh: Value(c.windspeed ?? 0.0),
+            waveHeightM: Value(c.waveHeight ?? 0.0),
+            humidity: Value(c.humidity ?? 0.0),
+            cachedAt: c.fetchedAt,
+            windDirection: Value(c.windDirection),
+            cloudCover: Value(c.cloudCover),
+            visibilityKm: Value(c.visibilityKm),
+            precipitation: Value(c.precipitation),
+            seaSurfaceTemperature: Value(c.seaSurfaceTemperature),
+            pressureHpa: Value(c.pressureHpa),
             dataJson: Value(
-              current.dataJson != null
-                  ? jsonEncode(current.dataJson)
-                  : null,
+              c.dataJson != null ? jsonEncode(c.dataJson) : null,
             ),
           ),
         );
       } catch (e, st) {
         debugPrint('[WeatherService] Drift write hatası: $e\n$st');
       }
-      final hourly = hourlyFromOpenMeteoV1Bundle(current.dataJson);
-      if (hourly.isEmpty && current.dataJson?['source'] != 'open_meteo_v1') {
-        return RegionalWeatherData(hourly: const [], current: current);
-      }
-      return RegionalWeatherData(hourly: hourly, current: current);
+      return pack;
     } catch (e, st) {
       debugPrint('[WeatherService] Supabase fetch hatası ($regionKey): $e\n$st');
       try {

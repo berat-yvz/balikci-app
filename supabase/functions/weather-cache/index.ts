@@ -11,9 +11,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  * İlçe anahtarları: `lib/core/constants/istanbul_ilce_weather.dart` ile aynı olmalı.
  */
 
+// İstanbul / İzmir en sonda: soğuk başlangıçta ilk iki istek bazen zaman aşımı veya
+// ağ gecikmesiyle kalıyordu; diğer bölgeler ısındıktan sonra aynı çalıştırmada güncellenir.
 const REGIONS: Record<string, { lat: number; lng: number }> = {
-  istanbul: { lat: 41.015, lng: 28.979 },
-  izmir: { lat: 38.423, lng: 27.143 },
   antalya: { lat: 36.896, lng: 30.713 },
   trabzon: { lat: 41.005, lng: 39.716 },
   canakkale: { lat: 40.144, lng: 26.406 },
@@ -24,6 +24,8 @@ const REGIONS: Record<string, { lat: number; lng: number }> = {
   mersin: { lat: 36.812, lng: 34.641 },
   mugla: { lat: 37.215, lng: 28.363 },
   balikesir: { lat: 39.649, lng: 27.889 },
+  istanbul: { lat: 41.015, lng: 28.979 },
+  izmir: { lat: 38.423, lng: 27.143 },
 }
 
 /** WMO weathercode (Open-Meteo) — kısa balıkçı özeti (Flutter FishingWeatherUtils ile uyumlu niyet). */
@@ -61,10 +63,22 @@ type HourlyPoint = {
   humidity: number | null
 }
 
+const FETCH_TIMEOUT_MS = 55_000
+
 async function fetchJson(url: string): Promise<Record<string, unknown>> {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return (await res.json()) as Record<string, unknown>
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS)
+  try {
+    const res = await fetch(url, { signal: ctrl.signal })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return (await res.json()) as Record<string, unknown>
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((r) => setTimeout(r, ms))
 }
 
 function mergeOpenMeteo(
@@ -242,6 +256,26 @@ async function upsertWeatherRegion(
   if (error) throw new Error(error.message)
 }
 
+async function upsertWeatherRegionWithRetry(
+  supabase: SupabaseClient,
+  regionKey: string,
+  lat: number,
+  lng: number,
+  fetchedAt: string,
+): Promise<void> {
+  let last: unknown
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await upsertWeatherRegion(supabase, regionKey, lat, lng, fetchedAt)
+      return
+    } catch (e) {
+      last = e
+      await sleep(500 * (attempt + 1))
+    }
+  }
+  throw last
+}
+
 serve(async (req: Request) => {
   if (req.method !== 'POST' && req.method !== 'OPTIONS') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
@@ -272,20 +306,34 @@ serve(async (req: Request) => {
 
   for (const [regionKey, coords] of Object.entries(REGIONS)) {
     try {
-      await upsertWeatherRegion(supabase, regionKey, coords.lat, coords.lng, fetchedAt)
+      await upsertWeatherRegionWithRetry(
+        supabase,
+        regionKey,
+        coords.lat,
+        coords.lng,
+        fetchedAt,
+      )
       results.push(`✓ ${regionKey}`)
     } catch (err) {
       results.push(`✗ ${regionKey}: ${String(err)}`)
     }
+    await sleep(120)
   }
 
   for (const row of ISTANBUL_ILCE_REGIONS) {
     try {
-      await upsertWeatherRegion(supabase, row.region_key, row.lat, row.lng, fetchedAt)
+      await upsertWeatherRegionWithRetry(
+        supabase,
+        row.region_key,
+        row.lat,
+        row.lng,
+        fetchedAt,
+      )
       results.push(`✓ ${row.region_key}`)
     } catch (err) {
       results.push(`✗ ${row.region_key}: ${String(err)}`)
     }
+    await sleep(120)
   }
 
   return new Response(JSON.stringify({ ok: true, fetched_at: fetchedAt, results }), {

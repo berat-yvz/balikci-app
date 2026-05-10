@@ -174,7 +174,8 @@ class PostRepository {
             'fish_species': fishSpecies,
             'spot_id': spotId,
             'spot_privacy_snapshot': spotPrivacySnapshot,
-            'spot_district': spotDistrict,
+            'spot_district':
+                spotPrivacySnapshot == 'vip' ? null : spotDistrict,
           })
           .select(_postSelect)
           .single();
@@ -197,7 +198,8 @@ class PostRepository {
 
   // ─── Arkadaşlar akışı ─────────────────────────────────────────────────────
 
-  /// Takip edilen kullanıcıların public ve friends görünürlüklü gönderileri.
+  /// Takip edilen kullanıcıların public, friends ve vip görünürlüklü gönderileri.
+  /// (VIP mera adı/konumu istemcide maskelenir.)
   /// Cursor-based pagination: [cursor] verilirse o tarihten öncesi döner.
   Future<List<PostModel>> getFriendsFeed({
     int limit = 20,
@@ -226,7 +228,7 @@ class PostRepository {
             .select(_postSelect)
             .inFilter('user_id', followingIds)
             .eq('is_deleted', false)
-            .inFilter('spot_privacy_snapshot', ['public', 'friends'])
+            .inFilter('spot_privacy_snapshot', ['public', 'friends', 'vip'])
             .lt('created_at', cursor.toIso8601String())
             .order('created_at', ascending: false)
             .limit(limit);
@@ -236,7 +238,7 @@ class PostRepository {
             .select(_postSelect)
             .inFilter('user_id', followingIds)
             .eq('is_deleted', false)
-            .inFilter('spot_privacy_snapshot', ['public', 'friends'])
+            .inFilter('spot_privacy_snapshot', ['public', 'friends', 'vip'])
             .order('created_at', ascending: false)
             .limit(limit);
       }
@@ -253,7 +255,7 @@ class PostRepository {
 
   // ─── Türkiye akışı ────────────────────────────────────────────────────────
 
-  /// Tüm kullanıcıların public gönderileri — "Türkiye" sekmesi.
+  /// Tüm kullanıcıların public ve vip (maskelemeli) gönderileri — "Türkiye" sekmesi.
   Future<List<PostModel>> getGlobalFeed({
     int limit = 20,
     DateTime? cursor,
@@ -265,7 +267,7 @@ class PostRepository {
             .from('posts')
             .select(_postSelect)
             .eq('is_deleted', false)
-            .eq('spot_privacy_snapshot', 'public')
+            .inFilter('spot_privacy_snapshot', ['public', 'vip'])
             .lt('created_at', cursor.toIso8601String())
             .order('created_at', ascending: false)
             .limit(limit);
@@ -274,7 +276,7 @@ class PostRepository {
             .from('posts')
             .select(_postSelect)
             .eq('is_deleted', false)
-            .eq('spot_privacy_snapshot', 'public')
+            .inFilter('spot_privacy_snapshot', ['public', 'vip'])
             .order('created_at', ascending: false)
             .limit(limit);
       }

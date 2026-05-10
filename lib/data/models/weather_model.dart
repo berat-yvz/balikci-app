@@ -99,6 +99,35 @@ class WeatherModel {
     return _weatherCode;
   }
 
+  /// Sunucudan gelen taze ilçe satırını seçili kıyı bölgesi (ör. istanbul) adıyla göstermek için.
+  WeatherModel withDisplayRegion({
+    required String regionKey,
+    required double lat,
+    required double lng,
+  }) {
+    return WeatherModel(
+      id: id,
+      lat: lat,
+      lng: lng,
+      dataJson: dataJson,
+      temperature: temperature,
+      windspeed: windspeed,
+      windDirection: windDirection,
+      waveHeight: waveHeight,
+      seaSurfaceTemperature: seaSurfaceTemperature,
+      precipitation: precipitation,
+      humidity: humidity,
+      visibilityKm: visibilityKm,
+      cloudCover: cloudCover,
+      pressureHpa: pressureHpa,
+      pressureHpa3hAgo: pressureHpa3hAgo,
+      weatherCode: _weatherCode,
+      fishingSummary: fishingSummary,
+      fetchedAt: fetchedAt,
+      regionKey: regionKey,
+    );
+  }
+
   factory WeatherModel.fromJson(Map<String, dynamic> json) {
     final dataJson = json['data_json'] as Map<String, dynamic>?;
     if (dataJson != null && dataJson['source'] == 'open_meteo_v1') {
@@ -173,7 +202,12 @@ class WeatherModel {
   /// konfigürasyonlarında suffix olmaksızın ("2026-05-08T10:00:00") döner.
   /// Dart bu durumda yerel saat (UTC+3 İstanbul) olarak yorumlar → 3 saatlik
   /// sapma. Timezone bilgisi yoksa UTC olduğunu varsayarak düzeltiyoruz.
-  static DateTime _parseTimestampAsUtc(String s) {
+  static DateTime _parseTimestampAsUtc(String raw) {
+    var s = raw.trim();
+    // PostgREST bazen "2026-05-10 20:00:04.261+00" (T yok) döner.
+    if (s.contains(' ') && !s.contains('T')) {
+      s = s.replaceFirst(' ', 'T');
+    }
     final hasTimezone = s.endsWith('Z') ||
         s.contains('+') ||
         (s.length > 19 && s[19] == '-');

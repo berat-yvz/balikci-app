@@ -61,6 +61,26 @@ class IstanbulWeatherNotifier extends AsyncNotifier<IstanbulWeatherData> {
     });
   }
 
+  /// Aşağı kaydırma: Edge `weather-cache` tetiklenir; işlem uzun sürebileceği için
+  /// kısa aralıklarla DB'den bu bölge tekrar okunur.
+  Future<void> refreshFromServer() async {
+    try {
+      await WeatherService.triggerBackendCacheRefresh();
+    } catch (e, st) {
+      debugPrint('[IstanbulWeatherProvider] weather-cache invoke: $e\n$st');
+    }
+    const step = Duration(seconds: 10);
+    for (var i = 0; i < 12; i++) {
+      if (i > 0) await Future<void>.delayed(step);
+      await _silentReload(ref.read(selectedWeatherRegionProvider));
+      final v = state.asData?.value;
+      if (v == null) continue;
+      final age =
+          DateTime.now().toUtc().difference(v.current.fetchedAt.toUtc());
+      if (age.inMinutes < 55) return;
+    }
+  }
+
   /// Hava sekmesi açılınca / uygulama öne gelince — yükleme spinner’ı olmadan güncelle.
   Future<void> pullLatestSilently() async {
     final regionKey = ref.read(selectedWeatherRegionProvider);

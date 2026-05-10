@@ -120,11 +120,21 @@ void main() {
       expect(post.displaySpotName, '📍 Bölge');
     });
 
-    test('vip spot — displaySpotName "🔒 VIP Mera"', () {
+    test(
+      "vip spot — API'de gelse bile ad/konum parse edilmez; displaySpotName maskeli",
+      () {
       final post = PostModel.fromJson(
-        _baseJson(spotPrivacySnapshot: 'vip'),
+        _baseJson(
+          spotPrivacySnapshot: 'vip',
+          spotDistrict: 'Gizli İlçe',
+          spotId: 'spot-secret',
+          spot: {'name': 'Gizli Mera'},
+        ),
       );
       expect(post.displaySpotName, '🔒 VIP Mera');
+      expect(post.spotName, isNull);
+      expect(post.spotDistrict, isNull);
+      expect(post.spotId, 'spot-secret');
     });
 
     test('friends spot — displaySpotName gerçek adı verir', () {

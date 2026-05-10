@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:intl/intl.dart' hide TextDirection;
+
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/weather_regions.dart';
 import 'package:balikci_app/core/utils/moon_phase_utils.dart';
@@ -12,23 +14,9 @@ import 'package:balikci_app/core/utils/weekly_forecast_aggregate.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
 import 'package:balikci_app/features/weather/widgets/weekly_forecast_table_card.dart';
 
-//
-// içinde 'weather-cache-hourly' cron kaydı mevcut (her saat başTODO(cron): supabase/migrations/20260504000005_verify_and_register_cron_jobs.sqlı, 0 * * * *).
-// Ancak cron 'x-webhook-secret' header'ı kullanıyor, 'Authorization: Bearer' yok.
-// Eğer weather_cache tablosu güncellenmiyorsa Supabase Dashboard > Database >
-// Extensions > pg_cron aktif olduğunu ve app.supabase_url / app.webhook_secret
-// ayarlarının SET edildiğini kontrol edin:
-//   ALTER DATABASE postgres SET app.supabase_url = 'https://<proje>.supabase.co';
-//   ALTER DATABASE postgres SET app.webhook_secret = '<secret>';
-// Alternatif doğrudan anon_key ile çağrı:
-//   SELECT cron.schedule('weather-update', '0 * * * *',
-//     $$ SELECT net.http_post(
-//          url:='https://<PROJE>.supabase.co/functions/v1/weather-cache',
-//          headers:'{"Authorization":"Bearer <ANON_KEY>","Content-Type":"application/json"}'::jsonb,
-//          body:'{}'::jsonb) $$);
-
 /// Detaylı hava durumu ekranı — H9 sprint.
-/// Veri sunucu `weather_cache` üzerinden gelir; periyodik yenileme + sekme/ön plan dönüşü.
+/// Veri `weather_cache` üzerinden gelir; pg_cron saatte bir `weather-cache` Edge
+/// fonksiyonunu tetikler. Aşağı kaydırma tüm bölgeleri sunucuda yeniler.
 class WeatherScreen extends ConsumerStatefulWidget {
   const WeatherScreen({super.key});
 
@@ -94,10 +82,8 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
               : null;
           return RefreshIndicator(
             color: AppColors.primary,
-            onRefresh: () async {
-              ref.invalidate(istanbulWeatherProvider);
-              await ref.read(istanbulWeatherProvider.future);
-            },
+            onRefresh: () =>
+                ref.read(istanbulWeatherProvider.notifier).refreshFromServer(),
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
               children: [
@@ -306,24 +292,44 @@ class _FetchedAtLabelState extends State<_FetchedAtLabel> {
     super.dispose();
   }
 
-  String _format() {
-    // toUtc() ile karşılaştırma tabanını sabitleriz; negatif fark (saat sapması)
-    // "az önce" olarak gösterilir.
+  String _formatRelative() {
     final diff = DateTime.now().toUtc().difference(widget.fetchedAt.toUtc());
-    if (diff.isNegative || diff.inMinutes < 1) return 'Az önce';
-    if (diff.inHours < 1) return '${diff.inMinutes} dakika önce';
-    if (diff.inHours < 24) return '${diff.inHours} saat önce';
-    return 'Dün güncellendi';
+    if (diff.isNegative || diff.inMinutes < 1) return 'Az önce güncellendi';
+    final mins = diff.inMinutes;
+    if (mins < 60) return '$mins dakika önce güncellendi';
+    final hours = mins ~/ 60;
+    final rem = mins % 60;
+    if (mins < 24 * 60) {
+      if (rem >= 5) return '$hours saat $rem dakika önce güncellendi';
+      return '$hours saat önce güncellendi';
+    }
+    return 'Uzun süredir güncellenmedi';
   }
 
   @override
   Widget build(BuildContext context) {
+    final abs =
+        DateFormat('dd.MM.yyyy HH:mm').format(widget.fetchedAt.toLocal());
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        'Son güncelleme: ${_format()}',
-        style: AppTextStyles.caption.copyWith(color: AppColors.muted),
-        textAlign: TextAlign.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Sunucu kaydı: $abs',
+            style: AppTextStyles.caption.copyWith(color: AppColors.muted),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _formatRelative(),
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.muted.withValues(alpha: 0.88),
+              fontSize: 12,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
