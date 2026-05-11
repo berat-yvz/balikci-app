@@ -42,6 +42,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _imagePicker = ImagePicker();
   bool _uploadingAvatar = false;
+  final GlobalKey _postsSectionKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +106,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         isUploadingAvatar: _uploadingAvatar,
         onPickAvatar:
             isSelf ? () => _pickAndUploadAvatar(displayUser) : null,
+        postsSectionKey: _postsSectionKey,
       );
     }
 
@@ -208,12 +210,14 @@ class _ProfileContent extends ConsumerWidget {
   final bool isSelf;
   final bool isUploadingAvatar;
   final VoidCallback? onPickAvatar;
+  final GlobalKey postsSectionKey;
 
   const _ProfileContent({
     required this.user,
     required this.isSelf,
     required this.isUploadingAvatar,
     required this.onPickAvatar,
+    required this.postsSectionKey,
   });
 
   @override
@@ -318,7 +322,20 @@ class _ProfileContent extends ConsumerWidget {
             const SizedBox(height: 20),
 
             // ADIM 9: Özet istatistik kartları 3'lü grid
-            _SummaryStatsGrid(userId: user.id),
+            _SummaryStatsGrid(
+              userId: user.id,
+              onPostsTap: () {
+                final ctx = postsSectionKey.currentContext;
+                if (ctx != null) {
+                  Scrollable.ensureVisible(
+                    ctx,
+                    duration: const Duration(milliseconds: 340),
+                    curve: Curves.easeInOut,
+                    alignment: 0.06,
+                  );
+                }
+              },
+            ),
             const SizedBox(height: 20),
 
             _SectionTitle(title: 'Rütbe İlerlemesi'),
@@ -394,9 +411,17 @@ class _ProfileContent extends ConsumerWidget {
 
             // Gönderi grid'i — her kullanıcı profili için
             const SizedBox(height: 24),
-            _SectionTitle(title: 'Gönderileri'),
-            const SizedBox(height: 10),
-            _PostGridSection(userId: user.id),
+            SizedBox(
+              key: postsSectionKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _SectionTitle(title: 'Gönderileri'),
+                  const SizedBox(height: 10),
+                  _PostGridSection(userId: user.id),
+                ],
+              ),
+            ),
 
             if (isSelf) ...[
               const SizedBox(height: 24),
@@ -1014,24 +1039,34 @@ class _FriendsStatRow extends ConsumerWidget {
 
 class _SummaryStatsGrid extends ConsumerWidget {
   final String userId;
-  const _SummaryStatsGrid({required this.userId});
+  final VoidCallback onPostsTap;
+
+  const _SummaryStatsGrid({
+    required this.userId,
+    required this.onPostsTap,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(profileSummaryStatsProvider(userId));
     return async.when(
-      loading: () => _SummaryStatsPlaceholderRow(userId: userId),
+      loading: () => _SummaryStatsPlaceholderRow(
+        userId: userId,
+        onPostsTap: onPostsTap,
+      ),
       error: (Object error, StackTrace stackTrace) => _SummaryStatsValuesRow(
         userId: userId,
         posts: '—',
         spots: '—',
         checkins: '—',
+        onPostsTap: onPostsTap,
       ),
       data: (s) => _SummaryStatsValuesRow(
         userId: userId,
         posts: '${s.postCount}',
         spots: '${s.spotCount}',
         checkins: '${s.checkinCount}',
+        onPostsTap: onPostsTap,
       ),
     );
   }
@@ -1039,7 +1074,12 @@ class _SummaryStatsGrid extends ConsumerWidget {
 
 class _SummaryStatsPlaceholderRow extends StatelessWidget {
   final String userId;
-  const _SummaryStatsPlaceholderRow({required this.userId});
+  final VoidCallback onPostsTap;
+
+  const _SummaryStatsPlaceholderRow({
+    required this.userId,
+    required this.onPostsTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1048,6 +1088,7 @@ class _SummaryStatsPlaceholderRow extends StatelessWidget {
       posts: '…',
       spots: '…',
       checkins: '…',
+      onPostsTap: onPostsTap,
     );
   }
 }
@@ -1057,12 +1098,14 @@ class _SummaryStatsValuesRow extends StatelessWidget {
   final String posts;
   final String spots;
   final String checkins;
+  final VoidCallback onPostsTap;
 
   const _SummaryStatsValuesRow({
     required this.userId,
     required this.posts,
     required this.spots,
     required this.checkins,
+    required this.onPostsTap,
   });
 
   @override
@@ -1074,6 +1117,7 @@ class _SummaryStatsValuesRow extends StatelessWidget {
             emoji: '📸',
             value: posts,
             label: 'Gönderiler',
+            onTap: onPostsTap,
           ),
         ),
         const SizedBox(width: 10),
@@ -1093,6 +1137,7 @@ class _SummaryStatsValuesRow extends StatelessWidget {
             emoji: '🎣',
             value: checkins,
             label: 'Bildirimlerim',
+            onTap: () => context.push(AppRoutes.notifications),
           ),
         ),
       ],
@@ -1116,46 +1161,65 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(14);
-    final child = Container(
+    final inner = Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(right: 8, bottom: 10),
+          child: Column(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 24)),
+              const SizedBox(height: 6),
+              Text(
+                value,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+        const Positioned(
+          right: 2,
+          bottom: 2,
+          child: Icon(
+            Icons.chevron_right,
+            size: 14,
+            color: AppColors.muted,
+          ),
+        ),
+      ],
+    );
+
+    final decorated = Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF132236),
         borderRadius: radius,
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.20)),
       ),
-      child: Column(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 24)),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(color: AppColors.muted, fontSize: 12),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+      child: inner,
     );
 
-    if (onTap == null) return child;
+    if (onTap == null) return decorated;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: radius,
-        child: child,
+        child: decorated,
       ),
     );
   }

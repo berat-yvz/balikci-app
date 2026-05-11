@@ -5,8 +5,75 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/weather_regions.dart';
 import 'package:balikci_app/data/models/fishing_score.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
+import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_detail_screen.dart';
+import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_model.dart';
+import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_provider.dart';
+import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_screen.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
 import 'package:balikci_app/shared/providers/fishing_score_provider.dart';
+
+Future<void> _navigateToFishSpecies(
+  BuildContext context,
+  WidgetRef ref,
+  FishSpeciesTip tip,
+) async {
+  try {
+    final list = await ref.read(fishEncyclopediaProvider.future);
+    FishEncyclopediaEntry? found;
+    for (final e in list) {
+      if (e.id == tip.id) {
+        found = e;
+        break;
+      }
+    }
+    if (found == null) {
+      final lower = tip.name.toLowerCase();
+      for (final e in list) {
+        if (e.name.toLowerCase() == lower) {
+          found = e;
+          break;
+        }
+      }
+    }
+    if (!context.mounted) return;
+    if (found != null) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => FishDetailScreen(fish: found!),
+        ),
+      );
+      return;
+    }
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          backgroundColor: AppColors.navy,
+          appBar: AppBar(
+            title: const Text('Balık Bilgisi'),
+            backgroundColor: AppColors.navy,
+            foregroundColor: AppColors.foam,
+          ),
+          body: const FishEncyclopediaScreen(),
+        ),
+      ),
+    );
+  } catch (_) {
+    if (!context.mounted) return;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          backgroundColor: AppColors.navy,
+          appBar: AppBar(
+            title: const Text('Balık Bilgisi'),
+            backgroundColor: AppColors.navy,
+            foregroundColor: AppColors.foam,
+          ),
+          body: const FishEncyclopediaScreen(),
+        ),
+      ),
+    );
+  }
+}
 
 String _stripTipPrefix(String m) {
   var s = m.trim();
@@ -216,7 +283,7 @@ class _RegionTitle extends StatelessWidget {
 
 // ── Ana / yarın kartı ───────────────────────────────────────────────────────
 
-class _ForecastInsightCard extends StatelessWidget {
+class _ForecastInsightCard extends ConsumerWidget {
   final String title;
   final DateTime date;
   final FishingScore score;
@@ -352,7 +419,7 @@ class _ForecastInsightCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ac = _accent(score.labelColor);
     final tone = _toneWord(score.score);
     final hasDetail =
@@ -516,25 +583,33 @@ class _ForecastInsightCard extends StatelessWidget {
                     ...score.suggestedSpecies.map((s) {
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 11,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.navy.withValues(alpha: 0.55),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () =>
+                                _navigateToFishSpecies(context, ref, s),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color:
-                                  AppColors.primary.withValues(alpha: 0.28),
-                            ),
-                          ),
-                          child: Text(
-                            s.name,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.foam,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 11,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.navy.withValues(alpha: 0.55),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppColors.primary
+                                      .withValues(alpha: 0.28),
+                                ),
+                              ),
+                              child: Text(
+                                s.name,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.foam,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -548,25 +623,41 @@ class _ForecastInsightCard extends StatelessWidget {
               SizedBox(height: emphasize ? 14 : 10),
               Align(
                 alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () => _openDetailSheet(context),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.muted,
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  icon: Icon(
-                    Icons.article_outlined,
-                    size: 17,
-                    color: AppColors.primary.withValues(alpha: 0.95),
-                  ),
-                  label: Text(
-                    'Detayları göster',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary.withValues(alpha: 0.95),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => _openDetailSheet(context),
+                    borderRadius: BorderRadius.circular(8),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 48),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Detayları göster',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.95),
+                              ),
+                            ),
+                            const Spacer(),
+                            Icon(
+                              Icons.chevron_right,
+                              size: 16,
+                              color: AppColors.muted,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
