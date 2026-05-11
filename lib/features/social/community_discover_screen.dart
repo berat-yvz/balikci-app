@@ -336,13 +336,24 @@ class _DiscoverUserTile extends ConsumerWidget {
             case SocialEdgeKind.self:
               return const SizedBox.shrink();
             case SocialEdgeKind.mutualFriend:
-              return Text(
-                'Arkadaş',
-                style: TextStyle(
-                  color: AppColors.success,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                ),
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Arkadaş',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               );
             case SocialEdgeKind.outgoingPending:
               return TextButton(
@@ -390,10 +401,18 @@ class _DiscoverUserTile extends ConsumerWidget {
                 child: const Text('Kabul', style: TextStyle(fontSize: 12)),
               );
             case SocialEdgeKind.stranger:
-              return FilledButton.tonal(
-                style: FilledButton.styleFrom(
+              return ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 onPressed: () async {
                   try {
@@ -422,7 +441,10 @@ class _DiscoverUserTile extends ConsumerWidget {
                     }
                   }
                 },
-                child: const Text('İstek', style: TextStyle(fontSize: 12)),
+                child: const Text(
+                  'İstek',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                ),
               );
           }
         },

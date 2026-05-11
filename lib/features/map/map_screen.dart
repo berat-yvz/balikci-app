@@ -2258,25 +2258,28 @@ class _SheetSecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = AppColors.foam.withValues(alpha: 0.92);
-    return OutlinedButton.icon(
+    const fill = Color(0xFF132236);
+    return ElevatedButton.icon(
       onPressed: onPressed,
-      icon: Icon(icon, size: 20, color: fg),
+      icon: Icon(icon, size: 20, color: Colors.white),
       label: Text(
         label,
-        style: TextStyle(
-          color: fg,
+        style: const TextStyle(
+          color: Colors.white,
           fontSize: 14,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
         ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      style: OutlinedButton.styleFrom(
+      style: ElevatedButton.styleFrom(
+        elevation: 0,
+        backgroundColor: fill,
+        foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
         minimumSize: const Size(0, 48),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
+        side: const BorderSide(color: AppColors.primary, width: 1.5),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),

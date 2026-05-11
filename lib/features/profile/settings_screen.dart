@@ -28,7 +28,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Çıkış Yap'),
-          content: const Text('Hesabından çıkış yapmak istediğine emin misin?'),
+          content: const Text('Hesabından çıkmak istediğine emin misin?'),
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -75,11 +75,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final shouldClear = await showDialog<bool>(
       context: context,
       builder: (context) {
+        final errorColor = Theme.of(context).colorScheme.error;
         return AlertDialog(
-          title: const Text('Harita önbelleği silinsin mi?'),
-          content: const Text(
-            'İnternetsiz bölgelerde harita yeniden yüklenene kadar görünmeyebilir.',
-          ),
+          title: const Text('Önbelleği Temizle'),
+          content: const Text('Harita önbelleği silinecek. Devam?'),
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -87,7 +86,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.accent,
+                backgroundColor: errorColor,
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.of(context).pop(true),
@@ -228,25 +227,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             height: 56,
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.accent,
+                foregroundColor: Theme.of(context).colorScheme.error,
                 side: BorderSide(
-                  color: AppColors.accent.withValues(alpha: 0.5),
+                  color: Theme.of(context).colorScheme.error.withValues(
+                        alpha: 0.85,
+                      ),
                 ),
               ),
               onPressed: _clearingCache ? null : _confirmAndClearCache,
               icon: _clearingCache
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.accent,
+                        color: Theme.of(context).colorScheme.error,
                       ),
                     )
-                  : const Icon(Icons.delete_outline, size: 24),
-              label: const Text(
+                  : Icon(
+                      Icons.delete_outline,
+                      size: 24,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+              label: Text(
                 'Önbelleği Temizle',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.error,
+                ),
               ),
             ),
           ),
@@ -289,7 +298,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         color: AppColors.danger,
                       ),
                     )
-                  : const Icon(Icons.chevron_right, color: Colors.white38),
+                  : null,
               onTap: _signingOut ? null : _confirmAndSignOut,
             ),
           ),
