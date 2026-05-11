@@ -290,8 +290,8 @@ class _MapNavItem extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
-        splashColor: AppColors.teal.withValues(alpha: 0.35),
-        highlightColor: AppColors.foam.withValues(alpha: 0.12),
+        splashColor: Colors.white.withValues(alpha: 0.22),
+        highlightColor: Colors.white.withValues(alpha: 0.14),
         child: SizedBox(
           width: 100,
           child: Column(
@@ -303,27 +303,29 @@ class _MapNavItem extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isActive
-                      ? AppColors.mapSpotLayerActive
+                      ? Colors.white
                       : AppColors.mapSpotLayerInactive,
                   border: Border.all(
                     color: isActive
-                        ? AppColors.primary.withValues(alpha: 0.55)
+                        ? Colors.white.withValues(alpha: 0.95)
                         : AppColors.muted.withValues(alpha: 0.35),
                     width: 2.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withValues(
-                        alpha: isActive ? 0.38 : 0.08,
-                      ),
-                      blurRadius: isActive ? 16 : 10,
+                      color: isActive
+                          ? Colors.white.withValues(alpha: 0.35)
+                          : AppColors.primary.withValues(alpha: 0.08),
+                      blurRadius: isActive ? 14 : 10,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Icon(
                   isActive ? Icons.map_rounded : Icons.map_outlined,
-                  color: isActive ? AppColors.primary : AppColors.muted,
+                  color: isActive
+                      ? const Color(0xFF0D1B2E)
+                      : AppColors.muted,
                   size: 32,
                 ),
               ),
@@ -334,7 +336,7 @@ class _MapNavItem extends StatelessWidget {
                   fontSize: 12,
                   fontWeight:
                       isActive ? FontWeight.w800 : FontWeight.w500,
-                  color: isActive ? AppColors.primary : AppColors.muted,
+                  color: isActive ? Colors.white : AppColors.muted,
                 ),
               ),
               const SizedBox(height: 2),
@@ -342,8 +344,7 @@ class _MapNavItem extends StatelessWidget {
                 height: 2,
                 width: 36,
                 decoration: BoxDecoration(
-                  color:
-                      isActive ? AppColors.primary : Colors.transparent,
+                  color: isActive ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(1),
                 ),
               ),
@@ -384,8 +385,8 @@ class _NavItem extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        splashColor: AppColors.teal.withValues(alpha: 0.35),
-        highlightColor: AppColors.foam.withValues(alpha: 0.12),
+        splashColor: Colors.white.withValues(alpha: 0.22),
+        highlightColor: Colors.white.withValues(alpha: 0.14),
         child: SizedBox(
           width: compact ? 68 : 72,
           height: 64,
@@ -394,7 +395,7 @@ class _NavItem extends StatelessWidget {
             children: [
               Icon(
                 isActive ? activeIcon : icon,
-                color: isActive ? AppColors.primary : AppColors.muted,
+                color: isActive ? Colors.white : AppColors.muted,
                 size: iconSize,
               ),
               SizedBox(height: compact ? 3 : 4),
@@ -404,7 +405,7 @@ class _NavItem extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: fontSize,
-                  color: isActive ? AppColors.primary : AppColors.muted,
+                  color: isActive ? Colors.white : AppColors.muted,
                   fontWeight:
                       isActive ? FontWeight.w800 : FontWeight.w500,
                 ),
@@ -415,7 +416,7 @@ class _NavItem extends StatelessWidget {
                 width: 32,
                 decoration: BoxDecoration(
                   color:
-                      isActive ? AppColors.primary : Colors.transparent,
+                      isActive ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(1),
                 ),
               ),
