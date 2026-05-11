@@ -134,13 +134,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onTap: () => context.push(AppRoutes.notificationsSettings),
           ),
           const Divider(height: 32),
-          ListTile(
-            leading: const Icon(Icons.privacy_tip_outlined,
-                color: Colors.white70),
-            title: const Text('Gizlilik',
-                style: TextStyle(fontWeight: FontWeight.w700)),
-            subtitle: const Text('Yakında'),
-            enabled: false,
+          MouseRegion(
+            cursor: SystemMouseCursors.basic,
+            child: Opacity(
+              opacity: 0.45,
+              child: ListTile(
+                enabled: false,
+                leading: const Icon(
+                  Icons.privacy_tip_outlined,
+                  color: AppColors.muted,
+                ),
+                title: Text(
+                  'Gizlilik',
+                  style: AppTextStyles.body.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.muted,
+                  ),
+                ),
+                subtitle: Text(
+                  'Yakında',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.muted,
+                  ),
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 32),
 

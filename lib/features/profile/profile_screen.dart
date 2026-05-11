@@ -552,9 +552,38 @@ class _ScoreRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Sürdürülebilirlik',
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    Row(
+                      children: [
+                        const Text(
+                          'Sürdürülebilirlik',
+                          style:
+                              TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: () => showDialog<void>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Sürdürülebilirlik Puanı'),
+                              content: const Text(
+                                'Yakaladıktan sonra bıraktığın balık sayısını ölçer. '
+                                'Her bırakılan balık puan kazandırır.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('Anladım'),
+                                ),
+                              ],
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.info_outline,
+                            size: 16,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -725,11 +754,11 @@ class _RankProgress extends ConsumerWidget {
             ),
             const SizedBox(height: 10),
             ClipRRect(
-              borderRadius: BorderRadius.circular(5),
+              borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: clampedProgress,
-                minHeight: 10,
-                backgroundColor: AppColors.surface,
+                minHeight: 8,
+                backgroundColor: const Color(0xFF132236),
                 valueColor:
                     const AlwaysStoppedAnimation<Color>(AppColors.primary),
               ),
