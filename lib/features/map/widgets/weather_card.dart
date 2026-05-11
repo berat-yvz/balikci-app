@@ -181,3 +181,76 @@ class WeatherCard extends ConsumerWidget {
     );
   }
 }
+
+/// Harita üstü minimize görünümü — [WeatherCard] ile aynı provider kaynağı.
+class MapWeatherCollapsedPill extends ConsumerWidget {
+  const MapWeatherCollapsedPill({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final weatherAsync = ref.watch(istanbulWeatherProvider);
+    final fishingAsync = ref.watch(fishingScoreProvider);
+
+    return weatherAsync.when(
+      loading: () => Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const SizedBox(
+            height: 14,
+            width: 14,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      ),
+      error: (Object error, StackTrace stackTrace) => const SizedBox.shrink(),
+      data: (data) {
+        final w = data.current;
+        final fishing = fishingAsync.when(
+          data: (v) => v,
+          loading: () => null,
+          error: (Object e, StackTrace stackTrace) => null,
+        );
+
+        final int score = fishing != null
+            ? fishing.score
+            : FishingWeatherUtils.getFishingScore(w);
+        final temp = w.tempCelsius.toStringAsFixed(0);
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.wb_sunny_outlined,
+                  size: 14,
+                  color: AppColors.foam,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '$temp° · $score',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
