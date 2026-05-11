@@ -18,47 +18,59 @@ class NotificationListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncNotifications = ref.watch(myNotificationsProvider);
+    final showMarkAllRead = asyncNotifications.maybeWhen(
+      data: (list) => list.isNotEmpty,
+      orElse: () => false,
+    );
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Bildirimler'),
         actions: [
-          TextButton.icon(
-            onPressed: () async {
-              final repo = ref.read(notificationRepositoryProvider);
-              try {
-                await repo.markAllAsRead();
-                ref.invalidate(myNotificationsProvider);
-                ref.invalidate(unreadCountProvider);
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Tüm okunmamış bildirimler okundu ve listeden kaldırıldı',
+          if (showMarkAllRead)
+            TextButton.icon(
+              onPressed: () async {
+                final repo = ref.read(notificationRepositoryProvider);
+                try {
+                  await repo.markAllAsRead();
+                  ref.invalidate(myNotificationsProvider);
+                  ref.invalidate(unreadCountProvider);
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Tüm okunmamış bildirimler okundu ve listeden kaldırıldı',
+                      ),
+                      backgroundColor: AppColors.success,
                     ),
-                    backgroundColor: AppColors.success,
-                  ),
-                );
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(ErrorMessageHelper.toUserMessage(e, fallback: 'İşlem başarısız.')),
-                    backgroundColor: AppColors.danger,
-                  ),
-                );
-              }
-            },
-            icon: const Icon(Icons.done_all_outlined),
-            label: const Text('Tümünü Oku'),
-          ),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        ErrorMessageHelper.toUserMessage(
+                          e,
+                          fallback: 'İşlem başarısız.',
+                        ),
+                      ),
+                      backgroundColor: AppColors.danger,
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.done_all_outlined),
+              label: const Text('Tümünü Oku'),
+            ),
         ],
       ),
       body: asyncNotifications.when(
         data: (notifications) {
           if (notifications.isEmpty) {
-            return const _NotificationEmptyState();
+            return _NotificationEmptyState(
+              onOpenMap: () => context.go(AppRoutes.home),
+            );
           }
 
           return RefreshIndicator(
@@ -242,23 +254,25 @@ class _NotificationTile extends StatelessWidget {
 }
 
 class _NotificationEmptyState extends StatelessWidget {
-  const _NotificationEmptyState();
+  final VoidCallback onOpenMap;
+
+  const _NotificationEmptyState({required this.onOpenMap});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.notifications_rounded,
               size: 80,
               color: AppColors.muted,
             ),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               'Henüz bildirim yok',
               style: TextStyle(
                 fontSize: 22,
@@ -266,14 +280,34 @@ class _NotificationEmptyState extends StatelessWidget {
                 color: AppColors.foam,
               ),
             ),
-            SizedBox(height: 8),
-            Text(
+            const SizedBox(height: 8),
+            const Text(
               'Yeni gelişmeleri kaçırmamak için\ntakip etmeye devam et.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
                 color: AppColors.muted,
                 height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: onOpenMap,
+                icon: const Icon(Icons.map_outlined),
+                label: const Text(
+                  'Haritayı Aç',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
               ),
             ),
           ],

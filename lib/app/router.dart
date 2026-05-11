@@ -264,10 +264,17 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: AppRoutes.socialHub,
-                pageBuilder: (context, state) => _fadeSlidePage(
-                  state: state,
-                  child: const FriendsHubScreen(),
-                ),
+                pageBuilder: (context, state) {
+                  final raw = state.extra;
+                  final idx = switch (raw) {
+                    final int i => i,
+                    _ => 0,
+                  };
+                  return _fadeSlidePage(
+                    state: state,
+                    child: FriendsHubScreen(initialTabIndex: idx),
+                  );
+                },
               ),
               GoRoute(
                 path: AppRoutes.socialLeaderboard,

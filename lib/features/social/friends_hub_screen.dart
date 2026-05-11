@@ -6,12 +6,20 @@ import 'package:balikci_app/features/social/friends_list_screen.dart';
 
 /// Arkadaş listesi + balıkçı keşfi — akış üzerindeki küçük girişten açılır.
 class FriendsHubScreen extends StatelessWidget {
-  const FriendsHubScreen({super.key});
+  /// [CommunityDiscoverScreen] sekmesi için `1` geçirilir ([GoRouter] `extra`).
+  final int initialTabIndex;
+
+  const FriendsHubScreen({
+    super.key,
+    this.initialTabIndex = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final tabIndex = initialTabIndex.clamp(0, 1);
     return DefaultTabController(
       length: 2,
+      initialIndex: tabIndex,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(

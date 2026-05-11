@@ -41,50 +41,59 @@ class _PickSpotLocationScreenState extends State<PickSpotLocationScreen> {
   @override
   Widget build(BuildContext context) {
     final center = _picked ?? widget.initial ?? _fallback;
-    final bottomPad = MediaQuery.of(context).padding.bottom;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    const double kButtonHeight = 52;
+    const double kBarTopPad = 8;
+    const double kBarBottomPad = 16;
+    final double mapBottomReserve =
+        bottomInset + kBarBottomPad + kButtonHeight + kBarTopPad;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Konum Seç')),
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: center,
-              initialZoom: 14,
-              onTap: (_, point) {
-                setState(() => _picked = point);
-              },
-            ),
-            children: [
-              TileLayer(
-                urlTemplate:
-                    'https://{s}.basemaps.cartocdn.com'
-                    '/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                subdomains: const ['a', 'b', 'c', 'd'],
-                userAgentPackageName: 'com.balikci.app',
-                maxNativeZoom: 19,
-                keepBuffer: 4,
-                panBuffer: 2,
-                evictErrorTileStrategy:
-                    EvictErrorTileStrategy.notVisibleRespectMargin,
+          Padding(
+            padding: EdgeInsets.only(bottom: mapBottomReserve),
+            child: FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: center,
+                initialZoom: 14,
+                onTap: (_, point) {
+                  setState(() => _picked = point);
+                },
               ),
-              if (_picked != null)
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: _picked!,
-                      width: 48,
-                      height: 48,
-                      child: const Icon(
-                        Icons.place,
-                        color: AppColors.pinPublic,
-                        size: 44,
-                      ),
-                    ),
-                  ],
+              children: [
+                TileLayer(
+                  urlTemplate:
+                      'https://{s}.basemaps.cartocdn.com'
+                      '/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                  subdomains: const ['a', 'b', 'c', 'd'],
+                  userAgentPackageName: 'com.balikci.app',
+                  maxNativeZoom: 19,
+                  keepBuffer: 4,
+                  panBuffer: 2,
+                  evictErrorTileStrategy:
+                      EvictErrorTileStrategy.notVisibleRespectMargin,
                 ),
-            ],
+                if (_picked != null)
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: _picked!,
+                        width: 48,
+                        height: 48,
+                        child: const Icon(
+                          Icons.place,
+                          color: AppColors.pinPublic,
+                          size: 44,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
           ),
 
           // Üst hint banner
@@ -122,24 +131,31 @@ class _PickSpotLocationScreenState extends State<PickSpotLocationScreen> {
             ),
           ),
 
-          // Alt onay butonu
+          // Alt onay — SafeArea ile sabit; harita üst padding ile ortalanır
           Positioned(
-            bottom: bottomPad + 16,
-            left: 16,
-            right: 16,
-            child: SizedBox(
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: _picked != null ? _confirm : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _picked != null
-                      ? AppColors.teal
-                      : AppColors.muted,
-                ),
-                icon: const Icon(Icons.check_circle_outline),
-                label: const Text(
-                  'Bu Konumu Onayla',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, kBarTopPad, 16, kBarBottomPad),
+                child: SizedBox(
+                  height: kButtonHeight,
+                  child: ElevatedButton.icon(
+                    onPressed: _picked != null ? _confirm : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _picked != null
+                          ? AppColors.teal
+                          : AppColors.muted,
+                    ),
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text(
+                      'Bu Konumu Onayla',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                    ),
+                  ),
                 ),
               ),
             ),

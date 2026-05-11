@@ -8,6 +8,22 @@ import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/widgets/network_error_widget.dart';
 import 'package:balikci_app/core/constants/storage_buckets.dart';
 import 'package:balikci_app/shared/providers/friend_request_provider.dart';
+import 'package:balikci_app/shared/widgets/rank_badge.dart';
+
+String _rankKeyForBadge(String rank) {
+  switch (rank) {
+    case 'olta_kurdu':
+    case 'usta':
+    case 'deniz_reisi':
+      return rank;
+    default:
+      return 'acemi';
+  }
+}
+
+void _openDiscover(BuildContext context) {
+  context.push(AppRoutes.socialHub, extra: 1);
+}
 
 /// Karşılıklı takip (kabul edilmiş arkadaşlıklar).
 /// [forUserId] null → oturumdaki kullanıcı; dolu → o kullanıcının arkadaş listesi.
@@ -40,14 +56,27 @@ class FriendsListScreen extends ConsumerWidget {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text(
-                  forUserId == null ? emptyOwn : emptyOther,
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.muted,
-                    fontSize: 16,
-                    height: 1.4,
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      forUserId == null ? emptyOwn : emptyOther,
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.muted,
+                        fontSize: 16,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () => _openDiscover(context),
+                        child: const Text('Balıkçı Keşfet →'),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -61,45 +90,74 @@ class FriendsListScreen extends ConsumerWidget {
               }
             },
             child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: users.length,
+              padding: const EdgeInsets.fromLTRB(0, 8, 0, 16),
+              itemCount: users.length + 1,
               separatorBuilder: (_, _) => const Divider(height: 1),
               itemBuilder: (context, i) {
-                final u = users[i];
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: AppColors.primaryLight,
-                    backgroundImage: u.avatarUrl != null &&
-                            u.avatarUrl!.isNotEmpty
-                        ? NetworkImage(_publicAvatarUrl(u.avatarUrl!))
-                        : null,
-                    child: u.avatarUrl == null || u.avatarUrl!.isEmpty
-                        ? Text(
-                            u.username.isNotEmpty
-                                ? u.username[0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        : null,
-                  ),
-                  title: Text(
-                    u.username,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
+                if (i < users.length) {
+                  final u = users[i];
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: AppColors.primaryLight,
+                      backgroundImage: u.avatarUrl != null &&
+                              u.avatarUrl!.isNotEmpty
+                          ? NetworkImage(_publicAvatarUrl(u.avatarUrl!))
+                          : null,
+                      child: u.avatarUrl == null || u.avatarUrl!.isEmpty
+                          ? Text(
+                              u.username.isNotEmpty
+                                  ? u.username[0].toUpperCase()
+                                  : '?',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : null,
                     ),
+                    title: Text(
+                      u.username,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            '${u.totalScore} puan',
+                            style: TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 13,
+                            ),
+                          ),
+                          RankBadge(
+                            rank: _rankKeyForBadge(u.rank),
+                            size: RankBadgeSize.small,
+                          ),
+                        ],
+                      ),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: Colors.white38,
+                    ),
+                    onTap: () =>
+                        context.push('${AppRoutes.profile}/${u.id}'),
+                  );
+                }
+                return Padding(
+                  padding:
+                      const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: OutlinedButton(
+                    onPressed: () => _openDiscover(context),
+                    child: const Text('Balıkçı Keşfet →'),
                   ),
-                  subtitle: Text(
-                    '${u.totalScore} puan',
-                    style: TextStyle(color: AppColors.muted, fontSize: 13),
-                  ),
-                  trailing:
-                      const Icon(Icons.chevron_right, color: Colors.white38),
-                  onTap: () =>
-                      context.push('${AppRoutes.profile}/${u.id}'),
                 );
               },
             ),
