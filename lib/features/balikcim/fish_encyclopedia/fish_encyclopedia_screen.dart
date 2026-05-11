@@ -213,75 +213,124 @@ class _FishCard extends StatelessWidget {
 
   const _FishCard({required this.entry, required this.onTap});
 
+  Widget _leadingEmoji() {
+    final raw = entry.emoji.trim();
+    if (raw.isEmpty) {
+      return Text(
+        '🐟',
+        style: AppTextStyles.h2.copyWith(
+          fontSize: 28,
+          fontWeight: FontWeight.normal,
+          height: 1,
+        ),
+      );
+    }
+    return Text(
+      raw,
+      style: AppTextStyles.h2.copyWith(
+        fontSize: 36,
+        fontWeight: FontWeight.normal,
+        height: 1,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final baitLine = entry.baits.take(2).join(' • ');
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.encyclopediaCard,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        minVerticalPadding: 14,
-        leading: Text(
-          entry.emoji,
-          style: AppTextStyles.h2.copyWith(
-            fontSize: 36,
-            fontWeight: FontWeight.normal,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 80, maxHeight: 100),
+      child: ClipRect(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.encyclopediaCard,
+            borderRadius: BorderRadius.circular(12),
           ),
-        ),
-        title: Text(
-          entry.name,
-          style: AppTextStyles.body.copyWith(
-            color: AppColors.foam,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                fishCategoryDisplayLabel(entry.category),
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.primary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 44,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: _leadingEmoji(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            entry.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.body.copyWith(
+                              color: AppColors.foam,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                flex: 0,
+                                fit: FlexFit.loose,
+                                child: IgnorePointer(
+                                  child: AppFilterChip(
+                                    label: fishCategoryDisplayLabel(
+                                      entry.category,
+                                    ),
+                                    isSelected: true,
+                                    dense: true,
+                                    onTap: () {},
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  baitLine.isEmpty ? '—' : baitLine,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: AppColors.muted,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.muted,
+                      size: 26,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                baitLine.isEmpty ? '—' : baitLine,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.muted,
-                  fontSize: 16,
-                ),
-              ),
-              if (entry.istanbulGear?.hasDisplayableData ?? false) ...[
-                const SizedBox(height: 6),
-                Text(
-                  'Önerilen takım (İstanbul veri seti)',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.accent.withValues(alpha: 0.95),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ],
+            ),
           ),
         ),
-        trailing: const Icon(
-          Icons.chevron_right,
-          color: AppColors.muted,
-          size: 28,
-        ),
-        onTap: onTap,
       ),
     );
   }

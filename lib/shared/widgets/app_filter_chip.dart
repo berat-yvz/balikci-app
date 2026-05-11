@@ -8,23 +8,33 @@ class AppFilterChip extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
+  /// Dar satırlar (ör. liste kartı etiketi); daha küçük dikey boyut ve yazı.
+  final bool dense;
+
   const AppFilterChip({
     super.key,
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.dense = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final minH = dense ? 28.0 : 48.0;
+    final pad = dense
+        ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+        : const EdgeInsets.symmetric(horizontal: 14, vertical: 10);
+    final fontSize = dense ? 11.0 : 14.0;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          constraints: const BoxConstraints(minHeight: 48),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          constraints: BoxConstraints(minHeight: minH),
+          padding: pad,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: isSelected ? AppColors.primary : Colors.transparent,
@@ -36,10 +46,12 @@ class AppFilterChip extends StatelessWidget {
           child: Text(
             label,
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: isSelected ? Colors.white : AppColors.muted,
               fontWeight: FontWeight.w600,
-              fontSize: 14,
+              fontSize: fontSize,
             ),
           ),
         ),
