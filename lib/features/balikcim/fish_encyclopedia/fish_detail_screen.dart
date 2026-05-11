@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_model.dart';
+import 'package:balikci_app/shared/widgets/app_filter_chip.dart';
 
 String _mevsimTurkce(String s) {
   switch (s) {
@@ -56,17 +57,61 @@ Color _zorlukRenk(String d) {
 }
 
 /// [Navigator.push] ile açılan balık detayı — bölüm sırası İstanbul Olta El Kitabı akışına göre.
-class FishDetailScreen extends StatelessWidget {
+class FishDetailScreen extends StatefulWidget {
   final FishEncyclopediaEntry fish;
 
   const FishDetailScreen({super.key, required this.fish});
 
   @override
+  State<FishDetailScreen> createState() => _FishDetailScreenState();
+}
+
+class _FishDetailScreenState extends State<FishDetailScreen> {
+  final GlobalKey _generalKey = GlobalKey();
+  final GlobalKey _seasonKey = GlobalKey();
+  final GlobalKey _baitKey = GlobalKey();
+  final GlobalKey _avlanmaKey = GlobalKey();
+  final GlobalKey _tackleKey = GlobalKey();
+  final GlobalKey _tipsKey = GlobalKey();
+  final GlobalKey _legalKey = GlobalKey();
+  final GlobalKey _funFactKey = GlobalKey();
+
+  /// Yalnızca chip tıklanınca güncellenir (scroll ile senkronize edilmez).
+  String? _selectedNavLabel;
+
+  void _scrollToSection(GlobalKey key, String label) {
+    setState(() => _selectedNavLabel = label);
+    final ctx = key.currentContext;
+    if (ctx != null) {
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final fish = widget.fish;
     final mevsimMetni = fish.seasons.map(_mevsimTurkce).join('  •  ');
     final aylarMetni = fish.bestMonths.isEmpty
         ? '—'
         : fish.bestMonths.map(_ayAdiTr).join(', ');
+    final gear = fish.istanbulGear;
+    final hasGear = gear != null && gear.hasDisplayableData;
+
+    final navEntries = <({String label, GlobalKey key})>[
+      (label: 'Genel', key: _generalKey),
+      (label: 'Mevsim', key: _seasonKey),
+      (label: 'Yemler', key: _baitKey),
+      (label: 'Avlanma', key: _avlanmaKey),
+      if (hasGear) (label: 'Takım', key: _tackleKey),
+      (label: 'İpuçları', key: _tipsKey),
+      if (fish.minLegalSizeCm != null)
+        (label: 'Mevzuat', key: _legalKey),
+      (label: 'Bilgi', key: _funFactKey),
+    ];
 
     return Scaffold(
       backgroundColor: AppColors.navy,
@@ -82,294 +127,376 @@ class FishDetailScreen extends StatelessWidget {
         foregroundColor: AppColors.foam,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              color: AppColors.encyclopediaCard,
-              child: Column(
-                children: [
-                  Text(
-                    fish.emoji,
-                    style: AppTextStyles.h1.copyWith(
-                      fontSize: 64,
-                      fontWeight: FontWeight.normal,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    fish.name,
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.h2.copyWith(
-                      color: AppColors.foam,
-                      fontSize: 22,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    fish.scientificName,
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.muted,
-                      fontSize: 15,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    fishCategoryDisplayLabel(fish.category),
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.primary,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-              child: Center(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: _zorlukRenk(fish.difficulty).withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: _zorlukRenk(fish.difficulty).withValues(alpha: 0.65),
-                    ),
-                  ),
-                  child: Text(
-                    'Zorluk: ${_zorlukEtiket(fish.difficulty)}',
-                    style: AppTextStyles.body.copyWith(
-                      color: _zorlukRenk(fish.difficulty),
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.navy,
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.muted.withValues(alpha: 0.22),
                 ),
               ),
             ),
-            _Section(
-              title: '🌤️ Hangi mevsimde tutulur?',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.only(bottom: 8, top: 4),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
                 children: [
-                  Text(
-                    mevsimMetni.isEmpty ? '—' : mevsimMetni,
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.foam,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'En iyi aylar',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.muted,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    aylarMetni,
-                    style: AppTextStyles.body.copyWith(
-                      color: AppColors.foam,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (fish.habitats.isNotEmpty) ...[
-                    const SizedBox(height: 14),
-                    Text(
-                      'Öne çıkan yerler',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.muted,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                  for (final e in navEntries) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: AppFilterChip(
+                        label: e.label,
+                        isSelected: _selectedNavLabel == e.label,
+                        onTap: () => _scrollToSection(e.key, e.label),
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    ...fish.habitats.map((h) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '• ',
-                              style: AppTextStyles.body.copyWith(
-                                color: AppColors.accent,
-                                fontSize: 17,
-                              ),
-                            ),
-                            Expanded(
-                              child: Text(
-                                h,
-                                style: AppTextStyles.body.copyWith(
-                                  color: AppColors.muted,
-                                  fontSize: 16,
+                  ],
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    key: _generalKey,
+                    color: AppColors.navy,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          color: AppColors.encyclopediaCard,
+                          child: Column(
+                            children: [
+                              Text(
+                                fish.emoji,
+                                style: AppTextStyles.h1.copyWith(
+                                  fontSize: 64,
+                                  fontWeight: FontWeight.normal,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                  ],
-                ],
-              ),
-            ),
-            _Section(
-              title: '🪱 Hangi yemlere gelir?',
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: fish.baits.map((b) => _Chip(b)).toList(),
-              ),
-            ),
-            _Section(
-              title: '🎣 Nasıl avlanır?',
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: fish.techniques.map((t) => _Chip(t)).toList(),
-              ),
-            ),
-            if (fish.istanbulGear case final gear?
-                when gear.hasDisplayableData) ...[
-              _Section(
-                title: '🎒 Önerilen takım',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'İstanbul av skorunda kullanılan tür dosyasından (olta, teknik, iğne, ağırlık). '
-                      'Mevcut deniz ve mevzuata göre uyarlamanız gerekebilir.',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.muted,
-                        fontSize: 14,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    if (gear.tackle.isNotEmpty)
-                      _GearDetailLine(label: 'Yem / takım', value: gear.tackle),
-                    if (gear.technique.isNotEmpty)
-                      _GearDetailLine(label: 'Teknik', value: gear.technique),
-                    if (gear.hookSize.isNotEmpty)
-                      _GearDetailLine(label: 'İğne numarası', value: gear.hookSize),
-                    if (gear.weightGr > 0)
-                      _GearDetailLine(
-                        label: 'Ağırlık (öneri)',
-                        value: '${gear.weightGr} g',
-                      ),
-                    if (gear.weightGr <= 0 &&
-                        gear.technique.toLowerCase().contains('yüzey'))
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Text(
-                          'Yüzey avı — kurşun ekini koşula göre ayarlayın.',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.muted,
-                            fontSize: 14,
+                              const SizedBox(height: 8),
+                              Text(
+                                fish.name,
+                                textAlign: TextAlign.center,
+                                style: AppTextStyles.h2.copyWith(
+                                  color: AppColors.foam,
+                                  fontSize: 22,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                fish.scientificName,
+                                textAlign: TextAlign.center,
+                                style: AppTextStyles.caption.copyWith(
+                                  color: AppColors.muted,
+                                  fontSize: 15,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                fishCategoryDisplayLabel(fish.category),
+                                style: AppTextStyles.caption.copyWith(
+                                  color: AppColors.primary,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-            _Section(
-              title: '💡 İpuçları',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: fish.tips.map((tip) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '• ',
-                          style: AppTextStyles.body.copyWith(
-                            color: AppColors.accent,
-                            fontSize: 17,
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            tip,
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.muted,
-                              fontSize: 16,
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _zorlukRenk(fish.difficulty)
+                                    .withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: _zorlukRenk(fish.difficulty)
+                                      .withValues(alpha: 0.65),
+                                ),
+                              ),
+                              child: Text(
+                                'Zorluk: ${_zorlukEtiket(fish.difficulty)}',
+                                style: AppTextStyles.body.copyWith(
+                                  color: _zorlukRenk(fish.difficulty),
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ],
                     ),
-                  );
-                }).toList(),
-              ),
-            ),
-            if (fish.minLegalSizeCm != null)
-              _Section(
-                title: '📏 Minimum boy (av mevzuatı)',
-                child: Text(
-                  '${fish.minLegalSizeCm} cm',
-                  style: AppTextStyles.h3.copyWith(
-                    color: AppColors.accent,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
                   ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.22),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.45),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '💬 İlginç bilgi',
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.foam,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                  Container(
+                    key: _seasonKey,
+                    child: _Section(
+                      title: '🌤️ Hangi mevsimde tutulur?',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            mevsimMetni.isEmpty ? '—' : mevsimMetni,
+                            style: AppTextStyles.body.copyWith(
+                              color: AppColors.foam,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'En iyi aylar',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.muted,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            aylarMetni,
+                            style: AppTextStyles.body.copyWith(
+                              color: AppColors.foam,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (fish.habitats.isNotEmpty) ...[
+                            const SizedBox(height: 14),
+                            Text(
+                              'Öne çıkan yerler',
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppColors.muted,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            ...fish.habitats.map((h) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '• ',
+                                      style: AppTextStyles.body.copyWith(
+                                        color: AppColors.accent,
+                                        fontSize: 17,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        h,
+                                        style: AppTextStyles.body.copyWith(
+                                          color: AppColors.muted,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ],
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      fish.funFact,
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.foam,
-                        fontSize: 16,
-                        fontStyle: FontStyle.italic,
-                        height: 1.35,
+                  ),
+                  Container(
+                    key: _baitKey,
+                    child: _Section(
+                      title: '🪱 Hangi yemlere gelir?',
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: fish.baits.map((b) => _Chip(b)).toList(),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  Container(
+                    key: _avlanmaKey,
+                    child: _Section(
+                      title: '🎣 Nasıl avlanır?',
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children:
+                            fish.techniques.map((t) => _Chip(t)).toList(),
+                      ),
+                    ),
+                  ),
+                  if (fish.istanbulGear case final gear?
+                      when gear.hasDisplayableData)
+                    Container(
+                      key: _tackleKey,
+                      child: _Section(
+                        title: '🎒 Önerilen takım',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'İstanbul av skorunda kullanılan tür dosyasından (olta, teknik, iğne, ağırlık). '
+                              'Mevcut deniz ve mevzuata göre uyarlamanız gerekebilir.',
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppColors.muted,
+                                fontSize: 14,
+                                height: 1.35,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            if (gear.tackle.isNotEmpty)
+                              _GearDetailLine(
+                                label: 'Yem / takım',
+                                value: gear.tackle,
+                              ),
+                            if (gear.technique.isNotEmpty)
+                              _GearDetailLine(
+                                label: 'Teknik',
+                                value: gear.technique,
+                              ),
+                            if (gear.hookSize.isNotEmpty)
+                              _GearDetailLine(
+                                label: 'İğne numarası',
+                                value: gear.hookSize,
+                              ),
+                            if (gear.weightGr > 0)
+                              _GearDetailLine(
+                                label: 'Ağırlık (öneri)',
+                                value: '${gear.weightGr} g',
+                              ),
+                            if (gear.weightGr <= 0 &&
+                                gear.technique.toLowerCase().contains('yüzey'))
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Text(
+                                  'Yüzey avı — kurşun ekini koşula göre ayarlayın.',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: AppColors.muted,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  Container(
+                    key: _tipsKey,
+                    child: _Section(
+                      title: '💡 İpuçları',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: fish.tips.map((tip) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '• ',
+                                  style: AppTextStyles.body.copyWith(
+                                    color: AppColors.accent,
+                                    fontSize: 17,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    tip,
+                                    style: AppTextStyles.body.copyWith(
+                                      color: AppColors.muted,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                  if (fish.minLegalSizeCm != null)
+                    Container(
+                      key: _legalKey,
+                      child: _Section(
+                        title: '📏 Minimum boy (av mevzuatı)',
+                        child: Text(
+                          '${fish.minLegalSizeCm} cm',
+                          style: AppTextStyles.h3.copyWith(
+                            color: AppColors.accent,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  Container(
+                    key: _funFactKey,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.22),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.45),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '💬 İlginç bilgi',
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.foam,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              fish.funFact,
+                              style: AppTextStyles.body.copyWith(
+                                color: AppColors.foam,
+                                fontSize: 16,
+                                fontStyle: FontStyle.italic,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
               ),
             ),
-            const SizedBox(height: 32),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
