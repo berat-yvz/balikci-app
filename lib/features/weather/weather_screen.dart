@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart' show DateFormat;
 
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/weather_regions.dart';
@@ -287,104 +288,24 @@ class _WeatherLoadingSkeleton extends StatelessWidget {
   }
 }
 
-// ── Son güncelleme etiketi — dakikada bir kendi kendine yenilenir ─────────────
+// ── Son güncelleme etiketi ────────────────────────────────────────────────────
 
-/// Her 60 saniyede rebuild eden küçük etiket.
-/// Saat başı poll'lar arasında "X dakika önce" metninin donup kalmasını önler.
-class _FetchedAtLabel extends StatefulWidget {
+class _FetchedAtLabel extends StatelessWidget {
   final DateTime fetchedAt;
   const _FetchedAtLabel({required this.fetchedAt});
 
   @override
-  State<_FetchedAtLabel> createState() => _FetchedAtLabelState();
-}
-
-class _FetchedAtLabelState extends State<_FetchedAtLabel> {
-  late Timer _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 60), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(covariant _FetchedAtLabel oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.fetchedAt != widget.fetchedAt) {
-      setState(() {});
-    }
-  }
-
-  String _formatAbsoluteIstanbul() {
-    final tr = widget.fetchedAt.toUtc().add(const Duration(hours: 3));
-    return '${tr.day.toString().padLeft(2, '0')}.${tr.month.toString().padLeft(2, '0')}.${tr.year} '
-        '${tr.hour.toString().padLeft(2, '0')}:${tr.minute.toString().padLeft(2, '0')}';
-  }
-
-  bool _sameIstanbulWallHour(DateTime fetchedUtc, DateTime nowUtc) {
-    return istanbulWallDateOnlyFromUtc(fetchedUtc) ==
-            istanbulWallDateOnlyFromUtc(nowUtc) &&
-        istanbulWallHourFromUtc(fetchedUtc) ==
-            istanbulWallHourFromUtc(nowUtc);
-  }
-
-  String _formatRelative() {
-    final nowU = DateTime.now().toUtc();
-    final fetchU = widget.fetchedAt.toUtc();
-
-    // Saat başı cron ~XX:00 TSİ; aynı yerel saat dilimindeyseniz paket hâlâ "bu saat" verisidir.
-    if (_sameIstanbulWallHour(widget.fetchedAt, nowU)) {
-      final hh = istanbulWallHourFromUtc(fetchU).toString().padLeft(2, '0');
-      return 'Bu saatlik veri (sunucu $hh:00 TSİ çekimi)';
-    }
-
-    final rawSecs = nowU.difference(fetchU).inSeconds;
-    final secs = rawSecs < 0 ? 0 : rawSecs;
-    if (secs < 60) return 'Az önce güncellendi';
-    final mins = secs ~/ 60;
-    if (mins < 60) return '$mins dakika önce güncellendi';
-    final hours = mins ~/ 60;
-    final rem = mins % 60;
-    if (mins < 24 * 60) {
-      if (rem >= 5) return '$hours saat $rem dakika önce güncellendi';
-      return '$hours saat önce güncellendi';
-    }
-    return 'Uzun süredir güncellenmedi';
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final hhmm = DateFormat('HH:mm').format(fetchedAt.toLocal());
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Column(
-        children: [
-          Text(
-            _formatRelative(),
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.muted.withValues(alpha: 0.88),
-              fontSize: 12,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Sunucu ölçümü (TSİ): ${_formatAbsoluteIstanbul()}',
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.muted.withValues(alpha: 0.65),
-              fontSize: 11,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+      child: Text(
+        'Son güncelleme: $hhmm',
+        style: AppTextStyles.caption.copyWith(
+          color: AppColors.muted.withValues(alpha: 0.88),
+          fontSize: 12,
+        ),
+        textAlign: TextAlign.center,
       ),
     );
   }

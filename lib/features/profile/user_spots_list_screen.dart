@@ -11,6 +11,15 @@ import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/favorite_provider.dart';
 import 'package:balikci_app/shared/widgets/skeleton_widget.dart';
 
+extension StringExt on String {
+  String get titleCase => split(' ')
+      .map(
+        (w) =>
+            w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}',
+      )
+      .join(' ');
+}
+
 /// Profil istatistiğinden: kullanıcının eklediği meralar.
 /// Kendi listende seçim → düzenleme; başka profilde → haritada aç.
 class UserSpotsListScreen extends ConsumerStatefulWidget {
@@ -62,18 +71,22 @@ class _UserSpotsListScreenState extends ConsumerState<UserSpotsListScreen> {
   }
 
   Future<void> _confirmDelete(SpotModel spot) async {
+    final displayName = spot.name.titleCase;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Merayı sil'),
-        content: Text('"${spot.name}" kalıcı olarak silinsin mi?'),
+        title: const Text('Merayı Sil'),
+        content: Text('"$displayName" silinecek. Geri alınamaz.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('İptal'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Sil'),
           ),
@@ -169,7 +182,7 @@ class _UserSpotsListScreenState extends ConsumerState<UserSpotsListScreen> {
                       final type = s.type;
                       return ListTile(
                         title: Text(
-                          s.name,
+                          s.name.titleCase,
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -195,8 +208,8 @@ class _UserSpotsListScreenState extends ConsumerState<UserSpotsListScreen> {
                                     tooltip: 'Düzenle',
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(
-                                      minWidth: 36,
-                                      minHeight: 36,
+                                      minWidth: 44,
+                                      minHeight: 44,
                                     ),
                                     onPressed: () => _openEdit(s),
                                   ),
@@ -210,8 +223,8 @@ class _UserSpotsListScreenState extends ConsumerState<UserSpotsListScreen> {
                                     tooltip: 'Sil',
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(
-                                      minWidth: 36,
-                                      minHeight: 36,
+                                      minWidth: 44,
+                                      minHeight: 44,
                                     ),
                                     onPressed: () => _confirmDelete(s),
                                   ),
