@@ -27,7 +27,6 @@ import 'package:balikci_app/data/models/checkin_model.dart';
 import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/data/models/shop_model.dart';
 import 'package:balikci_app/features/map/widgets/spot_marker.dart';
-import 'package:balikci_app/features/map/widgets/deferred_map_weather_card.dart';
 import 'package:balikci_app/features/map/widgets/weather_card.dart';
 import 'package:balikci_app/data/repositories/shop_repository.dart';
 import 'package:balikci_app/data/repositories/user_repository.dart';
@@ -130,9 +129,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
   MeraWeatherSnapshot? _meraWeather;
   bool _weatherLoading = false;
-
-  /// Harita üstü hava + balık skoru kartının tam / küçük pill görünümü.
-  bool _isWeatherExpanded = true;
 
   double _currentZoom = 10;
 
@@ -1172,28 +1168,9 @@ class _MapScreenState extends ConsumerState<MapScreen>
             top: MediaQuery.of(context).padding.top + 8 + 48 + 8,
             left: 12,
             right: 82,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => setState(
-                () => _isWeatherExpanded = !_isWeatherExpanded,
-              ),
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  switchInCurve: Curves.easeOut,
-                  switchOutCurve: Curves.easeOut,
-                  child: _isWeatherExpanded
-                      ? const KeyedSubtree(
-                          key: ValueKey<String>('map_weather_expanded'),
-                          child: DeferredMapWeatherCard(),
-                        )
-                      : const KeyedSubtree(
-                          key: ValueKey<String>('map_weather_collapsed'),
-                          child: MapWeatherCollapsedPill(),
-                        ),
-                ),
-              ),
+            child: const Align(
+              alignment: Alignment.topLeft,
+              child: MapWeatherExpandableCard(),
             ),
           ),
 
