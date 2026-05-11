@@ -30,21 +30,54 @@ class FeedScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.people_outline_rounded,
-                color: AppColors.foam),
-            iconSize: 22,
             tooltip: 'Arkadaşlar',
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
             onPressed: () => context.push(AppRoutes.socialHub),
+            icon: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.people_outline_rounded,
+                    color: AppColors.foam, size: 24),
+                const SizedBox(height: 2),
+                Text(
+                  'Arkadaşlar',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppColors.muted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
           IconButton(
-            icon: const Icon(Icons.camera_alt_rounded, color: AppColors.foam),
-            iconSize: 28,
-            tooltip: 'Gönderi Paylaş',
+            tooltip: 'Paylaş',
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => const CreatePostScreen(),
                 fullscreenDialog: true,
               ),
+            ),
+            icon: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.camera_alt_rounded,
+                    color: AppColors.foam, size: 24),
+                const SizedBox(height: 2),
+                Text(
+                  'Paylaş',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppColors.muted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 4),

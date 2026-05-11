@@ -284,6 +284,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final previewMaxHeight = MediaQuery.sizeOf(context).height * 0.30;
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
@@ -303,7 +304,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   SizedBox(
-                    height: 250,
+                    height: previewMaxHeight,
                     width: double.infinity,
                     child: GestureDetector(
                       onTap: _hasPhoto
@@ -314,7 +315,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                           color: AppColors.surface,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: AppColors.muted.withValues(alpha: 0.35),
+                            color:
+                                AppColors.muted.withValues(alpha: 0.35),
                           ),
                         ),
                         clipBehavior: Clip.antiAlias,
@@ -357,13 +359,23 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                     ),
                   ),
                   if (!_hasPhoto) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Fotoğraf eklemek zorunlu değildir',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 13,
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       height: 54,
                       child: FilledButton.icon(
                         onPressed: () => _pickImage(ImageSource.camera),
-                        icon: const Icon(Icons.photo_camera_rounded, size: 22),
+                        icon:
+                            const Icon(Icons.photo_camera_rounded, size: 22),
                         label: const Text(
                           'Fotoğraf çek',
                           style: TextStyle(
@@ -373,14 +385,16 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       height: 54,
                       child: OutlinedButton.icon(
                         onPressed: () => _pickImage(ImageSource.gallery),
-                        icon:
-                            const Icon(Icons.photo_library_rounded, size: 22),
+                        icon: const Icon(
+                          Icons.photo_library_rounded,
+                          size: 22,
+                        ),
                         label: const Text(
                           'Galeriden seç',
                           style: TextStyle(

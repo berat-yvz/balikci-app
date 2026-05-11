@@ -198,14 +198,14 @@ class _PostCardState extends ConsumerState<PostCard> {
           ),
 
           // ── Aksiyon satırı ──────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-            child: Row(
-              children: [
-                // Beğeni
-                SizedBox(
-                  height: 48,
-                  child: TextButton.icon(
+          SizedBox(
+            height: 48,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+              child: Row(
+                children: [
+                  // Beğeni
+                  TextButton.icon(
                     onPressed: _liking ? null : _toggleLike,
                     style: TextButton.styleFrom(
                       minimumSize: const Size(48, 48),
@@ -226,12 +226,9 @@ class _PostCardState extends ConsumerState<PostCard> {
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                // Yorum
-                SizedBox(
-                  height: 48,
-                  child: TextButton.icon(
+                  const SizedBox(width: 8),
+                  // Yorum
+                  TextButton.icon(
                     onPressed: widget.onTap,
                     style: TextButton.styleFrom(
                       minimumSize: const Size(48, 48),
@@ -240,7 +237,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                     icon: const Icon(
                       Icons.chat_bubble_outline_rounded,
                       color: AppColors.muted,
-                      size: 22,
+                      size: 24,
                     ),
                     label: Text(
                       ' ${widget.post.commentsCount}',
@@ -250,8 +247,8 @@ class _PostCardState extends ConsumerState<PostCard> {
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
@@ -525,11 +522,11 @@ class _DetailActionRowState extends ConsumerState<_DetailActionRow> {
     final likedAsync = ref.watch(likedPostsProvider(widget.post.id));
     final isLiked = likedAsync.valueOrNull ?? false;
 
-    return Row(
-      children: [
-        SizedBox(
-          height: 48,
-          child: TextButton.icon(
+    return SizedBox(
+      height: 48,
+      child: Row(
+        children: [
+          TextButton.icon(
             onPressed: _liking ? null : () => _toggleLike(isLiked),
             style: TextButton.styleFrom(
               minimumSize: const Size(48, 48),
@@ -538,7 +535,7 @@ class _DetailActionRowState extends ConsumerState<_DetailActionRow> {
             icon: Icon(
               isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
               color: isLiked ? AppColors.danger : AppColors.muted,
-              size: 22,
+              size: 24,
             ),
             label: Text(
               '${widget.post.likesCount}',
@@ -548,10 +545,8 @@ class _DetailActionRowState extends ConsumerState<_DetailActionRow> {
               ),
             ),
           ),
-        ),
-        SizedBox(
-          height: 48,
-          child: TextButton.icon(
+          const SizedBox(width: 8),
+          TextButton.icon(
             onPressed: widget.onCommentTap,
             style: TextButton.styleFrom(
               minimumSize: const Size(48, 48),
@@ -560,20 +555,20 @@ class _DetailActionRowState extends ConsumerState<_DetailActionRow> {
             icon: const Icon(
               Icons.chat_bubble_outline_rounded,
               color: AppColors.muted,
-              size: 22,
+              size: 24,
             ),
             label: Text(
               '${widget.post.commentsCount}',
               style: const TextStyle(color: AppColors.muted, fontSize: 15),
             ),
           ),
-        ),
-        const Spacer(),
-        Text(
-          timeAgo(widget.post.createdAt),
-          style: const TextStyle(fontSize: 12, color: AppColors.muted),
-        ),
-      ],
+          const Spacer(),
+          Text(
+            timeAgo(widget.post.createdAt),
+            style: const TextStyle(fontSize: 12, color: AppColors.muted),
+          ),
+        ],
+      ),
     );
   }
 
