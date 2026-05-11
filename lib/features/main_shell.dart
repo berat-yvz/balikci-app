@@ -307,14 +307,14 @@ class _MapNavItem extends StatelessWidget {
                       : AppColors.mapSpotLayerInactive,
                   border: Border.all(
                     color: isActive
-                        ? AppColors.foam.withValues(alpha: 0.25)
-                        : Colors.white24,
+                        ? AppColors.primary.withValues(alpha: 0.55)
+                        : AppColors.muted.withValues(alpha: 0.35),
                     width: 2.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.teal.withValues(
-                        alpha: isActive ? 0.45 : 0.2,
+                      color: AppColors.primary.withValues(
+                        alpha: isActive ? 0.38 : 0.08,
                       ),
                       blurRadius: isActive ? 16 : 10,
                       offset: const Offset(0, 4),
@@ -322,8 +322,8 @@ class _MapNavItem extends StatelessWidget {
                   ],
                 ),
                 child: Icon(
-                  Icons.map_rounded,
-                  color: isActive ? AppColors.foam : Colors.white70,
+                  isActive ? Icons.map_rounded : Icons.map_outlined,
+                  color: isActive ? AppColors.primary : AppColors.muted,
                   size: 32,
                 ),
               ),
@@ -332,8 +332,19 @@ class _MapNavItem extends StatelessWidget {
                 'Harita',
                 style: TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: isActive ? AppColors.foam : Colors.white60,
+                  fontWeight:
+                      isActive ? FontWeight.w800 : FontWeight.w500,
+                  color: isActive ? AppColors.primary : AppColors.muted,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Container(
+                height: 2,
+                width: 36,
+                decoration: BoxDecoration(
+                  color:
+                      isActive ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(1),
                 ),
               ),
             ],
@@ -383,7 +394,7 @@ class _NavItem extends StatelessWidget {
             children: [
               Icon(
                 isActive ? activeIcon : icon,
-                color: isActive ? AppColors.foam : Colors.white54,
+                color: isActive ? AppColors.primary : AppColors.muted,
                 size: iconSize,
               ),
               SizedBox(height: compact ? 3 : 4),
@@ -393,8 +404,19 @@ class _NavItem extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: fontSize,
-                  color: isActive ? AppColors.foam : Colors.white54,
-                  fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+                  color: isActive ? AppColors.primary : AppColors.muted,
+                  fontWeight:
+                      isActive ? FontWeight.w800 : FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: compact ? 2 : 3),
+              Container(
+                height: 2,
+                width: 32,
+                decoration: BoxDecoration(
+                  color:
+                      isActive ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(1),
                 ),
               ),
             ],
