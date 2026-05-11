@@ -792,6 +792,61 @@ class _WeatherDetailGrid extends StatelessWidget {
     return '$deg°';
   }
 
+  /// Lodos bandı (mevcut etiket) veya güney bileşeni güçlü rüzgar (≈165°–195°).
+  bool _isLodosOrSouthWind(int? deg) {
+    if (deg == null) return false;
+    if (deg >= 180 && deg < 220) return true;
+    if (deg >= 165 && deg <= 195) return true;
+    return false;
+  }
+
+  static const Color _lodosChipBg = Color(0xFFFAEEDA);
+  static const Color _lodosChipFg = Color(0xFF854F0B);
+
+  Widget _windDirectionValue(int? deg) {
+    final normal = _windDirLabel(deg);
+    if (!_isLodosOrSouthWind(deg)) {
+      return Text(
+        normal,
+        style: AppTextStyles.caption.copyWith(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: _lodosChipBg,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.warning_amber_rounded,
+            size: 16,
+            color: _lodosChipFg,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'Lodos — Av olumsuz etkilenebilir',
+              style: TextStyle(
+                color: _lodosChipFg,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GridView.count(
@@ -872,6 +927,9 @@ class _WeatherDetailGrid extends StatelessWidget {
           value: _windDirLabel(
             currentHour?.windDirection ?? weather.windDirection,
           ),
+          valueWidget: _windDirectionValue(
+            currentHour?.windDirection ?? weather.windDirection,
+          ),
         ),
       ],
     );
@@ -881,11 +939,15 @@ class _WeatherDetailGrid extends StatelessWidget {
 class _DetailTile extends StatelessWidget {
   final String icon, label, value;
   final Color? valueColor;
+  /// [value] yerine gösterilir (ör. Lodos uyarı chip'i).
+  final Widget? valueWidget;
+
   const _DetailTile({
     required this.icon,
     required this.label,
     required this.value,
     this.valueColor,
+    this.valueWidget,
   });
 
   @override
@@ -917,15 +979,16 @@ class _DetailTile extends StatelessWidget {
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-                Text(
-                  value,
-                  style: AppTextStyles.caption.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: valueColor ?? Colors.white,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                valueWidget ??
+                    Text(
+                      value,
+                      style: AppTextStyles.caption.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: valueColor ?? Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
               ],
             ),
           ),

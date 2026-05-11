@@ -1490,8 +1490,8 @@ class _PostGridSection extends ConsumerWidget {
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
-                crossAxisSpacing: 3,
-                mainAxisSpacing: 3,
+                crossAxisSpacing: 2,
+                mainAxisSpacing: 2,
                 childAspectRatio: 1,
               ),
               itemCount: visible.length,
@@ -1525,8 +1525,47 @@ class _PostGridTile extends StatelessWidget {
 
   const _PostGridTile({required this.post});
 
+  static const TextStyle _fishPlaceholderStyle = TextStyle(
+    color: AppColors.foam,
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    height: 1.15,
+  );
+
+  String _fishLine() {
+    final species = post.fishSpecies;
+    if (species != null && species.isNotEmpty) {
+      return species.take(3).join(', ');
+    }
+    final cap = post.caption?.trim();
+    if (cap != null && cap.isNotEmpty) {
+      return cap;
+    }
+    return '—';
+  }
+
+  Widget _photoPlaceholder() {
+    return ColoredBox(
+      color: AppColors.surface,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Text(
+            _fishLine(),
+            textAlign: TextAlign.center,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: _fishPlaceholderStyle,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final url = post.photoUrl.trim();
+
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
@@ -1535,20 +1574,15 @@ class _PostGridTile extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(4),
-        child: AspectRatio(
-          aspectRatio: 1,
-          child: Image.network(
-            post.photoUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(
-              color: AppColors.surface,
-              child: const Icon(
-                Icons.broken_image_outlined,
-                color: AppColors.muted,
+        child: url.isEmpty
+            ? _photoPlaceholder()
+            : Image.network(
+                url,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (_, _, _) => _photoPlaceholder(),
               ),
-            ),
-          ),
-        ),
       ),
     );
   }

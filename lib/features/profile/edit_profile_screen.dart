@@ -330,13 +330,13 @@ class _EditProfileBodyState extends ConsumerState<_EditProfileBody> {
               style: const TextStyle(color: AppColors.foam),
               decoration: _fieldDecoration(
                 'Hakkında',
-                hint: 'İsteğe bağlı',
+                hint: 'Kendin ve balıkçılık geçmişin hakkında yaz...',
               ),
               minLines: 3,
               maxLines: 3,
               textInputAction: TextInputAction.done,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               height: 56,
