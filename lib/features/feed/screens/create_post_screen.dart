@@ -14,6 +14,7 @@ import 'package:balikci_app/core/utils/avatar_image_prepare.dart';
 import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
+import 'package:balikci_app/shared/widgets/app_filter_chip.dart';
 
 /// Sık seçilen balık türleri — gönderi ekranında chip olarak.
 const List<String> _kCommonFishSpecies = [
@@ -419,20 +420,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                       runSpacing: 8,
                       children: _kCommonFishSpecies
                           .map(
-                            (species) => FilterChip(
-                              label: Text(species),
-                              selected: _selectedFish.contains(species),
-                              onSelected: (_) => _toggleFish(species),
-                              selectedColor:
-                                  AppColors.primary.withValues(alpha: 0.28),
-                              checkmarkColor: AppColors.primary,
-                              labelStyle: TextStyle(
-                                color: _selectedFish.contains(species)
-                                    ? AppColors.foam
-                                    : AppColors.foam.withValues(alpha: 0.9),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
+                            (species) => AppFilterChip(
+                              label: species,
+                              isSelected: _selectedFish.contains(species),
+                              onTap: () => _toggleFish(species),
                             ),
                           )
                           .toList(),

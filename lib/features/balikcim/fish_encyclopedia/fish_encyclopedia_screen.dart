@@ -8,6 +8,7 @@ import 'package:balikci_app/core/widgets/network_error_widget.dart';
 import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_detail_screen.dart';
 import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_model.dart';
 import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_provider.dart';
+import 'package:balikci_app/shared/widgets/app_filter_chip.dart';
 
 /// Balık ansiklopedisi listesi — [BalikcimScreen] TabBarView içine gömülür; Scaffold yok.
 class FishEncyclopediaScreen extends ConsumerStatefulWidget {
@@ -120,9 +121,9 @@ class _FishEncyclopediaScreenState extends ConsumerState<FishEncyclopediaScreen>
                 final isSelected = selected == f.$2;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: _CategoryFilterChip(
+                  child: AppFilterChip(
                     label: f.$1,
-                    selected: isSelected,
+                    isSelected: isSelected,
                     onTap: () {
                       ref.read(selectedFishCategoryProvider.notifier).state =
                           f.$2;
@@ -201,52 +202,6 @@ class _FishEncyclopediaScreenState extends ConsumerState<FishEncyclopediaScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CategoryFilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _CategoryFilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 48),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: selected ? AppColors.primary : Colors.transparent,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: AppColors.primary,
-                width: 1.5,
-              ),
-            ),
-            child: Text(
-              label,
-              style: AppTextStyles.caption.copyWith(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: selected ? AppColors.foam : AppColors.muted,
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

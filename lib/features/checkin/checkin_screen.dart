@@ -17,6 +17,7 @@ import 'package:balikci_app/data/repositories/checkin_repository.dart';
 import 'package:balikci_app/data/repositories/favorite_repository.dart';
 import 'package:balikci_app/data/repositories/notification_repository.dart';
 import 'package:balikci_app/data/repositories/spot_repository.dart';
+import 'package:balikci_app/shared/widgets/app_filter_chip.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// Balık yoğunluğu — DB: fish_density
@@ -512,8 +513,6 @@ class _Page1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardBg = Theme.of(context).cardColor;
-
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
@@ -599,30 +598,10 @@ class _Page1 extends StatelessWidget {
                           final type =
                               _CheckinScreenState._fishTypeOptions[index];
                           final isSelected = selectedFishTypes.contains(type);
-                          return FilterChip(
-                            label: Text(
-                              type,
-                              style: AppTextStyles.body.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: isSelected
-                                    ? AppColors.foam
-                                    : AppColors.muted,
-                              ),
-                            ),
-                            selected: isSelected,
-                            onSelected: (_) => onFishTypeToggle(type),
-                            selectedColor: AppColors.secondary,
-                            backgroundColor: cardBg,
-                            checkmarkColor: AppColors.foam,
-                            side: BorderSide(
-                              color: isSelected
-                                  ? AppColors.secondary
-                                  : AppColors.muted.withValues(alpha: 0.35),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
+                          return AppFilterChip(
+                            label: type,
+                            isSelected: isSelected,
+                            onTap: () => onFishTypeToggle(type),
                           );
                         },
                       ),

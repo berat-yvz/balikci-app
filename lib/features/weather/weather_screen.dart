@@ -13,6 +13,7 @@ import 'package:balikci_app/core/utils/weekly_forecast_aggregate.dart';
 import 'package:balikci_app/features/weather/providers/istanbul_weather_provider.dart';
 import 'package:balikci_app/features/weather/widgets/weekly_forecast_table_card.dart';
 import 'package:balikci_app/core/utils/weather_tr_schedule.dart';
+import 'package:balikci_app/shared/widgets/app_filter_chip.dart';
 
 /// Detaylı hava durumu ekranı — H9 sprint.
 ///
@@ -1017,54 +1018,23 @@ class _RegionSelector extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selected = ref.watch(selectedWeatherRegionProvider);
     final entries = weatherRegionDisplayNames.entries.toList();
-    return SizedBox(
-      height: 36,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        primary: false,
-        physics: const ClampingScrollPhysics(),
-        child: Row(
-          children: [
-            for (final (i, entry) in entries.indexed) ...[
-              if (i > 0) const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => ref
-                    .read(selectedWeatherRegionProvider.notifier)
-                    .state = entry.key,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: entry.key == selected
-                        ? AppColors.primary
-                        : AppColors.surface,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: entry.key == selected
-                          ? AppColors.primary
-                          : AppColors.muted.withValues(alpha: 0.25),
-                    ),
-                  ),
-                  child: Text(
-                    entry.value,
-                    style: AppTextStyles.caption.copyWith(
-                      fontSize: 13,
-                      color: entry.key == selected
-                          ? AppColors.foam
-                          : AppColors.muted,
-                      fontWeight: entry.key == selected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      primary: false,
+      physics: const ClampingScrollPhysics(),
+      child: Row(
+        children: [
+          for (final (i, entry) in entries.indexed) ...[
+            if (i > 0) const SizedBox(width: 8),
+            AppFilterChip(
+              label: entry.value,
+              isSelected: entry.key == selected,
+              onTap: () =>
+                  ref.read(selectedWeatherRegionProvider.notifier).state =
+                      entry.key,
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

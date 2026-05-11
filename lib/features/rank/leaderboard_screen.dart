@@ -7,6 +7,7 @@ import 'package:balikci_app/core/widgets/network_error_widget.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/user_provider.dart';
+import 'package:balikci_app/shared/widgets/app_filter_chip.dart';
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
 
 /// Arkadaşlar / istekler ekranlarıyla aynı kart dolgusu ([FriendRequestsScreen]).
@@ -173,96 +174,47 @@ class _RankFilterRow extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
         child: Row(
           children: [
-            _FilterChipButton(
-              label: 'Tümü',
-              emoji: '',
-              value: null,
-              selected: selected,
-              onChanged: onChanged,
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: AppFilterChip(
+                label: 'Tümü',
+                isSelected: selected == null,
+                onTap: () => onChanged(null),
+              ),
             ),
-            _FilterChipButton(
-              label: 'Acemi',
-              emoji: '🪝 ',
-              value: 'acemi',
-              selected: selected,
-              onChanged: onChanged,
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: AppFilterChip(
+                label: '🪝 Acemi',
+                isSelected: selected == 'acemi',
+                onTap: () => onChanged('acemi'),
+              ),
             ),
-            _FilterChipButton(
-              label: 'Olta Kurdu',
-              emoji: '🎣 ',
-              value: 'olta_kurdu',
-              selected: selected,
-              onChanged: onChanged,
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: AppFilterChip(
+                label: '🎣 Olta Kurdu',
+                isSelected: selected == 'olta_kurdu',
+                onTap: () => onChanged('olta_kurdu'),
+              ),
             ),
-            _FilterChipButton(
-              label: 'Usta',
-              emoji: '⚓ ',
-              value: 'usta',
-              selected: selected,
-              onChanged: onChanged,
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: AppFilterChip(
+                label: '⚓ Usta',
+                isSelected: selected == 'usta',
+                onTap: () => onChanged('usta'),
+              ),
             ),
-            _FilterChipButton(
-              label: 'Deniz Reisi',
-              emoji: '🌊 ',
-              value: 'deniz_reisi',
-              selected: selected,
-              onChanged: onChanged,
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: AppFilterChip(
+                label: '🌊 Deniz Reisi',
+                isSelected: selected == 'deniz_reisi',
+                onTap: () => onChanged('deniz_reisi'),
+              ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Kısayol kartlarına yakın: 12 radius, okunaklı 14sp etiket, min 48dp yükseklik.
-class _FilterChipButton extends StatelessWidget {
-  final String label;
-  final String emoji;
-  final String? value;
-  final String? selected;
-  final ValueChanged<String?> onChanged;
-
-  const _FilterChipButton({
-    required this.label,
-    required this.emoji,
-    required this.value,
-    required this.selected,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isOn = selected == value;
-    final labelText = '$emoji$label';
-    final labelStyle = TextStyle(
-      fontSize: 14,
-      fontWeight: isOn ? FontWeight.w800 : FontWeight.w700,
-      color: isOn ? AppColors.foam : Colors.white,
-    );
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Material(
-        color: isOn ? AppColors.primary : _kSocialCardFill,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: () => onChanged(value),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: isOn
-                  ? null
-                  : Border.all(
-                      color: AppColors.muted.withValues(alpha: 0.35),
-                    ),
-            ),
-            alignment: Alignment.center,
-            child: Text(labelText, style: labelStyle),
-          ),
         ),
       ),
     );
