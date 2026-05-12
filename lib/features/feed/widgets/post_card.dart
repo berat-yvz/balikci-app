@@ -11,6 +11,7 @@ import 'package:balikci_app/core/utils/error_message_helper.dart';
 import 'package:balikci_app/core/utils/time_utils.dart';
 import 'package:balikci_app/data/models/post_model.dart';
 import 'package:balikci_app/data/models/user_model.dart';
+import 'package:balikci_app/features/feed/widgets/post_comments_sheet.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
 
@@ -230,7 +231,9 @@ class _PostCardState extends ConsumerState<PostCard> {
                   const SizedBox(width: 8),
                   // Yorum
                   TextButton.icon(
-                    onPressed: widget.onTap,
+                    onPressed: () {
+                      showPostCommentsSheet(context, ref, widget.post);
+                    },
                     style: TextButton.styleFrom(
                       minimumSize: const Size(48, 48),
                       padding: const EdgeInsets.symmetric(horizontal: 8),

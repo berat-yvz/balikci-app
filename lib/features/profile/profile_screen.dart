@@ -16,6 +16,7 @@ import 'package:balikci_app/data/models/spot_model.dart';
 import 'package:balikci_app/data/models/user_model.dart';
 import 'package:balikci_app/data/repositories/notification_repository.dart';
 import 'package:balikci_app/data/models/post_model.dart';
+import 'package:balikci_app/data/repositories/spot_repository.dart';
 import 'package:balikci_app/features/feed/screens/post_detail_screen.dart';
 import 'package:balikci_app/shared/providers/auth_provider.dart';
 import 'package:balikci_app/shared/providers/favorite_provider.dart';
@@ -30,6 +31,14 @@ import 'package:balikci_app/features/profile/widgets/shadow_point_history_sheet.
 import 'package:balikci_app/shared/providers/shadow_point_provider.dart';
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
 
+/// Başka kullanıcı profilinde "Meralarım" sekmesi — eklediği fishing_spots.
+final userOwnedSpotsForProfileProvider =
+    FutureProvider.autoDispose.family<List<SpotModel>, String>(
+  (ref, userId) async {
+    return SpotRepository().getSpotsByUserId(userId);
+  },
+);
+
 class ProfileScreen extends ConsumerStatefulWidget {
   final String? userId; // diğer kullanıcı profili için
 
@@ -42,7 +51,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _imagePicker = ImagePicker();
   bool _uploadingAvatar = false;
-  final GlobalKey _postsSectionKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +114,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         isUploadingAvatar: _uploadingAvatar,
         onPickAvatar:
             isSelf ? () => _pickAndUploadAvatar(displayUser) : null,
-        postsSectionKey: _postsSectionKey,
       );
     }
 
@@ -210,14 +217,12 @@ class _ProfileContent extends ConsumerWidget {
   final bool isSelf;
   final bool isUploadingAvatar;
   final VoidCallback? onPickAvatar;
-  final GlobalKey postsSectionKey;
 
   const _ProfileContent({
     required this.user,
     required this.isSelf,
     required this.isUploadingAvatar,
     required this.onPickAvatar,
-    required this.postsSectionKey,
   });
 
   @override
@@ -239,14 +244,24 @@ class _ProfileContent extends ConsumerWidget {
         }
         ref.invalidate(mutualFriendCountForUserProvider(uid));
         ref.invalidate(profileSummaryStatsProvider(uid));
+        ref.invalidate(profileAnalyticsTabProvider(uid));
+        ref.invalidate(userOwnedSpotsForProfileProvider(uid));
         await ref.read(userPostsProvider(uid).notifier).refresh(uid);
       },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: DefaultTabController(
+        length: 3,
+        child: Builder(
+          builder: (context) {
+            final tabController = DefaultTabController.of(context);
+            return CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
             // ADIM 9: Profil başlığı — avatar + rank_badge yan yana
             Center(
               child: Column(
@@ -324,17 +339,7 @@ class _ProfileContent extends ConsumerWidget {
             // ADIM 9: Özet istatistik kartları 3'lü grid
             _SummaryStatsGrid(
               userId: user.id,
-              onPostsTap: () {
-                final ctx = postsSectionKey.currentContext;
-                if (ctx != null) {
-                  Scrollable.ensureVisible(
-                    ctx,
-                    duration: const Duration(milliseconds: 340),
-                    curve: Curves.easeInOut,
-                    alignment: 0.06,
-                  );
-                }
-              },
+              onPostsTap: () => tabController.animateTo(0),
             ),
             const SizedBox(height: 20),
 
@@ -409,28 +414,59 @@ class _ProfileContent extends ConsumerWidget {
                   ),
             ],
 
-            // Gönderi grid'i — her kullanıcı profili için
-            const SizedBox(height: 24),
-            SizedBox(
-              key: postsSectionKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _SectionTitle(title: 'Gönderileri'),
-                  const SizedBox(height: 10),
-                  _PostGridSection(userId: user.id),
-                ],
-              ),
-            ),
-
-            if (isSelf) ...[
-              const SizedBox(height: 24),
-              const _SectionTitle(title: 'Favori Meralarım'),
-              const SizedBox(height: 10),
-              const _FavoriteSpotsSection(),
-            ],
-            const SizedBox(height: 32),
-          ],
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _ProfileTabBarDelegate(
+                    TabBar(
+                      controller: tabController,
+                      indicatorColor: AppColors.primary,
+                      labelColor: AppColors.foam,
+                      unselectedLabelColor: AppColors.muted,
+                      indicatorWeight: 2,
+                      tabs: const [
+                        Tab(text: 'Gönderiler'),
+                        Tab(text: 'Meralarım'),
+                        Tab(text: 'İstatistikler'),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverFillRemaining(
+                  child: TabBarView(
+                    controller: tabController,
+                    children: [
+                      ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                        children: [
+                          _PostGridSection(userId: user.id),
+                        ],
+                      ),
+                      ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                        children: [
+                          if (isSelf)
+                            const _FavoriteSpotsSection()
+                          else
+                            _OwnedSpotsProfileTab(userId: user.id),
+                        ],
+                      ),
+                      ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                        children: [
+                          _ProfileStatsTabBody(userId: user.id),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -1315,6 +1351,213 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
+// ── Profil sekmeleri (TabBar / TabBarView) ────────────────────────────────────
+
+class _ProfileTabBarDelegate extends SliverPersistentHeaderDelegate {
+  _ProfileTabBarDelegate(this.tabBar);
+
+  final TabBar tabBar;
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Material(
+      color: AppColors.background,
+      child: tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _ProfileTabBarDelegate oldDelegate) {
+    return tabBar != oldDelegate.tabBar;
+  }
+}
+
+class _OwnedSpotsProfileTab extends ConsumerWidget {
+  final String userId;
+
+  const _OwnedSpotsProfileTab({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(userOwnedSpotsForProfileProvider(userId));
+    return async.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(
+              color: AppColors.primary,
+              strokeWidth: 2.5,
+            ),
+          ),
+        ),
+      ),
+      error: (error, stackTrace) => Text(
+        'Meralar yüklenemedi',
+        style: AppTextStyles.body.copyWith(color: AppColors.muted),
+      ),
+      data: (spots) {
+        if (spots.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF132236),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.place_outlined, color: AppColors.muted),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Henüz eklenmiş mera yok.',
+                    style: AppTextStyles.body.copyWith(color: AppColors.muted),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return Column(
+          children: spots
+              .map(
+                (s) => _FavoriteSpotTile(spot: s, favoriteStyle: false),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+}
+
+class _ProfileStatsTabBody extends ConsumerWidget {
+  final String userId;
+
+  const _ProfileStatsTabBody({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(profileAnalyticsTabProvider(userId));
+    return async.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 32),
+        child: Center(
+          child: SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(
+              color: AppColors.primary,
+              strokeWidth: 2.5,
+            ),
+          ),
+        ),
+      ),
+      error: (error, stackTrace) => Text(
+        'İstatistikler yüklenemedi',
+        style: AppTextStyles.body.copyWith(color: AppColors.muted),
+      ),
+      data: (s) => GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1.15,
+        children: [
+          _ProfileBigStatCell(value: '${s.totalSpots}', label: 'Toplam Mera'),
+          _ProfileBigStatCell(
+            value: '${s.totalCheckins}',
+            label: 'Toplam Check-in',
+          ),
+          _ProfileBigStatCell(
+            value: '${s.fishActivityCount}',
+            label: 'Balık bildirimi',
+          ),
+          _ProfileBigStatCell(
+            value: (s.topFishSpecies != null && s.topFishSpeciesHits > 0)
+                ? s.topFishSpecies!
+                : '—',
+            label: 'En çok tutulan',
+            caption: s.topFishSpeciesHits > 0
+                ? '${s.topFishSpeciesHits} kayıt'
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileBigStatCell extends StatelessWidget {
+  final String value;
+  final String label;
+  final String? caption;
+
+  const _ProfileBigStatCell({
+    required this.value,
+    required this.label,
+    this.caption,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF132236),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              height: 1.1,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.muted,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          if (caption != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              caption!,
+              style: const TextStyle(color: AppColors.muted, fontSize: 11),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
 
 // ── Favori Meralar Bölümü ────────────────────────────────────────────────────
 
@@ -1379,7 +1622,13 @@ class _FavoriteSpotsSection extends ConsumerWidget {
 
 class _FavoriteSpotTile extends StatelessWidget {
   final SpotModel spot;
-  const _FavoriteSpotTile({required this.spot});
+  /// false → eklenen mera (yer imi yerine konum ikonu).
+  final bool favoriteStyle;
+
+  const _FavoriteSpotTile({
+    required this.spot,
+    this.favoriteStyle = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1401,9 +1650,10 @@ class _FavoriteSpotTile extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.bookmark,
-                  color: AppColors.sand,
+                Icon(
+                  favoriteStyle ? Icons.bookmark : Icons.place_rounded,
+                  color:
+                      favoriteStyle ? AppColors.sand : AppColors.primaryLight,
                   size: 20,
                 ),
                 const SizedBox(width: 12),

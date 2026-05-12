@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:balikci_app/core/services/score_service.dart';
 import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/data/models/post_model.dart';
+import 'package:balikci_app/data/repositories/comment_repository.dart';
 
 /// Sosyal akış repository — posts, post_likes, post_comments tabloları.
 ///
@@ -13,6 +14,7 @@ import 'package:balikci_app/data/models/post_model.dart';
 /// yetkisiz kullanıcılara dönmez.
 class PostRepository {
   final _remote = SupabaseService.client;
+  final CommentRepository _comments = CommentRepository();
 
   String? get _uid => SupabaseService.auth.currentUser?.id;
 
@@ -28,10 +30,6 @@ class PostRepository {
     author:users!posts_user_id_fkey(username, avatar_url, rank, email),
     spot:fishing_spots(name)
   ''';
-
-  /// Comments için tam select — user join dahil.
-  static const _commentSelect =
-      'id, post_id, user_id, content, created_at, user:users(username, avatar_url, email)';
 
   // ─── Gönderi oluşturma sonrası: skor / gölge puan (ana akışı engellemez) ───
 
@@ -90,10 +88,7 @@ class PostRepository {
             'post_id': ?postId,
             'liker_id': ?likerId,
           };
-          await _remote.functions.invoke(
-            'score-calculator',
-            body: body,
-          );
+          await _remote.functions.invoke('score-calculator', body: body);
         } catch (e) {
           debugPrint('score-calculator çağrı hatası (${source.value}): $e');
         }
@@ -145,7 +140,9 @@ class PostRepository {
     String? spotDistrict,
   }) async {
     final uid = _uid;
-    if (uid == null) throw Exception('Gönderi oluşturmak için giriş yapmalısın.');
+    if (uid == null) {
+      throw Exception('Gönderi oluşturmak için giriş yapmalısın.');
+    }
 
     // Mera gizlilik seviyesi snapshot'ı
     var spotPrivacySnapshot = 'public';
@@ -174,8 +171,7 @@ class PostRepository {
             'fish_species': fishSpecies,
             'spot_id': spotId,
             'spot_privacy_snapshot': spotPrivacySnapshot,
-            'spot_district':
-                spotPrivacySnapshot == 'vip' ? null : spotDistrict,
+            'spot_district': spotPrivacySnapshot == 'vip' ? null : spotDistrict,
           })
           .select(_postSelect)
           .single();
@@ -245,7 +241,9 @@ class PostRepository {
 
       return response.map(PostModel.fromJson).toList();
     } on PostgrestException catch (e) {
-      debugPrint('PostRepository hata (posts tablosu yok olabilir): ${e.message}');
+      debugPrint(
+        'PostRepository hata (posts tablosu yok olabilir): ${e.message}',
+      );
       return [];
     } catch (e, st) {
       debugPrint('PostRepository beklenmedik hata (getFriendsFeed): $e\n$st');
@@ -283,7 +281,9 @@ class PostRepository {
 
       return response.map(PostModel.fromJson).toList();
     } on PostgrestException catch (e) {
-      debugPrint('PostRepository hata (posts tablosu yok olabilir): ${e.message}');
+      debugPrint(
+        'PostRepository hata (posts tablosu yok olabilir): ${e.message}',
+      );
       return [];
     } catch (e, st) {
       debugPrint('PostRepository beklenmedik hata (getGlobalFeed): $e\n$st');
@@ -413,25 +413,11 @@ class PostRepository {
     }
   }
 
-  // ─── Yorumlar ─────────────────────────────────────────────────────────────
+  // ─── Yorumlar → [CommentRepository] ────────────────────────────────────────
 
   /// Bir gönderinin yorumlarını tarih sırasıyla (ASC) döner.
-  Future<List<CommentModel>> getComments(String postId) async {
-    try {
-      final response = await _remote
-          .from('post_comments')
-          .select(_commentSelect)
-          .eq('post_id', postId)
-          .order('created_at', ascending: true);
-
-      return (response as List)
-          .map((r) => CommentModel.fromJson(r as Map<String, dynamic>))
-          .toList();
-    } catch (e, st) {
-      debugPrint('getComments hatası: $e\n$st');
-      return [];
-    }
-  }
+  Future<List<CommentModel>> getComments(String postId) =>
+      _comments.getComments(postId);
 
   /// Yeni yorum ekler ve [CommentModel] döner.
   ///
@@ -440,42 +426,11 @@ class PostRepository {
     required String postId,
     required String content,
     String? postOwnerId,
-  }) async {
-    final uid = _uid;
-    if (uid == null) throw Exception('Yorum için giriş yapmalısın.');
-
-    try {
-      final response = await _remote
-          .from('post_comments')
-          .insert({'post_id': postId, 'user_id': uid, 'content': content})
-          .select(_commentSelect)
-          .single();
-
-      final comment = CommentModel.fromJson(response);
-      _scoreEvent(
-        uid,
-        ScoreSource.postComment,
-        sourceId: comment.id,
-        postId: postId,
-      );
-
-      if (postOwnerId != null && postOwnerId != uid) {
-        _notifyPostActivity(
-          postOwnerId: postOwnerId,
-          actorId: uid,
-          type: 'post_comment',
-          title: '💬 Yeni Yorum',
-          body: '${comment.username ?? "Birisi"} gönderine yorum yaptı 💬',
-          postId: postId,
-        );
-      }
-
-      return comment;
-    } on PostgrestException catch (e) {
-      debugPrint('addComment hatası: ${e.message}');
-      rethrow;
-    }
-  }
+  }) => _comments.addComment(
+    postId: postId,
+    content: content,
+    postOwnerId: postOwnerId,
+  );
 
   // ─── Soft delete ──────────────────────────────────────────────────────────
 

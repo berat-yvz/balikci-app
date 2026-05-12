@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/app/theme.dart';
-import 'package:balikci_app/core/constants/storage_buckets.dart';
-import 'package:balikci_app/core/services/supabase_service.dart';
 import 'package:balikci_app/core/utils/error_message_helper.dart';
-import 'package:balikci_app/core/utils/time_utils.dart';
 import 'package:balikci_app/data/models/post_model.dart';
+import 'package:balikci_app/features/feed/widgets/comment_list_tile.dart';
 import 'package:balikci_app/features/feed/widgets/post_card.dart';
 import 'package:balikci_app/shared/providers/post_provider.dart';
 
@@ -34,10 +31,19 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
   Future<void> _sendComment() async {
     final content = _commentController.text.trim();
     if (content.isEmpty || _sending) return;
+    if (content.length > 500) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Yorum en fazla 500 karakter olabilir.'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
     setState(() => _sending = true);
     try {
       await ref
-          .read(postRepositoryProvider)
+          .read(commentRepositoryProvider)
           .addComment(
             postId: widget.post.id,
             content: content,
@@ -45,6 +51,9 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
           );
       _commentController.clear();
       ref.invalidate(postCommentsProvider(widget.post.id));
+      ref.invalidate(globalFeedProvider);
+      ref.invalidate(friendsFeedProvider);
+      ref.invalidate(userPostsProvider(widget.post.userId));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -70,9 +79,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        title: Text(widget.post.authorUsername ?? 'Gönderi'),
-      ),
+      appBar: AppBar(title: Text(widget.post.authorUsername ?? 'Gönderi')),
       body: Column(
         children: [
           // Ana içerik kaydırılabilir
@@ -138,14 +145,11 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                       padding: const EdgeInsets.all(16),
                       child: Text(
                         'Henüz yorum yok. İlk yorumu sen yap!',
-                        style: TextStyle(
-                          color: AppColors.muted,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: AppColors.muted, fontSize: 14),
                       ),
                     )
                   else
-                    ...comments.map((c) => _CommentTile(comment: c)),
+                    ...comments.map((c) => CommentListTile(comment: c)),
 
                   const SizedBox(height: 8),
                 ],
@@ -166,7 +170,9 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                       height: 48,
                       child: TextField(
                         controller: _commentController,
+                        maxLength: 500,
                         decoration: InputDecoration(
+                          counterText: '',
                           hintText: 'Yorum yaz...',
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -221,129 +227,6 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ── Yorum satırı ─────────────────────────────────────────────────────────────
-
-class _CommentTile extends StatelessWidget {
-  final CommentModel comment;
-
-  const _CommentTile({required this.comment});
-
-  @override
-  Widget build(BuildContext context) {
-    final initials =
-        (comment.username?.isNotEmpty ?? false)
-            ? comment.username![0].toUpperCase()
-            : '?';
-
-    ImageProvider? image;
-    if (comment.avatarUrl != null && comment.avatarUrl!.isNotEmpty) {
-      final url = comment.avatarUrl!.startsWith('http')
-          ? comment.avatarUrl!
-          : '${dotenv.env['SUPABASE_URL'] ?? ''}/storage/v1/object/public/${avatarStorageBucket()}/${comment.avatarUrl}';
-      image = NetworkImage(url);
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: AppColors.primaryLight,
-            backgroundImage: image,
-            child: image == null
-                ? Text(
-                    initials,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.foam,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )
-                : null,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      comment.username ?? 'Kullanıcı',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.foam,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      timeAgo(comment.createdAt),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.muted,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  comment.content,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: AppColors.foam,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Kendi yorumu için sil butonu
-          if (comment.userId ==
-              SupabaseService.auth.currentUser?.id)
-            _DeleteCommentButton(comment: comment),
-        ],
-      ),
-    );
-  }
-
-}
-
-// ── Yorum sil butonu ─────────────────────────────────────────────────────────
-
-class _DeleteCommentButton extends ConsumerWidget {
-  final CommentModel comment;
-
-  const _DeleteCommentButton({required this.comment});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return SizedBox(
-      width: 36,
-      height: 36,
-      child: IconButton(
-        onPressed: () async {
-          try {
-            await SupabaseService.client
-                .from('post_comments')
-                .delete()
-                .eq('id', comment.id);
-            ref.invalidate(postCommentsProvider(comment.postId));
-          } catch (_) {}
-        },
-        icon: const Icon(
-          Icons.delete_outline_rounded,
-          size: 18,
-          color: AppColors.muted,
-        ),
-        tooltip: 'Yorumu sil',
       ),
     );
   }

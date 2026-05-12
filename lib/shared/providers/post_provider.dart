@@ -3,12 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:balikci_app/data/models/post_model.dart';
 import 'package:balikci_app/data/repositories/post_repository.dart';
+import 'package:balikci_app/data/repositories/comment_repository.dart';
 
 // ─── Repository ────────────────────────────────────────────────────────────
 
 /// PostRepository singleton provider.
 final postRepositoryProvider = Provider<PostRepository>((ref) {
   return PostRepository();
+});
+
+/// Yorum CRUD — [post_comments] tablosu.
+final commentRepositoryProvider = Provider<CommentRepository>((ref) {
+  return CommentRepository();
 });
 
 // ─── Arkadaşlar Akışı ──────────────────────────────────────────────────────
@@ -62,8 +68,8 @@ class FriendsFeedNotifier extends AsyncNotifier<List<PostModel>> {
 
 final friendsFeedProvider =
     AsyncNotifierProvider<FriendsFeedNotifier, List<PostModel>>(
-  FriendsFeedNotifier.new,
-);
+      FriendsFeedNotifier.new,
+    );
 
 // ─── Türkiye (Global) Akışı ────────────────────────────────────────────────
 
@@ -110,16 +116,15 @@ class GlobalFeedNotifier extends AsyncNotifier<List<PostModel>> {
 
 final globalFeedProvider =
     AsyncNotifierProvider<GlobalFeedNotifier, List<PostModel>>(
-  GlobalFeedNotifier.new,
-);
+      GlobalFeedNotifier.new,
+    );
 
 // ─── Kullanıcı Gönderileri ─────────────────────────────────────────────────
 
 /// Belirli bir kullanıcının gönderilerini yöneten notifier (family).
 ///
 /// Parametre olarak userId alır; profil ekranındaki post grid'i için kullanılır.
-class UserPostsNotifier
-    extends FamilyAsyncNotifier<List<PostModel>, String> {
+class UserPostsNotifier extends FamilyAsyncNotifier<List<PostModel>, String> {
   late PostRepository _repo;
 
   bool _isLoadingMore = false;
@@ -155,22 +160,23 @@ class UserPostsNotifier
 
   Future<void> refresh(String userId) async {
     state = const AsyncLoading();
-    state =
-        await AsyncValue.guard(() => _repo.getPostsByUser(userId));
+    state = await AsyncValue.guard(() => _repo.getPostsByUser(userId));
   }
 }
 
-final userPostsProvider = AsyncNotifierProvider.family<UserPostsNotifier,
-    List<PostModel>, String>(
-  UserPostsNotifier.new,
-);
+final userPostsProvider =
+    AsyncNotifierProvider.family<UserPostsNotifier, List<PostModel>, String>(
+      UserPostsNotifier.new,
+    );
 
 // ─── Beğeni Durumu ─────────────────────────────────────────────────────────
 
 /// Giriş yapmış kullanıcının belirtilen postu beğenip beğenmediği.
 /// autoDispose: post detay ekranı kapatılınca cache temizlenir.
-final likedPostsProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, postId) async {
+final likedPostsProvider = FutureProvider.autoDispose.family<bool, String>((
+  ref,
+  postId,
+) async {
   final repo = ref.read(postRepositoryProvider);
   return repo.isLikedByMe(postId);
 });
@@ -179,10 +185,8 @@ final likedPostsProvider =
 
 /// Bir gönderinin yorum listesi.
 /// autoDispose: yorum ekranı kapatılınca cache temizlenir.
-final postCommentsProvider =
-    FutureProvider.autoDispose.family<List<CommentModel>, String>(
-  (ref, postId) async {
-    final repo = ref.read(postRepositoryProvider);
-    return repo.getComments(postId);
-  },
-);
+final postCommentsProvider = FutureProvider.autoDispose
+    .family<List<CommentModel>, String>((ref, postId) async {
+      final repo = ref.read(commentRepositoryProvider);
+      return repo.getComments(postId);
+    });
