@@ -91,8 +91,8 @@ class _PostCardState extends ConsumerState<PostCard> {
     final screenWidth = MediaQuery.sizeOf(context).width;
 
     // Header subtitle: "3 saat önce • 📍 MeraAdı"
-    final spotLabel = (widget.post.spotId != null ||
-            widget.post.spotDistrict != null)
+    final spotLabel =
+        (widget.post.spotId != null || widget.post.spotDistrict != null)
         ? widget.post.displaySpotName
         : null;
     final subtitleText = spotLabel != null
@@ -153,10 +153,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                     ],
                   ),
                 ),
-                if (isOwner)
-                  _PostMenu(post: widget.post)
-                else
-                  const SizedBox(width: 8),
+                _PostMenu(post: widget.post, isOwner: isOwner),
               ],
             ),
           ),
@@ -211,17 +208,21 @@ class _PostCardState extends ConsumerState<PostCard> {
                       minimumSize: const Size(48, 48),
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
-                    icon: Icon(
-                      isLiked
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                      color: isLiked ? AppColors.danger : AppColors.muted,
-                      size: 24,
+                    icon: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      transitionBuilder: (child, anim) =>
+                          ScaleTransition(scale: anim, child: child),
+                      child: Icon(
+                        isLiked ? Icons.favorite : Icons.favorite_border,
+                        key: ValueKey<bool>(isLiked),
+                        color: isLiked ? Colors.red : AppColors.muted,
+                        size: 24,
+                      ),
                     ),
                     label: Text(
                       ' ${widget.post.likesCount}',
                       style: TextStyle(
-                        color: isLiked ? AppColors.danger : AppColors.muted,
+                        color: isLiked ? Colors.red : AppColors.muted,
                         fontSize: 15,
                       ),
                     ),
@@ -286,8 +287,7 @@ class _PostCardState extends ConsumerState<PostCard> {
             ),
 
           // ── Caption — "kullanıcıAdı metin" (Facebook stili) ─────────────────
-          if (widget.post.caption != null &&
-              widget.post.caption!.isNotEmpty)
+          if (widget.post.caption != null && widget.post.caption!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: RichText(
@@ -453,7 +453,8 @@ class _SpotChip extends StatelessWidget {
         icon = Icons.workspace_premium_rounded;
     }
 
-    final canTap = post.spotId != null &&
+    final canTap =
+        post.spotId != null &&
         (post.spotPrivacySnapshot == SpotPrivacyLevel.public ||
             post.spotPrivacySnapshot == SpotPrivacyLevel.friends);
 
@@ -532,15 +533,21 @@ class _DetailActionRowState extends ConsumerState<_DetailActionRow> {
               minimumSize: const Size(48, 48),
               padding: const EdgeInsets.symmetric(horizontal: 8),
             ),
-            icon: Icon(
-              isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-              color: isLiked ? AppColors.danger : AppColors.muted,
-              size: 24,
+            icon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (child, anim) =>
+                  ScaleTransition(scale: anim, child: child),
+              child: Icon(
+                isLiked ? Icons.favorite : Icons.favorite_border,
+                key: ValueKey<bool>(isLiked),
+                color: isLiked ? Colors.red : AppColors.muted,
+                size: 24,
+              ),
             ),
             label: Text(
               '${widget.post.likesCount}',
               style: TextStyle(
-                color: isLiked ? AppColors.danger : AppColors.muted,
+                color: isLiked ? Colors.red : AppColors.muted,
                 fontSize: 15,
               ),
             ),
@@ -593,12 +600,13 @@ class _DetailActionRowState extends ConsumerState<_DetailActionRow> {
   }
 }
 
-// ── "..." menüsü ──────────────────────────────────────────────────────────────
+// ── "⋯" menüsü — her kartta; gönderi sahibinde ek olarak Sil ────────────────────
 
 class _PostMenu extends ConsumerWidget {
   final PostModel post;
+  final bool isOwner;
 
-  const _PostMenu({required this.post});
+  const _PostMenu({required this.post, required this.isOwner});
 
   Future<void> _confirmAndDelete(BuildContext context, WidgetRef ref) async {
     final confirm = await showDialog<bool>(
@@ -613,10 +621,7 @@ class _PostMenu extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Sil',
-              style: TextStyle(color: AppColors.danger),
-            ),
+            child: const Text('Sil', style: TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -628,9 +633,9 @@ class _PostMenu extends ConsumerWidget {
       ref.invalidate(userPostsProvider(post.userId));
       ref.invalidate(likedPostsProvider(post.id));
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gönderi silindi')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Gönderi silindi')));
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -649,41 +654,60 @@ class _PostMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return IconButton(
+    return PopupMenuButton<String>(
       tooltip: 'Gönderi seçenekleri',
-      icon: const Icon(Icons.more_vert_rounded, color: AppColors.muted),
-      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
       padding: EdgeInsets.zero,
-      onPressed: () async {
-        final choice = await showModalBottomSheet<String>(
-          context: context,
-          backgroundColor: AppColors.surface,
-          showDragHandle: true,
-          builder: (ctx) => SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    leading: const Icon(
-                      Icons.delete_outline_rounded,
-                      color: AppColors.danger,
-                    ),
-                    title: const Text(
-                      'Sil',
-                      style: TextStyle(color: AppColors.danger),
-                    ),
-                    onTap: () => Navigator.pop(ctx, 'delete'),
-                  ),
-                ],
-              ),
+      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+      icon: const Icon(Icons.more_vert, color: AppColors.muted, size: 20),
+      color: AppColors.surface,
+      onSelected: (value) async {
+        switch (value) {
+          case 'delete':
+            await _confirmAndDelete(context, ref);
+          case 'share':
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Paylaş özelliği yakında.')),
+            );
+          case 'report':
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Şikayet özelliği yakında.')),
+            );
+          default:
+            break;
+        }
+      },
+      itemBuilder: (BuildContext ctx) => [
+        const PopupMenuItem<String>(
+          value: 'share',
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.share_outlined),
+            title: Text('Paylaş'),
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'report',
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.flag_outlined),
+            title: Text('Şikayet Et'),
+          ),
+        ),
+        if (isOwner)
+          const PopupMenuItem<String>(
+            value: 'delete',
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.delete_outline, color: Colors.red),
+              title: Text('Sil', style: TextStyle(color: Colors.red)),
             ),
           ),
-        );
-        if (!context.mounted || choice != 'delete') return;
-        await _confirmAndDelete(context, ref);
-      },
+      ],
     );
   }
 }

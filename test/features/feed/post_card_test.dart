@@ -47,15 +47,11 @@ Widget _wrap(PostModel post, {bool isLiked = false}) {
     overrides: [
       // Supabase başlatılmadan test ortamı için null user
       currentUserProvider.overrideWithValue(null),
-      likedPostsProvider(post.id).overrideWith(
-        (ref) async => isLiked,
-      ),
+      likedPostsProvider(post.id).overrideWith((ref) async => isLiked),
     ],
     child: MaterialApp(
       home: Scaffold(
-        body: SingleChildScrollView(
-          child: PostCard(post: post),
-        ),
+        body: SingleChildScrollView(child: PostCard(post: post)),
       ),
     ),
   );
@@ -118,8 +114,8 @@ void main() {
       final post = _makePost();
       await tester.pumpWidget(_wrap(post));
       await tester.pumpAndSettle();
-      // TextButton.icon (beğeni) — Icons.favorite_border_rounded
-      final likeButton = find.byIcon(Icons.favorite_border_rounded);
+      // TextButton.icon (beğeni) — Icons.favorite_border
+      final likeButton = find.byIcon(Icons.favorite_border);
       expect(likeButton, findsOneWidget);
     });
 
@@ -130,10 +126,10 @@ void main() {
 
       // SizedBox(height: 48) içinde TextButton.icon var mı
       final sizedBoxes = tester.widgetList<SizedBox>(find.byType(SizedBox));
-      final has48dp =
-          sizedBoxes.any((sb) => sb.height != null && sb.height! >= 48);
-      expect(has48dp, isTrue,
-          reason: '48dp yüksekliğinde SizedBox bulunamadı');
+      final has48dp = sizedBoxes.any(
+        (sb) => sb.height != null && sb.height! >= 48,
+      );
+      expect(has48dp, isTrue, reason: '48dp yüksekliğinde SizedBox bulunamadı');
     });
   });
 
@@ -162,10 +158,7 @@ void main() {
     });
 
     testWidgets('vip spot — "🔒 VIP Mera" gösteriliyor', (tester) async {
-      final post = _makePost(
-        spotId: 'spot-3',
-        privacy: SpotPrivacyLevel.vip,
-      );
+      final post = _makePost(spotId: 'spot-3', privacy: SpotPrivacyLevel.vip);
       await tester.pumpWidget(_wrap(post));
       await tester.pump();
       expect(find.textContaining('🔒 VIP Mera'), findsOneWidget);
@@ -195,10 +188,7 @@ void main() {
       final post = _makePost();
       await tester.pumpWidget(_wrap(post));
       await tester.pumpAndSettle();
-      expect(
-        find.byIcon(Icons.chat_bubble_outline_rounded),
-        findsOneWidget,
-      );
+      expect(find.byIcon(Icons.chat_bubble_outline_rounded), findsOneWidget);
     });
   });
 }

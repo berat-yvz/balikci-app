@@ -801,8 +801,9 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
   List<Marker> get _markers {
     final key = _markersKey();
-    if (_cachedMarkers != null && _markersCacheKey == key)
+    if (_cachedMarkers != null && _markersCacheKey == key) {
       return _cachedMarkers!;
+    }
     _cachedMarkers = _buildMarkers();
     _markersCacheKey = key;
     return _cachedMarkers!;
