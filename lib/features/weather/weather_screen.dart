@@ -18,8 +18,9 @@ import 'package:balikci_app/shared/widgets/app_filter_chip.dart';
 /// Detaylı hava durumu ekranı — H9 sprint.
 ///
 /// Veri `weather_cache` + yerel Drift: sunucu saat başında Edge `weather-cache`
-/// ile Open-Meteo doldurur; uygulama **yalnızca her saat :02** (İstanbul)
-/// `weather_cache` okur. Aşağı kaydırma Edge tetiklemez, yalnızca Drift yenilenir.
+/// ile Open-Meteo doldurur; [istanbulWeatherProvider] saatlik senkron ve
+/// `ref.watch` ile UI güncellenir. İlk açılış ve uygulama ön plana gelince
+/// `pullLatestSilently` Drift özetini yeniler; aşağı çekme ile yenileme yoktur.
 class WeatherScreen extends ConsumerStatefulWidget {
   const WeatherScreen({super.key});
 
@@ -28,10 +29,9 @@ class WeatherScreen extends ConsumerStatefulWidget {
   ) {
     final nowU = DateTime.now().toUtc();
     final currentHour = startOfCurrentIstanbulWallHourUtc(nowU);
-    final filtered = source
-        .where((h) => !h.time.toUtc().isBefore(currentHour))
-        .toList()
-      ..sort((a, b) => a.time.compareTo(b.time));
+    final filtered =
+        source.where((h) => !h.time.toUtc().isBefore(currentHour)).toList()
+          ..sort((a, b) => a.time.compareTo(b.time));
     return filtered.length > 24 ? filtered.take(24).toList() : filtered;
   }
 
@@ -85,172 +85,152 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen>
           final currentHour = hoursFromNow.isNotEmpty
               ? hoursFromNow.first
               : null;
-          return RefreshIndicator(
-            color: AppColors.primary,
-            onRefresh: () async {
-              await ref
-                  .read(istanbulWeatherProvider.notifier)
-                  .refreshFromServer();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Hava verisi sunucudan güncellendi. Tam taze özet saat başında '
-                      'arka planda hesaplanır; uygulama genelde yerel saat ile :02 '
-                      'geçe çeker.',
-                    ),
-                    backgroundColor: AppColors.primary,
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+            cacheExtent: 380,
+            children: [
+              const _RegionSelector(),
+              if (data.isFromCache) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
                   ),
-                );
-              }
-            },
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-              cacheExtent: 380,
-              children: [
-                const _RegionSelector(),
-                if (data.isFromCache) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppColors.warning.withValues(alpha: 0.35),
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.warning.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: AppColors.warning.withValues(alpha: 0.35),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.wifi_off_outlined,
+                        color: AppColors.warning,
+                        size: 16,
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.wifi_off_outlined,
-                          color: AppColors.warning,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Çevrimdışı mod — son önbellekten gösteriliyor. '
-                            'Saatlik tahmin mevcut değil.',
-                            style: AppTextStyles.caption.copyWith(
-                              fontSize: 12,
-                              color: AppColors.warning,
-                            ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Çevrimdışı mod — son önbellekten gösteriliyor. '
+                          'Saatlik tahmin mevcut değil.',
+                          style: AppTextStyles.caption.copyWith(
+                            fontSize: 12,
+                            color: AppColors.warning,
                           ),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.location_on_outlined,
+                    color: AppColors.muted,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '$regionDisplayName kıyı özeti',
+                    style: AppTextStyles.h3.copyWith(
+                      color: AppColors.muted,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      color: AppColors.muted,
-                      size: 20,
+              ),
+              const SizedBox(height: 12),
+
+              _WeatherHeroCard(weather: data.current),
+              if (data.current.fishingSummary != null &&
+                  data.current.fishingSummary!.isNotEmpty)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.3),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '$regionDisplayName kıyı özeti',
-                      style: AppTextStyles.h3.copyWith(
-                        color: AppColors.muted,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  ),
+                  child: Text(
+                    data.current.fishingSummary!,
+                    style: AppTextStyles.body.copyWith(color: AppColors.foam),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              const SizedBox(height: 6),
+              _FetchedAtLabel(fetchedAt: data.current.fetchedAt),
+              _WeatherDetailGrid(
+                weather: data.current,
+                currentHour: currentHour,
+              ),
+              const SizedBox(height: 12),
+
+              if (data.hourly.isNotEmpty) ...[
+                RepaintBoundary(
+                  child: WeeklyForecastTableCard(
+                    rows: buildWeeklyForecastRows(
+                      data.hourly,
+                      DateTime.now().toUtc(),
                     ),
-                  ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // ADIM 4: Saatlik tahmin yatay kaydırmalı
+              if (hoursFromNow.isNotEmpty) ...[
+                Text(
+                  'Saatlik Tahmin',
+                  style: AppTextStyles.h3.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                RepaintBoundary(child: _HourlyScrollRow(hours: hoursFromNow)),
+                const SizedBox(height: 12),
+                Text(
+                  'Sıcaklık grafiği',
+                  style: AppTextStyles.h3.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 17,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Önümüzdeki 24 saat',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.muted,
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 12),
-
-                _WeatherHeroCard(weather: data.current),
-                if (data.current.fishingSummary != null &&
-                    data.current.fishingSummary!.isNotEmpty)
-                  Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Text(
-                      data.current.fishingSummary!,
-                      style: AppTextStyles.body.copyWith(color: AppColors.foam),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                const SizedBox(height: 6),
-                _FetchedAtLabel(fetchedAt: data.current.fetchedAt),
-                _WeatherDetailGrid(
-                  weather: data.current,
-                  currentHour: currentHour,
+                RepaintBoundary(
+                  child: _HourlyWeatherChart(hours: hoursFromNow),
                 ),
-                const SizedBox(height: 12),
-
-                if (data.hourly.isNotEmpty) ...[
-                  RepaintBoundary(
-                    child: WeeklyForecastTableCard(
-                      rows: buildWeeklyForecastRows(
-                        data.hourly,
-                        DateTime.now().toUtc(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // ADIM 4: Saatlik tahmin yatay kaydırmalı
-                if (hoursFromNow.isNotEmpty) ...[
-                  Text(
-                    'Saatlik Tahmin',
-                    style: AppTextStyles.h3.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  RepaintBoundary(child: _HourlyScrollRow(hours: hoursFromNow)),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Sıcaklık grafiği',
-                    style: AppTextStyles.h3.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 17,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Önümüzdeki 24 saat',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.muted,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  RepaintBoundary(
-                    child: _HourlyWeatherChart(hours: hoursFromNow),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-
-                // Ay fazı kartı — büyük ikon + Türkçe isim
-                const _MoonPhaseCard(),
                 const SizedBox(height: 12),
               ],
-            ),
+
+              // Ay fazı kartı — büyük ikon + Türkçe isim
+              const _MoonPhaseCard(),
+              const SizedBox(height: 12),
+            ],
           );
         },
       ),
@@ -278,13 +258,7 @@ class _WeatherLoadingSkeleton extends StatelessWidget {
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-      children: [
-        bar(52),
-        bar(152),
-        bar(88),
-        bar(240),
-        bar(112),
-      ],
+      children: [bar(52), bar(152), bar(88), bar(240), bar(112)],
     );
   }
 }
@@ -327,8 +301,7 @@ class _HourlyScrollRow extends StatelessWidget {
       physics: const ClampingScrollPhysics(),
       child: Row(
         children: hours.map((h) {
-          final isNow =
-              h.time.toUtc().difference(nowU).abs().inMinutes <= 30;
+          final isNow = h.time.toUtc().difference(nowU).abs().inMinutes <= 30;
           return Container(
             width: 72,
             margin: const EdgeInsets.only(right: 8),
@@ -817,16 +790,17 @@ class _WeatherDetailGrid extends StatelessWidget {
       );
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: _lodosChipBg,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Icon(
             Icons.warning_amber_rounded,
-            size: 16,
+            size: 14,
             color: _lodosChipFg,
           ),
           const SizedBox(width: 6),
@@ -835,11 +809,13 @@ class _WeatherDetailGrid extends StatelessWidget {
               'Lodos — Av olumsuz etkilenebilir',
               style: TextStyle(
                 color: _lodosChipFg,
-                fontSize: 13,
+                fontSize: 11,
+                height: 1.2,
                 fontWeight: FontWeight.w600,
               ),
-              maxLines: 3,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
+              softWrap: true,
             ),
           ),
         ],
@@ -855,7 +831,7 @@ class _WeatherDetailGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
-      childAspectRatio: 2.45,
+      childAspectRatio: 2.28,
       children: [
         _DetailTile(
           icon: '💨',
@@ -939,6 +915,7 @@ class _WeatherDetailGrid extends StatelessWidget {
 class _DetailTile extends StatelessWidget {
   final String icon, label, value;
   final Color? valueColor;
+
   /// [value] yerine gösterilir (ör. Lodos uyarı chip'i).
   final Widget? valueWidget;
 
@@ -970,6 +947,7 @@ class _DetailTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
               children: [
                 Text(
                   label,
@@ -977,18 +955,26 @@ class _DetailTile extends StatelessWidget {
                     fontSize: 16,
                     color: AppColors.muted,
                   ),
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                valueWidget ??
-                    Text(
-                      value,
-                      style: AppTextStyles.caption.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: valueColor ?? Colors.white,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child:
+                        valueWidget ??
+                        Text(
+                          value,
+                          style: AppTextStyles.caption.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: valueColor ?? Colors.white,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                  ),
+                ),
               ],
             ),
           ),

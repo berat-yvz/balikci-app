@@ -68,6 +68,25 @@ WeeklyWeatherVisualKind _visualFromCode(int code, {required bool night}) {
       : WeeklyWeatherVisualKind.clearDay;
 }
 
+/// Örnekleme saati yağmur kodu taşımasa bile günlük yağış olasılığı yüksekse
+/// "bulutlu" glifi yerine yağmur göster (tablo ile tutarlılık).
+WeeklyWeatherVisualKind _applyPrecipToVisual(
+  WeeklyWeatherVisualKind base,
+  int precipPercent,
+) {
+  if (precipPercent < 38) return base;
+  switch (base) {
+    case WeeklyWeatherVisualKind.cloudy:
+    case WeeklyWeatherVisualKind.partlyCloudyDay:
+    case WeeklyWeatherVisualKind.partlyCloudyNight:
+      return WeeklyWeatherVisualKind.rain;
+    case WeeklyWeatherVisualKind.rain:
+    case WeeklyWeatherVisualKind.clearDay:
+    case WeeklyWeatherVisualKind.clearNight:
+      return base;
+  }
+}
+
 HourlyWeatherModel? _nearestHour(List<HourlyWeatherModel> hs, int targetHour) {
   if (hs.isEmpty) return null;
   HourlyWeatherModel? best;
@@ -122,10 +141,11 @@ List<WeeklyForecastRow> buildWeeklyForecastRows(
   }
 
   if (ordered.length < 7) {
-    final rest = byDay.keys
-        .where((k) => !k.isBefore(todayOnly) && !ordered.contains(k))
-        .toList()
-      ..sort();
+    final rest =
+        byDay.keys
+            .where((k) => !k.isBefore(todayOnly) && !ordered.contains(k))
+            .toList()
+          ..sort();
     for (final k in rest) {
       if (ordered.length >= 7) break;
       ordered.add(k);
@@ -137,13 +157,20 @@ List<WeeklyForecastRow> buildWeeklyForecastRows(
     final hours = byDay[date];
     if (hours == null || hours.isEmpty) continue;
 
-    final high = hours.map((h) => h.temperature).reduce((a, b) => a > b ? a : b);
+    final high = hours
+        .map((h) => h.temperature)
+        .reduce((a, b) => a > b ? a : b);
     final low = hours.map((h) => h.temperature).reduce((a, b) => a < b ? a : b);
 
     final daySample = _nearestHour(hours, 13) ?? hours.first;
     final nightSample = _nearestHour(hours, 22) ?? hours.last;
 
     final precip = _precipChanceApprox(hours);
+
+    var dayVisual = _visualFromCode(daySample.weatherCode, night: false);
+    var nightVisual = _visualFromCode(nightSample.weatherCode, night: true);
+    dayVisual = _applyPrecipToVisual(dayVisual, precip ?? 0);
+    nightVisual = _applyPrecipToVisual(nightVisual, precip ?? 0);
 
     rows.add(
       WeeklyForecastRow(
@@ -152,8 +179,8 @@ List<WeeklyForecastRow> buildWeeklyForecastRows(
         highC: high.round(),
         lowC: low.round(),
         precipChancePercent: precip,
-        dayVisual: _visualFromCode(daySample.weatherCode, night: false),
-        nightVisual: _visualFromCode(nightSample.weatherCode, night: true),
+        dayVisual: dayVisual,
+        nightVisual: nightVisual,
       ),
     );
   }

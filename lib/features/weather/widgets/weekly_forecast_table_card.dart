@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import 'package:balikci_app/app/theme.dart';
@@ -19,9 +17,7 @@ class WeeklyForecastTableCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       child: Stack(
         children: [
-          Positioned.fill(
-            child: CustomPaint(painter: _RainBackdropPainter()),
-          ),
+          Positioned.fill(child: CustomPaint(painter: _RainBackdropPainter())),
           Container(
             decoration: BoxDecoration(
               color: const Color(0xFF1A3D44).withValues(alpha: 0.72),
@@ -177,7 +173,12 @@ class _WeatherGlyphPainter extends CustomPainter {
       case WeeklyWeatherVisualKind.cloudy:
         _paintCloud(canvas, cx, cy, size.width * 0.38, const Color(0xFFE8EEF5));
       case WeeklyWeatherVisualKind.partlyCloudyDay:
-        _paintSun(canvas, cx - size.width * 0.12, cy - size.height * 0.1, size.width * 0.22);
+        _paintSun(
+          canvas,
+          cx - size.width * 0.12,
+          cy - size.height * 0.1,
+          size.width * 0.22,
+        );
         _paintCloud(
           canvas,
           cx + size.width * 0.06,
@@ -186,7 +187,12 @@ class _WeatherGlyphPainter extends CustomPainter {
           Colors.white,
         );
       case WeeklyWeatherVisualKind.partlyCloudyNight:
-        _paintMoon(canvas, cx - size.width * 0.14, cy - size.height * 0.1, size.width * 0.20);
+        _paintMoon(
+          canvas,
+          cx - size.width * 0.14,
+          cy - size.height * 0.1,
+          size.width * 0.20,
+        );
         _paintCloud(
           canvas,
           cx + size.width * 0.06,
@@ -206,13 +212,7 @@ class _WeatherGlyphPainter extends CustomPainter {
   void _paintRainWithCloud(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cloudY = size.height * 0.36;
-    _paintCloud(
-      canvas,
-      cx,
-      cloudY,
-      size.width * 0.34,
-      const Color(0xFFB0BEC5),
-    );
+    _paintCloud(canvas, cx, cloudY, size.width * 0.34, const Color(0xFFB0BEC5));
     final p = Paint()
       ..color = Colors.white.withValues(alpha: 0.9)
       ..strokeWidth = 1.35
@@ -237,23 +237,35 @@ class _WeatherGlyphPainter extends CustomPainter {
   }
 
   void _paintMoon(Canvas canvas, double cx, double cy, double r) {
-    final moonPath = Path()
-      ..addArc(Rect.fromCircle(center: Offset(cx, cy), radius: r), -math.pi * 0.35, math.pi * 1.7);
+    // Dolu hilal — eski sürümde yalnızca ince yay çizildiği için küçük
+    // kutuda boş halka / "Kıble" benzeri daire görünüyordu.
+    final outer = Path()
+      ..addOval(Rect.fromCircle(center: Offset(cx, cy), radius: r));
+    final bite = Path()
+      ..addOval(
+        Rect.fromCircle(
+          center: Offset(cx + r * 0.48, cy - r * 0.05),
+          radius: r * 0.72,
+        ),
+      );
+    final crescent = Path.combine(PathOperation.difference, outer, bite);
     canvas.drawPath(
-      moonPath,
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.95)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = r * 0.38
-        ..strokeCap = StrokeCap.round,
+      crescent,
+      Paint()..color = Colors.white.withValues(alpha: 0.94),
     );
   }
 
   void _paintCloud(Canvas canvas, double cx, double cy, double w, Color fill) {
     final path = Path()
-      ..addOval(Rect.fromCircle(center: Offset(cx - w * 0.35, cy), radius: w * 0.42))
-      ..addOval(Rect.fromCircle(center: Offset(cx + w * 0.35, cy), radius: w * 0.48))
-      ..addOval(Rect.fromCircle(center: Offset(cx, cy - w * 0.22), radius: w * 0.44));
+      ..addOval(
+        Rect.fromCircle(center: Offset(cx - w * 0.35, cy), radius: w * 0.42),
+      )
+      ..addOval(
+        Rect.fromCircle(center: Offset(cx + w * 0.35, cy), radius: w * 0.48),
+      )
+      ..addOval(
+        Rect.fromCircle(center: Offset(cx, cy - w * 0.22), radius: w * 0.44),
+      );
     canvas.drawPath(path, Paint()..color = fill.withValues(alpha: 0.95));
   }
 
@@ -270,7 +282,11 @@ class _RainBackdropPainter extends CustomPainter {
       ..color = Colors.white.withValues(alpha: 0.035)
       ..strokeWidth = 1;
     for (double x = -size.height; x < size.width + size.height; x += 11) {
-      canvas.drawLine(Offset(x, 0), Offset(x + size.height * 0.35, size.height), p);
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x + size.height * 0.35, size.height),
+        p,
+      );
     }
   }
 

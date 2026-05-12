@@ -85,6 +85,26 @@ void main() {
     expect(row.nightVisual, WeeklyWeatherVisualKind.rain);
   });
 
+  test('yüksek yağış olasılığında kapalı bulut kodu yağmur glifine çıkar', () {
+    final now = DateTime(2026, 5, 9, 12);
+    final d = DateTime(2026, 5, 9);
+    final hourly = <HourlyWeatherModel>[];
+    for (var h = 0; h < 24; h++) {
+      hourly.add(
+        _h(
+          DateTime(d.year, d.month, d.day, h),
+          temp: 15,
+          code: 3,
+          precip: h.isEven ? 0.3 : 0,
+        ),
+      );
+    }
+    final row = buildWeeklyForecastRows(hourly, now).single;
+    expect(row.precipChancePercent, greaterThanOrEqualTo(38));
+    expect(row.dayVisual, WeeklyWeatherVisualKind.rain);
+    expect(row.nightVisual, WeeklyWeatherVisualKind.rain);
+  });
+
   test('yedi günlük saatlik veriden yedi satır üretir', () {
     final now = DateTime(2026, 5, 9, 12);
     final hourly = <HourlyWeatherModel>[];

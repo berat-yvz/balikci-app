@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:balikci_app/shared/widgets/rank_badge.dart';
 
-Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: Center(child: child)));
+Widget _wrap(Widget child) => MaterialApp(
+  home: Scaffold(body: Center(child: child)),
+);
 
 void main() {
   group('RankBadge — rütbe metinleri', () {
@@ -35,7 +37,9 @@ void main() {
       expect(find.text('👑'), findsOneWidget);
     });
 
-    testWidgets('bilinmeyen rütbe → Deniz Reisi gösterilir (default)', (tester) async {
+    testWidgets('bilinmeyen rütbe → Deniz Reisi gösterilir (default)', (
+      tester,
+    ) async {
       await tester.pumpWidget(_wrap(const RankBadge(rank: 'bilinmeyen')));
       await tester.pump();
       expect(find.text('Deniz Reisi'), findsOneWidget);
@@ -43,18 +47,17 @@ void main() {
   });
 
   group('RankBadge — boyut', () {
-    testWidgets('small boyut render edilir', (tester) async {
+    testWidgets('compact boyut küçük punto kullanır', (tester) async {
       await tester.pumpWidget(
-        _wrap(const RankBadge(rank: 'usta', size: RankBadgeSize.small)),
+        _wrap(const RankBadge(rank: 'acemi', size: RankBadgeSize.compact)),
       );
       await tester.pump();
-      expect(find.text('Usta'), findsOneWidget);
+      final text = tester.widget<Text>(find.text('Acemi'));
+      expect(text.style?.fontSize, 10);
     });
 
     testWidgets('medium boyut render edilir (varsayılan)', (tester) async {
-      await tester.pumpWidget(
-        _wrap(const RankBadge(rank: 'usta')),
-      );
+      await tester.pumpWidget(_wrap(const RankBadge(rank: 'usta')));
       await tester.pump();
       expect(find.text('Usta'), findsOneWidget);
     });
@@ -69,7 +72,9 @@ void main() {
   });
 
   group('RankBadge — deniz_reisi animasyonu', () {
-    testWidgets('deniz_reisi — birden fazla frame sonra da düzgün render', (tester) async {
+    testWidgets('deniz_reisi — birden fazla frame sonra da düzgün render', (
+      tester,
+    ) async {
       await tester.pumpWidget(_wrap(const RankBadge(rank: 'deniz_reisi')));
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 800));

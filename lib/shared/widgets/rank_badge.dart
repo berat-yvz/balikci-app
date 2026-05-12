@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:balikci_app/app/theme.dart';
 
-enum RankBadgeSize { small, medium, large }
+enum RankBadgeSize { compact, small, medium, large }
 
 class RankBadge extends StatefulWidget {
   final String rank;
@@ -29,7 +29,9 @@ class _RankBadgeState extends State<RankBadge>
       duration: const Duration(milliseconds: 1600),
       vsync: this,
     );
-    if (widget.rank == 'deniz_reisi') _controller.repeat();
+    if (widget.rank == 'deniz_reisi' && widget.size != RankBadgeSize.compact) {
+      _controller.repeat();
+    }
   }
 
   @override
@@ -44,7 +46,7 @@ class _RankBadgeState extends State<RankBadge>
   Widget build(BuildContext context) {
     final cfg = _badgeConfig(widget.rank, widget.size);
 
-    final child = _isDenizReisi
+    final child = _isDenizReisi && widget.size != RankBadgeSize.compact
         ? _DenizReisiShimmerBadge(controller: _controller, child: cfg.child)
         : cfg.child;
 
@@ -52,13 +54,19 @@ class _RankBadgeState extends State<RankBadge>
   }
 
   _BadgeConfig _badgeConfig(String rank, RankBadgeSize size) {
+    final isCompact = size == RankBadgeSize.compact;
     final isSmall = size == RankBadgeSize.small;
     final isLarge = size == RankBadgeSize.large;
 
-    final double padV = isSmall ? 6 : (isLarge ? 12 : 9);
-    final double padH = isSmall ? 10 : (isLarge ? 14 : 12);
-    final double fontSize = isSmall ? 13 : (isLarge ? 18 : 15);
-    final double iconSize = isSmall ? 16 : (isLarge ? 22 : 18);
+    final double padV = isCompact ? 2 : (isSmall ? 6 : (isLarge ? 12 : 9));
+    final double padH = isCompact ? 5 : (isSmall ? 10 : (isLarge ? 14 : 12));
+    final double fontSize = isCompact
+        ? 10
+        : (isSmall ? 13 : (isLarge ? 18 : 15));
+    final double iconSize = isCompact
+        ? 11
+        : (isSmall ? 16 : (isLarge ? 22 : 18));
+    final double emojiGap = isCompact ? 3 : 8;
 
     switch (rank) {
       case 'acemi':
@@ -70,6 +78,8 @@ class _RankBadgeState extends State<RankBadge>
             padH: padH,
             fontSize: fontSize,
             iconSize: iconSize,
+            emojiTextGap: emojiGap,
+            compact: isCompact,
             borderColor: Colors.transparent,
             backgroundColor: AppColors.rankAcemi.withValues(alpha: 0.15),
             textColor: AppColors.rankAcemi,
@@ -84,6 +94,8 @@ class _RankBadgeState extends State<RankBadge>
             padH: padH,
             fontSize: fontSize,
             iconSize: iconSize,
+            emojiTextGap: emojiGap,
+            compact: isCompact,
             borderColor: Colors.transparent,
             backgroundColor: AppColors.rankOltaKurdu.withValues(alpha: 0.15),
             textColor: AppColors.rankOltaKurdu,
@@ -98,6 +110,8 @@ class _RankBadgeState extends State<RankBadge>
             padH: padH,
             fontSize: fontSize,
             iconSize: iconSize,
+            emojiTextGap: emojiGap,
+            compact: isCompact,
             borderColor: AppColors.rankUsta,
             backgroundColor: AppColors.rankUsta.withValues(alpha: 0.10),
             textColor: AppColors.rankUsta,
@@ -113,6 +127,8 @@ class _RankBadgeState extends State<RankBadge>
             padH: padH,
             fontSize: fontSize,
             iconSize: iconSize,
+            emojiTextGap: emojiGap,
+            compact: isCompact,
             borderColor: AppColors.rankDenizReisi,
             backgroundColor: AppColors.rankDenizReisi.withValues(alpha: 0.18),
             textColor: AppColors.rankDenizReisi,
@@ -128,11 +144,25 @@ class _RankBadgeState extends State<RankBadge>
     required double padH,
     required double fontSize,
     required double iconSize,
+    required double emojiTextGap,
+    required bool compact,
     required Color borderColor,
     required Color backgroundColor,
     required Color textColor,
   }) {
+    final textWidget = Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: fontSize,
+        fontWeight: FontWeight.w800,
+        color: textColor,
+      ),
+    );
+
     return Container(
+      constraints: compact ? const BoxConstraints(maxWidth: 112) : null,
       padding: EdgeInsets.symmetric(vertical: padV, horizontal: padH),
       decoration: BoxDecoration(
         color: backgroundColor,
@@ -143,15 +173,8 @@ class _RankBadgeState extends State<RankBadge>
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(emoji, style: TextStyle(fontSize: iconSize)),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w800,
-              color: textColor,
-            ),
-          ),
+          SizedBox(width: emojiTextGap),
+          if (compact) Expanded(child: textWidget) else textWidget,
         ],
       ),
     );
