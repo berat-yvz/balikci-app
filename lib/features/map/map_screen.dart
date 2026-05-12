@@ -38,12 +38,16 @@ import 'package:balikci_app/shared/providers/notification_provider.dart';
 enum MapViewState {
   /// Sadece harita; arama odakta değil, liste ve detay kapalı.
   clean,
+
   /// Arama alanı odakta; sonuç listesi henüz yok.
   searching,
+
   /// Arama sonuçları / yakındaki meralar listesi açık.
   spotList,
+
   /// Alt sayfada mera detayı (sheet) açık.
   spotDetail,
+
   /// Mera ekleme tam ekran rotası açık.
   addingSpot,
 }
@@ -89,6 +93,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
   Map<String, List<CheckinModel>> _activeCheckinsBySpotId = const {};
   // ignore: unused_field
   final Map<LatLng, bool> _activeSpotByLatLng = {};
+
   /// Uzak sunucudan mera listesi çekilirken — tam ekran spinner yok, ince çubuk.
   bool _spotsRemoteRefreshing = false;
   String? _error;
@@ -106,7 +111,11 @@ class _MapScreenState extends ConsumerState<MapScreen>
   Timer? _boundsDebounce;
   Timer? _checkinRealtimeDebounce;
   Timer? _ttlCheckTimer;
+  Timer? _locationMoveDebounce;
   RealtimeChannel? _checkinsRealtimeChannel;
+
+  /// [build] içinde [ref.listen] kurmayı önler; konum güncellemeleri debounce'lu taşınır.
+  bool _didRegisterLocationListener = false;
 
   SpotModel? _sheetSpot;
   final DraggableScrollableController _sheetController =
@@ -149,6 +158,27 @@ class _MapScreenState extends ConsumerState<MapScreen>
   /// Push sırasında [MapViewState.addingSpot] — `context.push` await bitince false.
   bool _addingSpotRouteOpen = false;
 
+  static bool _isValidGeo(double lat, double lng) {
+    if (lat.isNaN || lng.isNaN || lat.isInfinite || lng.isInfinite) {
+      return false;
+    }
+    return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+  }
+
+  /// GPS güncellemelerinde harita/kamera yarışını ve sekme geçişindeki titremeyi azaltır.
+  void _scheduleDebouncedMapMoveToPosition(Position next) {
+    _locationMoveDebounce?.cancel();
+    _locationMoveDebounce = Timer(const Duration(milliseconds: 180), () {
+      if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        try {
+          _mapController.move(LatLng(next.latitude, next.longitude), 13.0);
+        } catch (_) {}
+      });
+    });
+  }
+
   void _onSearchFocusChanged() {
     if (!mounted) return;
     setState(() {});
@@ -179,8 +209,16 @@ class _MapScreenState extends ConsumerState<MapScreen>
         } catch (_) {}
       }
       unawaited(_initializeCacheAndLoad());
-      Future<void>.delayed(const Duration(milliseconds: 200), () {
-        if (mounted) setState(() => _mapSecondaryLayersReady = true);
+      // İki frame + kısa gecikme: FlutterMap / MapCamera oturduktan sonra küme katmanı —
+      // erken mount bazen layout/assert ile kısa kırmızı ekran flaşı üretebiliyordu.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          Future<void>.delayed(const Duration(milliseconds: 120), () {
+            if (mounted) setState(() => _mapSecondaryLayersReady = true);
+          });
+        });
       });
     });
     Future<void>.delayed(const Duration(milliseconds: 380), () {
@@ -201,21 +239,28 @@ class _MapScreenState extends ConsumerState<MapScreen>
       curve: Curves.easeInOut,
     );
 
-    _ttlCheckTimer = Timer.periodic(
-      const Duration(minutes: 15),
-      (_) {
-        if (mounted) {
-          _cachedMarkers = null;
-          setState(() {});
-        }
-      },
-    );
+    _ttlCheckTimer = Timer.periodic(const Duration(minutes: 15), (_) {
+      if (mounted) {
+        _cachedMarkers = null;
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didRegisterLocationListener) return;
+    _didRegisterLocationListener = true;
+    ref.listenManual<Position?>(userLocationProvider, (previous, next) {
+      if (next == null || !mounted) return;
+      _scheduleDebouncedMapMoveToPosition(next);
+    }, fireImmediately: false);
   }
 
   Future<void> _checkFmtcReady() async {
     try {
-      final ready =
-          await FMTCStore(AppConstants.fmtcStoreName).manage.ready;
+      final ready = await FMTCStore(AppConstants.fmtcStoreName).manage.ready;
       if (mounted && ready) setState(() => _fmtcReady = true);
     } catch (_) {
       // FMTC başlatılmadıysa sessizce fallback provider'a geçilir.
@@ -227,14 +272,15 @@ class _MapScreenState extends ConsumerState<MapScreen>
   TileProvider get _tileProvider {
     if (_fmtcReady) {
       try {
-        _cachedFmtcTileProvider ??=
-            FMTCStore(AppConstants.fmtcStoreName).getTileProvider(
-          settings: FMTCTileProviderSettings(
-            behavior: CacheBehavior.cacheFirst,
-            cachedValidDuration:
-                Duration(days: AppConstants.fmtcMaxCacheDays),
-          ),
-        );
+        _cachedFmtcTileProvider ??= FMTCStore(AppConstants.fmtcStoreName)
+            .getTileProvider(
+              settings: FMTCTileProviderSettings(
+                behavior: CacheBehavior.cacheFirst,
+                cachedValidDuration: Duration(
+                  days: AppConstants.fmtcMaxCacheDays,
+                ),
+              ),
+            );
         return _cachedFmtcTileProvider!;
       } catch (e) {
         debugPrint('FMTC provider hatası: $e');
@@ -252,6 +298,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
     _boundsDebounce?.cancel();
     _checkinRealtimeDebounce?.cancel();
     _ttlCheckTimer?.cancel();
+    _locationMoveDebounce?.cancel();
     _sheetController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
@@ -338,7 +385,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Bu mera artık mevcut değil veya gizlenmiş olabilir. '  
+              'Bu mera artık mevcut değil veya gizlenmiş olabilir. '
               'Başka bir mera seçebilirsin.',
             ),
             duration: Duration(seconds: 5),
@@ -366,7 +413,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Mera bilgisi yüklenirken bir sorun oluştu. '  
+            'Mera bilgisi yüklenirken bir sorun oluştu. '
             'İnternet bağlantını kontrol edip tekrar dene.',
           ),
           duration: Duration(seconds: 5),
@@ -576,9 +623,9 @@ class _MapScreenState extends ConsumerState<MapScreen>
       }
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Konum alınamadı')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Konum alınamadı')));
   }
 
   Future<void> _openDirectionsForSpot(SpotModel spot) async {
@@ -681,7 +728,8 @@ class _MapScreenState extends ConsumerState<MapScreen>
       final now = DateTime.now();
       final cached = _cachedSearchPos;
       final cachedAt = _cachedSearchPosTime;
-      final isFresh = cached != null &&
+      final isFresh =
+          cached != null &&
           cachedAt != null &&
           now.difference(cachedAt) < const Duration(seconds: 60);
       final pos = isFresh
@@ -753,7 +801,8 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
   List<Marker> get _markers {
     final key = _markersKey();
-    if (_cachedMarkers != null && _markersCacheKey == key) return _cachedMarkers!;
+    if (_cachedMarkers != null && _markersCacheKey == key)
+      return _cachedMarkers!;
     _cachedMarkers = _buildMarkers();
     _markersCacheKey = key;
     return _cachedMarkers!;
@@ -768,6 +817,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
     );
     final fishIds = _fishReportSpotIds;
     return _spots
+        .where((s) => _isValidGeo(s.lat, s.lng))
         .map(
           (spot) => Marker(
             key: ValueKey(spot.id),
@@ -803,6 +853,7 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
   List<Marker> _buildShopMarkers() {
     return _shops
+        .where((s) => _isValidGeo(s.lat, s.lng))
         .map(
           (shop) => Marker(
             point: LatLng(shop.lat, shop.lng),
@@ -956,16 +1007,6 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<Position?>(userLocationProvider, (previous, next) {
-      if (next == null || !mounted) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        try {
-          _mapController.move(LatLng(next.latitude, next.longitude), 13.0);
-        } catch (_) {}
-      });
-    });
-
     const sheetInitialSize = 0.18;
     const sheetMinSize = 0.14;
     const sheetMaxSize = 0.85;
@@ -1007,11 +1048,11 @@ class _MapScreenState extends ConsumerState<MapScreen>
         }
       },
       child: Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: FlutterMap(
+        backgroundColor: AppColors.background,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: FlutterMap(
                 mapController: _mapController,
                 options: MapOptions(
                   initialCenter: const LatLng(41.0082, 28.9784),
@@ -1088,8 +1129,9 @@ class _MapScreenState extends ConsumerState<MapScreen>
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.success
-                                            .withValues(alpha: 0.45),
+                                        color: AppColors.success.withValues(
+                                          alpha: 0.45,
+                                        ),
                                         blurRadius: 10,
                                         spreadRadius: 2,
                                       ),
@@ -1142,8 +1184,9 @@ class _MapScreenState extends ConsumerState<MapScreen>
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppColors.success
-                                              .withValues(alpha: 0.6),
+                                          color: AppColors.success.withValues(
+                                            alpha: 0.6,
+                                          ),
                                           blurRadius: 4,
                                         ),
                                       ],
@@ -1160,591 +1203,607 @@ class _MapScreenState extends ConsumerState<MapScreen>
                     MarkerLayer(markers: _buildShopMarkers()),
                 ],
               ),
-          ),
-
-          // H9: Kompakt hava kartı — arama çubuğu (48px) altına yerleşir
-          // right: 80 → sağdaki katman toggle butonlarıyla çakışmaz
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8 + 48 + 8,
-            left: 12,
-            right: 82,
-            child: const Align(
-              alignment: Alignment.topLeft,
-              child: MapWeatherExpandableCard(),
             ),
-          ),
 
-          // Üst: Arama (floating)
-          Positioned(
-            left: 16,
-            right: 78,
-            top: MediaQuery.of(context).padding.top + 8,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: _searchController,
-                  focusNode: _searchFocusNode,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'Mera, tür veya bölge ara...',
-                    hintStyle: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      color: Colors.white70,
-                      size: 26,
-                    ),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            tooltip: 'Temizle',
-                            icon: const Icon(
-                              Icons.close,
-                              size: 18,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              _searchController.clear();
-                              _onSearchChanged('');
-                              _searchFocusNode.unfocus();
-                              setState(() {});
-                            },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: const Color(0xFF1A2E44),
-                    border: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(14)),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                  ),
-                  onChanged: _onSearchChanged,
-                  onTap: () => _onSearchChanged(_searchController.text),
-                ),
-                const SizedBox(height: 8),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOut,
-                  height: _searchResults.isEmpty
-                      ? 0
-                      : 56.0 *
-                              (_searchResults.length.clamp(1, _searchDropdownMaxRows)) +
-                          16,
-                  child: _searchResults.isEmpty
-                      ? const SizedBox.shrink()
-                      : Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.9),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.4),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
+            // H9: Kompakt hava kartı — arama çubuğu (48px) altına yerleşir
+            // right: 80 → sağdaki katman toggle butonlarıyla çakışmaz
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 8 + 48 + 8,
+              left: 12,
+              right: 82,
+              child: const Align(
+                alignment: Alignment.topLeft,
+                child: MapWeatherExpandableCard(),
+              ),
+            ),
+
+            // Üst: Arama (floating)
+            Positioned(
+              left: 16,
+              right: 78,
+              top: MediaQuery.of(context).padding.top + 8,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Mera, tür veya bölge ara...',
+                      hintStyle: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Colors.white70,
+                        size: 26,
+                      ),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              tooltip: 'Temizle',
+                              icon: const Icon(
+                                Icons.close,
+                                size: 18,
+                                color: Colors.white,
                               ),
-                            ],
-                          ),
-                          child: _searchResults.isEmpty
-                              ? const Center(
-                                  child: Text(
-                                    'Sonuç bulunamadı',
-                                    style: TextStyle(color: Colors.white54),
-                                  ),
-                                )
-                              : ListView.separated(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 8,
-                                    horizontal: 8,
-                                  ),
-                                  physics: const ClampingScrollPhysics(),
-                                  itemCount: _searchResults.length,
-                                  separatorBuilder: (_, _) =>
-                                      const SizedBox(height: 4),
-                                  itemBuilder: (context, idx) {
-                                    final spot = _searchResults[idx];
-                                    return InkWell(
-                                      borderRadius: BorderRadius.circular(12),
-                                      onTap: () {
-                                        _searchController.text = spot.name;
-                                        _searchFocusNode.unfocus();
-                                        _selectSpot(spot);
-                                        setState(() {
-                                          _searchResults = const [];
-                                        });
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 8,
-                                          horizontal: 10,
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            const Icon(
-                                              Icons.location_on,
-                                              color: AppColors.teal,
-                                              size: 18,
-                                            ),
-                                            const SizedBox(width: 10),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    spot.name,
-                                                    style: const TextStyle(
-                                                      color: Colors.white,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                  if (spot.type != null)
-                                                    const SizedBox(height: 2),
-                                                  if (spot.type != null)
-                                                    Container(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 8,
-                                                            vertical: 3,
-                                                          ),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white12,
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              999,
-                                                            ),
+                              onPressed: () {
+                                _searchController.clear();
+                                _onSearchChanged('');
+                                _searchFocusNode.unfocus();
+                                setState(() {});
+                              },
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: const Color(0xFF1A2E44),
+                      border: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(14)),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                    ),
+                    onChanged: _onSearchChanged,
+                    onTap: () => _onSearchChanged(_searchController.text),
+                  ),
+                  const SizedBox(height: 8),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOut,
+                    height: _searchResults.isEmpty
+                        ? 0
+                        : 56.0 *
+                                  (_searchResults.length.clamp(
+                                    1,
+                                    _searchDropdownMaxRows,
+                                  )) +
+                              16,
+                    child: _searchResults.isEmpty
+                        ? const SizedBox.shrink()
+                        : Container(
+                            margin: const EdgeInsets.only(top: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.9),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.4),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: _searchResults.isEmpty
+                                ? const Center(
+                                    child: Text(
+                                      'Sonuç bulunamadı',
+                                      style: TextStyle(color: Colors.white54),
+                                    ),
+                                  )
+                                : ListView.separated(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                      horizontal: 8,
+                                    ),
+                                    physics: const ClampingScrollPhysics(),
+                                    itemCount: _searchResults.length,
+                                    separatorBuilder: (_, _) =>
+                                        const SizedBox(height: 4),
+                                    itemBuilder: (context, idx) {
+                                      final spot = _searchResults[idx];
+                                      return InkWell(
+                                        borderRadius: BorderRadius.circular(12),
+                                        onTap: () {
+                                          _searchController.text = spot.name;
+                                          _searchFocusNode.unfocus();
+                                          _selectSpot(spot);
+                                          setState(() {
+                                            _searchResults = const [];
+                                          });
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 8,
+                                            horizontal: 10,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.location_on,
+                                                color: AppColors.teal,
+                                                size: 18,
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      spot.name,
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.w600,
                                                       ),
-                                                      child: Text(
-                                                        spot.type!,
-                                                        style: const TextStyle(
-                                                          color: Colors.white70,
-                                                          fontSize: 13,
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                    if (spot.type != null)
+                                                      const SizedBox(height: 2),
+                                                    if (spot.type != null)
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 3,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.white12,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                999,
+                                                              ),
+                                                        ),
+                                                        child: Text(
+                                                          spot.type!,
+                                                          style:
+                                                              const TextStyle(
+                                                                color: Colors
+                                                                    .white70,
+                                                                fontSize: 13,
+                                                              ),
                                                         ),
                                                       ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              _PrivacyChip(
+                                                level: spot.privacyLevel,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Sağ alt: mevcut konuma git (arka planda doldurulan provider)
+            Positioned(
+              right: 16,
+              bottom: mapFabBottom,
+              child: FloatingActionButton.small(
+                heroTag: 'location_btn',
+                backgroundColor: AppColors.surface,
+                tooltip: 'Konumumu Bul',
+                onPressed: _goToMyLocation,
+                child: const Icon(
+                  Icons.my_location_rounded,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+
+            // Sol alt — mera ekle (yalnızca saf harita görünümünde)
+            Positioned(
+              left: 16,
+              bottom: mapFabBottom,
+              child: AnimatedOpacity(
+                opacity: _mapViewState == MapViewState.clean ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: IgnorePointer(
+                  ignoring: _mapViewState != MapViewState.clean,
+                  child: FloatingActionButton.extended(
+                    heroTag: 'addSpotFab',
+                    onPressed: () async {
+                      setState(() => _addingSpotRouteOpen = true);
+                      try {
+                        final ok = await context.push<bool>('/map/add-spot');
+                        if (!mounted) return;
+                        if (ok == true) unawaited(_refreshSpotsFromRemote());
+                      } finally {
+                        if (mounted) {
+                          setState(() => _addingSpotRouteOpen = false);
+                        }
+                      }
+                    },
+                    backgroundColor: AppColors.mapSpotLayerActive,
+                    foregroundColor: AppColors.foam,
+                    elevation: 3,
+                    extendedPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 0,
+                    ),
+                    icon: const Icon(Icons.add_location_alt, size: 20),
+                    label: const Text(
+                      'Mera Ekle',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Top-right: Bildirim + Katman toggles
+            Positioned(
+              right: 12,
+              top: MediaQuery.of(context).padding.top + 8,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (!_mapSecondaryLayersReady)
+                    Tooltip(
+                      message: 'Bildirimler',
+                      child: GestureDetector(
+                        onTap: () => context.push(AppRoutes.notifications),
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.65),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications_outlined,
+                            color: Colors.white,
+                            size: 26,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final count = ref.watch(unreadCountProvider);
+
+                        Widget buildButton(int count) {
+                          return Tooltip(
+                            message: 'Bildirimler',
+                            child: GestureDetector(
+                              onTap: () =>
+                                  context.push(AppRoutes.notifications),
+                              child: Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.65),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    Center(
+                                      child: Icon(
+                                        count > 0
+                                            ? Icons.notifications_rounded
+                                            : Icons.notifications_outlined,
+                                        color: count > 0
+                                            ? AppColors.sand
+                                            : Colors.white,
+                                        size: 26,
+                                      ),
+                                    ),
+                                    // Okunmamış bildirim nokta göstergesi
+                                    if (count > 0)
+                                      Positioned(
+                                        right: 9,
+                                        top: 9,
+                                        child: Container(
+                                          width: 9,
+                                          height: 9,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.success,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Colors.black,
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    // Okunmamış sayı rozeti
+                                    if (count > 0)
+                                      Positioned(
+                                        right: 5,
+                                        bottom: 5,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 5,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.danger,
+                                            borderRadius: BorderRadius.circular(
+                                              999,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            count > 99 ? '99+' : '$count',
+                                            style: const TextStyle(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w900,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+
+                        return buildButton(count);
+                      },
+                    ),
+                  const SizedBox(height: 8),
+                  _LayerToggleGroup(
+                    showSpots: _showSpots,
+                    showShops: _showShops,
+                    onToggleSpots: () =>
+                        setState(() => _showSpots = !_showSpots),
+                    onToggleShops: _toggleShopsLayer,
+                  ),
+                ],
+              ),
+            ),
+
+            // Üst: uzak mera senkronu — harita kullanılabilir kalır.
+            if (_spotsRemoteRefreshing)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: MediaQuery.of(context).padding.top,
+                child: LinearProgressIndicator(
+                  minHeight: 2,
+                  backgroundColor: Colors.black.withValues(alpha: 0.15),
+                  valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                ),
+              ),
+
+            // Alt: Draggable sheet — yalnızca mera seçilince görünür.
+            // Align(bottomCenter) + Stack gevşek kısıtları bazen sheet’e 0 yükseklik verir;
+            // hit test: "Cannot hit test a render box with no size". Positioned.fill gerekli.
+            if (sheetSpot != null)
+              Positioned.fill(
+                child: DraggableScrollableSheet(
+                  controller: _sheetController,
+                  initialChildSize: sheetInitialSize,
+                  minChildSize: sheetMinSize,
+                  maxChildSize: sheetMaxSize,
+                  snap: true,
+                  snapSizes: const [sheetInitialSize, 0.32, 0.42, sheetMaxSize],
+                  builder: (context, scrollController) {
+                    final bottomPad = MediaQuery.of(context).padding.bottom;
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: bottomPad),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: CustomScrollView(
+                          key: ValueKey<String>('spot_sheet_${sheetSpot.id}'),
+                          controller: scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: ClampingScrollPhysics(),
+                          ),
+                          slivers: [
+                            SliverPadding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                              sliver: SliverToBoxAdapter(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Center(
+                                      child: Container(
+                                        margin: const EdgeInsets.only(
+                                          top: 8,
+                                          bottom: 12,
+                                        ),
+                                        width: 40,
+                                        height: 4,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.muted.withValues(
+                                            alpha: 0.45,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            2,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    _SpotSheetHeader(
+                                      spot: sheetSpot,
+                                      activeCount: activeCount,
+                                      hasMuhtar: sheetSpot.muhtarId != null,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    if (sheetSpot.privacyLevel == 'vip' &&
+                                        !_isUstaOrAbove)
+                                      _VipLockedWidget(
+                                        userScore: _currentUserScore,
+                                      )
+                                    else ...[
+                                      if (mostRecent != null)
+                                        _LatestCheckinBanner(
+                                          checkin: mostRecent,
+                                        ),
+                                      if (mostRecent != null)
+                                        const SizedBox(height: 10),
+                                      _MeraWeatherSection(
+                                        loading: _weatherLoading,
+                                        snap: _meraWeather,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      SizedBox(
+                                        height: 48,
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: [
+                                            Expanded(
+                                              child: _SheetPrimaryButton(
+                                                onPressed: () =>
+                                                    _openCheckinForSpot(
+                                                      sheetSpot,
                                                     ),
-                                                ],
+                                                icon:
+                                                    Icons.check_circle_outline,
+                                                label: 'Balık Var!',
                                               ),
                                             ),
                                             const SizedBox(width: 8),
-                                            _PrivacyChip(
-                                              level: spot.privacyLevel,
+                                            Expanded(
+                                              child: _SheetSecondaryButton(
+                                                onPressed: () =>
+                                                    _openDirectionsForSpot(
+                                                      sheetSpot,
+                                                    ),
+                                                icon: Icons.directions,
+                                                label: 'Yol Tarifi',
+                                              ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                    );
-                                  },
-                                ),
-                        ),
-                ),
-              ],
-            ),
-          ),
-
-          // Sağ alt: mevcut konuma git (arka planda doldurulan provider)
-          Positioned(
-            right: 16,
-            bottom: mapFabBottom,
-            child: FloatingActionButton.small(
-              heroTag: 'location_btn',
-              backgroundColor: AppColors.surface,
-              tooltip: 'Konumumu Bul',
-              onPressed: _goToMyLocation,
-              child: const Icon(
-                Icons.my_location_rounded,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-
-          // Sol alt — mera ekle (yalnızca saf harita görünümünde)
-          Positioned(
-            left: 16,
-            bottom: mapFabBottom,
-            child: AnimatedOpacity(
-              opacity: _mapViewState == MapViewState.clean ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 200),
-              child: IgnorePointer(
-                ignoring: _mapViewState != MapViewState.clean,
-                child: FloatingActionButton.extended(
-                  heroTag: 'addSpotFab',
-                  onPressed: () async {
-                    setState(() => _addingSpotRouteOpen = true);
-                    try {
-                      final ok = await context.push<bool>('/map/add-spot');
-                      if (!mounted) return;
-                      if (ok == true) unawaited(_refreshSpotsFromRemote());
-                    } finally {
-                      if (mounted) {
-                        setState(() => _addingSpotRouteOpen = false);
-                      }
-                    }
-                  },
-                  backgroundColor: AppColors.mapSpotLayerActive,
-                  foregroundColor: AppColors.foam,
-                  elevation: 3,
-                  extendedPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 0,
-                  ),
-                  icon: const Icon(Icons.add_location_alt, size: 20),
-                  label: const Text(
-                    'Mera Ekle',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Top-right: Bildirim + Katman toggles
-          Positioned(
-            right: 12,
-            top: MediaQuery.of(context).padding.top + 8,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                if (!_mapSecondaryLayersReady)
-                  Tooltip(
-                    message: 'Bildirimler',
-                    child: GestureDetector(
-                      onTap: () => context.push(AppRoutes.notifications),
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.65),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.notifications_outlined,
-                          color: Colors.white,
-                          size: 26,
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  Consumer(
-                    builder: (context, ref, _) {
-                      final count = ref.watch(unreadCountProvider);
-
-                      Widget buildButton(int count) {
-                        return Tooltip(
-                          message: 'Bildirimler',
-                          child: GestureDetector(
-                            onTap: () => context.push(AppRoutes.notifications),
-                            child: Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.65),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  Center(
-                                    child: Icon(
-                                      count > 0
-                                          ? Icons.notifications_rounded
-                                          : Icons.notifications_outlined,
-                                      color: count > 0
-                                          ? AppColors.sand
-                                          : Colors.white,
-                                      size: 26,
-                                    ),
-                                  ),
-                                  // Okunmamış bildirim nokta göstergesi
-                                  if (count > 0)
-                                    Positioned(
-                                      right: 9,
-                                      top: 9,
-                                      child: Container(
-                                        width: 9,
-                                        height: 9,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.success,
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: Colors.black,
-                                            width: 1.5,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  // Okunmamış sayı rozeti
-                                  if (count > 0)
-                                    Positioned(
-                                      right: 5,
-                                      bottom: 5,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 5,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.danger,
-                                          borderRadius: BorderRadius.circular(
-                                            999,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          count > 99 ? '99+' : '$count',
-                                          style: const TextStyle(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-
-                      return buildButton(count);
-                    },
-                  ),
-                const SizedBox(height: 8),
-                _LayerToggleGroup(
-                  showSpots: _showSpots,
-                  showShops: _showShops,
-                  onToggleSpots: () => setState(() => _showSpots = !_showSpots),
-                  onToggleShops: _toggleShopsLayer,
-                ),
-              ],
-            ),
-          ),
-
-          // Üst: uzak mera senkronu — harita kullanılabilir kalır.
-          if (_spotsRemoteRefreshing)
-            Positioned(
-              left: 0,
-              right: 0,
-              top: MediaQuery.of(context).padding.top,
-              child: LinearProgressIndicator(
-                minHeight: 2,
-                backgroundColor: Colors.black.withValues(alpha: 0.15),
-                valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-              ),
-            ),
-
-          // Alt: Draggable sheet — yalnızca mera seçilince görünür.
-          // Align(bottomCenter) + Stack gevşek kısıtları bazen sheet’e 0 yükseklik verir;
-          // hit test: "Cannot hit test a render box with no size". Positioned.fill gerekli.
-          if (sheetSpot != null)
-            Positioned.fill(
-              child: DraggableScrollableSheet(
-                controller: _sheetController,
-                initialChildSize: sheetInitialSize,
-                minChildSize: sheetMinSize,
-                maxChildSize: sheetMaxSize,
-                snap: true,
-                snapSizes: const [sheetInitialSize, 0.32, 0.42, sheetMaxSize],
-                builder: (context, scrollController) {
-                  final bottomPad = MediaQuery.of(context).padding.bottom;
-                  return Padding(
-                    padding: EdgeInsets.only(bottom: bottomPad),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(20),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 20,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: CustomScrollView(
-                        key: ValueKey<String>('spot_sheet_${sheetSpot.id}'),
-                        controller: scrollController,
-                        physics: const AlwaysScrollableScrollPhysics(
-                          parent: ClampingScrollPhysics(),
-                        ),
-                        slivers: [
-                          SliverPadding(
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                            sliver: SliverToBoxAdapter(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Center(
-                                    child: Container(
-                                      margin: const EdgeInsets.only(
-                                        top: 8,
-                                        bottom: 12,
-                                      ),
-                                      width: 40,
-                                      height: 4,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.muted.withValues(
-                                          alpha: 0.45,
-                                        ),
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
-                                    ),
-                                  ),
-                                  _SpotSheetHeader(
-                                    spot: sheetSpot,
-                                    activeCount: activeCount,
-                                    hasMuhtar: sheetSpot.muhtarId != null,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  if (sheetSpot.privacyLevel == 'vip' &&
-                                      !_isUstaOrAbove)
-                                    _VipLockedWidget(
-                                      userScore: _currentUserScore,
-                                    )
-                                  else ...[
-                                    if (mostRecent != null)
-                                      _LatestCheckinBanner(
-                                        checkin: mostRecent,
-                                      ),
-                                    if (mostRecent != null)
-                                      const SizedBox(height: 10),
-                                    _MeraWeatherSection(
-                                      loading: _weatherLoading,
-                                      snap: _meraWeather,
-                                    ),
-                                    const SizedBox(height: 10),
-                                    SizedBox(
-                                      height: 48,
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children: [
-                                          Expanded(
-                                            child: _SheetPrimaryButton(
-                                              onPressed: () =>
-                                                  _openCheckinForSpot(
-                                                    sheetSpot,
-                                                  ),
-                                              icon: Icons.check_circle_outline,
-                                              label: 'Balık Var!',
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: _SheetSecondaryButton(
-                                              onPressed: () =>
-                                                  _openDirectionsForSpot(
-                                                    sheetSpot,
-                                                  ),
-                                              icon: Icons.directions,
-                                              label: 'Yol Tarifi',
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    if (sheetDescriptionTrimmed != null &&
-                                        sheetDescriptionTrimmed.isNotEmpty)
-                                      Text(
-                                        sheetDescriptionTrimmed,
-                                        style: AppTextStyles.body.copyWith(
-                                          color: AppColors.foam.withValues(
-                                            alpha: 0.78,
-                                          ),
-                                        ),
-                                      ),
-                                    if (sheetDescriptionTrimmed != null &&
-                                        sheetDescriptionTrimmed.isNotEmpty)
                                       const SizedBox(height: 12),
-                                    _RecentCheckinsRow(checkins: sheetCheckins),
+                                      if (sheetDescriptionTrimmed != null &&
+                                          sheetDescriptionTrimmed.isNotEmpty)
+                                        Text(
+                                          sheetDescriptionTrimmed,
+                                          style: AppTextStyles.body.copyWith(
+                                            color: AppColors.foam.withValues(
+                                              alpha: 0.78,
+                                            ),
+                                          ),
+                                        ),
+                                      if (sheetDescriptionTrimmed != null &&
+                                          sheetDescriptionTrimmed.isNotEmpty)
+                                        const SizedBox(height: 12),
+                                      _RecentCheckinsRow(
+                                        checkins: sheetCheckins,
+                                      ),
+                                    ],
                                   ],
-                                ],
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                    );
+                  },
+                ),
+              ),
+
+            if (_error != null && !_spotsRemoteRefreshing)
+              Positioned(
+                left: 16,
+                right: 16,
+                top: 140,
+                child: Material(
+                  color: AppColors.danger,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: Colors.white),
+                      textAlign: TextAlign.center,
                     ),
-                  );
-                },
-              ),
-            ),
-
-          if (_error != null && !_spotsRemoteRefreshing)
-            Positioned(
-              left: 16,
-              right: 16,
-              top: 140,
-              child: Material(
-                color: AppColors.danger,
-                borderRadius: BorderRadius.circular(10),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    _error!,
-                    style: const TextStyle(color: Colors.white),
-                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
-            ),
 
-          // Deep-link yükleme banner'ı — bildirimden gelen mera çekilirken gösterilir.
-          if (_isDeepLinkLoading)
-            Positioned(
-              left: 24,
-              right: 24,
-              top: MediaQuery.of(context).padding.top + 70,
-              child: Material(
-                color: Colors.black.withValues(alpha: 0.78),
-                borderRadius: BorderRadius.circular(14),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(width: 14),
-                      Expanded(
-                        child: Text(
-                          'Mera yükleniyor...',
-                          style: TextStyle(
+            // Deep-link yükleme banner'ı — bildirimden gelen mera çekilirken gösterilir.
+            if (_isDeepLinkLoading)
+              Positioned(
+                left: 24,
+                right: 24,
+                top: MediaQuery.of(context).padding.top + 70,
+                child: Material(
+                  color: Colors.black.withValues(alpha: 0.78),
+                  borderRadius: BorderRadius.circular(14),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
                             color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                      ),
-                    ],
+                        SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            'Mera yükleniyor...',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 }
@@ -2037,7 +2096,9 @@ class _ActivePulseCountState extends State<_ActivePulseCount>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.success.withValues(alpha: 0.45),
+                                color: AppColors.success.withValues(
+                                  alpha: 0.45,
+                                ),
                                 blurRadius: 6,
                                 spreadRadius: 1,
                               ),
@@ -2075,10 +2136,7 @@ class _MeraWeatherSection extends StatelessWidget {
   final bool loading;
   final MeraWeatherSnapshot? snap;
 
-  const _MeraWeatherSection({
-    required this.loading,
-    required this.snap,
-  });
+  const _MeraWeatherSection({required this.loading, required this.snap});
 
   @override
   Widget build(BuildContext context) {
@@ -2229,10 +2287,7 @@ class _SheetPrimaryButton extends StatelessWidget {
       icon: Icon(icon, size: 20),
       label: Text(
         label,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w800,
-        ),
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -2240,9 +2295,7 @@ class _SheetPrimaryButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
         minimumSize: const Size(0, 48),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -2283,9 +2336,7 @@ class _SheetSecondaryButton extends StatelessWidget {
         minimumSize: const Size(0, 48),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         side: const BorderSide(color: AppColors.primary, width: 1.5),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -2741,7 +2792,9 @@ class _ShopDetailSheet extends StatelessWidget {
                           Text(
                             'Doğrulandı',
                             style: AppTextStyles.caption.copyWith(
-                              color: AppColors.secondary.withValues(alpha: 0.95),
+                              color: AppColors.secondary.withValues(
+                                alpha: 0.95,
+                              ),
                             ),
                           ),
                         ],
@@ -2836,10 +2889,7 @@ class _InfoRow extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: AppColors.muted),
           const SizedBox(width: 10),
-          Text(
-            text,
-            style: AppTextStyles.body.copyWith(color: AppColors.foam),
-          ),
+          Text(text, style: AppTextStyles.body.copyWith(color: AppColors.foam)),
         ],
       ),
     );
