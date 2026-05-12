@@ -139,7 +139,7 @@ Widget _buildExpandedWeatherCardBody(
                     ],
                   ),
                   Text(
-                    '💨 ${w.windKmh.toStringAsFixed(0)} km/s'
+                    '💨 ${w.windKmh.toStringAsFixed(0)} km/h'
                     '${w.waveHeight != null ? '  🌊 ${w.waveHeight!.toStringAsFixed(1)} m' : ''}',
                     style: AppTextStyles.caption.copyWith(
                       color: AppColors.muted,

@@ -83,7 +83,7 @@ serve(async (req: Request) => {
     if (cur) {
       const w = cur.windspeed as number | undefined
       const t = cur.temperature as number | undefined
-      if (w != null) wind = `💨 ${Math.round(w)} km/s`
+      if (w != null) wind = `💨 ${Math.round(w)} km/h`
       if (t != null) temp = `🌡️ ${Math.round(t)}°C`
     }
     const detail = [temp, wind].filter(Boolean).join('  ')

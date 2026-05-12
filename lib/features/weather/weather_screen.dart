@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/weather_regions.dart';
 import 'package:balikci_app/core/utils/moon_phase_utils.dart';
+import 'package:balikci_app/core/utils/wind_direction_utils.dart';
 import 'package:balikci_app/data/models/hourly_weather_model.dart';
 import 'package:balikci_app/data/models/weather_model.dart';
 import 'package:balikci_app/core/utils/weekly_forecast_aggregate.dart';
@@ -341,7 +342,7 @@ class _HourlyScrollRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '💨${h.windspeed.round()}',
+                  '💨 ${h.windspeed.round()} km/h',
                   style: const TextStyle(
                     color: Color(0xFF88BBFF),
                     fontSize: 11,
@@ -453,7 +454,7 @@ class _HourlyWeatherChart extends StatelessWidget {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                '💨 ${hours[i].windspeed.round()} km/s',
+                                '💨 ${hours[i].windspeed.round()} km/h',
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   color: Color(0xFF88BBFF),
@@ -753,90 +754,76 @@ class _WeatherDetailGrid extends StatelessWidget {
     return '${km.round()} km';
   }
 
-  String _windDirLabel(int? deg) {
-    if (deg == null) return '—';
-    if (deg >= 30 && deg < 60) return 'Poyraz ↗';
-    if (deg >= 60 && deg < 90) return 'Gündoğusu →';
-    if (deg >= 180 && deg < 220) return 'Lodos ↙ ⚠️';
-    if (deg >= 200 && deg < 230) return 'Kıble ↓ ⚠️';
-    if (deg >= 240 && deg < 270) return 'Keşişleme ↙ ⚠️';
-    if (deg >= 300 && deg < 330) return 'Karayel ↖';
-    if (deg >= 345 || deg < 15) return 'Yıldız ↑';
-    return '$deg°';
-  }
-
-  /// Lodos bandı (mevcut etiket) veya güney bileşeni güçlü rüzgar (≈165°–195°).
-  bool _isLodosOrSouthWind(int? deg) {
-    if (deg == null) return false;
-    if (deg >= 180 && deg < 220) return true;
-    if (deg >= 165 && deg <= 195) return true;
-    return false;
-  }
-
-  static const Color _lodosChipBg = Color(0xFFFAEEDA);
-  static const Color _lodosChipFg = Color(0xFF854F0B);
-
-  Widget _windDirectionValue(int? deg) {
-    final normal = _windDirLabel(deg);
-    if (!_isLodosOrSouthWind(deg)) {
+  Widget _windDirectionBody(int? deg) {
+    if (deg == null) {
       return Text(
-        normal,
+        '—',
         style: AppTextStyles.caption.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.w700,
           color: Colors.white,
         ),
-        overflow: TextOverflow.ellipsis,
       );
     }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: _lodosChipBg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.warning_amber_rounded,
-            size: 14,
-            color: _lodosChipFg,
+    final advisory = isSoutherlyWindCoastalAdvisory(deg);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          formatWindDirectionTurkish(deg),
+          style: AppTextStyles.caption.copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            height: 1.2,
           ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              'Lodos — Av olumsuz etkilenebilir',
-              style: TextStyle(
-                color: _lodosChipFg,
-                fontSize: 11,
-                height: 1.2,
-                fontWeight: FontWeight.w600,
+        ),
+        if (advisory) ...[
+          const SizedBox(height: 6),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 14,
+                color: AppColors.warning.withValues(alpha: 0.95),
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              softWrap: true,
-            ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Güney/Güneybatı rüzgarı kıyıda dalga ve akıntıyı artırabilir; '
+                  'olta için koşullar zorlayıcı olabilir.',
+                  style: AppTextStyles.caption.copyWith(
+                    fontSize: 11,
+                    height: 1.35,
+                    color: AppColors.muted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
-      ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final windDeg = currentHour?.windDirection ?? weather.windDirection;
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
-      childAspectRatio: 2.28,
+      childAspectRatio: 1.88,
       children: [
         _DetailTile(
           icon: '💨',
           label: 'Rüzgar',
-          value: '${weather.windKmh.toStringAsFixed(0)} km/s',
+          value: '${weather.windKmh.toStringAsFixed(0)} km/h',
         ),
         _DetailTile(
           icon: '🌡️',
@@ -900,12 +887,8 @@ class _WeatherDetailGrid extends StatelessWidget {
         _DetailTile(
           icon: '🧭',
           label: 'Rüzgar Yönü',
-          value: _windDirLabel(
-            currentHour?.windDirection ?? weather.windDirection,
-          ),
-          valueWidget: _windDirectionValue(
-            currentHour?.windDirection ?? weather.windDirection,
-          ),
+          value: formatWindDirectionTurkish(windDeg),
+          valueWidget: _windDirectionBody(windDeg),
         ),
       ],
     );
@@ -916,7 +899,7 @@ class _DetailTile extends StatelessWidget {
   final String icon, label, value;
   final Color? valueColor;
 
-  /// [value] yerine gösterilir (ör. Lodos uyarı chip'i).
+  /// [value] yerine özel widget (ör. rüzgar yönü çok satır).
   final Widget? valueWidget;
 
   const _DetailTile({

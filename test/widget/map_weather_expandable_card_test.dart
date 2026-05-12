@@ -71,7 +71,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('22'), findsWidgets);
-      expect(find.textContaining('km/s'), findsOneWidget);
+      expect(find.textContaining('km/h'), findsOneWidget);
     });
 
     testWidgets('dokununca küçük pill metnine geçer', (tester) async {
