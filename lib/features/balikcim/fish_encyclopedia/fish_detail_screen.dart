@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:go_router/go_router.dart';
+
+import 'package:balikci_app/app/app_routes.dart';
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/features/balikcim/fish_encyclopedia/fish_encyclopedia_model.dart';
 import 'package:balikci_app/shared/widgets/app_filter_chip.dart';
@@ -19,24 +22,30 @@ String _mevsimTurkce(String s) {
   }
 }
 
+const _turkishMonthNames = <String>[
+  'Ocak',
+  'Şubat',
+  'Mart',
+  'Nisan',
+  'Mayıs',
+  'Haziran',
+  'Temmuz',
+  'Ağustos',
+  'Eylül',
+  'Ekim',
+  'Kasım',
+  'Aralık',
+];
+
 String _ayAdiTr(int month) {
-  const names = [
-    '',
-    'Ocak',
-    'Şubat',
-    'Mart',
-    'Nisan',
-    'Mayıs',
-    'Haziran',
-    'Temmuz',
-    'Ağustos',
-    'Eylül',
-    'Ekim',
-    'Kasım',
-    'Aralık',
-  ];
   if (month < 1 || month > 12) return '$month';
-  return names[month];
+  return _turkishMonthNames[month - 1];
+}
+
+int? _monthIndexFromTurkishName(String name) {
+  final i = _turkishMonthNames.indexOf(name);
+  if (i < 0) return null;
+  return i + 1;
 }
 
 String _zorlukEtiket(String d) {
@@ -67,6 +76,9 @@ class FishDetailScreen extends StatefulWidget {
 }
 
 class _FishDetailScreenState extends State<FishDetailScreen> {
+  /// Seçili ay adı (Ocak…Aralık); null ise av durumu özeti gösterilmez.
+  String? _selectedMonth;
+
   final GlobalKey _generalKey = GlobalKey();
   final GlobalKey _seasonKey = GlobalKey();
   final GlobalKey _baitKey = GlobalKey();
@@ -91,6 +103,16 @@ class _FishDetailScreenState extends State<FishDetailScreen> {
     }
   }
 
+  void _onMonthChipTap(String monthName) {
+    setState(() {
+      if (_selectedMonth == monthName) {
+        _selectedMonth = null;
+      } else {
+        _selectedMonth = monthName;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final fish = widget.fish;
@@ -100,6 +122,13 @@ class _FishDetailScreenState extends State<FishDetailScreen> {
         : fish.bestMonths.map(_ayAdiTr).join(', ');
     final gear = fish.istanbulGear;
     final hasGear = gear != null && gear.hasDisplayableData;
+
+    final selectedMonth = _selectedMonth;
+    final selectedMonthIdx = selectedMonth != null
+        ? _monthIndexFromTurkishName(selectedMonth)
+        : null;
+    final isSelectedMonthBest = selectedMonthIdx != null &&
+        fish.bestMonths.contains(selectedMonthIdx);
 
     final navEntries = <({String label, GlobalKey key})>[
       (label: 'Genel', key: _generalKey),
@@ -269,14 +298,74 @@ class _FishDetailScreenState extends State<FishDetailScreen> {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            aylarMetni,
-                            style: AppTextStyles.body.copyWith(
-                              color: AppColors.foam,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final ay in _turkishMonthNames)
+                                GestureDetector(
+                                  onTap: () => _onMonthChipTap(ay),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    curve: Curves.easeOut,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _selectedMonth == ay
+                                          ? AppColors.primary
+                                              .withValues(alpha: 0.35)
+                                          : AppColors.navy
+                                              .withValues(alpha: 0.35),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: _selectedMonth == ay
+                                            ? AppColors.primary
+                                            : AppColors.muted
+                                                .withValues(alpha: 0.35),
+                                        width:
+                                            _selectedMonth == ay ? 2 : 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      ay,
+                                      style: AppTextStyles.body.copyWith(
+                                        color: AppColors.foam,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          if (fish.bestMonths.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Text(
+                              'Özet: $aylarMetni',
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppColors.muted,
+                                fontSize: 13,
+                                height: 1.3,
+                              ),
                             ),
+                          ],
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 250),
+                            switchInCurve: Curves.easeOut,
+                            switchOutCurve: Curves.easeIn,
+                            child: selectedMonth == null
+                                ? const SizedBox.shrink(
+                                    key:
+                                        ValueKey<String>('av-summary-none'),
+                                  )
+                                : _MonthAvSummaryCard(
+                                    key: ValueKey<String>(selectedMonth),
+                                    monthLabel: selectedMonth,
+                                    isBestPeriod: isSelectedMonthBest,
+                                  ),
                           ),
                           if (fish.habitats.isNotEmpty) ...[
                             const SizedBox(height: 14),
@@ -310,6 +399,28 @@ class _FishDetailScreenState extends State<FishDetailScreen> {
                                           fontSize: 16,
                                         ),
                                       ),
+                                    ),
+                                    TextButton.icon(
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppColors.primary,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                        ),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      icon: const Icon(
+                                        Icons.map_outlined,
+                                        size: 14,
+                                      ),
+                                      label: const Text(
+                                        'Haritada Gör',
+                                        style: TextStyle(fontSize: 12),
+                                      ),
+                                      onPressed: () {
+                                        context.go(AppRoutes.home);
+                                      },
                                     ),
                                   ],
                                 ),
@@ -497,6 +608,49 @@ class _FishDetailScreenState extends State<FishDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MonthAvSummaryCard extends StatelessWidget {
+  final String monthLabel;
+  final bool isBestPeriod;
+
+  const _MonthAvSummaryCard({
+    super.key,
+    required this.monthLabel,
+    required this.isBestPeriod,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final text = isBestPeriod
+        ? '⭐ $monthLabel: Bu balık için iyi bir dönem!'
+        : 'ℹ️ $monthLabel: Sezon dışı, av azalabilir.';
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Card(
+        color: AppColors.navy.withValues(alpha: 0.55),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: AppColors.primary.withValues(alpha: 0.4),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Text(
+            text,
+            style: AppTextStyles.body.copyWith(
+              color: AppColors.foam,
+              fontSize: 15,
+              height: 1.35,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ),
     );
   }
