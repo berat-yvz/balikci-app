@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart' show DateFormat;
-
 import 'package:balikci_app/app/theme.dart';
 import 'package:balikci_app/core/constants/weather_regions.dart';
 import 'package:balikci_app/core/utils/moon_phase_utils.dart';
@@ -272,7 +270,7 @@ class _FetchedAtLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hhmm = DateFormat('HH:mm').format(fetchedAt.toLocal());
+    final hhmm = turkeyWallClockHmFromUtc(fetchedAt);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(

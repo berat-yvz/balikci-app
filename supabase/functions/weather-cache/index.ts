@@ -324,6 +324,9 @@ serve(async (req: Request) => {
   const results: string[] = []
   const fetchedAt = new Date().toISOString()
 
+  type UpsertFail = { key: string; lat: number; lng: number }
+  const failures: UpsertFail[] = []
+
   const tasks: (() => Promise<void>)[] = []
 
   for (const [regionKey, coords] of Object.entries(REGIONS)) {
@@ -339,6 +342,7 @@ serve(async (req: Request) => {
         results.push(`✓ ${regionKey}`)
       } catch (err) {
         results.push(`✗ ${regionKey}: ${String(err)}`)
+        failures.push({ key: regionKey, lat: coords.lat, lng: coords.lng })
       }
     })
   }
@@ -356,11 +360,32 @@ serve(async (req: Request) => {
         results.push(`✓ ${row.region_key}`)
       } catch (err) {
         results.push(`✗ ${row.region_key}: ${String(err)}`)
+        failures.push({ key: row.region_key, lat: row.lat, lng: row.lng })
       }
     })
   }
 
   await runWithConcurrency(tasks, OPEN_METEO_CONCURRENCY)
+
+  // İlk turda zaman aşımı / Open-Meteo dalgalanması (özellikle sıca başlangıçta antalya vb.)
+  // kalan bölgeleri tek ikinci deneme ile hizalar — `fetched_at` hep aynı ISO kalır.
+  if (failures.length > 0) {
+    await sleep(2500)
+    for (const f of failures) {
+      try {
+        await upsertWeatherRegionWithRetry(
+          supabase,
+          f.key,
+          f.lat,
+          f.lng,
+          fetchedAt,
+        )
+        results.push(`✓ ${f.key} (retry)`)
+      } catch (err) {
+        results.push(`✗ ${f.key} retry: ${String(err)}`)
+      }
+    }
+  }
 
   return new Response(JSON.stringify({ ok: true, fetched_at: fetchedAt, results }), {
     headers: { 'Content-Type': 'application/json' },

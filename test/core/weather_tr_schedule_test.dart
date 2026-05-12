@@ -27,6 +27,13 @@ void main() {
     });
   });
 
+  group('turkeyWallClockHmFromUtc', () {
+    test('UTC 17:05 → TR 20:05', () {
+      final u = DateTime.utc(2026, 5, 11, 17, 5, 0);
+      expect(turkeyWallClockHmFromUtc(u), '20:05');
+    });
+  });
+
   group('openMeteoIstanbulNaiveTimeToUtc', () {
     test('ofsetsiz TR saati UTC\'ye iner', () {
       final u = openMeteoIstanbulNaiveTimeToUtc('2026-05-08T14:30');

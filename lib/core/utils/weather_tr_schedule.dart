@@ -58,3 +58,13 @@ int istanbulWallHourFromUtc(DateTime utcInstant) {
   final tr = utcInstant.toUtc().add(const Duration(hours: 3));
   return tr.hour;
 }
+
+/// `weather_cache.fetched_at` gibi UTC anlarının Türkiye sabit UTC+3 duvar saatinde **HH:mm** gösterimi.
+///
+/// Saatlik tahmin satırlarıyla aynı zaman ekseninde kalır; cihazın yerel saat dilimine bağlı değildir.
+String turkeyWallClockHmFromUtc(DateTime utcInstant) {
+  final shifted = utcInstant.toUtc().add(const Duration(hours: 3));
+  final h = shifted.hour.toString().padLeft(2, '0');
+  final m = shifted.minute.toString().padLeft(2, '0');
+  return '$h:$m';
+}

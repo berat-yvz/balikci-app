@@ -23,8 +23,11 @@ class WeatherService {
   static final _db = SupabaseService.client;
   static final _driftDb = AppDatabase.instance;
 
-  /// Aynı turda diğer kıyılar tazelendi, sunucuda bu il hâlâ eskiyse gereksiz tekrar isteği kes.
-  static final Set<String> _coastalCatchupDeferred = {};
+  /// Geride kalan `fetched_at` için tek satır yenileme başarısız olunca kısa süre istek kesilir;
+  /// süresi dolunca yeniden dene (kalıcı blok yok).
+  static final Map<String, DateTime> _coastalCatchupBackoffUntilUtc = {};
+
+  static const Duration _coastalCatchupBackoff = Duration(minutes: 12);
 
   /// `istanbul` kıyı anahtarı bazen worker'da diğerlerinden eski kalabiliyor; taze ilçe
   /// satırı Drift'te varsa aynı paketi bölge adıyla sunarız (ekstra ağ isteği yok).
@@ -83,10 +86,14 @@ class WeatherService {
     final mine = pack.current.fetchedAt.toUtc();
     const tolerance = Duration(minutes: 2);
     if (!mine.isBefore(peerNewest.subtract(tolerance))) {
-      _coastalCatchupDeferred.remove(regionKey);
+      _coastalCatchupBackoffUntilUtc.remove(regionKey);
       return pack;
     }
-    if (_coastalCatchupDeferred.contains(regionKey)) return pack;
+    final backoffUntil = _coastalCatchupBackoffUntilUtc[regionKey];
+    final nowU = DateTime.now().toUtc();
+    if (backoffUntil != null && nowU.isBefore(backoffUntil)) {
+      return pack;
+    }
     if (kDebugMode) {
       debugPrint(
         '[WeatherService] $regionKey yerel fetched_at ($mine) emsallardan '
@@ -100,9 +107,10 @@ class WeatherService {
     if (fresh == null) return pack;
     final freshT = fresh.current.fetchedAt.toUtc();
     if (freshT.isBefore(peerNewest.subtract(tolerance))) {
-      _coastalCatchupDeferred.add(regionKey);
+      _coastalCatchupBackoffUntilUtc[regionKey] =
+          nowU.add(_coastalCatchupBackoff);
     } else {
-      _coastalCatchupDeferred.remove(regionKey);
+      _coastalCatchupBackoffUntilUtc.remove(regionKey);
     }
     return fresh;
   }
@@ -213,7 +221,7 @@ class WeatherService {
           debugPrint('[WeatherService] Drift toplu yazım ($rk): $e\n$st');
         }
       }
-      if (n > 0) _coastalCatchupDeferred.clear();
+      if (n > 0) _coastalCatchupBackoffUntilUtc.clear();
       return n;
     } catch (e, st) {
       debugPrint('[WeatherService] Toplu weather_cache okuma: $e\n$st');
